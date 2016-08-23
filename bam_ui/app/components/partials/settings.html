@@ -1,0 +1,110 @@
+<script type="text/ng-template" id="alert.html">
+    <div class="alert" style="background-color:#fa39c3;color:white;" role="alert">
+        <div ng-transclude></div>
+    </div>
+</script>
+<uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert($index)" class="uib-text">{{alert.msg}}</uib-alert>
+<section class="content-header">
+    <h1>
+        Settings
+     </h1>
+    <div id="pgcInfoText" class="pull-left"></div>
+</section>
+<section class="content">
+    <div class="box">
+        <div class="box-header with-border">
+            <h4>Check for updates</h4>
+        </div>
+        <div class="box-body">
+            <form class="form-horizontal">
+                <div class="form-group">
+                    <div class="col-sm-10">
+                        <div class="radio">
+                            <label>
+                                <input type="radio" ng-checked="settingType == 'manual'" ng-model="settingType" value="manual" ng-change="updateManualSettings()" /> Manually
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-10">
+                        <div class="radio">
+                            <label>
+                                <input type="radio" ng-checked="settingType == 'auto'" ng-model="settingType" ng-change="onAutomaticOptionSelection()"  value="auto" /> Automatically
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-6">
+                        <label for="inputPassword3" class="col-sm-4 control-label">Check for Updates</label>
+                        <div class="col-sm-4">
+                            <select class="form-control" name="singleSelect" id="automaticSettings" ng-change="onAutomaticOptionSelection()" ng-model="automaticSettings" ng-init="automaticSettings = settingsOptions[0]"  ng-disabled="settingType=='manual' || settingType==undefined && settingType != 'auto'" disabled="disable" ng-options="option.name for option in settingsOptions">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+
+                    <div class="col-sm-6 col-md-8 col-xs-8">
+                    <p class="col-md-9 col-xs-9" style="margin-top: 8px" ng-show="lastUpdateStatus">The last time you checked for updates was at {{lastUpdateStatus}}</p>
+                        <button type="button" class="btn btn-default" id="checkNow" ng-click="open('manual')">Check now</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="box">
+        <div class="box-header with-border">
+            <h4>PGC Server Info</h4></div>
+        <div class="box-body">
+            <div class="col-sm-12">
+                <table class="table table-condensed settings-table-pgc-info">
+                    <thead>
+                        <tr>
+                            <td class="col-md-1 col-xs-1"></td>
+                            <td class="col-md-11 col-xs-11"></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <h5>PGC:</h5></td>
+                            <td>
+                                <p>{{pgcInfo.version}}</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <h5>User &amp; Host:</h5></td>
+                            <td>
+                                <p>{{pgcInfo.user}} &nbsp; {{pgcInfo.host}} </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <h5>OS:</h5></td>
+                            <td>
+                                <p>{{pgcInfo.os}}</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <h5>Hardware:</h5></td>
+                            <td>
+                                <p>{{pgcInfo.mem}} GB, {{pgcInfo.cpu}}</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <h5>Repo URL:</h5></td>
+                            <td>
+                                <p>{{pgcInfo.repo}}</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

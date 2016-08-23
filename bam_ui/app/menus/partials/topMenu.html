@@ -1,0 +1,44 @@
+<header class="main-header">
+    <!-- Logo -->
+    <a href="/" class="logo">
+        <!-- mini logo for sidebar mini 50x50 pixels -->
+        <span class="logo-mini"></span>
+        <!-- logo for regular state and mobile devices -->
+        <span class="logo-lg"></span>
+    </a>
+    <!-- Header Navbar: style can be found in header.less -->
+    <nav class="navbar navbar-static-top" role="navigation">
+        <!-- Sidebar toggle button-->
+        <!--  <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+                    <span class="sr-only">Toggle navigation</span>
+                </a> -->
+        <!-- Navbar Right Menu -->
+        <h1 id="pgc-logo">BigSQL Manager III</h1>
+        <div class="navbar-custom-menu">
+            <ul class="nav navbar-nav">
+                <!-- Notifications: style can be found in dropdown.less -->
+                <li>
+                    
+                </li>
+                <li ng-click="open()" id="updatesAvailable" ng-if="updates">
+                    <a href="">
+                        <div>
+                            <small class="label bg-orange"><i class="fa fa-arrow-circle-down"></i> {{updates}} Updates Available</small>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <div id="pgcHost">
+                        {{pgcInfo.host_short}}
+                    </div>
+                </li>
+                <li>
+                    <a class="feedback-link" target="_blank" href="https://www.bigsql.org/feedback/index.jsp" tooltip-placement="bottom-right" uib-tooltip="Give Your Feedback">
+                        <i class="fa fa-comments-o" aria-hidden="true"></i>
+                    </a>
+                </li>
+                <!-- Control Sidebar Toggle Button -->
+            </ul>
+        </div>
+    </nav>
+</header>

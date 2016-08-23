@@ -1,0 +1,100 @@
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        Component Details
+    </h1>
+    <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
+</section>
+
+<!-- Main content -->
+<section class="content">
+    <div class="row">
+        <div class="col-md-4 col-xs-4 col-sm-12">
+            <!-- Profile Image -->
+            <div class="box box-primary">
+                <div class="box-body box-profile">
+                    <img class="profile-user-img img-responsive" id="component-logo" ng-src="assets/img/component-logos/{{ component.component }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
+                    <h3 class="profile-username text-center" ng-bind="component.component" id="comp_name"></h3>
+                    <ul class="list-group list-group-unbordered" id="comp_details">
+                        <li class="list-group-item" ng-show="component.version != '' && component.version != undefined">
+                            <span class="pull-left"><b>Version</b></span> <span class="pull-right" ng-bind="component.version" id="comp_version"></span>
+                        </li>
+                        <li class="list-group-item" ng-show="component.home_url != '' && component.home_url != undefined || component.doc_url != '' && component.doc_url != undefined">
+                            <span class="pull-left"><a ng-show="component.home_url != ''" href="{{component.home_url}}" target='_blank'> Homepage <i class="fa fa-external-link"></i> </a></span> <span class="pull-right"> <a ng-show="component.doc_url != ''" href="{{component.doc_url}}" target='_blank'> Documentation <i class="fa fa-external-link"></i> </a> </span>
+                        </li>
+                        <li class="list-group-item" ng-show="component.port != '' && component.port != undefined && component.port != 0 && component.port != 1">
+                            <span class="pull-left"><b>Port</b></span> <span class="pull-right" ng-bind="component.port"></span>
+                        </li>
+                        <li class="list-group-item" ng-show="component.up_time != '' && component.up_time != undefined">
+                            <span class="pull-left"><b>Uptime</b></span> <span class="pull-right" ng-bind="component.up_time"></span>
+                        </li>
+                        <li class="list-group-item" ng-show="component.connections != '' && component.connections != undefined">
+                            <span class="pull-left"><b>Connections</b></span>
+                            <a class="pull-right" ng-bind="component.connections" id="home_url"></a>
+                        </li>
+                        <li class="list-group-item" ng-show="component.datadir != '' && component.datadir != undefined">
+                            <span class="pull-left"><b>Data Dir</b></span>
+                            <span class="pull-right" ng-bind="component.datadir" id="comp_doc"></span>
+                        </li>
+                        <li class="list-group-item" id="li-pointer" ng-show="component.logdir != '' && component.logdir != undefined">
+                            <span class="pull-left"><b>Log Dir</b></span>
+                            <span href="{{component.logdir}}" class="pull-right" ng-bind="component.logdir" id="dt_added"></span>
+                        </li>
+                        <li class="list-group-item" id="li-pointer" ng-show="component.data_size != '' && component.data_size != undefined">
+                            <span class="pull-left"><b>Data Size</b></span>
+                            <a class="pull-right" ng-bind="component.data_size" id="dt_added"></a>
+                        </li>
+                        <li class="list-group-item" id="li-pointer" ng-show="component.status != '' && component.status != undefined && component.port != 1">
+                            <span class="pull-left"><b>State</b></span>
+                            <span class="pull-right" style="margin-top: -4px;"><i ng-class="statusColors[component.status]" class="fa fa-stop fa-2x"></i>
+                                <div style="margin-left: 30px; margin-top: -24px;"> {{component.status}}</div>
+                            </span>
+                        </li>
+                    </ul>
+                    <div id="button-act" ng-click="action($event)">
+                        <a ng-show="component.status == undefined && component.is_installed == 0" action="install" class="btn btn-default" ng-disabled=" component.installation != undefined">Install</a>
+                        <a ng-show="component.status == 'Stopped' && component.port != 1" action="start" class="btn btn-default" ng-disabled=" component.spinner != undefined">Start</a>
+                        <a ng-show="(component.status == 'Stopped' && component.is_installed) || (component.is_installed == 1 && component.status == undefined)" action="remove" class="btn btn-default" ng-disabled=" component.spinner != undefined">Remove</a>
+                        <div ng-show="component.status == 'NotInitialized'">
+                            <a class="btn btn-danger" action="init" ng-disabled=" component.spinner != undefined">Initialize</a>
+                            <a class="btn btn-warning" action="remove" ng-disabled=" component.spinner != undefined">Remove</a>
+                        </div>
+                        <div ng-show="component.status == 'Running'">
+                            <a class="btn btn-default" action="stop" ng-disabled=" component.spinner != undefined">Stop</a>
+                            <a class="btn btn-default" action="restart" ng-disabled=" component.spinner != undefined">Restart</a>
+                        </div>
+                    </div>
+                    <br />
+                    <div id="dep_stats">
+                        <div ng-show="component.installation != undefined || component.spinner " style="width:100%;height:auto">
+                            <div>
+                                <span ng-show="component.spinner"><i class='fa fa-spinner fa-2x  fa-pulse'></i> <b>{{component.spinner}}</b></span>
+                                <div style="margin-left:10px;margin-top:20px" ng-show="component.installationDependents != undefined"><i class="fa fa-refresh fa-spin" style='margin-right:2px'></i><b> Installing dependencies...</b></div>
+                                <br />
+                                <div style="margin-left:10px;margin-top:-10px" ng-show="component.installationStart.status =='start' && component.installationStart.state == 'unpack'"><i class="fa fa-circle-o-notch fa-spin" style='margin-right:2px'></i><b> Unpacking </b></div>
+                                <div style="margin-left:10px;margin-top:20px" ng-show="component.installationStart.status =='start' && component.installationStart.state == 'download'"><i class="fa fa-circle-o-notch fa-spin" style='margin-right:2px'></i><b> Downloading </b></div>
+                                </br>
+                                <div ng-show="component.installationRunning != undefined" class="col-md-4 col-xs-4">
+                                    file:<br \>{{component.installationStart.file}}
+                                </div>
+                                <div class="col-md-4 col-xs-4" ng-show="component.installationRunning != undefined">
+                                    <progressbar value="component.progress"></progressbar>
+                                    <button class="btn btn-default btn-xs center-block" ng-click="cancelInstallation('cancelInstall') ">Cancel</button>
+                                </div>
+                                <div class="col-md-2 col-xs-2" ng-show="component.installationRunning != undefined">
+                                    {{component.installationRunning.pct}}%
+                                </div>
+                                <div class="col-md-2 col-xs-2" ng-show="component.installationRunning != undefined">
+                                    {{component.installationRunning.mb}}
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div id="stats">
+                    </div>
+                </div>
+                <!-- /.box-body -->
+            </div>
+        </div>
+</section>

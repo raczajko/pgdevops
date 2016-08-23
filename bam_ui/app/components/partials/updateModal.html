@@ -1,0 +1,114 @@
+<div class="modal-header">
+    <h2 class="modal-title" id="updateModalLabel">Updates</h2>
+</div>
+<div class="container-fluid" ng-show="loadingSpinner">
+    <div class="row">
+        <div class="col-md-12 col-xs-12">
+            <div class="well">
+                <i class="fa fa-spinner fa-2x  fa-pulse"></i>&#160;&#160;&#160;Checking for updates..
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-body" ng-show="body">
+    <p ng-hide="noUpdates">Select the components you want to update. (Or All)</p>
+    <div class="container-fluid">
+        <!-- /.box-header -->
+        <div class="row" id="updatesTable" ng-hide="noUpdates">
+            <div style="border-bottom: 2px solid #f4f4f4;width: 100%;height: 30px;vertical-align: middle;">
+                <div class="col-md-2 col-xs-2"></div>
+                <div class="col-md-4 col-xs-4"><b>Component</b></div>
+                <div class="col-md-5 col-xs-5"><b>Description</b></div>
+            </div>
+            <div class="col-md-12 col-xs-12" id="updatesTableTbody " ng-repeat="(key, value) in components" ng-if="value.updates>0 && value.component != 'bam2'">
+                <div class="component_box" id="{{value.component}}">
+                    <div class="col-md-2 col-xs-2">
+                        <input type="checkbox" ng-model="value.selected" ng-checked="selectedComp.component == value.component">
+                    </div>
+                    <div class="col-md-4 col-xs-4">
+                        <a ui-sref="components.detailsView({component:value.component}) ">
+                                    {{value.component}}
+                                </a>
+                    </div>
+                    <div class="col-md-5 col-xs-5">update {{value.version}} to {{value.current_version}}</div>
+                </div>
+                <div class="row" ng-show="value.installation != undefined" style="width:100%;height:50px">
+                    <div>
+                        <div ng-show="value.installationRunning != undefined" class="col-md-4 col-xs-4">
+                            {{value.installationStart.msg}}
+                        </div>
+                        <div class="col-md-4 col-xs-4" ng-show="value.installationRunning != undefined">
+                            <progressbar value="value.progress"></progressbar>
+                            <button class="btn btn-default btn-xs center-block" ng-click="cancelInstallation('cancelInstall') ">Cancel</button>
+                        </div>
+                        <div class="col-md-1 col-xs-1" ng-show="value.installationRunning != undefined">
+                            {{value.installationRunning.pct}}%
+                        </div>
+                        <div class="col-md-3 col-xs-3" ng-show="value.installationRunning != undefined">
+                            {{value.installationRunning.mb}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" ng-show="noUpdates">
+        <div class="well">
+            <p class="lead">All components are up-to-date. </p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" type="button" ng-click="selectedUpdate()" ng-hide="noUpdates">Update</button>
+        </div>
+        <div class="row">
+            <div class="box-header with-border">
+                <strong> New Components </strong>
+            </div>
+            <div class="box-body">
+                <div class="col-md-4 col-xs-4"><strong>Release Date</strong></div>
+                <div class="col-md-4 col-xs-4"><strong>Component Type</strong></div>
+                <div class="col-md-4 col-xs-4"><strong>Component</strong></div>
+            </div>
+            <div class="col-md-12 col-xs-12" id="updatesTableTbody " ng-repeat="(key, value) in components" ng-if="value.is_new == 1 && value.component != 'bam2' ">
+                <div class="component_box" id="{{value.component}}">
+                    <div class="col-md-4 col-xs-4">
+                        {{value.release_date}}
+                    </div>
+                    <div class="col-md-4 col-xs-4">
+                        {{value.category_desc}}
+                    </div>
+                    <div class="col-md-4 col-xs-4">
+                        {{value.component}}-{{value.version}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" ng-hide="hideLatestInstalled">
+            <div class="box-header with-border">
+                <strong>Components Installed/ Updated in last 30 days</strong>
+            </div>
+            <div class="box-body">
+                <div class="col-md-4 col-xs-4"><strong>Release Date</strong></div>
+                <div class="col-md-4 col-xs-4"><strong>Component Type</strong></div>
+                <div class="col-md-4 col-xs-4"><strong>Component</strong></div>
+            </div>
+            <div class="col-md-12 col-xs-12" id="updatesTableTbody " ng-repeat="(key, value) in components" ng-if="value.is_updated == 1  && value.component != 'bam2' ">
+                <div class="component_box" id="{{value.component}}">
+                    <div class="col-md-4 col-xs-4">
+                        {{value.release_date}}
+                    </div>
+                    <div class="col-md-4 col-xs-4">
+                        {{value.category_desc}}
+                    </div>
+                    <div class="col-md-4 col-xs-4">
+                        {{value.component}}-{{value.version}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /.box -->
+        <!-- /.box -->
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>
