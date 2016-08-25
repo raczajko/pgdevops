@@ -32,6 +32,8 @@ define(
         F7_KEY = 118,
         F8_KEY = 119;
 
+    var is_query_running = false;
+
     // Defining the backbone model for the sql grid
     var sqlEditorViewModel = Backbone.Model.extend({
 
@@ -161,6 +163,7 @@ define(
         "click #btn-file-menu-save-as": "on_save_as",
         "click #btn-add-row": "on_add",
         "click #btn-filter": "on_show_filter",
+        "click #btn-filter-menu": "on_show_filter",
         "click #btn-include-filter": "on_include_filter",
         "click #btn-exclude-filter": "on_exclude_filter",
         "click #btn-remove-filter": "on_remove_filter",
@@ -169,8 +172,10 @@ define(
         "click #btn-copy-row": "on_copy_row",
         "click #btn-paste-row": "on_paste_row",
         "click #btn-flash": "on_flash",
+        "click #btn-flash-menu": "on_flash",
         "click #btn-cancel-query": "on_cancel_query",
         "click #btn-download": "on_download",
+        "click #btn-edit": "on_clear",
         "click #btn-clear": "on_clear",
         "click #btn-auto-commit": "on_auto_commit",
         "click #btn-auto-rollback": "on_auto_rollback",
@@ -190,7 +195,7 @@ define(
       render: function() {
         var self = this;
 
-        $('.editor-title').text(self.editor_title);
+        $('.editor-title').text(_.unescape(self.editor_title));
 
         var filter = self.$el.find('#sql_filter');
 
@@ -206,7 +211,9 @@ define(
               rangeFinder: CodeMirror.fold.combine(CodeMirror.pgadminBeginRangeFinder, CodeMirror.pgadminIfRangeFinder,
                                 CodeMirror.pgadminLoopRangeFinder, CodeMirror.pgadminCaseRangeFinder)
             },
-            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            extraKeys: pgBrowser.editor_shortcut_keys,
+            tabSize: pgAdmin.Browser.editor_options.tabSize
         });
 
         // Create main wcDocker instance
@@ -248,7 +255,8 @@ define(
                                 CodeMirror.pgadminLoopRangeFinder, CodeMirror.pgadminCaseRangeFinder)
             },
             gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-            extraKeys: {"Ctrl-Space": "autocomplete"}
+            extraKeys: pgBrowser.editor_shortcut_keys,
+            tabSize: pgAdmin.Browser.editor_options.tabSize
         });
 
         // Create panels for 'Data Output', 'Explain', 'Messages' and 'History'
@@ -1045,6 +1053,9 @@ define(
        *  Shift+F7 - Explain analyze query
        */
       keyAction: function(ev) {
+        // return if query is running
+        if (is_query_running) return;
+
         var keyCode = ev.which || ev.keyCode;
         if (ev.shiftKey && keyCode == F7_KEY) {
           // Explain analyze query.
@@ -1108,7 +1119,7 @@ define(
           });
           self.transId = self.gridView.transId = self.container.data('transId');
 
-          self.gridView.editor_title = editor_title;
+          self.gridView.editor_title = _.unescape(editor_title);
           self.gridView.current_file = undefined;
           self.gridView.items_per_page = self.items_per_page
 
@@ -1282,7 +1293,13 @@ define(
                     else {
                       // Show message in message and history tab in case of query tool
                       self.total_time = self.get_query_run_time(self.query_start_time, self.query_end_time);
-                      self.update_msg_history(true, res.data.result);
+                      var msg = S('{{ _('Query returned successfully in %s.') }}').sprintf(self.total_time).value();
+                      res.data.result += "\n\n" + msg;
+                      self.update_msg_history(true, res.data.result, false);
+                      // Display the notifier if the timeout is set to >= 0
+                      if (self.info_notifier_timeout >= 0) {
+                          alertify.success(msg, self.info_notifier_timeout);
+                      }
                     }
 
                     // Enable/Disable query tool button only if is_query_tool is true.
@@ -1290,10 +1307,15 @@ define(
                       self.disable_tool_buttons(false);
                       $("#btn-cancel-query").prop('disabled', true);
                     }
+                    is_query_running = false;
                   }
                   else if (res.data.status === 'Busy') {
                     // If status is Busy then poll the result by recursive call to the poll function
                     self._poll();
+                    is_query_running = true;
+                    if (res.data.result) {
+                      self.update_msg_history(res.data.status, res.data.result, false);
+                    }
                   }
                   else if (res.data.status === 'NotConnected') {
 
@@ -1302,10 +1324,10 @@ define(
                       self.disable_tool_buttons(false);
                       $("#btn-cancel-query").prop('disabled', true);
                     }
-                    self.update_msg_history(false, res.data.result);
+                    self.update_msg_history(false, res.data.result, true);
                   }
                   else if (res.data.status === 'Cancel') {
-                    self.update_msg_history(false, "Execution Cancelled!")
+                    self.update_msg_history(false, "Execution Cancelled!", true)
                   }
                 },
                 error: function(e) {
@@ -1597,13 +1619,19 @@ define(
                   // Identify cell type of column.
                   switch(type) {
                     case "integer":
+                    case "bigint":
+                    case "smallint":
                       col_cell = 'integer';
                       break;
                     case "boolean":
                       col_cell = 'boolean';
                       break;
                     case "numeric":
-                      col_cell = 'number';
+                    case "double precision":
+                    case "real":
+                        col_cell = Backgrid.NumberCell.extend({
+                          formatter: Backgrid.StringFormatter
+                        });
                       break;
                     case "date":
                     case "reltime":
@@ -1670,35 +1698,43 @@ define(
         // This function is used to raise appropriate message.
         update_msg_history: function(status, msg, clear_grid) {
           var self = this;
-
           if (clear_grid === undefined)
             clear_grid = true;
 
-          self.trigger('pgadmin-sqleditor:loading-icon:hide');
-          $("#btn-flash").prop('disabled', false);
-
-          $('.sql-editor-message').text(msg);
           self.gridView.messages_panel.focus();
 
-          if (self.is_query_tool && clear_grid) {
-            // Delete grid and paginator
-            if (self.gridView.grid) {
-              self.gridView.grid.remove();
+          if (self.is_query_tool) {
+            if (clear_grid) {
+              // Delete grid and paginator
+              if (self.gridView.grid) {
+                self.gridView.grid.remove();
+              }
+              // Misc cleaning
               self.columns = undefined;
               self.collection = undefined;
+
+              if (self.gridView.paginator)
+                self.gridView.paginator.remove();
+              $('.sql-editor-message').text(msg);
+            } else {
+              $('.sql-editor-message').append(msg);
             }
-
-            if (self.gridView.paginator)
-             self.gridView.paginator.remove();
           }
+          // Scroll automatically when msgs appends to element
+          setTimeout(function(){
+            $(".sql-editor-message").scrollTop($(".sql-editor-message")[0].scrollHeight);;
+          }, 10);
 
-          self.gridView.history_collection.add(
-            {'status' : status, 'start_time': self.query_start_time.toString(),
-             'query': self.query, 'row_affected': self.rows_affected,
-             'total_time': self.total_time, 'message':msg
-          });
-
-          self.gridView.history_collection.sort();
+          if(status != 'Busy') {
+            $("#btn-flash").prop('disabled', false);
+            self.trigger('pgadmin-sqleditor:loading-icon:hide');
+            self.gridView.history_collection.add({
+              'status' : status, 'start_time': self.query_start_time.toString(),
+              'query': self.query, 'row_affected': self.rows_affected,
+              'total_time': self.total_time, 'message':msg
+            });
+            self.gridView.history_collection.sort();
+          }
         },
 
         // This function will return the total query execution Time.
@@ -2123,10 +2159,12 @@ define(
           var self = this;
 
           // Start execution of the query.
-          if (self.is_query_tool)
+          if (self.is_query_tool) {
+            $('.sql-editor-message').html('');
             self._execute();
-          else
+          } else {
             self._execute_data_query();
+          }
         },
 
         // This function will show the filter in the text area.

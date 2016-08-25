@@ -143,7 +143,7 @@ class FileManagerModule(PgAdminModule):
         # Register 'file upload size' preference
         self.file_upload_size = self.preference.register(
             'options', 'file_upload_size',
-            gettext("Maximum file upload size(MB)"), 'integer', 50,
+            gettext("Maximum file upload size (MB)"), 'integer', 50,
             category_label=gettext('Options')
         )
 
@@ -242,13 +242,15 @@ class Filemanager(object):
         self.trans_id = trans_id
         self.patherror = encode_json(
             {
-                'Error': gettext('No permission to operate on specified path.'),
+                'Error': gettext('No permission to operate on \
+                                  specified path.'),
                 'Code': -1
             }
         )
         self.dir = get_storage_directory()
 
-        if self.dir is not None and isinstance(self.dir, list):
+        if ((self.dir is not None and isinstance(self.dir, list)) or
+           self.dir is None):
             self.dir = ""
 
     @staticmethod

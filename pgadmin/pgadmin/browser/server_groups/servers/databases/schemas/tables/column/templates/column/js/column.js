@@ -57,15 +57,27 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
       },
       dependentChanged: function () {
         this.$el.empty();
-        var model = this.model;
-        var column = this.column;
-        editable = this.column.get("editable");
+        var model = this.model,
+            column = this.column,
+            editable = this.column.get("editable"),
+            is_editable = _.isFunction(editable) ? !!editable.apply(column, [model]) : !!editable;
 
-        is_editable = _.isFunction(editable) ? !!editable.apply(column, [model]) : !!editable;
         if (is_editable){ this.$el.addClass("editable"); }
         else { this.$el.removeClass("editable"); }
 
         this.delegateEvents();
+        return this;
+      },
+      render: function() {
+        Backgrid.NumberCell.prototype.render.apply(this, arguments);
+
+        var model = this.model,
+            column = this.column,
+            editable = this.column.get("editable"),
+            is_editable = _.isFunction(editable) ? !!editable.apply(column, [model]) : !!editable;
+
+        if (is_editable){ this.$el.addClass("editable"); }
+        else { this.$el.removeClass("editable"); }
         return this;
       },
       remove: Backgrid.Extension.DependentCell.prototype.remove
@@ -140,6 +152,8 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
         ]);
       },
       model: pgBrowser.Node.Model.extend({
+        idAttribute: 'attnum',
+
         defaults: {
           name: undefined,
           attowner: undefined,
@@ -156,7 +170,9 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
           is_primary_key: false,
           inheritedfrom: undefined,
           attstattarget:undefined,
-          attnotnull: false
+          attnotnull: false,
+          attlen: null,
+          attprecision: null
         },
         schema: [{
           id: 'name', label: '{{ _('Name') }}', cell: 'string',
@@ -218,20 +234,25 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
           id: 'cltype', label:'{{ _('Data type') }}',
           cell: Backgrid.Extension.NodeAjaxOptionsCell.extend({
             exitEditMode: function(e) {
+                var self = this;
                 this.$select.off('blur', this.exitEditMode);
                 this.$select.select2('close');
                 this.$el.removeClass('editor');
                 // Once user have selected a value
                 // we can shift to next cell if it is editable
                 var el_length_cell = this.$el.next();
-                if(el_length_cell && el_length_cell.hasClass('editable') && e) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      var command = new Backgrid.Command({key: "Tab", keyCode: 9, which: 9});
-                      this.model.trigger("backgrid:edited", this.model, this.column,
-                                        command);
-                      el_length_cell.focus();
-                }
+                // Add delay so that Select2 cell tab event is captured
+                // first before triggerring backgrid:edited event.
+                setTimeout(function() {
+                  if(el_length_cell && el_length_cell.hasClass('editable') && e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var command = new Backgrid.Command({key: "Tab", keyCode: 9, which: 9});
+                    self.model.trigger("backgrid:edited", self.model, self.column,
+                                      command);
+                    el_length_cell.focus();
+                  }
+                }, 20);
             }
           }),
           type: 'text', disabled: 'inSchemaWithColumnCheck',
@@ -322,16 +343,21 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
              if(!_.isUndefined(m.get('inheritedfrom'))) {
                 return false;
              }
+
+             if (!m.datatypes) {
+              // datatypes not loaded, may be this call is from CallByNeed from backgrid cell initialize.
+              return true;
+             }
              var of_type = m.get('cltype'),
                flag = false;
-              _.each(m.datatypes, function(o) {
-                if ( of_type == o.value ) {
-                    if(o.length)
-                    {
-                      m.set('min_val', o.min_val, {silent: true});
-                      m.set('max_val', o.max_val, {silent: true});
-                      flag = true;
-                    }
+
+               _.each(m.datatypes, function(o) {
+               if ( of_type == o.value ) {
+                 if(o.length) {
+                   m.set('min_val', o.min_val, {silent: true});
+                   m.set('max_val', o.max_val, {silent: true});
+                   flag = true;
+                 }
                 }
               });
 
@@ -351,12 +377,11 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
                flag = true;
               _.each(m.datatypes, function(o) {
                 if ( of_type == o.value ) {
-                    if(o.precision)
-                    {
-                      m.set('min_val', o.min_val, {silent: true});
-                      m.set('max_val', o.max_val, {silent: true});
-                      flag = false;
-                    }
+                  if(o.precision) {
+                    m.set('min_val', o.min_val, {silent: true});
+                    m.set('max_val', o.max_val, {silent: true});
+                    flag = false;
+                  }
                 }
               });
 
@@ -373,16 +398,20 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
                 return false;
              }
 
+             if (!m.datatypes) {
+              // datatypes not loaded yet, may be this call is from CallByNeed from backgrid cell initialize.
+              return true;
+             }
+
              var of_type = m.get('cltype'),
                flag = false;
               _.each(m.datatypes, function(o) {
                 if ( of_type == o.value ) {
-                    if(o.precision)
-                    {
-                      m.set('min_val', o.min_val, {silent: true});
-                      m.set('max_val', o.max_val, {silent: true});
-                      flag = true;
-                    }
+                  if(o.precision) {
+                    m.set('min_val', o.min_val, {silent: true});
+                    m.set('max_val', o.max_val, {silent: true});
+                    flag = true;
+                  }
                 }
               });
 
@@ -401,22 +430,22 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
           deps: ['cltype'], disabled: function(m) {
              var of_type = m.get('cltype'),
                flag = true;
-              _.each(m.datatypes, function(o) {
+             _.each(m.datatypes, function(o) {
                 if ( of_type == o.value ) {
                     if(o.is_collatable)
                     {
                       flag = false;
                     }
                 }
-              });
-              if (flag) {
+             });
+             if (flag) {
                 setTimeout(function(){
                   if(m.get('collspcname') && m.get('collspcname') !== '') {
                     m.set('collspcname', "");
                   }
                 }, 10);
-              }
-              return flag;
+             }
+             return flag;
           }
         },{
           id: 'defval', label:'{{ _('Default Value') }}', cell: 'string',

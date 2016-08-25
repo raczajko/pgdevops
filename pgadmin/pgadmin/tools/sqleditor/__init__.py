@@ -93,39 +93,67 @@ class SqlEditorModule(PgAdminModule):
         )
 
         self.explain_verbose = self.preference.register(
-            'Explain Options', 'explain_verbose',
-            gettext("Verbose"), 'boolean', False,
-            category_label=gettext('Explain Options')
+            'Explain', 'explain_verbose',
+            gettext("Verbose output?"), 'boolean', False,
+            category_label=gettext('Explain')
         )
 
         self.explain_costs = self.preference.register(
-            'Explain Options', 'explain_costs',
-            gettext("Costs"), 'boolean', False,
-            category_label=gettext('Explain Options')
+            'Explain', 'explain_costs',
+            gettext("Show costs?"), 'boolean', False,
+            category_label=gettext('Explain')
         )
 
         self.explain_buffers = self.preference.register(
-            'Explain Options', 'explain_buffers',
-            gettext("Buffers"), 'boolean', False,
-            category_label=gettext('Explain Options')
+            'Explain', 'explain_buffers',
+            gettext("Show buffers?"), 'boolean', False,
+            category_label=gettext('Explain')
         )
 
         self.explain_timing = self.preference.register(
-            'Explain Options', 'explain_timing',
-            gettext("Timing"), 'boolean', False,
-            category_label=gettext('Explain Options')
+            'Explain', 'explain_timing',
+            gettext("Show timing"), 'boolean', False,
+            category_label=gettext('Explain')
         )
 
         self.auto_commit = self.preference.register(
             'Options', 'auto_commit',
-            gettext("Auto-Commit"), 'boolean', True,
+            gettext("Auto commit?"), 'boolean', True,
             category_label=gettext('Options')
         )
 
         self.auto_rollback = self.preference.register(
             'Options', 'auto_rollback',
-            gettext("Auto-Rollback"), 'boolean', False,
+            gettext("Auto rollback?"), 'boolean', False,
             category_label=gettext('Options')
+        )
+
+        self.sql_font_size = self.preference.register(
+            'Options', 'sql_font_size',
+            gettext("Font size"), 'numeric', '1',
+            min_val=0.1,
+            max_val=10,
+            category_label=gettext('Display'),
+            help_str=gettext('The font size to use for the SQL text boxes and editors. '
+                             'The value specified is in "em" units, in which 1 is the default relative font size. '
+                             'For example, to increase the font size by 20% use a value of 1.2, or to reduce by 20%, '
+                             'use a value of 0.8. Minimum 0.1, maximum 10.')
+        )
+
+        self.tab_size = self.preference.register(
+            'Options', 'tab_size',
+            gettext("Tab size"), 'integer', 4,
+            min_val=2,
+            max_val=8,
+            category_label=gettext('Options'),
+            help_str=gettext('The number of spaces per tab. Minimum 2, maximum 8.')
+        )
+
+        self.use_spaces = self.preference.register(
+            'Options', 'use_spaces',
+            gettext("Use spaces?"), 'boolean', False,
+            category_label=gettext('Options'),
+            help_str=gettext('Specifies whether or not to insert spaces instead of tabs when the tab key is used.')
         )
 
 
@@ -406,8 +434,10 @@ def poll(trans_id):
         trans_id: unique transaction id
     """
     col_info = None
+    result = None
     primary_keys = None
     rows_affected = 0
+    additional_result = []
 
     # Check the transaction and connection status
     status, error_msg, conn, trans_obj, session_obj = check_transaction_status(trans_id)
@@ -430,6 +460,10 @@ def poll(trans_id):
             status = 'Cancel'
         else:
             status = 'Busy'
+            messages = conn.messages()
+            if messages and len(messages) > 0:
+                result = ''.join(messages)
+
     else:
         status = 'NotConnected'
         result = error_msg
@@ -450,20 +484,25 @@ def poll(trans_id):
         # restore it and update the session variable.
         session_obj['columns_info'] = columns
         update_session_grid_transaction(trans_id, session_obj)
-    else:
-        if result is None:
-            result = conn.status_message()
-            additional_result = conn.messages()
-            """
-            Procedure/Function output may comes in the form of Notices from the
-            database server, so we need to append those outputs with the
-            original result.
-            """
-            if isinstance(additional_result, list) \
-                    and len(additional_result) > 0:
-                result = str(additional_result[-1]) + result
 
-            rows_affected = conn.rows_affected()
+    """
+        Procedure/Function output may comes in the form of Notices from the
+        database server, so we need to append those outputs with the
+        original result.
+    """
+    if status == 'Success' and result is None:
+        result = conn.status_message()
+        messages = conn.messages()
+        if messages:
+            additional_result = ''.join(messages)
+        else:
+            additional_result = ''
+        if result != 'SELECT 1' and result is not None:
+            result = additional_result + result
+        else:
+            result = additional_result
+
+        rows_affected = conn.rows_affected()
 
     return make_json_response(
         data={
@@ -968,9 +1007,13 @@ def auto_complete(trans_id):
 @login_required
 def script():
     """render the required javascript"""
-    return Response(response=render_template("sqleditor/js/sqleditor.js", _=gettext),
+    return Response(response=render_template("sqleditor/js/sqleditor.js",
+                    tab_size=blueprint.tab_size.get(),
+                    use_spaces=blueprint.use_spaces.get(),
+                    _=gettext),
                     status=200,
-                    mimetype="application/javascript")
+                    mimetype="application/javascript"
+           )
 
 
 def is_begin_required(query):

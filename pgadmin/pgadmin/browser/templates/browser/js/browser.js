@@ -320,7 +320,9 @@ function(require, $, _, S, Bootstrap, pgAdmin, alertify, CodeMirror) {
             lineNumbers: true,
             lineWrapping: true,
             mode: "text/x-pgsql",
-            readOnly: true
+            readOnly: true,
+            extraKeys: pgAdmin.Browser.editor_shortcut_keys,
+            tabSize: pgAdmin.Browser.editor_options.tabSize
           });
 
       setTimeout(function() {
@@ -333,8 +335,12 @@ function(require, $, _, S, Bootstrap, pgAdmin, alertify, CodeMirror) {
           url: '{{ url_for('browser.get_nodes') }}',
           converters: {
             'text json': function(payload) {
-              return $.parseJSON(payload).data;
-            }
+              data = JSON.parse(payload).data;
+              _.each(data, function(d){
+                d.label = _.escape(d.label);
+              })
+              return data;
+            },
           }
         },
         ajaxHook: function(item, settings) {
@@ -688,8 +694,65 @@ function(require, $, _, S, Bootstrap, pgAdmin, alertify, CodeMirror) {
         pnlDialogHelp.focus();
         iframe.openURL(url);
       }
+    },
+
+    get_preference: function (module, preference_name) {
+      var preference = null;
+      $.ajax({
+        async: false,
+        url: "{{ url_for('preferences.preferences') }}" +"/"+ module +"/"+ preference_name,
+        success: function(res) {
+          preference = res;
+        },
+        error: function(xhr, status, error) {
+
+        }
+      });
+
+      return preference;
+    },
+
+    editor_shortcut_keys: {
+      // Autocomplete sql command
+      "Ctrl-Space": "autocomplete",
+      "Cmd-Space": "autocomplete",
+
+      // Select All text
+      "Ctrl-A": "selectAll",
+      "Cmd-A": "selectAll",
+
+      // Redo text
+      "Ctrl-Y": "redo",
+      "Cmd-Y": "redo",
+
+      // Undo text
+      "Ctrl-Z": "undo",
+      "Cmd-Z": "undo",
+
+      // Delete Line
+      "Ctrl-D": "deleteLine",
+      "Cmd-D": "deleteLine",
+
+      // Go to start/end of Line
+      "Alt-Left": "goLineStart",
+      "Alt-Right": "goLineEnd",
+
+      // Move word by word left/right
+      "Ctrl-Alt-Left": "goGroupLeft",
+      "Cmd-Alt-Left": "goGroupLeft",
+      "Ctrl-Alt-Right": "goGroupRight",
+      "Cmd-Alt-Right": "goGroupRight"
+    },
+    editor_options: {
+      tabSize: '{{ editor_tab_size }}'
     }
+
   });
+
+  // Use spaces instead of tab
+  if ('{{ editor_use_spaces }}' == 'True') {
+    pgAdmin.Browser.editor_shortcut_keys.Tab = "insertSoftTab";
+  }
 
   window.onbeforeunload = function(ev) {
     var e = ev || window.event,

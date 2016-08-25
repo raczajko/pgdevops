@@ -63,6 +63,24 @@ def parse_priv_to_db(str_privileges, allowed_acls=[]):
         priv_with_grant = []
         priv_without_grant = []
 
+        if isinstance(priv['privileges'], dict) and 'changed' in priv['privileges']:
+            tmp = []
+            for p in priv['privileges']['changed']:
+                tmp_p = {'privilege_type': p['privilege_type'],
+                         'privilege': False,
+                         'with_grant': False}
+
+                if 'with_grant' in p:
+                    tmp_p['privilege'] = True
+                    tmp_p['with_grant'] = p['with_grant']
+
+                if 'privilege' in p:
+                    tmp_p['privilege'] = p['privilege']
+
+                tmp.append(tmp_p)
+
+            priv['privileges'] = tmp
+
         for privilege in priv['privileges']:
 
             if privilege['privilege_type'] not in db_privileges:
@@ -80,9 +98,9 @@ def parse_priv_to_db(str_privileges, allowed_acls=[]):
                     db_privileges[privilege['privilege_type']]
                 )
         # If we have all acl then just return all
-        if len(priv_with_grant) == allowed_acls_len:
+        if len(priv_with_grant) == allowed_acls_len > 1:
             priv_with_grant = ['ALL']
-        if len(priv_without_grant) == allowed_acls_len:
+        if len(priv_without_grant) == allowed_acls_len > 1:
             priv_without_grant = ['ALL']
         # Appending and returning all ACL
         privileges.append({

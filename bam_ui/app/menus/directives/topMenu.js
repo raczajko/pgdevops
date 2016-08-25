@@ -28,28 +28,7 @@ angular.module('bigSQL.menus').component('topMenu', {
                 .success(function(data) {
                     $scope.pgcInfo = data[0];
                 });
-                
-                // session.call('com.bigsql.list');
 
-                // session.subscribe("com.bigsql.onList", function (components) {
-                //     var Checkupdates = 0;
-                //     $scope.components = JSON.parse(components[0][0]);
-                //     for (var i = 0; i < $scope.components.length; i++) {
-                //         if ($scope.components[i].component != 'bam2') {
-                //             Checkupdates += $scope.components[i].updates;
-                //         }
-                //     }
-                //     $scope.updates = Checkupdates;
-                // }).then(function (subscription) {
-                //     subscriptions.push(subscription);
-                // });
-
-                // var promise = MachineInfo.get(session);
-                // promise.then(function (data) {
-                //     $scope.pgcInfo = data;
-                // }, function (failObj) {
-                //     throw new Error(failObj);
-                // });
             });
 
             $scope.open = function () {

@@ -187,9 +187,9 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
       - It will return formatted output of query result
         as per client model format for index constraint node
 
-    * _cltype_formatter(self, type):
+    * _cltype_formatter(type): (staticmethod)
       - We need to remove [] from type and append it
-        after length/precision so we will set flag for
+        after length/precision so we will send flag for
         sql template
 
     * _parse_format_columns(self, data, mode=None):
@@ -277,7 +277,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             self.qtIdent = driver.qtIdent
             # We need datlastsysoid to check if current table is system table
             self.datlastsysoid = self.manager.db_info[kwargs['did']]['datlastsysoid']
-
+            self.server_type = self.manager.server_type
             # If DB not connected then return error to browser
             if not self.conn.connected():
                 return precondition_required(
@@ -285,10 +285,6 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                         "Connection to the server has been lost!"
                     )
                 )
-
-            # We need datlastsysoid to check if current index is system index
-            self.datlastsysoid = self.manager.db_info[kwargs['did']]['datlastsysoid']
-
             # we will set template path for sql scripts
             ver = self.manager.version
             # Template for Column node
@@ -627,17 +623,16 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                     column['isdup'], column['attndims'], column['atttypmod']
                 )
 
-                import re
                 # If we have length & precision both
                 matchObj = re.search(r'(\d+),(\d+)', fulltype)
                 if matchObj:
-                    column['attlen'] = matchObj.group(1)
-                    column['attprecision'] = matchObj.group(2)
+                    column['attlen'] = int(matchObj.group(1))
+                    column['attprecision'] = int(matchObj.group(2))
                 else:
                     # If we have length only
                     matchObj = re.search(r'(\d+)', fulltype)
                     if matchObj:
-                        column['attlen'] = matchObj.group(1)
+                        column['attlen'] = int(matchObj.group(1))
                         column['attprecision'] = None
                     else:
                         column['attlen'] = None
@@ -1045,7 +1040,6 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         # Filter inherited columns from all columns
         if 'columns' in data and len(data['columns']) > 0 \
                 and len(all_columns) > 0:
-            columns = []
             for row in data['columns']:
                 for i, col in enumerate(all_columns):
                     # If both name are same then remove it
@@ -1198,7 +1192,9 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         res = [{'label': '', 'value': ''}]
         try:
             SQL = render_template("/".join([self.template_path,
-                                            'get_oftype.sql']), scid=scid)
+                                            'get_oftype.sql']), scid=scid,
+                                  server_type=self.server_type,
+                                  show_sys_objects=self.blueprint.show_system_objects)
             status, rset = self.conn.execute_2darray(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
@@ -1227,7 +1223,8 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             res = []
             SQL = render_template("/".join([self.template_path, 'get_inherits.sql']),
                                   show_system_objects=self.blueprint.show_system_objects,
-                                  tid=tid)
+                                  tid=tid,
+                                  server_type=self.server_type)
             status, rset = self.conn.execute_2darray(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
@@ -1255,7 +1252,8 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         res = [{'label': '', 'value': ''}]
         try:
             SQL = render_template("/".join([self.template_path, 'get_relations.sql']),
-                                  show_sys_objects=self.blueprint.show_system_objects)
+                                  show_sys_objects=self.blueprint.show_system_objects,
+                                  server_type=self.server_type)
             status, rset = self.conn.execute_2darray(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
@@ -1271,24 +1269,22 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
-    def _cltype_formatter(self, type):
+    @staticmethod
+    def _cltype_formatter(data_type):
         """
 
         Args:
-            data: Type string
+            data_type: Type string
 
         Returns:
             We need to remove [] from type and append it
-            after length/precision so we will set flag for
+            after length/precision so we will send flag for
             sql template
         """
-        if '[]' in type:
-            type = type.replace('[]', '')
-            self.hasSqrBracket = True
+        if '[]' in data_type:
+            return data_type[:-2], True
         else:
-            self.hasSqrBracket = False
-
-        return type
+            return data_type, False
 
     def _parse_format_columns(self, data, mode=None):
         """
@@ -1313,9 +1309,9 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                         if 'attacl' in c:
                             c['attacl'] = parse_priv_to_db(c['attacl'], self.column_acl)
 
-                        # check type for '[]' in it
-                        c['cltype'] = self._cltype_formatter(c['cltype'])
-                        c['hasSqrBracket'] = self.hasSqrBracket
+                        if 'cltype' in c:
+                            # check type for '[]' in it
+                            c['cltype'], c['hasSqrBracket'] = self._cltype_formatter(c['cltype'])
 
                     data['columns'][action] = final_columns
         else:
@@ -1333,9 +1329,9 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                 if 'attacl' in c:
                     c['attacl'] = parse_priv_to_db(c['attacl'], self.column_acl)
 
-                # check type for '[]' in it
-                c['cltype'] = self._cltype_formatter(c['cltype'])
-                c['hasSqrBracket'] = self.hasSqrBracket
+                if 'cltype' in c:
+                    # check type for '[]' in it
+                    c['cltype'], c['hasSqrBracket'] = self._cltype_formatter(c['cltype'])
 
             data['columns'] = final_columns
 
@@ -1359,7 +1355,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         for k, v in data.items():
             try:
                 data[k] = json.loads(v, encoding='utf-8')
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, KeyError):
                 data[k] = v
 
         required_args = [
@@ -1448,7 +1444,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         for k, v in data.items():
             try:
                 data[k] = json.loads(v, encoding='utf-8')
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, KeyError):
                 data[k] = v
 
         try:
@@ -1688,7 +1684,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         for k, v in request.args.items():
             try:
                 data[k] = json.loads(v, encoding='utf-8')
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, KeyError):
                 data[k] = v
 
         try:
@@ -1843,19 +1839,20 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                         )
                         return '\n\n'.join(sql)
 
-                    cols = []
-                    for col in c['columns']:
-                        cols.append(col['local_column'])
+                    if 'columns' in c:
+                        cols = []
+                        for col in c['columns']:
+                            cols.append(col['local_column'])
 
-                    coveringindex = self.search_coveringindex(tid, cols)
+                        coveringindex = self.search_coveringindex(tid, cols)
 
-                    if coveringindex is None and 'autoindex' in c and c['autoindex'] and \
-                            ('coveringindex' in c and
-                                     c['coveringindex'] != ''):
-                        sql.append(render_template(
-                            "/".join([self.foreign_key_template_path, 'create_index.sql']),
-                            data=c, conn=self.conn).strip('\n')
-                                   )
+                        if coveringindex is None and 'autoindex' in c and c['autoindex'] and \
+                                ('coveringindex' in c and
+                                         c['coveringindex'] != ''):
+                            sql.append(render_template(
+                                "/".join([self.foreign_key_template_path, 'create_index.sql']),
+                                data=c, conn=self.conn).strip('\n')
+                                       )
 
             if 'added' in constraint:
                 for c in constraint['added']:
@@ -2163,9 +2160,46 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                             return internal_server_error(errormsg=res)
                         old_data = res['rows'][0]
 
-                        old_data['cltype'] = self._cltype_formatter(old_data['cltype'])
-                        old_data['hasSqrBracket'] = self.hasSqrBracket
+                        old_data['cltype'], old_data['hasSqrBracket'] = self._cltype_formatter(old_data['cltype'])
 
+                        fulltype = self.get_full_type(
+                            old_data['typnspname'], old_data['typname'],
+                            old_data['isdup'], old_data['attndims'], old_data['atttypmod']
+                        )
+
+                        # If we have length & precision both
+                        matchObj = re.search(r'(\d+),(\d+)', fulltype)
+                        if matchObj:
+                            old_data['attlen'] = int(matchObj.group(1))
+                            old_data['attprecision'] = int(matchObj.group(2))
+                        else:
+                            # If we have length only
+                            matchObj = re.search(r'(\d+)', fulltype)
+                            if matchObj:
+                                old_data['attlen'] = int(matchObj.group(1))
+                                old_data['attprecision'] = None
+                            else:
+                                old_data['attlen'] = None
+                                old_data['attprecision'] = None
+
+                        # Manual Data type formatting
+                        # If data type has () with them then we need to remove them
+                        # eg bit(1) because we need to match the name with combobox
+                        isArray = False
+                        if old_data['cltype'].endswith('[]'):
+                            isArray = True
+                            old_data['cltype'] = old_data['cltype'].rstrip('[]')
+
+                        idx = old_data['cltype'].find('(')
+                        if idx and old_data['cltype'].endswith(')'):
+                            old_data['cltype'] = old_data['cltype'][:idx]
+
+                        if isArray:
+                            old_data['cltype'] += "[]"
+
+                        if old_data['typnspname'] != 'pg_catalog':
+                            old_data['cltype'] = self.qtIdent(self.conn, old_data['typnspname']) \
+                                               + '.' + old_data['cltype']
                         # Sql for alter column
                         if 'inheritedfrom' not in c:
                             column_sql += render_template("/".join(
@@ -2259,7 +2293,8 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
         return SQL
 
-    def validate_constrains(self, key, data):
+    @staticmethod
+    def validate_constrains(key, data):
 
         if key == 'primary_key' or key == 'unique_constraint':
             if 'columns' in data and len(data['columns']) > 0:
@@ -2267,15 +2302,17 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             else:
                 return False
         elif key == 'foreign_key':
-            for arg in ['columns']:
-                if arg not in data:
-                    return False
-                elif isinstance(data[arg], list) and len(data[arg]) < 1:
-                    return False
+            if 'oid' not in data:
+                for arg in ['columns']:
+                    if arg not in data:
+                        return False
+                    elif isinstance(data[arg], list) and len(data[arg]) < 1:
+                        return False
 
-            if data['autoindex'] and ('coveringindex' not in data or
-                                              data['coveringindex'] == ''):
-                return False
+                if 'autoindex' in data and data['autoindex'] and \
+                        ('coveringindex' not in data or
+                                                  data['coveringindex'] == ''):
+                    return False
 
             return True
 
@@ -2406,8 +2443,8 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                     c['attacl'] = parse_priv_to_db(c['attacl'], self.column_acl)
 
                 # check type for '[]' in it
-                c['cltype'] = self._cltype_formatter(c['cltype'])
-                c['hasSqrBracket'] = self.hasSqrBracket
+                if 'cltype' in c:
+                    c['cltype'], c['hasSqrBracket'] = self._cltype_formatter(c['cltype'])
 
         sql_header = u"-- Table: {0}\n\n-- ".format(self.qtIdent(self.conn,
                                                                 data['schema'],

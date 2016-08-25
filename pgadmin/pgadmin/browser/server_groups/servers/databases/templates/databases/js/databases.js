@@ -231,6 +231,18 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
           id: 'acl', label: '{{ _('Privileges') }}', type: 'text',
           group: '{{ _('Security') }}', mode: ['properties'], disabled: true
         },{
+          id: 'tblacl', label: '{{ _('Default TABLE Privileges') }}', type: 'text',
+          group: '{{ _('Security') }}', mode: ['properties'], disabled: true
+        },{
+          id: 'seqacl', label: '{{ _('Default SEQUENCE Privileges') }}', type: 'text',
+          group: '{{ _('Security') }}', mode: ['properties'], disabled: true
+        },{
+          id: 'funcacl', label: '{{ _('Default FUNCTION Privileges') }}', type: 'text',
+          group: '{{ _('Security') }}', mode: ['properties'], disabled: true
+        },{
+          id: 'typeacl', label: '{{ _('Default TYPE Privileges') }}', type: 'text',
+          group: '{{ _('Security') }}', mode: ['properties'], disabled: true, min_version: 90200
+        },{
           id: 'comments', label:'{{ _('Comment') }}',
           editable: false, type: 'multiline'
         },{
@@ -242,8 +254,26 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
           id: 'template', label: '{{ _('Template') }}',
           editable: false, type: 'text', group: 'Definition',
           disabled: function(m) { return !m.isNew(); },
-          control: 'node-list-by-name', node: 'database', cache_level: 'server',
-          select2: { allowClear: false }
+          control: 'node-list-by-name', url: 'get_databases', cache_level: 'server',
+          select2: { allowClear: false },
+          transform: function(data, cell) {
+            var res = [],
+                control = cell || this,
+                label = control.model.get('name');
+
+            if (!control.model.isNew()) {
+              res.push({label: label, value: label});
+            }
+            else {
+              if (data && _.isArray(data)) {
+                _.each(data, function(d) {
+                  res.push({label: d.label, value: d.label,
+                            image: 'pg-icon-database'});
+                })
+              }
+            }
+            return res;
+          }
         },{
           id: 'spcname', label: '{{ _('Tablespace') }}',
           editable: false, type: 'text', group: 'Definition',

@@ -7,10 +7,11 @@
 #
 # ##################################################################
 
-import json
 
 from pgadmin.utils.route import BaseTestGenerator
 from regression import test_utils as utils
+from pgadmin.browser.server_groups.servers.tests import utils as server_utils
+from . import utils as database_utils
 
 
 class DatabaseAddTestCase(BaseTestGenerator):
@@ -24,7 +25,8 @@ class DatabaseAddTestCase(BaseTestGenerator):
         ('Check Databases Node URL', dict(url='/browser/database/obj/'))
     ]
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         """
         This function used to add the sever
 
@@ -32,27 +34,23 @@ class DatabaseAddTestCase(BaseTestGenerator):
         """
 
         # Add the server
-        utils.add_server(self.tester)
+        server_utils.add_server(cls.tester)
+
+        # Connect to server
+        cls.server_connect_response, cls.server_group, cls.server_ids = \
+            server_utils.connect_server(cls.tester)
+
+        if len(cls.server_connect_response) == 0:
+            raise Exception("No Server(s) connected to add the database!!!")
 
     def runTest(self):
         """ This function will add database under 1st server of tree node. """
 
-        server_connect_response, server_group, server_ids = \
-            utils.connect_server(self.tester)
+        database_utils.add_database(self.tester, self.server_connect_response,
+                                    self.server_ids)
 
-        for server_connect, server_id in zip(server_connect_response,
-                                             server_ids):
-            if server_connect['data']['connected']:
-                data = utils.get_db_data(server_connect)
-                db_response = self.tester.post(self.url + str(server_group) +
-                                               "/" + server_id + "/",
-                                               data=json.dumps(data),
-                                               content_type='html/json')
-                self.assertTrue(db_response.status_code, 200)
-                response_data = json.loads(db_response.data.decode('utf-8'))
-                utils.write_db_parent_id(response_data)
-
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         """
         This function deletes the added database, added server and the
         'parent_id.pkl' file which is created in setup()
@@ -60,6 +58,6 @@ class DatabaseAddTestCase(BaseTestGenerator):
         :return: None
         """
 
-        utils.delete_database(self.tester)
-        utils.delete_server(self.tester)
+        database_utils.delete_database(cls.tester)
+        server_utils.delete_server(cls.tester)
         utils.delete_parent_id_file()

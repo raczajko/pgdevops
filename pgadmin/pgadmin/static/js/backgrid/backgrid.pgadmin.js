@@ -30,6 +30,19 @@
   // Add new property cellFunction in Backgrid.Column.
   _.extend(Backgrid.Column.prototype.defaults, { cellFunction: undefined });
 
+  // Add tooltip to cell if cell content is larger than
+  // cell width
+  _.extend(Backgrid.Cell.prototype.events, {
+    'mouseover': function(e) {
+      var $el = $(this.el);
+      if($el.text().length > 0 && !$el.attr('title') &&
+        ($el.innerWidth() + 1) < $el[0].scrollWidth
+      ) {
+        $el.attr('title', $.trim($el.text()));
+      }
+    }
+  });
+
   _.extend(Backgrid.Row.prototype, {
     makeCell: function (column) {
       return new (this.getCell(column))({
@@ -525,7 +538,18 @@
       this.delegateEvents();
 
       // Initialize select2 control.
-      this.$select.select2(select2_opts);
+      this.$sel = this.$select.select2(select2_opts);
+
+      // Select the highlighted item on Tab press.
+      if (this.$sel) {
+        this.$sel.data('select2').on("keypress", function(ev) {
+          var self = this;
+          if (ev.which === 9) { // keycode 9 is for TAB key
+            self.trigger('results:select', {});
+            ev.preventDefault();
+          }
+        });
+      }
 
       return this;
     },

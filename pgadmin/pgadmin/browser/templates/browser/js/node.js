@@ -73,16 +73,20 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
       self.node_initialized = true;
 
       pgAdmin.Browser.add_menus([{
-        name: 'show_obj_properties', node: self.type, module: self,
-        applies: ['object', 'context'], callback: 'show_obj_properties',
-        priority: 999, label: '{{ _("Properties...") }}',
-        data: {'action': 'edit'}, icon: 'fa fa-pencil-square-o'
-      }, {
         name: 'refresh', node: self.type, module: self,
         applies: ['object', 'context'], callback: 'refresh',
         priority: 1, label: '{{ _("Refresh...") }}',
         icon: 'fa fa-refresh'
       }]);
+
+      if (self.canEdit) {
+        pgAdmin.Browser.add_menus([{
+        name: 'show_obj_properties', node: self.type, module: self,
+        applies: ['object', 'context'], callback: 'show_obj_properties',
+        priority: 999, label: '{{ _("Properties...") }}',
+        data: {'action': 'edit'}, icon: 'fa fa-pencil-square-o'
+      }]);
+      }
 
       if (self.canDrop) {
         pgAdmin.Browser.add_menus([{
@@ -139,15 +143,6 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
               enable: this.check_user_permission
             }]);
           });
-      // If node has hasSQL then provide CREATE Script by default
-      } else if(self.hasSQL) {
-          pgAdmin.Browser.add_menus([{
-            name: 'show_script_create', node: self.type, module: self,
-            applies: ['object', 'context'], callback: 'show_script',
-            priority: 4, label: 'CREATE Script', category: 'Scripts',
-            data: {'script': 'create'}, icon: 'fa fa-pencil',
-            enable: this.check_user_permission
-          }]);
       }
     },
     ///////
@@ -320,6 +315,20 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
         });
       p.load(pgBrowser.docker);
     },
+    /*
+     * Default script type menu for node.
+     *
+     * Override this, to show more script type menus (e.g hasScriptTypes: ['create', 'select', 'insert', 'update', 'delete'])
+     *
+     * Or set it to empty array to disable script type menu on node (e.g hasScriptTypes: [])
+     */
+    hasScriptTypes: ['create'],
+    /******************************************************************
+     * This function determines the given item is editable or not.
+     *
+     * Override this, when a node is not editable.
+     */
+    canEdit: true,
     /******************************************************************
      * This function determines the given item is deletable or not.
      *
@@ -633,6 +642,27 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
           this, [undefined, i]
         );
       },
+      added: function(item, data, browser) {
+        var b = browser || pgBrowser,
+            t = b.tree,
+            pItem = t.parent(item),
+            pData = pItem && t.itemData(pItem),
+            pNode = pData && pgBrowser.Nodes[pData._type];
+
+        // Check node is a collection or not.
+        if (pNode && pNode.is_collection) {
+          /* If 'collection_count' is not present in data
+           * it means tree node expanded first time, so we will
+           * kept collection count and label in data itself.
+           */
+          if (!('collection_count' in pData)) {
+            pData.collection_count = 0;
+            pData._label = pData.label;
+          }
+          pData.collection_count++;
+          t.setLabel(pItem, {label: (pData._label + ' <span>(' + pData.collection_count + ')</span>')});
+        }
+      },
       // Callback called - when a node is selected in browser tree.
       selected: function(item, data, browser) {
         // Show the information about the selected node in the below panels,
@@ -691,8 +721,33 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
         return true;
       },
       removed: function(item) {
-        var self = this;
+        var self = this,
+            t = pgBrowser.tree,
+            pItem = t.parent(item),
+            pData = pItem && t.itemData(pItem),
+            pNode = pData && pgBrowser.Nodes[pData._type];
+
+        // Check node is a collection or not.
+        if (pNode && pNode.is_collection &&
+            'collection_count' in pData)
+        {
+          pData.collection_count--;
+          t.setLabel(pItem, {label: (pData._label + ' <span>(' + pData.collection_count + ')</span>')});
+        }
+
         setTimeout(function() { self.clear_cache.apply(self, item); }, 0);
+      },
+      unloaded: function(item) {
+        var self = this,
+            t = pgBrowser.tree,
+            data = item && t.itemData(item);
+
+        // In case of unload remove the collection counter
+        if (self.is_collection && 'collection_count' in data)
+        {
+          delete data.collection_count;
+          t.setLabel(item, {label: data._label});
+        }
       },
       refresh: function(n, i) {
         var self = this,
@@ -838,18 +893,20 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
             // Create proper buttons
 
             var buttons = [];
+
             buttons.push({
               label: '', type: 'edit',
               tooltip: '{{ _("Edit") }}',
               extraClasses: ['btn-default'],
               icon: 'fa fa-lg fa-pencil-square-o',
-              disabled: false,
+              disabled: !that.canEdit,
               register: function(btn) {
                 btn.click(function() {
                   onEdit();
                 });
               }
             });
+
             buttons.push({
               label: '', type: 'help',
               tooltip: '{{ _("SQL help for this object type.") }}',
@@ -1119,10 +1176,10 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
                 newNodeData = view.model.tnode;
 
             tree.addIcon(item, {icon: newNodeData.icon});
-            tree.setLabel(item, {label: newNodeData.label});
+            tree.setLabel(item, {label: _.escape(newNodeData.label)});
             _.extend(itemData, newNodeData);
           } else if (view.model.get('name')) {
-            tree.setLabel(item, {label: view.model.get("name")});
+            tree.setLabel(item, {label: _.escape(view.model.get("name"))});
             if (
               view.model.get('data').icon && view.model.get('data').icon != ''
             )
@@ -1145,6 +1202,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
 
           /* TODO:: Create new tree node for this */
           if (view.model.tnode && '_id' in view.model.tnode) {
+            view.model.tnode.label = _.escape(view.model.tnode.label);
             var d = _.extend({}, view.model.tnode),
               func = function(i) {
                 setTimeout(function() {closePanel();}, 0);

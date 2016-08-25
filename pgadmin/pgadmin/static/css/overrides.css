@@ -6,6 +6,34 @@ body {
     padding-bottom: 20px;
 }
 
+@media (min-width: 768px) {
+  .pg-navbar {
+    height: 40px;
+  }
+
+  .pg-navbar .navbar-brand {
+    padding: 10px 15px;
+    height: 40px;
+  }
+
+  .pg-navbar .navbar-nav > li > a {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .pg-docker {
+    top: 40px !important;
+  }
+}
+
+.pg-docker {
+  position:absolute;
+  left:0px;
+  right:0px;
+  top:50px;
+  bottom:0px;
+}
+
 .app-icon {
     vertical-align: middle;
     font-size: 25px;
@@ -363,6 +391,40 @@ iframe {
 .pg-prop-btn-group > button:last-child {
     margin-right: 3px;
 }
+.btn-group-sm>.btn, .btn-sm{
+  font-size: 11px;
+  padding: 3px 3px;
+}
+
+.pg-prop-btn-group > .btn {
+  min-width: 40px;
+}
+
+.pg-prop-btn-group > .btn-group > .btn {
+  min-width: 40px;
+}
+
+.pg-prop-btn-group > .btn-group > .btn + .dropdown-toggle {
+  min-width: 20px;
+}
+
+.pg-prop-btn-group button.dropdown-toggle {
+  padding-left: 5px !important;
+  padding-right: 5px !important;
+}
+
+.pg-prop-btn-group .dropdown-menu {
+  min-width: initial;
+}
+
+.pg-prop-btn-group .backgrid-filter.form-search {
+  position: relative;
+  width: 248px;
+  height: 30px;
+  float: right;
+  margin-top: 2px;
+  margin-right: 10px;
+}
 
 .pg-prop-content {
     position: absolute;
@@ -705,7 +767,7 @@ fieldset.inline-fieldset-without-border {
 fieldset.inline-fieldset > legend {
     display: block; border: 0px solid black; box-shadow: none;
     box-sizing: content-box; top: auto; bottom: auto; left: auto;
-    font-size: 16px; font-style: normal; font-weight: 600;
+    font-size: 14px; font-style: normal; font-weight: 600;
     height: 20px; line-height: 20px; margin: 0px; padding-bottom: 0px;
     padding-left: 5px; padding-right: 5px; padding-top: 0px;
     vertical-align: middle; width: auto;
@@ -770,41 +832,6 @@ div.inline-tab-panel > ul.tab-content > div.tab-pane > *:last-child {
 
 .pgadmin-control-error-message{
   padding-left: 4px;
-}
-
-.btn-group-sm>.btn, .btn-sm{
-  font-size: 11px;
-  padding: 3px 3px;
-}
-
-.pg-prop-btn-group > .btn {
-  min-width: 40px;
-}
-
-.pg-prop-btn-group > .btn-group > .btn {
-  min-width: 40px;
-}
-
-.pg-prop-btn-group > .btn-group > .btn + .dropdown-toggle {
-  min-width: 20px;
-}
-
-.pg-prop-btn-group button.dropdown-toggle {
-  padding-left: 5px !important;
-  padding-right: 5px !important;
-}
-
-.pg-prop-btn-group .dropdown-menu {
-  min-width: initial;
-}
-
-.pg-prop-btn-group .backgrid-filter.form-search {
-  position: relative;
-  width: 248px;
-  height: 30px;
-  float: right;
-  margin-top: 2px;
-  margin-right: 10px;
 }
 
 td.edit-cell.editable.sortable.renderable.editor {

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>BigSQL Manager</title>
+    <title>{{ config.APP_NAME }}</title>
     <meta http-equiv="cache-control" content="max-age=0" />
     <meta http-equiv="cache-control" content="no-cache" />
     <meta http-equiv="expires" content="0" />
@@ -58,7 +58,7 @@
                     </strong>
                     <a href="/logout" title="Logout">log out</a>
             </div>
-                <!-- <div ng-controller="initialUpdateAlert">
+                <!--<div ng-controller="initialUpdateAlert">
                     <div ng-if="show" uib-alert class="indexAlert" close="closeAlert()">
                             <button ng-if="show" ng-click="open()" type="button" class="btn btn-xs btn-default pull-left">Turn On Updates</button>&nbsp;
                             Turn on automatic updates to keep your BigSQL distribution current.
@@ -69,7 +69,7 @@
                         </div>
                     </script>
                     <uib-alert ng-if="updateAlert" ng-repeat="alert in alerts" type="{{alert.type|angular}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg|angular}}</uib-alert>
-                </div> -->
+                </div>-->
                 <div ui-view="main ">
                 </div>
             </div>

@@ -36,12 +36,12 @@ APP_REVISION = 0
 
 # Application version suffix, e.g. 'beta1', 'dev'. Usually an empty string
 # for GA releases.
-APP_SUFFIX = 'beta3'
+APP_SUFFIX = 'beta4'
 
 # Numeric application version for upgrade checks. Should be in the format:
 # [X]XYYZZ, where X is the release version, Y is the revision, with a leading
 # zero if needed, and Z represents the suffix, with a leading zero if needed
-APP_VERSION_INT = 10003
+APP_VERSION_INT = 10004
 
 # DO NOT CHANGE!
 # The application version string, constructed from the components
@@ -59,8 +59,7 @@ HELP_PATH = '../../../docs/en_US/_build/html/'
 
 # Languages we support in the UI
 LANGUAGES = {
-    'en': 'English',
-    'fr': 'Français'
+    'en': 'English'
 }
 
 # DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING!
@@ -129,13 +128,11 @@ DESKTOP_USER = 'pgadmin4@pgadmin.org'
 # NOTE: This is NOT recommended for production use, only for debugging
 # or testing. Production installations should be run as a WSGI application
 # behind Apache HTTPD.
-DEFAULT_SERVER = '0.0.0.0'
+DEFAULT_SERVER = 'localhost'
 
 # The default port on which the app server will listen if not set in the
 # environment by the runtime
 DEFAULT_SERVER_PORT = 5050
-
-#SERVER_NAME = "0.0.0.0:8050"
 
 # Enable CSRF protection?
 CSRF_ENABLED = True
@@ -144,7 +141,10 @@ CSRF_ENABLED = True
 SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
 
 # Should HTML be minified on the fly when not in debug mode?
-MINIFY_HTML = True
+# Note: This is disabled by default as it will error when processing the
+#       docs. If the serving of docs is handled by an Apache HTTPD
+#       instance (rather than via the app), then it can be safely enabled.
+MINIFY_HTML = False
 
 ##########################################################################
 # Server Connection Driver Settings
@@ -207,11 +207,14 @@ SESSION_COOKIE_NAME = 'bam_session'
 
 # These settings are used when running in web server mode for confirming
 # and resetting passwords etc.
-MAIL_SERVER = 'smtp.gmail.com'
-MAIL_PORT = 465
-MAIL_USE_SSL = True
-MAIL_USERNAME = 'username'
-MAIL_PASSWORD = 'SuperSecret'
+# See: http://pythonhosted.org/Flask-Mail/ for more info
+MAIL_SERVER = 'localhost'
+MAIL_PORT = 25
+MAIL_USE_SSL = False
+MAIL_USE_TLS = False
+MAIL_USERNAME = ''
+MAIL_PASSWORD = ''
+MAIL_DEBUG = False
 
 ##########################################################################
 # Mail content settings

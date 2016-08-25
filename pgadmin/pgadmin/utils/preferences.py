@@ -149,10 +149,22 @@ class _Preference(object):
                 return False, gettext("Invalid value for a boolean option.")
         elif self._type == 'integer':
             value = int(value)
+
+            if self.min_val is not None and value < self.min_val:
+                value = self.min_val
+            if self.max_val is not None and value > self.max_val:
+                value = self.max_val
+
             if type(value) != int:
                 return False, gettext("Invalid value for an integer option.")
         elif self._type == 'numeric':
             value = float(value)
+
+            if self.min_val is not None and value < self.min_val:
+                value = self.min_val
+            if self.max_val is not None and value > self.max_val:
+                value = self.max_val
+
             t = type(value)
             if t != float and t != int and t != decimal.Decimal:
                 return False, gettext("Invalid value for a numeric option.")
@@ -394,8 +406,7 @@ class Preferences(object):
             if name in cat['preferences']:
                 return (cat['preferences'])[name]
 
-        assert False, """Couldn't find the preference in this preference!
-Did you forget to register it?"""
+        return None
 
     @classmethod
     def preferences(cls):
@@ -452,12 +463,13 @@ Did you forget to register it?"""
         )
 
     @classmethod
-    def module(cls, name):
+    def module(cls, name, create=True):
         """
         module (classmethod)
         Get the module preferences object
 
         :param name: Name of the module
+        :param create: Flag to create Preferences object
         :returns: a Preferences object representing for the module.
         """
         if name in Preferences.modules:
@@ -466,10 +478,11 @@ Did you forget to register it?"""
             if m.label is None:
                 m.label = name
             return m
-        else:
-            m = Preferences(name, None)
 
-        return m
+        if create:
+            return Preferences(name, None)
+
+        return None
 
     @classmethod
     def save(cls, mid, cid, pid, value):
@@ -525,10 +538,6 @@ Did you forget to register it?"""
             )
 
         try:
-            if pref.min_val is not None and int(value) < int(pref.min_val):
-                value = pref.min_val
-            if pref.max_val is not None and int(value) > int(pref.max_val):
-                value = pref.max_val
             pref.set(value)
         except Exception as e:
             current_app.logger.exeception(e)

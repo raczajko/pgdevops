@@ -189,10 +189,9 @@ class BrowserModule(PgAdminModule):
     def register_preferences(self):
         self.show_system_objects = self.preference.register(
             'display', 'show_system_objects',
-            gettext("Show system objects"), 'boolean', False,
+            gettext("Show system objects?"), 'boolean', False,
             category_label=gettext('Display')
         )
-
 
 blueprint = BrowserModule(MODULE_NAME, __name__)
 
@@ -495,6 +494,15 @@ def browser_js():
     edbas_help_path_pref = prefs.preference('edbas_help_path')
     edbas_help_path = edbas_help_path_pref.get()
 
+    # Get sqleditor options
+    prefs = Preferences.module('sqleditor')
+
+    editor_tab_size_pref = prefs.preference('tab_size')
+    editor_tab_size = editor_tab_size_pref.get()
+
+    editor_use_spaces_pref = prefs.preference('use_spaces')
+    editor_use_spaces = editor_use_spaces_pref.get()
+
     for submodule in current_blueprint.submodules:
         snippets.extend(submodule.jssnippets)
     return make_response(
@@ -504,6 +512,8 @@ def browser_js():
             jssnippets=snippets,
             pg_help_path=pg_help_path,
             edbas_help_path=edbas_help_path,
+            editor_tab_size=editor_tab_size,
+            editor_use_spaces=editor_use_spaces,
             _=gettext
         ),
         200, {'Content-Type': 'application/x-javascript'})
@@ -557,6 +567,16 @@ def collection_js():
 def browser_css():
     """Render and return CSS snippets from the nodes and modules."""
     snippets = []
+
+    # Get configurable options
+    prefs = Preferences.module('sqleditor')
+
+    sql_font_size_pref = prefs.preference('sql_font_size')
+    sql_font_size = round(float(sql_font_size_pref.get()), 2)
+
+    if sql_font_size != 0:
+        snippets.append('.CodeMirror { font-size: %sem; }' % str(sql_font_size))
+
     for submodule in blueprint.submodules:
         snippets.extend(submodule.csssnippets)
     return make_response(

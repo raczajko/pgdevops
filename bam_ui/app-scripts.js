@@ -113,6 +113,46 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
 }).controller('ComponentsController', ['$scope', function ($scope) {
 
 }]);
+angular.module('bigSQL.common').directive('errSrc', function () {
+
+    return {
+    link: function(scope, element, attrs) {
+
+      scope.$watch(function() {
+          return attrs['ngSrc'];
+        }, function (value) {
+          if (!value) {
+            element.attr('src', attrs.errSrc);  
+          }
+      });
+
+      element.bind('error', function() {
+        element.attr('src', attrs.errSrc);
+      });
+    }
+  }
+});
+angular.module('bigSQL.common').directive('progressbar', function () {
+
+    return {
+        scope: {
+            value: "="
+        },
+        restrict: 'E',
+        template: "<div class='progressBar'><div></div></div>",
+        link: function (scope, elem, attr) {
+
+            var progressbar = jQuery(elem).contents();
+            var bar = progressbar.find('div');
+            scope.$watch('value', function (newVal) {
+                if (newVal != undefined) {
+                    var progressBarWidth = newVal * progressbar.width() / 100;
+                    bar.width(progressBarWidth);
+                }
+            });
+        }
+    }
+});
 angular.module('bigSQL.common').factory('MachineInfo', function (PubSubService, $q, $filter) {
     var machineInfo;
     var logdir;
@@ -293,46 +333,6 @@ angular.module('bigSQL.common').factory('PubSubService', function ($window, $roo
 
     }
 
-});
-angular.module('bigSQL.common').directive('errSrc', function () {
-
-    return {
-    link: function(scope, element, attrs) {
-
-      scope.$watch(function() {
-          return attrs['ngSrc'];
-        }, function (value) {
-          if (!value) {
-            element.attr('src', attrs.errSrc);  
-          }
-      });
-
-      element.bind('error', function() {
-        element.attr('src', attrs.errSrc);
-      });
-    }
-  }
-});
-angular.module('bigSQL.common').directive('progressbar', function () {
-
-    return {
-        scope: {
-            value: "="
-        },
-        restrict: 'E',
-        template: "<div class='progressBar'><div></div></div>",
-        link: function (scope, elem, attr) {
-
-            var progressbar = jQuery(elem).contents();
-            var bar = progressbar.find('div');
-            scope.$watch('value', function (newVal) {
-                if (newVal != undefined) {
-                    var progressBarWidth = newVal * progressbar.width() / 100;
-                    bar.width(progressBarWidth);
-                }
-            });
-        }
-    }
 });
 angular.module('bigSQL.components').controller('ComponentBamUpdateController', ['$rootScope', '$scope', '$stateParams', 'PubSubService', '$state', '$uibModalInstance', 'MachineInfo', 'UpdateBamService','$window', function ($rootScope, $scope, $stateParams, PubSubService, $state, $uibModalInstance, MachineInfo, UpdateBamService,$window) {
 
@@ -2661,28 +2661,7 @@ angular.module('bigSQL.menus').component('topMenu', {
                 .success(function(data) {
                     $scope.pgcInfo = data[0];
                 });
-                
-                // session.call('com.bigsql.list');
 
-                // session.subscribe("com.bigsql.onList", function (components) {
-                //     var Checkupdates = 0;
-                //     $scope.components = JSON.parse(components[0][0]);
-                //     for (var i = 0; i < $scope.components.length; i++) {
-                //         if ($scope.components[i].component != 'bam2') {
-                //             Checkupdates += $scope.components[i].updates;
-                //         }
-                //     }
-                //     $scope.updates = Checkupdates;
-                // }).then(function (subscription) {
-                //     subscriptions.push(subscription);
-                // });
-
-                // var promise = MachineInfo.get(session);
-                // promise.then(function (data) {
-                //     $scope.pgcInfo = data;
-                // }, function (failObj) {
-                //     throw new Error(failObj);
-                // });
             });
 
             $scope.open = function () {
