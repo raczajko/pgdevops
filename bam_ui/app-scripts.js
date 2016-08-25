@@ -1079,7 +1079,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     });
 
 }]);
-angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope) {
+angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$http', '$window', '$rootScope', function ($scope, PubSubService, $state, $interval, $location, $http, $window, $rootScope) {
 
     var subscriptions = [];
     var count = 1;
@@ -1099,6 +1099,15 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         });
     });
 
+    function callInfo(argument) {
+        $http.get($window.location.origin + '/api/info')
+        .success(function(data) {
+            $scope.pgcInfo = data[0];
+        });
+    }
+
+
+    callInfo();
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
@@ -1210,6 +1219,8 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         }, 5);
     };
 
+
+
     $scope.action = function (event) {
         logviewer.empty();
         session.call('com.bigsql.logIntLines',[event, $scope.logfile]);
@@ -1317,6 +1328,16 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         };
 
     });
+
+    function callInfo(argument) {
+        $http.get($window.location.origin + '/api/info')
+        .success(function(data) {
+            $scope.pgcInfo = data[0];
+        });
+    }
+
+
+    callInfo();
 
     /**
      Unsubscribe to all the apis on the template and scope destroy
@@ -1847,6 +1868,16 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             $scope.retry = true;
         });
     };
+
+    function callInfo(argument) {
+        $http.get($window.location.origin + '/api/info')
+        .success(function(data) {
+            $scope.pgcInfo = data[0];
+        });
+    }
+
+
+    callInfo();
 
     getList();
 
@@ -2661,6 +2692,12 @@ angular.module('bigSQL.menus').component('topMenu', {
                 .success(function(data) {
                     $scope.pgcInfo = data[0];
                 });
+
+                $http.get($window.location.origin + '/api/userinfo')
+                .success(function(data) {
+                        $scope.userInfo = data;
+                });
+
 
             });
 

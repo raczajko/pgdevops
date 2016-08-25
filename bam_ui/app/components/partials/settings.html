@@ -6,7 +6,7 @@
 <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert($index)" class="uib-text">{{alert.msg}}</uib-alert>
 <section class="content-header">
     <h1>
-        Settings
+        Settings ({{pgcInfo.host_short}})
      </h1>
     <div id="pgcInfoText" class="pull-left"></div>
 </section>

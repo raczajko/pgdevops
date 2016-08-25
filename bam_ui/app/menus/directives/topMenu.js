@@ -29,6 +29,12 @@ angular.module('bigSQL.menus').component('topMenu', {
                     $scope.pgcInfo = data[0];
                 });
 
+                $http.get($window.location.origin + '/api/userinfo')
+                .success(function(data) {
+                        $scope.userInfo = data;
+                });
+
+
             });
 
             $scope.open = function () {

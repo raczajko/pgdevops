@@ -480,7 +480,7 @@ $templateCache.put("../app/components/partials/loading.html","<section class=\"c
 
 $templateCache.put("../app/components/partials/log.html","<section class=\"content-header\">\n" +
     "    <h1>\n" +
-    "        Log Tailer\n" +
+    "        Log Tailer ({{pgcInfo.host_short}})\n" +
     "     </h1>\n" +
     "</section>\n" +
     "<section class=\"content\">\n" +
@@ -550,7 +550,7 @@ $templateCache.put("../app/components/partials/settings.html","<script type=\"te
     "<uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" dismiss-on-timeout=\"8000\" close=\"closeAlert($index)\" class=\"uib-text\">{{alert.msg}}</uib-alert>\n" +
     "<section class=\"content-header\">\n" +
     "    <h1>\n" +
-    "        Settings\n" +
+    "        Settings ({{pgcInfo.host_short}})\n" +
     "     </h1>\n" +
     "    <div id=\"pgcInfoText\" class=\"pull-left\"></div>\n" +
     "</section>\n" +
@@ -656,7 +656,7 @@ $templateCache.put("../app/components/partials/settings.html","<script type=\"te
 
 $templateCache.put("../app/components/partials/status.html","<section class=\"content-header\">\n" +
     "    <h1>\n" +
-    "        Server Status\n" +
+    "        Server Status ({{pgcInfo.host_short}})\n" +
     "    </h1>\n" +
     "    <div></div>\n" +
     "    <div id=\"pgcInfoText\" class=\"pull-left\"><span><b>OS:&nbsp;&nbsp;</b>{{pgcInfo.os}}&nbsp;&nbsp;</span><span><b>Cores:&nbsp;&nbsp;</b></span>{{pgcInfo.cores}}&nbsp;&nbsp;<span><b>CPU:&nbsp;</b></span>{{pgcInfo.cpu}}&nbsp;&nbsp;<span><b>Memory:&nbsp;</b></span>{{pgcInfo.mem}} GB</div>\n" +
@@ -869,7 +869,7 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"m
 
 $templateCache.put("../app/components/partials/view.html","<section class=\"content-header\">\n" +
     "    <h1 class=\"components-update-title-wrapper\">\n" +
-    "        Update Manager\n" +
+    "        Update Manager ({{pgcInfo.host_short}})\n" +
     "     </h1>\n" +
     "  \n" +
     "    <div class=\"components-update-button-wrapper\">\n" +
@@ -1038,6 +1038,11 @@ $templateCache.put("../app/menus/partials/leftMenu.html","<aside class=\"main-si
     "                    <i class=\"fa fa-cog\"></i> <span>Settings</span>\n" +
     "                </a>\n" +
     "            </li>\n" +
+    "            <li>\n" +
+    "                <a href=\"/admin\" target=\"_blank\">\n" +
+    "                    <i class=\"fa fa-cog\"></i> <span>Admin</span>\n" +
+    "                </a>\n" +
+    "            </li>\n" +
     "        </ul>\n" +
     "    </section>\n" +
     "    <!-- /.sidebar -->\n" +
@@ -1059,29 +1064,47 @@ $templateCache.put("../app/menus/partials/topMenu.html","<header class=\"main-he
     "                </a> -->\n" +
     "        <!-- Navbar Right Menu -->\n" +
     "        <h1 id=\"pgc-logo\">BigSQL Manager III</h1>\n" +
+    "\n" +
     "        <div class=\"navbar-custom-menu\">\n" +
     "            <ul class=\"nav navbar-nav\">\n" +
     "                <!-- Notifications: style can be found in dropdown.less -->\n" +
     "                <li>\n" +
-    "                    \n" +
+    "\n" +
     "                </li>\n" +
     "                <li ng-click=\"open()\" id=\"updatesAvailable\" ng-if=\"updates\">\n" +
     "                    <a href=\"\">\n" +
     "                        <div>\n" +
-    "                            <small class=\"label bg-orange\"><i class=\"fa fa-arrow-circle-down\"></i> {{updates}} Updates Available</small>\n" +
+    "                            <small class=\"label bg-orange\"><i class=\"fa fa-arrow-circle-down\"></i> {{ updates }} Updates\n" +
+    "                                Available\n" +
+    "                            </small>\n" +
     "                        </div>\n" +
     "                    </a>\n" +
     "                </li>\n" +
     "                <li>\n" +
-    "                    <div id=\"pgcHost\">\n" +
-    "                        {{pgcInfo.host_short}}\n" +
+    "                    <div class=\"btn-group userinfo-btn\" uib-dropdown>\n" +
+    "                        <button id=\"btn-append-to-single-button\" type=\"button\" class=\"btn btn-dropdown\"\n" +
+    "                                uib-dropdown-toggle>\n" +
+    "                            {{ userInfo.email }} <span class=\"caret\"></span>\n" +
+    "                        </button>\n" +
+    "                        <ul class=\"dropdown-menu\" uib-dropdown-menu role=\"menu\"\n" +
+    "                            aria-labelledby=\"btn-append-to-single-button\">\n" +
+    "                            <li role=\"menuitem\"><a href=\"/change\">Change Password</a></li>\n" +
+    "                            <li role=\"menuitem\" ng-if=\"userInfo.isAdmin\"><a href=\"#\">Users</a></li>\n" +
+    "                            <li role=\"menuitem\"><a href=\"/logout\">Logout</a></li>\n" +
+    "                        </ul>\n" +
     "                    </div>\n" +
+    "\n" +
+    "\n" +
+    "                    <!--<div id=\"pgcHost\">\n" +
+    "                        {{userInfo.email}}\n" +
+    "                    </div>-->\n" +
     "                </li>\n" +
-    "                <li>\n" +
-    "                    <a class=\"feedback-link\" target=\"_blank\" href=\"https://www.bigsql.org/feedback/index.jsp\" tooltip-placement=\"bottom-right\" uib-tooltip=\"Give Your Feedback\">\n" +
+    "                <!--<li>\n" +
+    "                    <a class=\"feedback-link\" target=\"_blank\" href=\"https://www.bigsql.org/feedback/index.jsp\"\n" +
+    "                       tooltip-placement=\"bottom-right\" uib-tooltip=\"Give Your Feedback\">\n" +
     "                        <i class=\"fa fa-comments-o\" aria-hidden=\"true\"></i>\n" +
     "                    </a>\n" +
-    "                </li>\n" +
+    "                </li>-->\n" +
     "                <!-- Control Sidebar Toggle Button -->\n" +
     "            </ul>\n" +
     "        </div>\n" +

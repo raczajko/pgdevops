@@ -85,6 +85,16 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
     });
 
+    function callInfo(argument) {
+        $http.get($window.location.origin + '/api/info')
+        .success(function(data) {
+            $scope.pgcInfo = data[0];
+        });
+    }
+
+
+    callInfo();
+
     /**
      Unsubscribe to all the apis on the template and scope destroy
      **/

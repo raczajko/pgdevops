@@ -70,6 +70,16 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         });
     };
 
+    function callInfo(argument) {
+        $http.get($window.location.origin + '/api/info')
+        .success(function(data) {
+            $scope.pgcInfo = data[0];
+        });
+    }
+
+
+    callInfo();
+
     getList();
 
     $rootScope.$on('sessionCreated', function () {

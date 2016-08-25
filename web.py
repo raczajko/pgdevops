@@ -73,6 +73,17 @@ class pgcApiCom(Resource):
 
 api.add_resource(pgcApiCom, '/api/info/<string:comp>')
 
+class bamUserInfo(Resource):
+    def get(self):
+        userInfo = {}
+        if current_user.is_authenticated:
+            userInfo['email'] = current_user.email
+            userInfo['isAdmin'] = current_user.has_role("Administrator")
+        return userInfo
+
+
+api.add_resource(bamUserInfo, '/api/userinfo')
+
 
 @application.route('/list')
 def list():

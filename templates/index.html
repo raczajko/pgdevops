@@ -48,16 +48,6 @@
             <!-- Left side column. contains the logo and sidebar -->
             <left-menu></left-menu>
             <div class="content-wrapper" style="min-height: 419px;">
-                <div style="width: 100%;float: right;padding: 15px;text-align: right;">
-                Welcome , <strong>{{ user.email }}
-                    {% if is_admin %}
-                    (Administrator)
-                  {% else %}
-                    (User)
-                  {% endif %}
-                    </strong>
-                    <a href="/logout" title="Logout">log out</a>
-            </div>
                 <!--<div ng-controller="initialUpdateAlert">
                     <div ng-if="show" uib-alert class="indexAlert" close="closeAlert()">
                             <button ng-if="show" ng-click="open()" type="button" class="btn btn-xs btn-default pull-left">Turn On Updates</button>&nbsp;

@@ -6612,3 +6612,26 @@ table.settings-table-pgc-info > tbody > tr > td {
     margin-top: -5px;
     background-color: #FF0000;
 }
+
+.btn-dropdown {
+    background-color: #1e2129;
+    border-color: #1e2129;
+    color: #fff;
+    padding-top: 15px;
+
+}
+.btn-dropdown.hover {
+    background-color: #1e2129;
+    border-color: #1e2129;
+    color: #fff;
+}
+.userinfo-btn .dropdown-menu {
+    background-color: #1e2129;
+    color: #fff;
+    right:0;
+}
+
+
+.userinfo-btn .dropdown-menu>li>a {
+    color: #fff;
+}

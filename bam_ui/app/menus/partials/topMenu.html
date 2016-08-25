@@ -14,29 +14,47 @@
                 </a> -->
         <!-- Navbar Right Menu -->
         <h1 id="pgc-logo">BigSQL Manager III</h1>
+
         <div class="navbar-custom-menu">
             <ul class="nav navbar-nav">
                 <!-- Notifications: style can be found in dropdown.less -->
                 <li>
-                    
+
                 </li>
                 <li ng-click="open()" id="updatesAvailable" ng-if="updates">
                     <a href="">
                         <div>
-                            <small class="label bg-orange"><i class="fa fa-arrow-circle-down"></i> {{updates}} Updates Available</small>
+                            <small class="label bg-orange"><i class="fa fa-arrow-circle-down"></i> {{ updates }} Updates
+                                Available
+                            </small>
                         </div>
                     </a>
                 </li>
                 <li>
-                    <div id="pgcHost">
-                        {{pgcInfo.host_short}}
+                    <div class="btn-group userinfo-btn" uib-dropdown>
+                        <button id="btn-append-to-single-button" type="button" class="btn btn-dropdown"
+                                uib-dropdown-toggle>
+                            {{ userInfo.email }} <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" uib-dropdown-menu role="menu"
+                            aria-labelledby="btn-append-to-single-button">
+                            <li role="menuitem"><a href="/change">Change Password</a></li>
+                            <li role="menuitem" ng-if="userInfo.isAdmin"><a href="#">Users</a></li>
+                            <li role="menuitem"><a href="/logout">Logout</a></li>
+                        </ul>
                     </div>
+
+
+                    <!--<div id="pgcHost">
+                        {{userInfo.email}}
+                    </div>-->
                 </li>
-                <li>
-                    <a class="feedback-link" target="_blank" href="https://www.bigsql.org/feedback/index.jsp" tooltip-placement="bottom-right" uib-tooltip="Give Your Feedback">
+                <!--<li>
+                    <a class="feedback-link" target="_blank" href="https://www.bigsql.org/feedback/index.jsp"
+                       tooltip-placement="bottom-right" uib-tooltip="Give Your Feedback">
                         <i class="fa fa-comments-o" aria-hidden="true"></i>
                     </a>
-                </li>
+                </li>-->
                 <!-- Control Sidebar Toggle Button -->
             </ul>
         </div>
