@@ -5,7 +5,7 @@
 
 ### Development setup :
 
-* git clone bam2-ng
+* git clone bam3
 * Download and untar a bigsql [sandbox](http://www.bigsql.org/postgresql/sandboxes.jsp)
 * Set environment variables (of course, use your actual sandbox location):
 
@@ -14,7 +14,7 @@
 
 export PGC_HOME="$HOME/c/bigsql"
 export PGC_LOGS="$PGC_HOME/logs/pgcli_log.out"
-cd bam2-ng
+cd bam2
 mkdir -p ../data/logs
 
 ```
@@ -34,7 +34,7 @@ gulp
 
 Make a change to bam_ui/app/app.js (add a space to end of file) to trigger gulp repacking. You should see app-scripts and templates-dev being processed.
 
-Start bam2 app server:
+Start bam3 app server:
 ```
 #!bash
 
