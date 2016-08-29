@@ -1,48 +1,30 @@
-# BigSQL DevOps Manager #
 
+# BAM3: BigSQL DevOps Manager #
 
+### Setup python env
 
+```
+#!bash
 
-### Development setup :
+mkvirtualenv bam3-env
+pip install -r requirements.txt
 
-* git clone bam3-prototype
-* Download and untar a bigsql [sandbox](http://www.bigsql.org/postgresql/sandboxes.jsp)
-* Set environment variables (of course, use your actual sandbox location):
+```
 
+### Setup admin user
+```
+#!bash
+
+python pgadmin/setup.py
+
+```
+
+### Startup crossbar running pgAdmin4 (Dev) + BAM (Ops)
 ```
 #!bash
 
 export PGC_HOME="$HOME/c/bigsql"
 export PGC_LOGS="$PGC_HOME/logs/pgcli_log.out"
-cd bam3-prototype
-mkdir -p ../data/logs
+./bin/start_crossbar.sh
 
 ```
-
-*Install Prerequisites:*
-
-* nodes & npm
-* gulp  (sudo npm install --global gulp-cli)
-
-Run gulp to keep gulp watching for changes to assets
-```
-#!bash
-
-cd bam3-prototype/bam_ui
-gulp
-```
-
-Make a change to bam_ui/app/app.js (add a space to end of file) to trigger gulp repacking. You should see app-scripts and templates-dev being processed.
-
-Start bam3 app server:
-```
-#!bash
-
-sh bin/start_crossbar.sh
-```
-
-Open browser to http://localhost:8050
-
-### To package a release:
-
-run ./build.sh <version no>
