@@ -39,8 +39,10 @@ Werkzeug==0.9.6
 WTForms==2.0.2
 sqlparse==0.1.19
 ordereddict; python_version < '2.7'
+
 flask-triangle
 psutil
 crossbar
 flask_restful
 pygtail
+paramiko
