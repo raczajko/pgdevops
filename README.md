@@ -1,5 +1,4 @@
-
-# BAM3: BigSQL DevOps Manager #
+# bam3-DevOps #
 
 ### Setup python env
 
