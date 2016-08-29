@@ -1,4 +1,6 @@
-
+####################################################################
+#########            Copyright 2016 BigSQL               ###########
+####################################################################
 
 from werkzeug.wsgi import DispatcherMiddleware
 from flask import Flask
