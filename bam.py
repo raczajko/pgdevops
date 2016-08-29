@@ -15,10 +15,10 @@ from pygtail import Pygtail
 
 this_uname = str(platform.system())
 
-if this_uname == "Darwin":
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'lib', 'osx'))
-elif this_uname == "Linux":
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'lib', 'linux'))
+#if this_uname == "Darwin":
+##    sys.path.append(os.path.join(os.path.dirname(__file__), 'lib', 'osx'))
+#elif this_uname == "Linux":
+#    sys.path.append(os.path.join(os.path.dirname(__file__), 'lib', 'linux'))
 
 import psutil
 
