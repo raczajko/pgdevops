@@ -5,7 +5,7 @@
 
 ### Development setup :
 
-* git clone bam3
+* git clone bam3-prototype
 * Download and untar a bigsql [sandbox](http://www.bigsql.org/postgresql/sandboxes.jsp)
 * Set environment variables (of course, use your actual sandbox location):
 
@@ -14,7 +14,7 @@
 
 export PGC_HOME="$HOME/c/bigsql"
 export PGC_LOGS="$PGC_HOME/logs/pgcli_log.out"
-cd bam2
+cd bam3-prototype
 mkdir -p ../data/logs
 
 ```
@@ -28,7 +28,7 @@ Run gulp to keep gulp watching for changes to assets
 ```
 #!bash
 
-cd bam2-ng/bam_ui
+cd bam3-prototype/bam_ui
 gulp
 ```
 
