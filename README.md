@@ -1,7 +1,7 @@
-# BAM2 - BigSQL Manager II #
+# BigSQL DevOps Manager #
 
 
-![toBe.png](https://bitbucket.org/repo/apMb9G/images/7373138-toBe.png)
+
 
 ### Development setup :
 
