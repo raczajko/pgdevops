@@ -113,6 +113,120 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
 }).controller('ComponentsController', ['$scope', function ($scope) {
 
 }]);
+angular.module('bigSQL.menus').component('bamUpdate', {
+    bindings: {},
+    controller: function ($rootScope, $scope, PubSubService, MachineInfo, $uibModal, UpdateComponentsService, UpdateBamService) {
+
+        var subscriptions = [];
+
+        var session;
+
+        /**Below function is for displaying update badger on every page.
+         **/
+        function updateComponents(sessParam) {
+            var bamUpdatePromise = UpdateBamService.getBamUpdateInfo();
+            bamUpdatePromise.then(function (info) {
+                if ( info.component == "bam2" && info.is_current == 0 && info.current_version ) {
+                    $scope.bamUpdate = true;
+                } else {
+                    $scope.bamUpdate = false;
+                }
+            }, function () {
+                throw new Error('failed to subscribe to topic updateComponents', err);
+            })
+
+
+        }
+
+
+        $rootScope.$on('topMenuEvent', function () {
+            var sessPromise = PubSubService.getSession();
+            sessPromise.then(function (sessionParam) {
+                updateComponents(sessionParam);
+            });
+        });
+
+
+        $scope.open = function () {
+
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/bamUpdate.html',
+                windowClass: 'bam-update-modal modal',
+                controller: 'ComponentBamUpdateController',
+            });
+        };
+
+        /**
+         Unsubscribe to all the apis on the template and scope destroy
+         **/
+        $scope.$on('$destroy', function () {
+            for (var i = 0; i < subscriptions.length; i++) {
+                session.unsubscribe(subscriptions[i]);
+            }
+        });
+
+
+    },
+    templateUrl: "../app/menus/partials/bamHeaderUpdate.html"
+});
+angular.module('bigSQL.menus').component('leftMenu', {
+    bindings: {},
+    controller: function ($scope, PubSubService) {
+    },
+    templateUrl: "../app/menus/partials/leftMenu.html"
+});
+angular.module('bigSQL.menus').component('topMenu', {
+    bindings: {},
+    controller: function ($rootScope, $scope, PubSubService, $uibModal, UpdateComponentsService, MachineInfo, $http, $window) {
+
+        var subscriptions = [];
+
+        /**Below function is for displaying update badger on every page.
+         **/
+        
+        // $rootScope.$on('topMenuEvent',function () {
+
+            var sessPromise = PubSubService.getSession();
+
+            sessPromise.then(function (session) {
+                $http.get($window.location.origin + '/api/list')
+                .success(function(data) {
+                    var Checkupdates = 0;
+                    $scope.components = data;
+                    for (var i = 0; i < $scope.components.length; i++) {
+                        if ($scope.components[i].component != 'bam2') {
+                            Checkupdates += $scope.components[i].updates;
+                        }
+                    }
+                    $scope.updates = Checkupdates;
+                });
+
+                $http.get($window.location.origin + '/api/info')
+                .success(function(data) {
+                    $scope.pgcInfo = data[0];
+                });
+
+                $http.get($window.location.origin + '/api/userinfo')
+                .success(function(data) {
+                        $scope.userInfo = data;
+                });
+
+
+            });
+
+            $scope.open = function () {
+
+                UpdateComponentsService.setCheckUpdatesAuto();
+
+                var modalInstance = $uibModal.open({
+                    templateUrl: '../app/components/partials/updateModal.html',
+                    controller: 'ComponentsUpdateController',
+                });
+            };
+        // });
+    },
+    templateUrl: "../app/menus/partials/topMenu.html"
+});
 angular.module('bigSQL.common').directive('errSrc', function () {
 
     return {
@@ -2521,16 +2635,6 @@ angular.module('bigSQL.components').controller('graphsTabController', ['$scope',
     });
 
 }]);
-angular.module('bigSQL.components').directive('bigsqlInstallComponent', function () {
-    var directive = {};
-
-    directive.restrict = 'E';
-    /* restrict this directive to elements */
-    directive.transclude = true;
-    directive.template = "<div class='bigsqlInstallComponent' ng-transclude></div>";
-
-    return directive;
-});
 angular.module('bigSQL.components').factory('UpdateBamService', function (PubSubService, $q) {
 
     var bamUpdateInfo;
@@ -2600,117 +2704,13 @@ angular.module('bigSQL.components').factory('UpdateComponentsService', function 
     }
 })
 
-angular.module('bigSQL.menus').component('bamUpdate', {
-    bindings: {},
-    controller: function ($rootScope, $scope, PubSubService, MachineInfo, $uibModal, UpdateComponentsService, UpdateBamService) {
+angular.module('bigSQL.components').directive('bigsqlInstallComponent', function () {
+    var directive = {};
 
-        var subscriptions = [];
+    directive.restrict = 'E';
+    /* restrict this directive to elements */
+    directive.transclude = true;
+    directive.template = "<div class='bigsqlInstallComponent' ng-transclude></div>";
 
-        var session;
-
-        /**Below function is for displaying update badger on every page.
-         **/
-        function updateComponents(sessParam) {
-            var bamUpdatePromise = UpdateBamService.getBamUpdateInfo();
-            bamUpdatePromise.then(function (info) {
-                if ( info.component == "bam2" && info.is_current == 0 && info.current_version ) {
-                    $scope.bamUpdate = true;
-                } else {
-                    $scope.bamUpdate = false;
-                }
-            }, function () {
-                throw new Error('failed to subscribe to topic updateComponents', err);
-            })
-
-
-        }
-
-
-        $rootScope.$on('topMenuEvent', function () {
-            var sessPromise = PubSubService.getSession();
-            sessPromise.then(function (sessionParam) {
-                updateComponents(sessionParam);
-            });
-        });
-
-
-        $scope.open = function () {
-
-            var modalInstance = $uibModal.open({
-                templateUrl: '../app/components/partials/bamUpdate.html',
-                windowClass: 'bam-update-modal modal',
-                controller: 'ComponentBamUpdateController',
-            });
-        };
-
-        /**
-         Unsubscribe to all the apis on the template and scope destroy
-         **/
-        $scope.$on('$destroy', function () {
-            for (var i = 0; i < subscriptions.length; i++) {
-                session.unsubscribe(subscriptions[i]);
-            }
-        });
-
-
-    },
-    templateUrl: "../app/menus/partials/bamHeaderUpdate.html"
-});
-angular.module('bigSQL.menus').component('leftMenu', {
-    bindings: {},
-    controller: function ($scope, PubSubService) {
-    },
-    templateUrl: "../app/menus/partials/leftMenu.html"
-});
-angular.module('bigSQL.menus').component('topMenu', {
-    bindings: {},
-    controller: function ($rootScope, $scope, PubSubService, $uibModal, UpdateComponentsService, MachineInfo, $http, $window) {
-
-        var subscriptions = [];
-
-        /**Below function is for displaying update badger on every page.
-         **/
-        
-        // $rootScope.$on('topMenuEvent',function () {
-
-            var sessPromise = PubSubService.getSession();
-
-            sessPromise.then(function (session) {
-                $http.get($window.location.origin + '/api/list')
-                .success(function(data) {
-                    var Checkupdates = 0;
-                    $scope.components = data;
-                    for (var i = 0; i < $scope.components.length; i++) {
-                        if ($scope.components[i].component != 'bam2') {
-                            Checkupdates += $scope.components[i].updates;
-                        }
-                    }
-                    $scope.updates = Checkupdates;
-                });
-
-                $http.get($window.location.origin + '/api/info')
-                .success(function(data) {
-                    $scope.pgcInfo = data[0];
-                });
-
-                $http.get($window.location.origin + '/api/userinfo')
-                .success(function(data) {
-                        $scope.userInfo = data;
-                });
-
-
-            });
-
-            $scope.open = function () {
-
-                UpdateComponentsService.setCheckUpdatesAuto();
-
-                var modalInstance = $uibModal.open({
-                    templateUrl: '../app/components/partials/updateModal.html',
-                    controller: 'ComponentsUpdateController',
-                });
-            };
-        // });
-    },
-    templateUrl: "../app/menus/partials/topMenu.html"
+    return directive;
 });

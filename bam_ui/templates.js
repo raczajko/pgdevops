@@ -7,6 +7,123 @@ app.run(["$templateCache", function($templateCache) {
 
 $templateCache.put("../app/components/components.html","<div ui-view=\"sub\"></div>")
 
+$templateCache.put("../app/menus/partials/bamHeaderUpdate.html","<div ng-show=\"bamUpdate\">\n" +
+    "    <div class=\"bamUpdateVisor\">\n" +
+    "    	<span>An update to the BigSQL Manager is available. Click the button to continue </span><button class=\"btn btn-default\" ng-click=\"open()\">Update</button>\n" +
+    "    </div>\n" +
+    "</div>")
+
+$templateCache.put("../app/menus/partials/leftMenu.html","<aside class=\"main-sidebar\">\n" +
+    "    <!-- sidebar: style can be found in sidebar.less -->\n" +
+    "    <section class=\"sidebar\">\n" +
+    "        <!-- search form -->\n" +
+    "        <form action=\"#\" method=\"get\" class=\"sidebar-form\">\n" +
+    "            <div class=\"input-group\">\n" +
+    "                <input type=\"text\" name=\"q\" class=\"form-control\" placeholder=\"Search...\">\n" +
+    "                <span class=\"input-group-btn\">\n" +
+    "                <button type=\"submit\" name=\"search\" id=\"search-btn\" class=\"btn btn-flat\"><i class=\"fa fa-search\"></i>\n" +
+    "                </button>\n" +
+    "              </span>\n" +
+    "            </div>\n" +
+    "        </form>\n" +
+    "        <!-- /.search form -->\n" +
+    "        <!-- sidebar menu: : style can be found in sidebar.less -->\n" +
+    "        <ul class=\"sidebar-menu\">\n" +
+    "            <li class=\"header\">MAIN NAVIGATION</li>\n" +
+    "            <li>\n" +
+    "                <a ui-sref=\"components.view\">\n" +
+    "                    <i class=\"fa fa-th\"></i> <span>Update Manager</span>\n" +
+    "                    <!-- <i class=\"fa fa-angle-left pull-right\"></i> -->\n" +
+    "                </a>\n" +
+    "            </li>\n" +
+    "            <li>\n" +
+    "                <a ui-sref=\"components.status\">\n" +
+    "                    <i class=\"fa fa-dashboard\"></i> <span>Server Status</span>\n" +
+    "                </a>\n" +
+    "            </li>\n" +
+    "            <li>\n" +
+    "                <a ui-sref=\"components.componentLog({component:'pgcli'})\">\n" +
+    "                    <i class=\"fa fa-file-text-o\"></i> <span>Log Tailer</span>\n" +
+    "                </a>\n" +
+    "            </li>\n" +
+    "            <li>\n" +
+    "                <a ui-sref=\"components.settingsView\">\n" +
+    "                    <i class=\"fa fa-cog\"></i> <span>Settings</span>\n" +
+    "                </a>\n" +
+    "            </li>\n" +
+    "            <li>\n" +
+    "                <a href=\"/admin\" target=\"_blank\">\n" +
+    "                    <i class=\"fa fa-cog\"></i> <span>Admin</span>\n" +
+    "                </a>\n" +
+    "            </li>\n" +
+    "        </ul>\n" +
+    "    </section>\n" +
+    "    <!-- /.sidebar -->\n" +
+    "</aside>")
+
+$templateCache.put("../app/menus/partials/topMenu.html","<header class=\"main-header\">\n" +
+    "    <!-- Logo -->\n" +
+    "    <a href=\"/\" class=\"logo\">\n" +
+    "        <!-- mini logo for sidebar mini 50x50 pixels -->\n" +
+    "        <span class=\"logo-mini\"></span>\n" +
+    "        <!-- logo for regular state and mobile devices -->\n" +
+    "        <span class=\"logo-lg\"></span>\n" +
+    "    </a>\n" +
+    "    <!-- Header Navbar: style can be found in header.less -->\n" +
+    "    <nav class=\"navbar navbar-static-top\" role=\"navigation\">\n" +
+    "        <!-- Sidebar toggle button-->\n" +
+    "        <!--  <a href=\"#\" class=\"sidebar-toggle\" data-toggle=\"offcanvas\" role=\"button\">\n" +
+    "                    <span class=\"sr-only\">Toggle navigation</span>\n" +
+    "                </a> -->\n" +
+    "        <!-- Navbar Right Menu -->\n" +
+    "        <h1 id=\"pgc-logo\">BigSQL Ops</h1>\n" +
+    "\n" +
+    "        <div class=\"navbar-custom-menu\">\n" +
+    "            <ul class=\"nav navbar-nav\">\n" +
+    "                <!-- Notifications: style can be found in dropdown.less -->\n" +
+    "                <li>\n" +
+    "\n" +
+    "                </li>\n" +
+    "                <li ng-click=\"open()\" id=\"updatesAvailable\" ng-if=\"updates\">\n" +
+    "                    <a href=\"\">\n" +
+    "                        <div>\n" +
+    "                            <small class=\"label bg-orange\"><i class=\"fa fa-arrow-circle-down\"></i> {{ updates }} Updates\n" +
+    "                                Available\n" +
+    "                            </small>\n" +
+    "                        </div>\n" +
+    "                    </a>\n" +
+    "                </li>\n" +
+    "                <li>\n" +
+    "                    <div class=\"btn-group userinfo-btn\" uib-dropdown>\n" +
+    "                        <button id=\"btn-append-to-single-button\" type=\"button\" class=\"btn btn-dropdown\"\n" +
+    "                                uib-dropdown-toggle>\n" +
+    "                            {{ userInfo.email }} <span class=\"caret\"></span>\n" +
+    "                        </button>\n" +
+    "                        <ul class=\"dropdown-menu\" uib-dropdown-menu role=\"menu\"\n" +
+    "                            aria-labelledby=\"btn-append-to-single-button\">\n" +
+    "                            <li role=\"menuitem\"><a href=\"/change\">Change Password</a></li>\n" +
+    "                            <li role=\"menuitem\" ng-if=\"userInfo.isAdmin\"><a href=\"#\">Users</a></li>\n" +
+    "                            <li role=\"menuitem\"><a href=\"/logout\">Logout</a></li>\n" +
+    "                        </ul>\n" +
+    "                    </div>\n" +
+    "\n" +
+    "\n" +
+    "                    <!--<div id=\"pgcHost\">\n" +
+    "                        {{userInfo.email}}\n" +
+    "                    </div>-->\n" +
+    "                </li>\n" +
+    "                <!--<li>\n" +
+    "                    <a class=\"feedback-link\" target=\"_blank\" href=\"https://www.bigsql.org/feedback/index.jsp\"\n" +
+    "                       tooltip-placement=\"bottom-right\" uib-tooltip=\"Give Your Feedback\">\n" +
+    "                        <i class=\"fa fa-comments-o\" aria-hidden=\"true\"></i>\n" +
+    "                    </a>\n" +
+    "                </li>-->\n" +
+    "                <!-- Control Sidebar Toggle Button -->\n" +
+    "            </ul>\n" +
+    "        </div>\n" +
+    "    </nav>\n" +
+    "</header>")
+
 $templateCache.put("../app/components/partials/bamUpdate.html","<!-- <div ng-click=\"cancel()\" class=\"close-modal\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
     "                <div class=\"lr\">\n" +
     "                    <div class=\"rl\">\n" +
@@ -993,122 +1110,5 @@ $templateCache.put("../app/components/partials/view.html","<section class=\"cont
     "            </div>\n" +
     "        </div>\n" +
     "</section>")
-
-$templateCache.put("../app/menus/partials/bamHeaderUpdate.html","<div ng-show=\"bamUpdate\">\n" +
-    "    <div class=\"bamUpdateVisor\">\n" +
-    "    	<span>An update to the BigSQL Manager is available. Click the button to continue </span><button class=\"btn btn-default\" ng-click=\"open()\">Update</button>\n" +
-    "    </div>\n" +
-    "</div>")
-
-$templateCache.put("../app/menus/partials/leftMenu.html","<aside class=\"main-sidebar\">\n" +
-    "    <!-- sidebar: style can be found in sidebar.less -->\n" +
-    "    <section class=\"sidebar\">\n" +
-    "        <!-- search form -->\n" +
-    "        <form action=\"#\" method=\"get\" class=\"sidebar-form\">\n" +
-    "            <div class=\"input-group\">\n" +
-    "                <input type=\"text\" name=\"q\" class=\"form-control\" placeholder=\"Search...\">\n" +
-    "                <span class=\"input-group-btn\">\n" +
-    "                <button type=\"submit\" name=\"search\" id=\"search-btn\" class=\"btn btn-flat\"><i class=\"fa fa-search\"></i>\n" +
-    "                </button>\n" +
-    "              </span>\n" +
-    "            </div>\n" +
-    "        </form>\n" +
-    "        <!-- /.search form -->\n" +
-    "        <!-- sidebar menu: : style can be found in sidebar.less -->\n" +
-    "        <ul class=\"sidebar-menu\">\n" +
-    "            <li class=\"header\">MAIN NAVIGATION</li>\n" +
-    "            <li>\n" +
-    "                <a ui-sref=\"components.view\">\n" +
-    "                    <i class=\"fa fa-th\"></i> <span>Update Manager</span>\n" +
-    "                    <!-- <i class=\"fa fa-angle-left pull-right\"></i> -->\n" +
-    "                </a>\n" +
-    "            </li>\n" +
-    "            <li>\n" +
-    "                <a ui-sref=\"components.status\">\n" +
-    "                    <i class=\"fa fa-dashboard\"></i> <span>Server Status</span>\n" +
-    "                </a>\n" +
-    "            </li>\n" +
-    "            <li>\n" +
-    "                <a ui-sref=\"components.componentLog({component:'pgcli'})\">\n" +
-    "                    <i class=\"fa fa-file-text-o\"></i> <span>Log Tailer</span>\n" +
-    "                </a>\n" +
-    "            </li>\n" +
-    "            <li>\n" +
-    "                <a ui-sref=\"components.settingsView\">\n" +
-    "                    <i class=\"fa fa-cog\"></i> <span>Settings</span>\n" +
-    "                </a>\n" +
-    "            </li>\n" +
-    "            <li>\n" +
-    "                <a href=\"/admin\" target=\"_blank\">\n" +
-    "                    <i class=\"fa fa-cog\"></i> <span>Admin</span>\n" +
-    "                </a>\n" +
-    "            </li>\n" +
-    "        </ul>\n" +
-    "    </section>\n" +
-    "    <!-- /.sidebar -->\n" +
-    "</aside>")
-
-$templateCache.put("../app/menus/partials/topMenu.html","<header class=\"main-header\">\n" +
-    "    <!-- Logo -->\n" +
-    "    <a href=\"/\" class=\"logo\">\n" +
-    "        <!-- mini logo for sidebar mini 50x50 pixels -->\n" +
-    "        <span class=\"logo-mini\"></span>\n" +
-    "        <!-- logo for regular state and mobile devices -->\n" +
-    "        <span class=\"logo-lg\"></span>\n" +
-    "    </a>\n" +
-    "    <!-- Header Navbar: style can be found in header.less -->\n" +
-    "    <nav class=\"navbar navbar-static-top\" role=\"navigation\">\n" +
-    "        <!-- Sidebar toggle button-->\n" +
-    "        <!--  <a href=\"#\" class=\"sidebar-toggle\" data-toggle=\"offcanvas\" role=\"button\">\n" +
-    "                    <span class=\"sr-only\">Toggle navigation</span>\n" +
-    "                </a> -->\n" +
-    "        <!-- Navbar Right Menu -->\n" +
-    "        <h1 id=\"pgc-logo\">BigSQL Manager III</h1>\n" +
-    "\n" +
-    "        <div class=\"navbar-custom-menu\">\n" +
-    "            <ul class=\"nav navbar-nav\">\n" +
-    "                <!-- Notifications: style can be found in dropdown.less -->\n" +
-    "                <li>\n" +
-    "\n" +
-    "                </li>\n" +
-    "                <li ng-click=\"open()\" id=\"updatesAvailable\" ng-if=\"updates\">\n" +
-    "                    <a href=\"\">\n" +
-    "                        <div>\n" +
-    "                            <small class=\"label bg-orange\"><i class=\"fa fa-arrow-circle-down\"></i> {{ updates }} Updates\n" +
-    "                                Available\n" +
-    "                            </small>\n" +
-    "                        </div>\n" +
-    "                    </a>\n" +
-    "                </li>\n" +
-    "                <li>\n" +
-    "                    <div class=\"btn-group userinfo-btn\" uib-dropdown>\n" +
-    "                        <button id=\"btn-append-to-single-button\" type=\"button\" class=\"btn btn-dropdown\"\n" +
-    "                                uib-dropdown-toggle>\n" +
-    "                            {{ userInfo.email }} <span class=\"caret\"></span>\n" +
-    "                        </button>\n" +
-    "                        <ul class=\"dropdown-menu\" uib-dropdown-menu role=\"menu\"\n" +
-    "                            aria-labelledby=\"btn-append-to-single-button\">\n" +
-    "                            <li role=\"menuitem\"><a href=\"/change\">Change Password</a></li>\n" +
-    "                            <li role=\"menuitem\" ng-if=\"userInfo.isAdmin\"><a href=\"#\">Users</a></li>\n" +
-    "                            <li role=\"menuitem\"><a href=\"/logout\">Logout</a></li>\n" +
-    "                        </ul>\n" +
-    "                    </div>\n" +
-    "\n" +
-    "\n" +
-    "                    <!--<div id=\"pgcHost\">\n" +
-    "                        {{userInfo.email}}\n" +
-    "                    </div>-->\n" +
-    "                </li>\n" +
-    "                <!--<li>\n" +
-    "                    <a class=\"feedback-link\" target=\"_blank\" href=\"https://www.bigsql.org/feedback/index.jsp\"\n" +
-    "                       tooltip-placement=\"bottom-right\" uib-tooltip=\"Give Your Feedback\">\n" +
-    "                        <i class=\"fa fa-comments-o\" aria-hidden=\"true\"></i>\n" +
-    "                    </a>\n" +
-    "                </li>-->\n" +
-    "                <!-- Control Sidebar Toggle Button -->\n" +
-    "            </ul>\n" +
-    "        </div>\n" +
-    "    </nav>\n" +
-    "</header>")
 }]);
 })();

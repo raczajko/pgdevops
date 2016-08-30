@@ -19,8 +19,10 @@ from logging import *
 ##########################################################################
 
 # Name of the application to display in the UI
-APP_NAME = 'pgAdmin 4'
+APP_NAME = 'BigSQL Dev'
 APP_ICON = 'icon-postgres-alt'
+
+
 
 ##########################################################################
 # Application settings
