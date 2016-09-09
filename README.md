@@ -1,11 +1,14 @@
-# bam3-DevOps #
+# bam4 : BigSQL Manager IV with PgAdmin Server #
+
+BAM4 is a multi-user & multi-server version of BAM nicely integrated with PgAdmin4
+
 
 ### Setup python env
 
 ```
 #!bash
 
-mkvirtualenv bam3-env
+mkvirtualenv bam4-env
 pip install -r requirements.txt
 
 ```
