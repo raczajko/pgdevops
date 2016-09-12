@@ -1,17 +1,17 @@
 define(
   [
     'jquery', 'underscore', 'underscore.string', 'alertify', 'pgadmin',
-    'backbone', 'backgrid', 'codemirror', 'pgadmin.misc.explain',
-    'backgrid.select.all', 'backgrid.filter', 'bootstrap', 'pgadmin.browser',
+    'backbone', 'backgrid', 'codemirror', 'pgadmin.misc.explain', 'slickgrid',
+    'bootstrap', 'pgadmin.browser',
     'codemirror/mode/sql/sql', 'codemirror/addon/selection/mark-selection',
-    'codemirror/addon/selection/active-line', 'backbone.paginator',
+    'codemirror/addon/selection/active-line',
     'codemirror/addon/fold/foldgutter', 'codemirror/addon/fold/foldcode',
     'codemirror/addon/hint/show-hint', 'codemirror/addon/hint/sql-hint',
-    'codemirror/addon/fold/pgadmin-sqlfoldcode', 'backgrid.paginator',
+    'codemirror/addon/fold/pgadmin-sqlfoldcode',
     'backgrid.sizeable.columns', 'wcdocker', 'pgadmin.file_manager'
   ],
   function(
-    $, _, S, alertify, pgAdmin, Backbone, Backgrid, CodeMirror, pgExplain
+    $, _, S, alertify, pgAdmin, Backbone, Backgrid, CodeMirror, pgExplain, Slick
   ) {
     // Some scripts do export their object in the window only.
     // Generally the one, which do no have AMD support.
@@ -44,7 +44,6 @@ define(
       parse: function(data) {
         var self = this;
         self.grid_keys = {};
-        self.marked_for_deletion = false;
         self.changed_data = false;
 
         if (data && 'primary_keys' in self && self.primary_keys && _.size(self.primary_keys) > 0) {
@@ -70,8 +69,7 @@ define(
 
         return {
           'keys': this.grid_keys,
-          'data': res,
-          'marked_for_deletion': this.marked_for_deletion
+          'data': res
         };
       },
 
@@ -104,50 +102,6 @@ define(
       }
     });
 
-    // Suppose you want to highlight the entire row when an editable field is focused
-    var FocusableRow = Backgrid.Row.extend({
-      highlightColor: "#D9EDF7",
-      events: {
-        focusin: "rowFocused",
-        focusout: "rowLostFocus"
-      },
-      rowFocused: function() {
-        this.model.trigger('backgrid:row:selected', this);
-        this.el.style.backgroundColor = this.highlightColor;
-      },
-      rowLostFocus: function() {
-        this.model.trigger('backgrid:row:deselected', this);
-      }
-    });
-
-    /*
-     * Extend the FocusableRow row used when user marked
-     * the row for deletion.
-     */
-    var SqlEditorCustomRow = FocusableRow.extend({
-      initialize: function() {
-        Backgrid.Row.prototype.initialize.apply(this, arguments);
-        _.bindAll(this, 'render');
-
-        // Listen for the mark for deletion event and call render method.
-        this.model.on('backgrid:row:mark:deletion', this.render);
-      },
-      remove: function() {
-        this.model.off('backgrid:row:mark:deletion', this.render);
-        Backgrid.Row.prototype.remove.apply(this, arguments);
-      },
-      render: function() {
-        var res = Backgrid.Row.prototype.render.apply(this, arguments);
-
-        if (this.model.marked_for_deletion)
-          this.$el.addClass('pgadmin-row-deleted');
-        else
-          this.$el.removeClass('pgadmin-row-deleted');
-
-        return res;
-      }
-    });
-
     // Defining Backbone view for the sql grid.
     var SQLEditorView = Backbone.View.extend({
       initialize: function(opts) {
@@ -161,7 +115,7 @@ define(
         "click #btn-save": "on_save",
         "click #btn-file-menu-save": "on_save",
         "click #btn-file-menu-save-as": "on_save_as",
-        "click #btn-add-row": "on_add",
+        "click #btn-delete-row": "on_delete",
         "click #btn-filter": "on_show_filter",
         "click #btn-filter-menu": "on_show_filter",
         "click #btn-include-filter": "on_include_filter",
@@ -267,7 +221,7 @@ define(
           height:'100%',
           isCloseable: false,
           isPrivate: true,
-          content: '<div id ="datagrid" class="sql-editor-grid-container"></div><div id ="datagrid-paginator"></div>'
+          content: '<div id ="datagrid" class="sql-editor-grid-container"></div>'
         })
 
         var explain = new pgAdmin.Browser.Panel({
@@ -313,6 +267,48 @@ define(
         self.history_panel = main_docker.addPanel('history', wcDocker.DOCK.STACKED, self.data_output_panel);
 
         self.render_history_grid();
+
+        // Listen on the panel closed event and notify user to save modifications.
+        _.each(window.top.pgAdmin.Browser.docker.findPanels('frm_datagrid'), function(p) {
+          if(p.isVisible()) {
+            p.on(wcDocker.EVENT.CLOSING, function() {
+              // Only if we can edit data then perform this check
+              var notify = false, msg;
+              if(self.handler.can_edit) {
+                var data_store = self.handler.data_store;
+                if(data_store && (_.size(data_store.added) ||
+                    _.size(data_store.updated))) {
+                  msg = '{{ _('The data has been modified, but not saved. Are you sure you wish to discard the changes?') }}';
+                  notify = true;
+                }
+              } else if(self.handler.is_query_tool) {
+                // We will check for modified sql content
+                var sql = self.handler.gridView.query_tool_obj.getValue();
+                sql = sql.replace(/\s+/g, '');
+                // If it is an empty query, do nothing.
+                if (sql.length > 0) {
+                  msg = '{{ _('The query has been modified, but not saved. Are you sure you wish to discard the changes?') }}';
+                  notify = true;
+                }
+              }
+              if(notify) {return self.user_confirmation(p, msg);}
+              return true;
+            });
+            // Set focus on query tool of active panel
+            p.on(wcDocker.EVENT.GAIN_FOCUS, function() {
+              if (!$(p.$container).hasClass('wcPanelTabContentHidden')) {
+                setTimeout(function() {
+                  self.handler.gridView.query_tool_obj.focus();
+                }, 200);
+              }
+            });
+          }
+        });
+
+        // set focus on query tool once loaded
+        setTimeout(function() {
+          self.query_tool_obj.focus();
+        }, 500);
 
         /* We have override/register the hint function of CodeMirror
          * to provide our own hint logic.
@@ -416,123 +412,392 @@ define(
         });
       },
 
-      /* This function is responsible to create and render the
-       * new backgrid and paginator.
+      /* To prompt user for unsaved changes */
+      user_confirmation: function(panel, msg) {
+        // If there is anything to save then prompt user
+        alertify.confirm('{{ _('Unsaved changes') }}', msg,
+          function() {
+            // Do nothing as user do not want to save, just continue
+            window.onbeforeunload = null;
+            panel.off(wcDocker.EVENT.CLOSING);
+            window.top.pgAdmin.Browser.docker.removePanel(panel);
+          },
+          function() {
+            // Stop, User wants to save
+            // false value will prevent from panel to close
+            return true;
+          }
+        ).set('labels', {ok:'Yes', cancel:'No'});
+        return false;
+      },
+
+      /* Regarding SlickGrid usage in render_grid function.
+
+       SlickGrid Plugins:
+       ------------------
+       1) Slick.AutoTooltips
+         - This plugin is useful for displaying cell data as tooltip when
+            user hover mouse on cell if data is large
+       2) Slick.CheckboxSelectColumn
+         - This plugin is useful for selecting rows using checkbox
+       3) RowSelectionModel
+         - This plugin is needed by CheckboxSelectColumn plugin to select rows
+
+       Grid Options:
+       -------------
+       1) editable
+         - This option allow us to make grid editable
+       2) enableAddRow
+         - This option allow us to add new rows at the end of grid
+       3) enableCellNavigation
+         - This option allow us to navigate cells using keyboard
+       4) enableColumnReorder
+         - This option allow us to record column
+       5) asyncEditorLoading
+         - This option allow us to open editor async
+       6) autoEdit
+         - This option allow us to enter in edit mode directly when user clicks on it
+           otherwise user have to double click or manually press enter on cell to go
+           in cell edit mode
+
+       Handling of data:
+       -----------------
+         We are doing data handling manually,what user adds/updates/deletes etc
+         we will use `data_store` object to store everything user does within grid data
+
+         - updated:
+           This will hold all the data which user updates in grid
+         - added:
+           This will hold all the new row(s) data which user adds in grid
+         - staged_rows:
+           This will hold all the data which user copies/pastes/deletes in grid
+         - deleted:
+           This will hold all the data which user delets in grid
+
+       Events handling:
+       ----------------
+         1) onCellChange
+           - We are using this event to listen to changes on individual cell.
+         2) onAddNewRow
+           - We are using this event to listen to new row adding functionality.
+         3) onSelectedRangesChanged
+           - We are using this event to listen when user selects rows for copy/delete operation.
+         4) onBeforeEditCell
+           - We are using this event to save the data before users modified them
+         5) onKeyDown
+           - We are using this event for Copy operation on grid
        */
-      render_grid: function(collection, columns) {
+
+      // This function is responsible to create and render the SlickGrid.
+      render_grid: function(collection, columns, is_editable) {
         var self = this;
 
+        // This will work as data store and holds all the
+        // inserted/updated/deleted data from grid
+        self.handler.data_store = {
+          updated: {},
+          added: {},
+          staged_rows: {},
+          deleted: {},
+          updated_index: {},
+          added_index: {}
+        };
+
+        // To store primary keys before they gets changed
+        self.handler.primary_keys_data = {};
+
         // Remove any existing grid first
-        if (self.grid) {
-            self.grid.remove();
+        if (self.handler.slickgrid) {
+            self.handler.slickgrid.destroy();
         }
 
-        // Remove any existing paginator
-        if (self.paginator) {
-            self.paginator.remove();
+        if(!_.isArray(collection) || !_.size(collection)) {
+          collection = [];
         }
 
-        // Remove any existing client side filter
-        if (self.clientSideFilter) {
-            self.clientSideFilter.remove();
-        }
+        var grid_columns = new Array(),
+          checkboxSelector;
 
-        // Create an array for client filter
-        var filter_array = new Array()
-        _.each(columns, function(c) {
-            filter_array.push(c.name);
-        });
-
-        // Create Collection of Backgrid columns
-        var columnsColl = new Backgrid.Columns(columns);
-        var $data_grid = self.$el.find('#datagrid');
-
-        var grid = self.grid = new Backgrid.Grid({
-            columns: columnsColl,
-            collection: collection,
-            className: "backgrid table-bordered",
-            row: SqlEditorCustomRow
-          }),
-          clientSideFilter = self.clientSideFilter = new Backgrid.Extension.ClientSideFilter({
-                 collection: collection,
-                 placeholder: _('Search'),
-                 // The model fields to search for matches
-                 fields: filter_array,
-                 // How long to wait after typing has stopped before searching can start
-                 wait: 150
+          checkboxSelector = new Slick.CheckboxSelectColumn({
+            cssClass: "slick-cell-checkboxsel"
           });
 
-        // Render the paginator if items_per_page is greater than zero.
-        if (self.items_per_page > 0) {
-          if ($data_grid.hasClass('has-no-footer'))
-            $data_grid.removeClass('has-no-footer');
+          grid_columns.push(checkboxSelector.getColumnDefinition());
 
-          // Render the grid
-          $data_grid.append(self.grid.render().$el);
+        _.each(columns, function(c) {
+            var options = {
+              id: c.name,
+              field: c.name,
+              name: c.label
+            };
 
-          var paginator = self.paginator = new Backgrid.Extension.Paginator({
-            goBackFirstOnSort: false,
-            collection: collection
-          })
+            // If grid is editable then add editor else make it readonly
+            if(c.cell == 'Json') {
+              options['editor'] = is_editable ? Slick.Editors.JsonText
+                                              : Slick.Editors.ReadOnlyJsonText;
+              options['formatter'] = Slick.Formatters.JsonString;
+            } else if(c.cell == 'number') {
+              options['editor'] = is_editable ? Slick.Editors.Text
+                                              : Slick.Editors.ReadOnlyText;
+              options['formatter'] = Slick.Formatters.Numbers;
+            } else if(c.cell == 'boolean') {
+              options['editor'] = is_editable ? Slick.Editors.Checkbox
+                                              : Slick.Editors.ReadOnlyCheckbox;
+              options['formatter'] = Slick.Formatters.Checkmark;
+            } else {
+              options['editor'] = is_editable ? Slick.Editors.pgText
+                                              : Slick.Editors.ReadOnlypgText;
+            }
 
-          // Render the paginator
-          self.$el.find('#datagrid-paginator').append(paginator.render().el);
+           grid_columns.push(options)
+        });
+
+        var grid_options = {
+          editable: true,
+          enableAddRow: is_editable,
+          enableCellNavigation: true,
+          enableColumnReorder: false,
+          asyncEditorLoading: false,
+          autoEdit: false
+        };
+
+        var $data_grid = self.$el.find('#datagrid');
+        // Calculate height based on panel size at runtime & set it
+        var grid_height = $($('#editor-panel').find('.wcFrame')[1]).height() - 35;
+        $data_grid.height(grid_height);
+
+        // Add our own custom primary key to keep track of changes
+        _.each(collection, function(row){
+          row['__temp_PK'] = epicRandomString(15);
+        });
+
+        // Add-on function which allow us to identify the faulty row after insert/update
+        // and apply css accordingly
+        collection.getItemMetadata = function(i) {
+          var res = {}, cssClass = 'normal_row';
+          if (_.has(self.handler, 'data_store')) {
+            if (i in self.handler.data_store.added_index) {
+              cssClass = 'new_row';
+              if (self.handler.data_store.added[self.handler.data_store.added_index[i]].err) {
+                cssClass += ' error';
+              }
+            } else if (i in self.handler.data_store.updated_index) {
+              cssClass = 'updated_row';
+              if (self.handler.data_store.updated[self.handler.data_store.updated_index[i]].err) {
+                cssClass += ' error';
+              }
+            }
+          }
+          return {'cssClasses': cssClass};
         }
-        else {
-          if (!$data_grid.hasClass('has-no-footer'))
-            $data_grid.addClass('has-no-footer');
 
-          // Render the grid
-          $data_grid.append(self.grid.render().$el);
+        var grid = new Slick.Grid($data_grid, collection, grid_columns, grid_options);
+        grid.registerPlugin( new Slick.AutoTooltips({ enableForHeaderCells: false }) );
+        grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+        grid.registerPlugin(checkboxSelector);
+
+        var editor_data = {
+          keys: self.handler.primary_keys,
+          vals: collection,
+          columns: columns,
+          grid: grid,
+          selection: grid.getSelectionModel(),
+          editor: self
+        };
+
+        self.handler.slickgrid = grid;
+
+        // Listener function to watch selected rows from grid
+        if (editor_data.selection) {
+           editor_data.selection.onSelectedRangesChanged.subscribe(function(e, args) {
+             var collection = this.grid.getData(),
+               _pk = _.keys(this.keys),
+               rows_for_stage = {}, selected_rows_list = [];
+               // Only if entire row(s) are selected via check box
+               if(_.has(this.selection, 'getSelectedRows')) {
+                 selected_rows_list = this.selection.getSelectedRows();
+               }
+
+              // If any row(s) selected ?
+              if(selected_rows_list.length) {
+                if(this.editor.handler.can_edit)
+                  // Enable delete rows button
+                  $("#btn-delete-row").prop('disabled', false);
+                // Enable copy rows button
+                $("#btn-copy-row").prop('disabled', false);
+                // Collect primary key data from collection as needed for stage row
+                _.each(selected_rows_list, function(row_index) {
+                  var row_data = collection[row_index], _selected = {};
+                  rows_for_stage[row_data.__temp_PK] = _.pick(row_data, _pk);
+                });
+              } else {
+                // Clear the object as no rows to delete
+                rows_for_stage = {};
+                // Disable delete/copy rows button
+                $("#btn-delete-row").prop('disabled', true);
+                $("#btn-copy-row").prop('disabled', true);
+              }
+
+             // Update main data store
+            this.editor.handler.data_store.staged_rows = rows_for_stage;
+           }.bind(editor_data));
         }
 
-        // Render the client side filter
-        self.$el.find('.pg-prop-btn-group').append(clientSideFilter.render().el);
 
-        var sizeAbleCol = new Backgrid.Extension.SizeAbleColumns({
-          collection: collection,
-          columns: columnsColl,
-          grid: self.grid
-        });
+        // Listener function which will be called before user updates existing cell
+        // This will be used to collect primary key for that row
+        grid.onBeforeEditCell.subscribe(function (e, args) {
+            var before_data = args.item;
+            if(before_data && '__temp_PK' in before_data) {
+              var _pk = before_data.__temp_PK,
+                _keys = self.handler.primary_keys,
+                current_pk = {}, each_pk_key = {};
 
-        $data_grid.find('thead').before(sizeAbleCol.render().el);
+              // If already have primary key data then no need to go ahead
+              if(_pk in self.handler.primary_keys_data) {
+                return;
+              }
 
-        // Add resize handlers
-        var sizeHandler = new Backgrid.Extension.SizeAbleColumnsHandlers({
-          sizeAbleColumns: sizeAbleCol,
-          grid: self.grid,
-          saveColumnWidth: true
-        });
-
-        // sizeHandler should render only when table grid loaded completely.
-        setTimeout(function() {
-          $data_grid.find('thead').before(sizeHandler.render().el);
-        }, 1000);
-
-        // Initialized table width 0 still not calculated
-        var table_width = 0;
-        // Listen to resize events
-        columnsColl.on('resize',
-          function(columnModel, newWidth, oldWidth, offset) {
-            var $grid_el = $data_grid.find('table'),
-                tbl_orig_width = $grid_el.width(),
-                offset = oldWidth - newWidth,
-                tbl_new_width = tbl_orig_width - offset;
-
-            if (table_width == 0) {
-              table_width = tbl_orig_width
-            }
-            // Table new width cannot be less than original width
-            if (tbl_new_width >= table_width) {
-              $($grid_el).css('width', tbl_new_width + 'px');
-            }
-            else {
-              // reset if calculated tbl_new_width is less than original
-              // table width
-              tbl_new_width = table_width;
-              $($grid_el).css('width', tbl_new_width + 'px');
+              // Fetch primary keys for the row before they gets modified
+              _.each(_keys, function(value, key) {
+                current_pk[key] = before_data[key];
+              });
+              // Place it in main variable for later use
+              self.handler.primary_keys_data[_pk] = current_pk
             }
         });
+
+        // Listener function for COPY/PASTE operation on grid
+        grid.onKeyDown.subscribe(function (e, args) {
+          var c = e.keyCode,
+            ctrlDown = e.ctrlKey||e.metaKey; // Mac support
+
+          //    (ctrlDown && c==67) return false // c
+          //    (ctrlDown && c==86) return false // v
+          //    (ctrlDown && c==88) return false // x
+
+
+          if (!ctrlDown && !(c==67 || c==86 || c==88)) {
+            return;  // Not a copy paste opration
+          }
+
+          var grid = args.grid, column_info, column_values, value,
+            cell = args.cell, row = args.row, selected_rows,
+            self = this.editor.handler;
+
+          // Copy operation (Only when if there is no row selected)
+          // When user press `Ctrl + c` on selected cell
+          if(ctrlDown && c==67) {
+            // May be single cell is selected
+            column_info = grid.getColumns()[cell]
+            // Fetch current row data from grid
+            column_values = grid.getDataItem(row, cell)
+            //  Get the value from cell
+            value = column_values[column_info.field] || '';
+            //Copy this value to Clipborad
+            if(value)
+              this.editor.handler.copyTextToClipboard(value);
+            // Go to cell again
+            grid.gotoCell(row, cell, false);
+          }
+
+        }.bind(editor_data));
+
+
+        // Listener function which will be called when user updates existing rows
+        grid.onCellChange.subscribe(function (e, args) {
+          // self.handler.data_store.updated will holds all the updated data
+          var changed_column = args.grid.getColumns()[args.cell].field, // Current filed name
+            updated_data = args.item[changed_column],                   // New value for current field
+            _pk = args.item.__temp_PK || null,                          // Unique key to identify row
+            column_data = {},
+            _type;
+
+           column_data[changed_column] = updated_data;
+
+          if(_pk) {
+            // Check if it is in newly added row by user?
+            if(_pk in self.handler.data_store.added) {
+              _.extend(
+                self.handler.data_store.added[_pk]['data'],
+                  column_data);
+              //Find type for current column
+              self.handler.data_store.added[_pk]['err'] = false
+              self.handler.data_store.added[_pk]['data_type'][changed_column] = _.where(this.columns, {name: changed_column})[0]['type'];
+            // Check if it is updated data from existing rows?
+            } else if(_pk in self.handler.data_store.updated) {
+              _.extend(
+                self.handler.data_store.updated[_pk], {
+                  'data': column_data,
+                  'err': false
+                }
+              );
+             //Find type for current column
+             self.handler.data_store.updated[_pk]['data_type'][changed_column] = _.where(this.columns, {name: changed_column})[0]['type'];
+            } else {
+              // First updated data for this primary key
+              self.handler.data_store.updated[_pk] = {
+                'err': false, 'data': column_data,
+                'primary_keys': self.handler.primary_keys_data[_pk]
+              };
+              self.handler.data_store.updated_index[args.row] = _pk;
+              // Find & add column data type for current changed column
+              var temp = {};
+              temp[changed_column] = _.where(this.columns, {name: changed_column})[0]['type'];
+              self.handler.data_store.updated[_pk]['data_type'] = temp;
+            }
+          }
+          // Enable save button
+          $("#btn-save").prop('disabled', false);
+        }.bind(editor_data));
+
+        // Listener function which will be called when user adds new rows
+        grid.onAddNewRow.subscribe(function (e, args) {
+          // self.handler.data_store.added will holds all the newly added rows/data
+          var _key = epicRandomString(10),
+            column = args.column,
+            item = args.item, data_length = this.grid.getDataLength();
+
+          if(item) {
+            item.__temp_PK = _key;
+          }
+          collection.push(item);
+          self.handler.data_store.added[_key] = {'err': false, 'data': item};
+          self.handler.data_store.added_index[data_length] = _key;
+          // Fetch data type & add it for the column
+          var temp = {};
+          temp[column.field] = _.where(this.columns, {name: column.field})[0]['type'];
+          self.handler.data_store.added[_key]['data_type'] =  temp;
+          grid.invalidateRows([collection.length - 1]);
+          grid.updateRowCount();
+          grid.render();
+          // Enable save button
+          $("#btn-save").prop('disabled', false);
+        }.bind(editor_data));
+
+        // Resize SlickGrid when window resize
+        $( window ).resize( function() {
+          self.grid_resize(grid);
+        });
+
+        // Resize SlickGrid when output Panel resize
+        self.data_output_panel.on(wcDocker.EVENT.RESIZE_ENDED, function() {
+          self.grid_resize(grid);
+        });
+
+        // Resize SlickGrid when output Panel gets focus
+        self.data_output_panel.on(wcDocker.EVENT.VISIBILITY_CHANGED, function() {
+          // Resize grid only if output panel is visible
+          if(self.data_output_panel.isVisible())
+            self.grid_resize(grid);
+        });
+      },
+
+      /* This function is responsible to render output grid */
+      grid_resize: function(grid) {
+        var h = $($('#editor-panel').find('.wcFrame')[1]).height() - 35;
+        $('#datagrid').css({'height':h+'px'});
+        grid.resizeCanvas();
       },
 
       /* This function is responsible to create and render the
@@ -687,12 +952,12 @@ define(
       },
 
       // Callback function for Add New Row button click.
-      on_add: function() {
+      on_delete: function() {
         var self = this;
 
         // Trigger the addrow signal to the SqlEditorController class
         self.handler.trigger(
-            'pgadmin-sqleditor:button:addrow',
+            'pgadmin-sqleditor:button:deleterow',
             self,
             self.handler
         );
@@ -893,21 +1158,49 @@ define(
 
       // Callback function for the clear button click.
       on_clear: function(ev) {
+        var self = this, sql;
         this._stopEventPropogation(ev);
         this._closeDropDown(ev);
 
-        this.query_tool_obj.setValue('');
+        // We will check for modified sql content
+        sql = self.query_tool_obj.getValue();
+        sql = sql.replace(/\s+/g, '');
+        // If there is nothing to save, clear it.
+        if (!sql.length) { self.query_tool_obj.setValue('');  return; }
+
+        alertify.confirm(
+          '{{ _('Unsaved changes') }}',
+          '{{ _('Are you sure you wish to discard the current changes?') }}',
+          function() {
+            // Do nothing as user do not want to save, just continue
+            self.query_tool_obj.setValue('');
+          },
+          function() {
+            return true;
+          }
+        ).set('labels', {ok:'Yes', cancel:'No'});
       },
 
       // Callback function for the clear history button click.
       on_clear_history: function(ev) {
+        var self = this;
         this._stopEventPropogation(ev);
         this._closeDropDown(ev);
+        // ask for confirmation only if anything to clear
+        if(!self.history_collection.length) { return; }
 
-        // Remove any existing grid first
-        if (this.history_grid) {
-            this.history_collection.reset();
-        }
+        alertify.confirm('{{ _('Clear history') }}',
+          '{{ _('Are you sure you wish to clear the history?') }}',
+          function() {
+            // Remove any existing grid first
+            if (self.history_grid) {
+              self.history_collection.reset();
+            }
+          },
+          function() {
+            return true;
+          }
+        ).set('labels', {ok:'Yes', cancel:'No'});
       },
 
       // Callback function for the auto commit button click.
@@ -1140,14 +1433,14 @@ define(
           // Listen on events come from SQLEditorView for the button clicked.
           self.on('pgadmin-sqleditor:button:load_file', self._load_file, self);
           self.on('pgadmin-sqleditor:button:save', self._save, self);
-          self.on('pgadmin-sqleditor:button:addrow', self._add, self);
+          self.on('pgadmin-sqleditor:button:deleterow', self._delete, self);
           self.on('pgadmin-sqleditor:button:show_filter', self._show_filter, self);
           self.on('pgadmin-sqleditor:button:include_filter', self._include_filter, self);
           self.on('pgadmin-sqleditor:button:exclude_filter', self._exclude_filter, self);
           self.on('pgadmin-sqleditor:button:remove_filter', self._remove_filter, self);
           self.on('pgadmin-sqleditor:button:apply_filter', self._apply_filter, self);
           self.on('pgadmin-sqleditor:button:copy_row', self._copy_row, self);
-          self.on('pgadmin-sqleditor:button:paste_row', self._paste_row_callback, self);
+          self.on('pgadmin-sqleditor:button:paste_row', self._paste_row, self);
           self.on('pgadmin-sqleditor:button:limit', self._set_limit, self);
           self.on('pgadmin-sqleditor:button:flash', self._refresh, self);
           self.on('pgadmin-sqleditor:button:cancel-query', self._cancel_query, self);
@@ -1179,8 +1472,35 @@ define(
           }
         },
 
-        // This function makes the ajax call to execute the sql query.
+        // This function checks if there is any dirty data in the grid before
+        // it executes the sql query
         _execute_data_query: function() {
+          var self = this;
+
+          // Check if the data grid has any changes before running query
+          if(_.has(self, 'data_store') &&
+                ( _.size(self.data_store.added) ||
+                _.size(self.data_store.updated) ||
+                _.size(self.data_store.deleted))
+            ) {
+                alertify.confirm('{{ _('Unsaved changes') }}',
+                  '{{ _('The data has been modified, but not saved. Are you sure you wish to discard the changes?') }}',
+                  function(){
+                    // Do nothing as user do not want to save, just continue
+                    self._run_query();
+                  },
+                  function(){
+                    // Stop, User wants to save
+                    return true;
+                  }
+                ).set('labels', {ok:'Yes', cancel:'No'});
+          } else {
+            self._run_query();
+          }
+        },
+
+        // This function makes the ajax call to execute the sql query.
+        _run_query: function() {
           var self = this;
           self.query_start_time = new Date();
           self.rows_affected = 0;
@@ -1368,13 +1688,6 @@ define(
           self.changedModels = [];
           $('.sql-editor-explain').empty();
 
-          // Stop listening to all the events
-          if (self.collection) {
-            self.collection.off('change', self.on_model_change, self);
-            self.collection.off('backgrid:selected', self.on_backgrid_selected, self);
-            self.collection.off('backgrid:editing', self.on_cell_editing, self);
-          }
-
           /* If object don't have primary keys then set the
            * can_edit flag to false.
            */
@@ -1394,16 +1707,12 @@ define(
             $("#btn-filter-dropdown").prop('disabled', false);
           }
 
-          /* If user can edit the data then we should enabled
-           * add row, copy row and paste row buttons.
-           */
-          if (self.can_edit) {
-            $("#btn-add-row").prop('disabled', false);
-          }
-          else {
+          // Initial settings for delete row, copy row and paste row buttons.
+          $("#btn-delete-row").prop('disabled', true);
+          if (!self.can_edit) {
             $("#btn-save").prop('disabled', true);
             $("#btn-file-menu-dropdown").prop('disabled', true);
-            $("#btn-add-row").prop('disabled', true);
+            $("#btn-delete-row").prop('disabled', true);
             $("#btn-copy-row").prop('disabled', true);
             $("#btn-paste-row").prop('disabled', true);
           }
@@ -1416,48 +1725,6 @@ define(
             '{{ _('Loading data from the database server and rendering...') }}',
             self
           );
-
-          /* Defining backbone's pageable collection if items per page
-           * is greater than zero else define backbone collection.
-           */
-          if (self.items_per_page > 0) {
-            self.collection = new (Backbone.PageableCollection.extend({
-              mode: "client",
-              state: {
-                pageSize: self.items_per_page,
-                order: -1
-              },
-              model: sqlEditorViewModel.extend({
-                primary_keys: self.primary_keys,
-
-                /* Change the idAttribute to random string
-                 * so that it won't clash with id column of
-                 * the table.
-                 */
-                idAttribute: epicRandomString(10)
-              })
-            }));
-          }
-          else {
-            self.collection = new (Backbone.Collection.extend({
-              model: sqlEditorViewModel.extend({
-                primary_keys: self.primary_keys,
-
-                /* Change the idAttribute to random string
-                 * so that it won't clash with id column of
-                 * the table.
-                 */
-                idAttribute: epicRandomString(10)
-              })
-            }));
-          }
-
-          // Listen on backgrid events
-          self.collection.on('change', self.on_model_change, self);
-          self.collection.on('backgrid:selected', self.on_backgrid_selected, self);
-          self.collection.on('backgrid:editing', self.on_cell_editing, self);
-          self.collection.on('backgrid:row:selected', self.on_row_selected, self);
-          self.collection.on('backgrid:row:deselected', self.on_row_deselected, self);
 
           // Show message in message and history tab in case of query tool
           self.total_time = self.get_query_run_time(self.query_start_time, self.query_end_time);
@@ -1484,12 +1751,10 @@ define(
               explain_data_array.push(explain_data);
               self.gridView.explain_panel.focus();
               pgExplain.DrawJSONPlan($('.sql-editor-explain'), data.result[0]['QUERY PLAN']);
-              self.collection.add(explain_data_array, {parse: true});
-              self.gridView.render_grid(self.collection, self.columns);
+              self.gridView.render_grid(explain_data_array, self.columns, self.can_edit);
           }
           else {
-            self.collection.add(data.result, {parse: true});
-            self.gridView.render_grid(self.collection, self.columns);
+            self.gridView.render_grid(data.result, self.columns, self.can_edit);
             self.gridView.data_output_panel.focus();
           }
 
@@ -1503,52 +1768,8 @@ define(
           var colinfo = data.colinfo,
               primary_keys = data.primary_keys,
               result = data.result,
-              self = this,
-              columns = [{
-                // name is a required parameter, but you don't really want one on a select all column
-                name: "",
-
-                /* Extend Backgrid.Extension.SelectRowCell to create
-                 * a custom checkbox where we change the icon when user
-                 * click on checkbox.
-                 */
-                cell: Backgrid.Extension.SelectRowCell.extend({
-                  render: function() {
-                    var self = this,
-                        id = _.uniqueId('sql_grid_deletable_');
-                    Backgrid.Extension.SelectRowCell.prototype.render.apply(this, arguments);
-
-                    // Find the input control and add sqleditor-checkbox class
-                    this.$el.find('input').attr('id', id).addClass(
-                        'sqleditor-checkbox'
-                        ).prop('checked', this.model.marked_for_deletion);
-
-                    // Append the label and add class to change the icon and color using css
-                    this.$el.append(
-                        $('<label>', {
-                            for: id, class: 'deletable'
-                        }).append($('<span>')));
-
-                    this.delegateEvents();
-                    return this;
-                  }
-                }),
-
-                // Backgrid.Extension.SelectAllHeaderCell lets you select all the row on a page
-                headerCell: "select-all"
-              }];
-
-          /* If user will not be able to edit data
-           * then no need to show 'select-all' column.
-           */
-          if (!self.can_edit) {
-            columns = [];
-            $('#datagrid').removeClass('has-select-all');
-          }
-          else {
-            if ($('#datagrid').hasClass('has-select-all') === false)
-                $('#datagrid').addClass('has-select-all');
-          }
+              columns = [],
+              self = this;
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:message',
@@ -1583,13 +1804,7 @@ define(
                   // To show column label and data type in multiline,
                   // The elements should be put inside the div.
                   // Create column label and type.
-                  var column_label = document.createElement('div'),
-                      label_text = document.createElement('div'),
-                      column_type = document.createElement('span'),
-                      col_label = '',
-                      col_type = '';
-                  label_text.innerText = c.display_name;
-
+                  var col_type = column_label = '';
                   var type = pg_types[c.type_code] ?
                                pg_types[c.type_code][0] :
                                // This is the case where user might
@@ -1603,85 +1818,45 @@ define(
                   else
                     col_type += ' [PK] ' + type;
 
-                  if (c.precision == null) {
-                    if (c.internal_size > 0)
-                      col_type += ' (' + c.internal_size + ')';
+                  if (c.precision && c.precision != 65535) {
+                    col_type += ' (' + c.precision;
+                    col_type += c.scale && c.scale != 65535 ?
+                                ',' + c.scale + ')':
+                                ')';
                   }
-                  else
-                    col_type += ' (' + c.precision + ',' + c.scale + ')';
 
-                  column_type.innerText = col_type;
-
-                  // Set values of column label and its type
-                  column_label.appendChild(label_text);
-                  column_label.appendChild(column_type);
+                  column_label = c.display_name + '<br>' + col_type;
 
                   // Identify cell type of column.
                   switch(type) {
-                    case "integer":
-                    case "bigint":
-                    case "smallint":
-                      col_cell = 'integer';
-                      break;
-                    case "boolean":
-                      col_cell = 'boolean';
-                      break;
-                    case "numeric":
-                    case "double precision":
-                    case "real":
-                        col_cell = Backgrid.NumberCell.extend({
-                          formatter: Backgrid.StringFormatter
-                        });
-                      break;
-                    case "date":
-                    case "reltime":
-                    case "abstime":
-                    case "timestamp without time zone":
-                    case "timestamp with time zone":
-                    case "time with time zone":
-                    case "time without time zone":
-                      col_cell = Backgrid.DatetimeCell.extend({
-                        formatter: Backgrid.StringFormatter,
-                      });
-                      break;
                     case "json":
                     case "json[]":
                     case "jsonb":
                     case "jsonb[]":
-                      col_cell = Backgrid.Extension.JSONBCell;
+                      col_cell = 'Json';
+                      break;
+                    case "smallint":
+                    case "integer":
+                    case "bigint":
+                    case "decimal":
+                    case "numeric":
+                    case "real":
+                    case "double precision":
+                      col_cell = 'number';
+                      break;
+                    case "boolean":
+                      col_cell = 'boolean';
                       break;
                     default:
                       col_cell = 'string';
                   }
 
                   var col = {
-                    name : c.name,
-                    label: column_label.innerHTML,
-                    cell: col_cell,
-                    can_edit: self.can_edit,
-                    editable: self.is_editable,
-                    resizeable: true,
-                    headerCell: Backgrid.HeaderCell.extend({
-                      render: function () {
-                        // Add support for HTML element in column title
-                        this.$el.empty();
-                        var column = this.column,
-                            sortable = Backgrid.callByNeed(column.sortable(), column, this.collection),
-                            label;
-                        if(sortable){
-                          label = $("<a>").append(column.get("label")).append("<b class='sort-caret'></b>");
-                        } else {
-                          var header_column = document.createElement('div');
-                          label = header_column.appendChild(column.get("label"));
-                        }
-
-                        this.$el.append(label);
-                        this.$el.addClass(column.get("name"));
-                        this.$el.addClass(column.get("direction"));
-                        this.delegateEvents();
-                        return this;
-                      }
-                    })
+                    'name': c.name,
+                    'label': column_label,
+                    'cell': col_cell,
+                    'can_edit': self.can_edit,
+                    'type': type
                   };
                   columns.push(col);
                 });
@@ -1705,16 +1880,15 @@ define(
 
           if (self.is_query_tool) {
             if (clear_grid) {
-              // Delete grid and paginator
-              if (self.gridView.grid) {
-                self.gridView.grid.remove();
+              // Delete grid
+              if (self.gridView.handler.slickgrid) {
+                self.gridView.handler.slickgrid.destroy();
+
               }
               // Misc cleaning
               self.columns = undefined;
               self.collection = undefined;
 
-              if (self.gridView.paginator)
-                self.gridView.paginator.remove();
               $('.sql-editor-message').text(msg);
             } else {
               $('.sql-editor-message').append(msg);
@@ -1760,172 +1934,84 @@ define(
 
         /* This function is used to check whether cell
          * is editable or not depending on primary keys
-         * and marked_for_deletion flag
+         * and staged_rows flag
          */
         is_editable: function(obj) {
           var self = this;
           if (obj instanceof Backbone.Collection)
             return false;
-          return (self.get('can_edit') && !obj.marked_for_deletion);
+          return (self.get('can_edit'));
         },
 
-        /* This is a callback function when there is any change
-         * in the model and stores the unique id (cid) to the changedModels
-         * array which will be used when Save button is clicked.
-         */
-        on_model_change: function(model) {
-          $("#btn-save").prop('disabled', false);
-          var self = this;
-          model.changed_data = true;
-          if (_.indexOf(self.changedModels, model.cid) == -1) {
-            self.changedModels.push(model.cid);
-          }
-          return;
-        },
+        // This function will delete selected row.
+        _delete: function() {
+          var self = this, deleted_keys = [],
+              dgrid = document.getElementById("datagrid"),
+              is_added = _.size(self.data_store.added),
+              is_updated = _.size(self.data_store.updated);
 
-        // This is a callback function when backgrid is selected
-        on_backgrid_selected: function (model, selected) {
-          var self = this,
-              item_idx = _.indexOf(self.changedModels, model.cid);
-
-          // If data can't be edited then no need to marked for deletion.
-          if (!self.can_edit)
-           return;
-
-          if (selected) {
-            /* Check whether it is a new row, not inserted
-             * yet to the database. If yes then remove the row
-             * immediately. If not then marked the row for deletion.
-             */
-            if ('grid_keys' in model) {
-              model.marked_for_deletion = true;
-
-              // Push the model if not already exist and if exists then update the flag
-              if (item_idx == -1)
-                self.changedModels.push(model.cid);
-
-            }
-            else {
-               // Pop the model from changed model list if already exist
-              if (item_idx != -1)
-                self.changedModels.splice(item_idx, 1);
-
-              self.collection.remove(model);
-            }
-          }
-          else {
-            if (item_idx != -1) {
-              model.marked_for_deletion = false;
-              /* In case of deselected we check whether data is updated
-               * for this model, if not updated then delete it from
-               * changed list.
-               */
-              if (!model.changed_data)
-                self.changedModels.splice(item_idx, 1);
-            }
-          }
-
-          // Trigger the mark for deletion event where SqlEditorCustomRow is listening
-          model.trigger('backgrid:row:mark:deletion', model);
-
-          // Enable/Disable Save button
-          if (self.changedModels.length > 0) {
-            $("#btn-save").prop('disabled', false);
-          } else {
-            $("#btn-save").prop('disabled', true);
-            $("#btn-file-menu-dropdown").prop('disabled', true);
-          }
-        },
-
-        /* This is a callback function when backgrid cell
-         * is selected we need this event for filter by selection
-         * or filter exclude selection.
-         */
-        on_cell_editing: function (model, column) {
-          var self = this;
-
-          self.cell_selected = true;
-          self.column_name = column.attributes.name;
-          self.column_value = model.attributes[self.column_name]
-        },
-
-        /* This is a callback function when backgrid row
-         * is selected. This function will change the color
-         * of the backgrid row and saved the selected model.
-         */
-        on_row_selected: function(row) {
-          var self = this;
-          if (self.selected_row && self.selected_row.cid != row.cid) {
-            self.selected_row.el.style.backgroundColor = '';
-          }
-          self.selected_row = row;
-          self.selected_model = row.model;
-
-          if (self.can_edit) {
-            $("#btn-copy-row").prop('disabled', false);
-          }
-        },
-
-        /* This is a callback function when backgrid row
-         * is deselected. This function will clear the background
-         * color and reset the selected model.
-         */
-        on_row_deselected: function(row) {
-          var self = this;
-          setTimeout(
-            function() {
-              if (self.selected_row.cid != row.cid) {
-                row.el.style.backgroundColor = '';
-                self.cell_selected = false;
-                self.selected_model = null;
+              // Remove newly added rows from staged rows as we don't want to send them on server
+              if(is_added) {
+                  _.each(self.data_store.added, function(val, key) {
+                    if(key in self.data_store.staged_rows) {
+                      // Remove the row from data store so that we do not send it on server
+                      deleted_keys.push(key);
+                      delete self.data_store.staged_rows[key];
+                      delete self.data_store.added[key]
+                    }
+                  });
               }
-            }, 200
-          );
-        },
 
-        // This function will add a new row to the backgrid.
-        _add: function() {
-          var self = this,
-              empty_model = new (self.collection.model),
-              dgrid = document.getElementById("datagrid");
-
-          // If items_per_page is zero then no pagination.
-          if (self.items_per_page === 0) {
-            self.collection.add(empty_model);
-            // scroll to the newly added row
-            dgrid.scrollTop = dgrid.scrollHeight;
-          }
-          else {
-            // If current page is not the last page then confirm from the user
-            if (self.collection.state.lastPage != null &&
-                self.collection.state.currentPage != self.collection.state.lastPage
-              ) {
-              alertify.confirm('{{ _('Add New Row') }}',
-                '{{ _('The result set display will move to the last page. Do you wish to continue?') }}',
-                function() {
-                  self.collection.getLastPage();
-                  self.collection.add(empty_model);
-                  // scroll to the newly added row
-                  dgrid.scrollTop = dgrid.scrollHeight;
-                },
-                function() {
-                  // Do nothing as user canceled the operation.
+              // If only newly rows to delete and no data is there to send on server
+              // then just re-render the grid
+              if(_.size(self.data_store.staged_rows) == 0) {
+                var grid = self.slickgrid, data = grid.getData(), idx = 0;
+                  if(deleted_keys.length){
+                    // Remove new rows from grid data using deleted keys
+                   data = _.reject(data, function(d){
+                     return (d && _.indexOf(deleted_keys, d.__temp_PK) > -1)
+                   });
+                  }
+                  grid.resetActiveCell();
+                  grid.setData(data, true);
+                  grid.setSelectedRows([]);
+                  grid.invalidate();
+                  // Nothing to copy or delete here
+                  $("#btn-delete-row").prop('disabled', true);
+                  $("#btn-copy-row").prop('disabled', true);
+                  if(_.size(self.data_store.added) || is_updated) {
+                    // Do not disable save button if there are
+                    // any other changes present in grid data
+                    $("#btn-save").prop('disabled', false);
+                  } else {
+                    $("#btn-save").prop('disabled', true);
+                  }
+                  alertify.success('{{ _('Row(s) deleted') }}');
+              } else {
+                // There are other data to needs to be updated on server
+                if(is_updated) {
+                  alertify.alert('{{ _('Operation failed') }}',
+                    '{{ _('There are unsaved changes in grid, Please save them first to avoid inconsistency in data') }}'
+                  );
+                  return;
                 }
-              ).set('labels', {ok:'Yes', cancel:'No'});
-            }
-            else {
-              self.collection.add(empty_model);
-              // scroll to the newly added row
-              dgrid.scrollTop = dgrid.scrollHeight;
+                alertify.confirm('{{ _('Delete Row(s)') }}',
+                  '{{ _('Are you sure you wish to delete selected row(s)?') }}',
+                  function() {
+                    $("#btn-delete-row").prop('disabled', true);
+                    $("#btn-copy-row").prop('disabled', true);
+                    // Change the state
+                    self.data_store.deleted = self.data_store.staged_rows;
+                    self.data_store.staged_rows = {};
+                    // Save the changes on server
+                    self._save();
+                  },
+                  function() {
+                    // Do nothing as user canceled the operation.
+                  }
+                ).set('labels', {ok:'Yes', cancel:'No'});
+              }
 
-              /* If no of items on the page exceeds the page size limit then
-               * advanced to the next page.
-               */
-              var current_page = self.collection.getPage(self.collection.state.currentPage);
-              if (current_page.length >= current_page.state.pageSize)
-                self.collection.getLastPage();
-            }
-          }
         },
 
         /* This function will fetch the list of changed models and make
@@ -1959,78 +2045,86 @@ define(
           }
           $("#btn-save").prop('disabled', true);
           $("#btn-file-menu-dropdown").prop('disabled', true);
-          if (self.changedModels.length == 0)
-            return;
 
-          for (var i = 0; i < self.changedModels.length; i++) {
-            if (self.collection) {
-              var model = self.collection.get(self.changedModels[i]);
-              /* Iterate through primary keys and check the key
-               * is not null. If it is null then raise an error
-               * and return from the function.
-               */
-              _.each(self.primary_keys, function (value, key) {
-                if (model.attributes[key] === null ||
-                    model.attributes[key] === undefined) {
-                 alertify.alert(
-                    'Save Error',
-                    '{{ _('Primary key columns cannot be null.') }}'
-                 );
-                 save_data = false;
+          var is_added = _.size(self.data_store.added),
+            is_updated = _.size(self.data_store.updated),
+            is_deleted = _.size(self.data_store.deleted),
+            is_primary_error = false;
 
-                 return;
-                }
-              });
-
-              if (save_data)
-                data.push(model.toJSON(true, false));
-            }
+          if( !is_added && !is_updated && !is_deleted ) {
+                return;  // Nothing to save here
           }
 
           if (save_data) {
-
             // Make ajax call to save the data
             $.ajax({
               url: "{{ url_for('sqleditor.index') }}" + "save/" + self.transId,
               method: 'POST',
               async: false,
               contentType: "application/json",
-              data: JSON.stringify(data),
+              data: JSON.stringify(self.data_store),
               success: function(res) {
+                var grid = self.slickgrid,
+                  data = grid.getData();;
                 if (res.data.status) {
-                  // Update the primary keys if changed in the model
-                  for (var i = 0; i < self.changedModels.length; i++) {
-                    if (self.collection) {
-                      var model = self.collection.get(self.changedModels[i]);
-
-                      /* if model is marked for deletion the destroy
-                       * the model else update the primary keys if changed.
-                       */
-                      if (model.marked_for_deletion)
-                        model.destroy();
-                      else
-                        model.update_keys();
+                    // Remove deleted rows from client as well
+                    if(is_deleted) {
+                      var rows = grid.getSelectedRows();
+                      // Reverse the deletion from array
+                      // so that when we remove it does not affect index
+                      rows = rows.sort().reverse();
+                      rows.forEach(function(idx) {
+                        data.splice(idx, 1);
+                      });
+                      grid.setData(data, true);
+                      grid.setSelectedRows([]);
                     }
-                  }
 
-                  self.changedModels.length = 0;
-                }
-                else {
+                    // Reset data store
+                    self.data_store = {
+                      'added': {},
+                      'updated': {},
+                      'deleted': {},
+                      'added_index': {},
+                      'updated_index': {}
+                    }
+
+                    // Reset old primary key data now
+                    self.primary_keys_data = {};
+
+                    // Clear msgs after successful save
+                    $('.sql-editor-message').html('');
+                } else {
+                  // Something went wrong while saving data on the db server
                   self.trigger('pgadmin-sqleditor:loading-icon:hide');
                   $("#btn-flash").prop('disabled', false);
                   $('.sql-editor-message').text(res.data.result);
-                  self.gridView.messages_panel.focus();
+                  var err_msg = S('{{ _('%s.') }}').sprintf(res.data.result).value();
+                  alertify.notify(err_msg, 'error', 20);
+
+                  // To highlight the row at fault
+                  if(_.has(res.data, '_rowid') &&
+                      (!_.isUndefined(res.data._rowid)|| !_.isNull(res.data._rowid))) {
+                    var _row_index = self._find_rowindex(res.data._rowid);
+                    if(_row_index in self.data_store.added_index) {
+                     self.data_store.added[self.data_store.added_index[_row_index]].err = true
+                    } else if (_row_index in self.data_store.updated_index) {
+                     self.data_store.updated[self.data_store.updated_index[_row_index]].err = true
+                    }
+                  }
+                  grid.gotoCell(_row_index, 1);
                 }
 
                 // Update the sql results in history tab
                 _.each(res.data.query_result, function(r) {
-
                   self.gridView.history_collection.add(
                     {'status' : r.status, 'start_time': self.query_start_time.toString(),
                     'query': r.sql, 'row_affected': r.rows_affected,
                     'total_time': self.total_time, 'message': r.result
                   });
                 });
+
+                grid.invalidate();
               },
               error: function(e) {
                 if (e.readyState == 0) {
@@ -2051,6 +2145,38 @@ define(
           }
         },
 
+        // Find index of row at fault from grid data
+        _find_rowindex: function(rowid) {
+          var self = this;
+          var grid = self.slickgrid,
+            data = grid.getData(), _rowid, count = 0, _idx = -1;
+          // If _rowid is object then it's update/delete operation
+          if(_.isObject(rowid)) {
+              _rowid = rowid;
+          } else if (_.isString(rowid)) { // Insert opration
+            _rowid = { '__temp_PK': rowid };
+          } else {
+            // Something is wrong with unique id
+            return _idx;
+          }
+
+          _.find(data, function(d) {
+            // search for unique id in row data if found than its the row
+            // which error out on server side
+            var tmp = [];  //_.findWhere needs array of object to work
+            tmp.push(d);
+            if(_.findWhere(tmp, _rowid)) {
+              _idx = count;
+              // Now exit the loop by returning true
+              return true;
+            }
+              count++;
+          });
+
+          // Not able to find in grid Data
+          return _idx;
+        },
+
         // Save as
         _save_as: function() {
           return this._save(true);
@@ -2064,8 +2190,30 @@ define(
             }
           });
         },
+
         // load select file dialog
         _load_file: function() {
+          var self = this;
+          // We will check for modified sql content
+          sql = self.gridView.query_tool_obj.getValue()
+          sql = sql.replace(/\s+/g, '');
+          // If there is nothing to save, open file manager.
+          if (!sql.length) { self._open_select_file_manager(); return; }
+
+          alertify.confirm('{{ _('Unsaved changes') }}',
+            '{{ _('Are you sure you wish to discard the current changes?') }}',
+            function() {
+              // User do not want to save, just continue
+              self._open_select_file_manager();
+           },
+            function() {
+              return true;
+            }
+          ).set('labels', {ok:'Yes', cancel:'No'});
+        },
+
+        // Open FileManager
+        _open_select_file_manager: function() {
           var params = {
             'supported_types': ["sql"], // file types allowed
             'dialog_type': 'select_file' // open select file dialog
@@ -2210,14 +2358,24 @@ define(
         // This function will include the filter by selection.
         _include_filter: function () {
           var self = this,
-              data = {};
+              data = {}, grid, active_column, column_info, _values;
+
+         grid = self.slickgrid;
+         active_column = grid.getActiveCell();
 
           // If no cell is selected then return from the function
-          if (self.cell_selected === false)
+          if (_.isNull(active_column) || _.isUndefined(active_column))
             return;
 
-          // Add column name and their value to data
-          data[self.column_name] = self.column_value;
+          column_info = grid.getColumns()[active_column.cell]
+
+          // Fetch current row data from grid
+          _values = grid.getDataItem(active_column.row, active_column.cell)
+          if (_.isNull(_values) || _.isUndefined(_values))
+            return;
+
+          // Add column name and it's' value to data
+          data[column_info.field] = _values[column_info.field] || '';
 
           // Make ajax call to include the filter by selection
           $.ajax({
@@ -2255,15 +2413,25 @@ define(
 
         // This function will exclude the filter by selection.
         _exclude_filter: function () {
-          var self = this,
-              data = {};
+           var self = this,
+              data = {}, grid, active_column, column_info, _values;
+
+         grid = self.slickgrid;
+         active_column = grid.getActiveCell();
 
           // If no cell is selected then return from the function
-          if (self.cell_selected === false)
+          if (_.isNull(active_column) || _.isUndefined(active_column))
             return;
 
-          // Add column name and their value to data
-          data[self.column_name] = self.column_value;
+          column_info = grid.getColumns()[active_column.cell]
+
+          // Fetch current row data from grid
+          _values = grid.getDataItem(active_column.row, active_column.cell)
+          if (_.isNull(_values) || _.isUndefined(_values))
+            return;
+
+          // Add column name and it's' value to data
+          data[column_info.field] = _values[column_info.field] || '';
 
           // Make ajax call to exclude the filter by selection.
           $.ajax({
@@ -2376,91 +2544,154 @@ define(
           });
         },
 
+        // This function will copy the selected rows(s) in Clipboard.
+        copyTextToClipboard: function (text) {
+          var textArea = document.createElement("textarea");
+
+          //
+          // *** This styling is an extra step which is likely not required. ***
+          //
+          // Why is it here? To ensure:
+          // 1. the element is able to have focus and selection.
+          // 2. if element was to flash render it has minimal visual impact.
+          // 3. less flakyness with selection and copying which **might** occur if
+          //    the textarea element is not visible.
+          //
+          // The likelihood is the element won't even render, not even a flash,
+          // so some of these are just precautions. However in IE the element
+          // is visible whilst the popup box asking the user for permission for
+          // the web page to copy to the clipboard.
+          //
+
+          // Place in top-left corner of screen regardless of scroll position.
+          textArea.style.position = 'fixed';
+          textArea.style.top = 0;
+          textArea.style.left = 0;
+
+          // Ensure it has a small width and height. Setting to 1px / 1em
+          // doesn't work as this gives a negative w/h on some browsers.
+          textArea.style.width = '2em';
+          textArea.style.height = '2em';
+
+          // We don't need padding, reducing the size if it does flash render.
+          textArea.style.padding = 0;
+
+          // Clean up any borders.
+          textArea.style.border = 'none';
+          textArea.style.outline = 'none';
+          textArea.style.boxShadow = 'none';
+
+          // Avoid flash of white box if rendered for any reason.
+          textArea.style.background = 'transparent';
+
+
+          textArea.value = text;
+
+          document.body.appendChild(textArea);
+
+          textArea.select();
+
+          try {
+            document.execCommand('copy');
+          } catch (err) {
+            alertify.alert('{{ _('Error') }}',
+                           '{{ _('Oops, unable to copy to clipboard') }}');
+          }
+
+          document.body.removeChild(textArea);
+        },
+
         // This function will copy the selected row.
         _copy_row: function() {
-          var self = this;
+          var self = this, grid, data, rows, copied_text = '';
 
-          $("#btn-paste-row").prop('disabled', false);
+          self.copied_rows = [];
 
-          // Save the selected model as copied model for future use
-          if ('selected_model' in self)
-            self.copied_model = self.selected_model;
+          // Disable copy button
+          $("#btn-copy-row").prop('disabled', true);
+          // Enable paste button
+          if(self.can_edit) {
+            $("#btn-paste-row").prop('disabled', false);
+          }
+
+          grid = self.slickgrid;
+          data = grid.getData();
+          rows = grid.getSelectedRows();
+          // Iterate over all the selected rows & fetch data
+          for (var i = 0; i < rows.length; i += 1) {
+            var idx = rows[i],
+              _rowData = data[idx],
+              _values = [];
+            self.copied_rows.push(_rowData);
+            // Convert it as CSV for clipboard
+            for (var j = 0; j < self.columns.length; j += 1) {
+               var val = _rowData[self.columns[j].name];
+               if(val && _.isObject(val))
+                 val = "'" + JSON.stringify(val) + "'";
+               else if(val && typeof val != "number")
+                 val = "'" + val.toString() + "'";
+               else if (_.isNull(val) || _.isUndefined(val))
+                 val = '';
+                _values.push(val);
+            }
+            // Append to main text string
+            if(_values.length > 0)
+              copied_text += _values.toString() + "\n";
+          }
+          // If there is something to set into clipboard
+          if(copied_text)
+            self.copyTextToClipboard(copied_text);
         },
 
         // This function will paste the selected row.
         _paste_row: function() {
-          var self = this;
-              new_model = null;
-          if ('copied_model' in self && self.copied_model != null) {
-            $("#btn-save").prop('disabled', false);
-            $("#btn-file-menu-dropdown").prop('disabled', false);
+          var self = this, col_info = {},
+            grid = self.slickgrid,
+            data = grid.getData();
+            // Deep copy
+            var copied_rows = $.extend(true, [], self.copied_rows);
 
-            // fullCollection is part of pageable collection
-            var coll = self.collection.fullCollection === undefined ? self.collection : self.collection.fullCollection;
+            // If there are rows to paste?
+            if(copied_rows.length > 0) {
+              // Enable save button so that user can
+              // save newly pasted rows on server
+              $("#btn-save").prop('disabled', false);
+              // Generate Unique key for each pasted row(s)
+              _.each(copied_rows, function(row) {
+                  var _pk = epicRandomString(8);
+                  row.__temp_PK = _pk;
+              });
+              data = data.concat(copied_rows);
+              grid.setData(data, true);
+              grid.updateRowCount();
+              grid.setSelectedRows([]);
+              grid.invalidateAllRows();
+              grid.render();
 
-            /* Find the model to be copied in the collection
-             * if found then we need to clone the object, so
-             * that it's cid/id gets changed.
-             */
-            if (coll.get(self.copied_model.cid) === undefined)
-              new_model = self.copied_model;
-            else
-              new_model = self.copied_model.clone();
+              // Fetch column name & its data type
+              _.each(self.columns, function(c) {
+                col_info[c.name] = c.type;
+              });
 
-            /* Add the model to the array of changedModels which
-             * will be used when save button is clicked.
-             */
-            if (_.indexOf(self.changedModels, new_model.cid) == -1) {
-                self.changedModels.push(new_model.cid);
+              // insert these data in data_store as well to save them on server
+              for (var j = 0; j < copied_rows.length; j += 1) {
+                self.data_store.added[copied_rows[j].__temp_PK] = {
+                  'data_type': {},
+                  'data': {}
+                };
+                self.data_store.added[copied_rows[j].__temp_PK]['data_type'] = col_info;
+                _.each(copied_rows[j], function(val, key) {
+                  // If value is array then convert it to string
+                  if(_.isArray(val)) {
+                    copied_rows[j][key] = val.toString();
+                  // If value is object then stringify it
+                  } else if(_.isObject(val)) {
+                    copied_rows[j][key] = JSON.stringify(val);
+                  }
+                });
+                self.data_store.added[copied_rows[j].__temp_PK]['data'] = copied_rows[j];
+              }
             }
-
-            // Add the copied model to collection
-            self.collection.add(new_model);
-          }
-        },
-
-        // This function is callback function for paste row.
-        _paste_row_callback: function() {
-          var self = this,
-              dgrid = document.getElementById("datagrid");
-
-          // If items_per_page is zero then no pagination.
-          if (self.items_per_page == 0) {
-            self._paste_row();
-            // scroll to the newly added row
-            dgrid.scrollTop = dgrid.scrollHeight;
-          }
-          else {
-            // If current page is not the last page then confirm from the user
-            if (self.collection.state.lastPage != null &&
-                self.collection.state.currentPage != self.collection.state.lastPage
-              ) {
-              alertify.confirm('{{ _('Paste Row') }}',
-                '{{ _('The result set display will move to the last page. Do you wish to continue?') }}',
-                function() {
-                  self.collection.getLastPage();
-                  self._paste_row();
-                  // scroll to the newly added row
-                  dgrid.scrollTop = dgrid.scrollHeight;
-                },
-                function() {
-                  // Do nothing as user canceled the operation.
-                }
-              ).set('labels', {ok:'Yes', cancel:'No'});
-            }
-            else {
-              self._paste_row();
-              // scroll to the newly added row
-              dgrid.scrollTop = dgrid.scrollHeight;
-
-              /* If no of items on the page exceeds the page size limit then
-               * advanced to the next page.
-               */
-              var current_page = self.collection.getPage(self.collection.state.currentPage);
-              if (current_page.length >= current_page.state.pageSize)
-                self.collection.getLastPage();
-            }
-          }
         },
 
         // This function will set the limit for SQL query

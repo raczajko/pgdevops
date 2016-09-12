@@ -18,10 +18,10 @@ from flask import render_template, make_response, request, jsonify
 from flask_babel import gettext
 from pgadmin.browser.collection import CollectionNodeModule
 from pgadmin.browser.utils import PGChildNodeView
-from pgadmin.utils.ajax import make_json_response, \
-    make_response as ajax_response, internal_server_error
-from pgadmin.utils.ajax import precondition_required
+from pgadmin.utils.ajax import make_json_response, internal_server_error, \
+    make_response as ajax_response
 from pgadmin.utils.driver import get_driver
+from pgadmin.utils.ajax import gone
 
 from config import PG_DEFAULT_DRIVER
 
@@ -256,22 +256,13 @@ class DomainConstraintView(PGChildNodeView):
             self.conn = self.manager.connection(did=kwargs['did'])
             self.qtIdent = driver.qtIdent
 
-            # If DB not connected then return error to browser
-            if not self.conn.connected():
-                return precondition_required(
-                    gettext("Connection to the server has been lost!")
-                )
-
-            ver = self.manager.version
-
-            # we will set template path for sql scripts
-            if ver >= 90200:
+            # Set the template path for the SQL scripts
+            if self.manager.version >= 90200:
                 self.template_path = 'domain_constraints/sql/9.2_plus'
-            elif ver >= 90100:
+            else:
                 self.template_path = 'domain_constraints/sql/9.1_plus'
 
             return f(*args, **kwargs)
-
         return wrap
 
     @check_precondition
@@ -340,6 +331,47 @@ class DomainConstraintView(PGChildNodeView):
         )
 
     @check_precondition
+    def node(self, gid, sid, did, scid, doid, coid):
+        """
+        Returns all the Domain Constraints.
+
+        Args:
+            gid: Server Group Id
+            sid: Server Id
+            did: Database Id
+            scid: Schema Id
+            doid: Domain Id
+            coid: Domain Constraint Id
+        """
+        res = []
+        SQL = render_template("/".join([self.template_path,
+                                        'properties.sql']),
+                              coid=coid)
+        status, rset = self.conn.execute_2darray(SQL)
+
+        if not status:
+            return internal_server_error(errormsg=rset)
+
+        for row in rset['rows']:
+            if 'convalidated' not in row:
+                icon = 'icon-domain_constraints'
+            elif row['convalidated']:
+                icon = 'icon-domain_constraints'
+            else:
+                icon = 'icon-domain_constraints-bad'
+            return make_json_response(
+                data=self.blueprint.generate_browser_node(
+                    row['oid'],
+                    doid,
+                    row['name'],
+                    icon=icon
+                ),
+                status=200
+            )
+
+        return gone(gettext("Could not find the specified domain constraint."))
+
+    @check_precondition
     def properties(self, gid, sid, did, scid, doid, coid):
         """
         Returns the Domain Constraints property.
@@ -359,6 +391,12 @@ class DomainConstraintView(PGChildNodeView):
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+
+        if len(res['rows']) == 0:
+            return gone(gettext(
+                "Could not find the specified domain constraint."
+                )
+            )
 
         data = res['rows'][0]
         return ajax_response(

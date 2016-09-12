@@ -19,10 +19,8 @@ from logging import *
 ##########################################################################
 
 # Name of the application to display in the UI
-APP_NAME = 'BigSQL Dev'
+APP_NAME = 'pgAdmin 4'
 APP_ICON = 'icon-postgres-alt'
-
-
 
 ##########################################################################
 # Application settings
@@ -38,12 +36,12 @@ APP_REVISION = 0
 
 # Application version suffix, e.g. 'beta1', 'dev'. Usually an empty string
 # for GA releases.
-APP_SUFFIX = 'beta4'
+APP_SUFFIX = 'rc1'
 
 # Numeric application version for upgrade checks. Should be in the format:
 # [X]XYYZZ, where X is the release version, Y is the revision, with a leading
 # zero if needed, and Z represents the suffix, with a leading zero if needed
-APP_VERSION_INT = 10004
+APP_VERSION_INT = 10005
 
 # DO NOT CHANGE!
 # The application version string, constructed from the components
@@ -139,6 +137,18 @@ DEFAULT_SERVER_PORT = 5050
 # Enable CSRF protection?
 CSRF_ENABLED = True
 
+# Secret key for signing CSRF data. Override this in config_local.py if
+# running on a web server
+CSRF_SESSION_KEY = 'SuperSecret1'
+
+# Secret key for signing cookies. Override this in config_local.py if
+# running on a web server
+SECRET_KEY = 'SuperSecret2'
+
+# Salt used when hashing passwords. Override this in config_local.py if
+# running on a web server
+SECURITY_PASSWORD_SALT = 'SuperSecret3'
+
 # Hashing algorithm used for password storage
 SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
 
@@ -201,7 +211,7 @@ SESSION_DB_PATH = os.path.join(
     'sessions'
 )
 
-SESSION_COOKIE_NAME = 'bam_session'
+SESSION_COOKIE_NAME = 'pga4_session'
 
 ##########################################################################
 # Mail server settings
@@ -267,7 +277,6 @@ THREADED_MODE = True
 ##########################################################################
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-SECURITY_LOGIN_URL= "/auth"
 ##########################################################################
 # Local config settings
 ##########################################################################

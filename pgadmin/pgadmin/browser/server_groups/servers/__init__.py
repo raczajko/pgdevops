@@ -8,7 +8,6 @@
 ##########################################################################
 
 import simplejson as json
-import traceback
 
 import pgadmin.browser.server_groups as sg
 from flask import render_template, request, make_response, jsonify, \
@@ -269,6 +268,12 @@ class ServerNode(PGChildNodeView):
                     wal_pause=wal_paused
                 )
             )
+
+        if not len(res):
+            return gone(errormsg=gettext(
+                'The specified server group with id# {0} could not be found.'
+                ))
+
         return make_json_response(result=res)
 
     def node(self, gid, sid):
@@ -283,7 +288,7 @@ class ServerNode(PGChildNodeView):
                 success=0,
                 errormsg=gettext(
                     gettext(
-                        "Couldn't find the server with id# %s!"
+                        "Couldn't find the server with id# {0}!"
                     ).format(sid)
                 )
             )
@@ -337,6 +342,7 @@ class ServerNode(PGChildNodeView):
         # TODO:: A server, which is connected, can not be deleted
         if servers is None:
             return make_json_response(
+                status=410,
                 success=0,
                 errormsg=gettext(
                     'The specified server could not be found.\n'
@@ -355,14 +361,8 @@ class ServerNode(PGChildNodeView):
                     success=0,
                     errormsg=e.message)
 
-        try:
-            info = traceback.format_exc()
-        except Exception as e:
-            current_app.logger.exception(e)
-            info = str(e)
-
         return make_json_response(success=1,
-                                  info=info)
+                                  info=gettext("Server deleted"))
 
     def update(self, gid, sid):
         """Update the server settings"""
@@ -371,6 +371,7 @@ class ServerNode(PGChildNodeView):
 
         if server is None:
             return make_json_response(
+                status=410,
                 success=0,
                 errormsg=gettext("Could not find the required server.")
             )
@@ -446,9 +447,8 @@ class ServerNode(PGChildNodeView):
         if not conn.connected():
             manager.update(server)
 
-        return make_json_response(
-            success=1,
-            data=self.blueprint.generate_browser_node(
+        return jsonify(
+            node=self.blueprint.generate_browser_node(
                 "%d" % (server.id), server.servergroup_id,
                 server.name,
                 "icon-server-not-connected" if not connected else
@@ -509,6 +509,7 @@ class ServerNode(PGChildNodeView):
 
         if server is None:
             return make_json_response(
+                status=410,
                 success=0,
                 errormsg=gettext("Could not find the required server.")
             )
@@ -719,8 +720,16 @@ class ServerNode(PGChildNodeView):
         from pgadmin.utils.driver import get_driver
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(sid)
         conn = manager.connection()
+        res = conn.connected()
 
-        return make_json_response(data={'connected': conn.connected()})
+        if res:
+            from pgadmin.utils.exception import ConnectionLost
+            try:
+                conn.execute_scalar('SELECT 1')
+            except ConnectionLost:
+                res = False
+
+        return make_json_response(data={'connected': res})
 
     def connect(self, gid, sid):
         """
@@ -759,8 +768,14 @@ class ServerNode(PGChildNodeView):
         password = None
         save_password = False
 
+        # Connect the Server
+        from pgadmin.utils.driver import get_driver
+        manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(sid)
+        conn = manager.connection()
+
         if 'password' not in data:
-            if server.password is None:
+            conn_passwd = getattr(conn, 'password', None)
+            if conn_passwd is None and server.password is None:
                 # Return the password template in case password is not
                 # provided, or password has not been saved earlier.
                 return make_json_response(
@@ -779,19 +794,15 @@ class ServerNode(PGChildNodeView):
                 data['save_password'] if password and \
                                          'save_password' in data else False
 
-        # Encrypt the password before saving with user's login password key.
-        try:
-            password = encrypt(password, user.password) \
-                if password is not None else server.password
-        except Exception as e:
-            current_app.logger.exception(e)
-            return internal_server_error(errormsg=e.message)
+            # Encrypt the password before saving with user's login password key.
+            try:
+                password = encrypt(password, user.password) \
+                    if password is not None else server.password
+            except Exception as e:
+                current_app.logger.exception(e)
+                return internal_server_error(errormsg=e.message)
 
-        # Connect the Server
-        from pgadmin.utils.driver import get_driver
-        manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(sid)
-        conn = manager.connection()
-
+        status = True
         try:
             status, errmsg = conn.connect(
                 password=password,
@@ -799,13 +810,18 @@ class ServerNode(PGChildNodeView):
             )
         except Exception as e:
             current_app.logger.exception(e)
-            # TODO::
-            # Ask the password again (if existing password couldn't be
-            # descrypted)
-            if e.message:
-                return internal_server_error(errormsg=e.message)
-            else:
-                return internal_server_error(errormsg=str(e))
+
+            return make_json_response(
+                success=0,
+                status=401,
+                result=render_template(
+                    'servers/password.html',
+                    server_label=server.name,
+                    username=server.username,
+                    errmsg=getattr(e, 'message', str(e)),
+                    _=gettext
+                )
+            )
 
         if not status:
             current_app.logger.error(

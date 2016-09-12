@@ -17,12 +17,12 @@ from flask import render_template, request, jsonify
 from flask_babel import gettext
 from pgadmin.browser.collection import CollectionNodeModule
 from pgadmin.browser.utils import PGChildNodeView
-from pgadmin.utils.ajax import make_json_response, \
-    make_response as ajax_response, internal_server_error
-from pgadmin.utils.ajax import precondition_required
+from pgadmin.utils.ajax import make_json_response, internal_server_error, \
+    make_response as ajax_response
 from pgadmin.utils.driver import get_driver
 
 from config import PG_DEFAULT_DRIVER
+from pgadmin.utils.ajax import gone
 
 
 class IndexesModule(CollectionNodeModule):
@@ -69,13 +69,6 @@ class IndexesModule(CollectionNodeModule):
         """
         if super(IndexesModule, self).BackendSupported(manager, **kwargs):
             conn = manager.connection(did=kwargs['did'])
-            # If DB is not connected then return error to browser
-            if not conn.connected():
-                return precondition_required(
-                    gettext(
-                        "Connection to the server has been lost!"
-                    )
-                )
 
             if 'vid' not in kwargs:
                 return True
@@ -228,16 +221,11 @@ class IndexesView(PGChildNodeView):
                 kwargs['sid']
             )
             self.conn = self.manager.connection(did=kwargs['did'])
-            # If DB not connected then return error to browser
-            if not self.conn.connected():
-                return precondition_required(
-                    gettext(
-                        "Connection to the server has been lost!"
-                    )
-                )
-
             # We need datlastsysoid to check if current index is system index
-            self.datlastsysoid = self.manager.db_info[kwargs['did']]['datlastsysoid']
+            self.datlastsysoid = self.manager.db_info[
+                kwargs['did']
+            ]['datlastsysoid'] if self.manager.db_info is not None and \
+                kwargs['did'] in self.manager.db_info else 0
 
             # we will set template path for sql scripts
             self.template_path = 'index/sql/9.1_plus'
@@ -383,6 +371,43 @@ class IndexesView(PGChildNodeView):
         )
 
     @check_precondition
+    def node(self, gid, sid, did, scid, tid, idx):
+        """
+        This function will used to create all the child node within that collection.
+        Here it will create all the schema node.
+
+        Args:
+            gid: Server Group ID
+            sid: Server ID
+            did: Database ID
+            scid: Schema ID
+            tid: Table ID
+
+        Returns:
+            JSON of available schema child nodes
+        """
+        SQL = render_template("/".join([self.template_path,
+                                        'nodes.sql']), idx=idx)
+        status, rset = self.conn.execute_2darray(SQL)
+        if not status:
+            return internal_server_error(errormsg=rset)
+
+        if len(rset['rows']) == 0:
+            return gone(gettext("""Could not find the index in the table."""))
+
+        res = self.blueprint.generate_browser_node(
+                rset['rows'][0]['oid'],
+                tid,
+                rset['rows'][0]['name'],
+                icon="icon-index"
+            )
+
+        return make_json_response(
+            data=res,
+            status=200
+        )
+
+    @check_precondition
     def nodes(self, gid, sid, did, scid, tid):
         """
         This function will used to create all the child node within that collection.
@@ -440,7 +465,6 @@ class IndexesView(PGChildNodeView):
         # 'options' we need true/false to render switch ASC(false)/DESC(true)
         columns = []
         cols = []
-        cnt = 1
         for row in rset['rows']:
             # We need all data as collection for ColumnsModel
             cols_data = {
@@ -497,6 +521,9 @@ class IndexesView(PGChildNodeView):
 
         if not status:
             return internal_server_error(errormsg=res)
+
+        if len(res['rows']) == 0:
+            return gone(gettext("""Could not find the index in the table."""))
 
         # Making copy of output for future use
         data = dict(res['rows'][0])
@@ -689,32 +716,20 @@ class IndexesView(PGChildNodeView):
         data['schema'] = self.schema
         data['table'] = self.table
         try:
-            SQL = self.get_sql(scid, tid, idx, data)
-            if SQL and SQL.strip('\n') and SQL.strip(' '):
-                status, res = self.conn.execute_scalar(SQL)
-                if not status:
-                    return internal_server_error(errormsg=res)
+            SQL, name = self.get_sql(scid, tid, idx, data)
+            SQL = SQL.strip('\n').strip(' ')
+            status, res = self.conn.execute_scalar(SQL)
+            if not status:
+                return internal_server_error(errormsg=res)
 
-                return make_json_response(
-                    success=1,
-                    info="Index updated",
-                    data={
-                        'id': idx,
-                        'tid': tid,
-                        'scid': scid
-                    }
+            return jsonify(
+                node=self.blueprint.generate_browser_node(
+                    idx,
+                    tid,
+                    name,
+                    icon="icon-%s" % self.node_type
                 )
-            else:
-                return make_json_response(
-                    success=1,
-                    info="Nothing to update",
-                    data={
-                        'id': idx,
-                        'tid': tid,
-                        'scid': scid
-                    }
-                )
-
+            )
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
@@ -743,13 +758,14 @@ class IndexesView(PGChildNodeView):
         data['table'] = self.table
 
         try:
-            SQL = self.get_sql(scid, tid, idx, data, mode='create')
-
-            if SQL and SQL.strip('\n') and SQL.strip(' '):
-                return make_json_response(
-                    data=SQL,
-                    status=200
-                )
+            sql, name = self.get_sql(scid, tid, idx, data, mode='create')
+            sql = sql.strip('\n').strip(' ')
+            if sql == '':
+                sql = "--modified SQL"
+            return make_json_response(
+                data=sql,
+                status=200
+            )
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
@@ -801,7 +817,7 @@ class IndexesView(PGChildNodeView):
             SQL += render_template("/".join([self.template_path, 'alter.sql']),
                                    data=data, conn=self.conn)
 
-        return SQL
+        return SQL, data['name'] if 'name' in data else old_data['name']
 
     @check_precondition
     def sql(self, gid, sid, did, scid, tid, idx):
@@ -834,7 +850,7 @@ class IndexesView(PGChildNodeView):
             # Add column details for current index
             data = self._column_details(idx, data)
 
-            SQL = self.get_sql(scid, tid, None, data)
+            SQL, name = self.get_sql(scid, tid, None, data)
 
             sql_header = "-- Index: {0}\n\n-- ".format(data['name'])
             if hasattr(str, 'decode'):

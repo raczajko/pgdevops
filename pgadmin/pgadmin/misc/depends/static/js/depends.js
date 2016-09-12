@@ -1,6 +1,7 @@
-define(
-  ['underscore', 'underscore.string', 'jquery', 'pgadmin.browser'],
-  function(_, S, $, pgBrowser) {
+define([
+  'underscore', 'underscore.string', 'jquery', 'pgadmin.browser',
+  'alertify', 'pgadmin.alertifyjs'
+], function(_, S, $, pgBrowser, Alertify) {
 
   if (pgBrowser.ShowNodeDepends)
     return pgBrowser.ShowNodeDepends;
@@ -122,6 +123,18 @@ define(
                         this.dependenciesPanelVisibilityChanged);
       pgBrowser.Events.on('pgadmin-browser:panel-dependents:' + wcDocker.EVENT.VISIBILITY_CHANGED,
                         this.dependentsPanelVisibilityChanged);
+      pgBrowser.Events.on(
+        'pgadmin:browser:node:updated', function() {
+          if (this.dependenciesPanels && this.dependenciesPanels.length) {
+            $(this.dependenciesPanels[0]).data('node-prop', '');
+            this.dependenciesPanelVisibilityChanged(this.dependenciesPanels[0]);
+          }
+          if (this.dependentsPanels && this.dependentsPanels.length) {
+            $(this.dependentsPanels[0]).data('node-prop', '');
+            this.dependentsPanelVisibilityChanged(this.dependentsPanels[0]);
+          }
+        }, this
+      );
 
       // We will render the grid objects in the panel after some time, because -
       // it is possible, it is not yet available.
@@ -226,7 +239,30 @@ define(
           $gridContainer.removeClass('hidden');
           // Set the url, fetch the data and update the collection
           collection.url = url;
-          collection.fetch({ reset: true });
+          collection.fetch({
+            reset: true,
+            error: function(coll, xhr, error, message) {
+              var _label = treeHierarchy[n_type].label;
+              pgBrowser.Events.trigger(
+                'pgadmin:node:retrieval:error', 'depends', xhr, error, message
+              );
+              if (
+                !Alertify.pgHandleItemError(xhr, error, message, {
+                  item: item, info: treeHierarchy
+                })
+              ) {
+                Alertify.pgNotifier(
+                  error, xhr,
+                  S(
+                    pgBrowser.messages['ERR_RETRIEVAL_INFO']
+                  ).sprintf(message || _label).value(),
+                  function() {
+                    console.log(arguments);
+                  }
+                );
+              }
+            }
+          });
         }
       }
       if (msg != '') {

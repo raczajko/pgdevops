@@ -18,10 +18,10 @@ from flask_babel import gettext
 from pgadmin.browser.server_groups.servers.databases.schemas.utils \
     import SchemaChildModule
 from pgadmin.browser.utils import PGChildNodeView
-from pgadmin.utils.ajax import make_json_response, \
-    make_response as ajax_response, internal_server_error
-from pgadmin.utils.ajax import precondition_required
+from pgadmin.utils.ajax import make_json_response, internal_server_error, \
+    make_response as ajax_response
 from pgadmin.utils.driver import get_driver
+from pgadmin.utils.ajax import gone
 
 from config import PG_DEFAULT_DRIVER
 
@@ -185,18 +185,10 @@ class CollationView(PGChildNodeView):
                 kwargs['sid']
             )
             self.conn = self.manager.connection(did=kwargs['did'])
-            # If DB not connected then return error to browser
-            if not self.conn.connected():
-                return precondition_required(
-                    gettext(
-                        "Connection to the server has been lost!"
-                    )
-                )
-
-            # we will set template path for sql scripts
+            # Set the template path for the SQL scripts
             self.template_path = 'collation/sql/9.1_plus'
-            return f(*args, **kwargs)
 
+            return f(*args, **kwargs)
         return wrap
 
     @check_precondition
@@ -263,6 +255,41 @@ class CollationView(PGChildNodeView):
         )
 
     @check_precondition
+    def node(self, gid, sid, did, scid, coid):
+        """
+        This function will fetch properties of the collation node.
+
+        Args:
+            gid: Server Group ID
+            sid: Server ID
+            did: Database ID
+            scid: Schema ID
+            coid: Collation ID
+
+        Returns:
+            JSON of given collation node
+        """
+
+        SQL = render_template("/".join([self.template_path,
+                                        'nodes.sql']), coid=coid)
+        status, rset = self.conn.execute_2darray(SQL)
+        if not status:
+            return internal_server_error(errormsg=rset)
+
+        for row in rset['rows']:
+            return make_json_response(
+                data=self.blueprint.generate_browser_node(
+                    row['oid'],
+                    scid,
+                    row['name'],
+                    icon="icon-collation"
+                ),
+                status=200
+            )
+
+        return gone(gettext("Could not find the specified collation."))
+
+    @check_precondition
     def properties(self, gid, sid, did, scid, coid):
         """
         This function will show the properties of the selected collation node.
@@ -279,22 +306,21 @@ class CollationView(PGChildNodeView):
             JSON of selected collation node
         """
 
-        try:
-            SQL = render_template("/".join([self.template_path,
-                                            'properties.sql']),
-                                  scid=scid, coid=coid)
-            status, res = self.conn.execute_dict(SQL)
+        SQL = render_template("/".join([self.template_path,
+                                        'properties.sql']),
+                              scid=scid, coid=coid)
+        status, res = self.conn.execute_dict(SQL)
 
-            if not status:
-                return internal_server_error(errormsg=res)
+        if not status:
+            return internal_server_error(errormsg=res)
 
-            return ajax_response(
-                response=res['rows'][0],
-                status=200
-            )
+        if len(res['rows']) == 0:
+            return gone(gettext("""Could not find the collation object in the database. It may have been removed by another user."""))
 
-        except Exception as e:
-            return internal_server_error(errormsg=str(e))
+        return ajax_response(
+            response=res['rows'][0],
+            status=200
+        )
 
     @check_precondition
     def get_collation(self, gid, sid, did, scid, coid=None):
@@ -403,31 +429,28 @@ class CollationView(PGChildNodeView):
                 )
             )
 
-        try:
-            SQL = render_template("/".join([self.template_path,
-                                            'create.sql']),
-                                  data=data, conn=self.conn)
-            status, res = self.conn.execute_scalar(SQL)
-            if not status:
-                return internal_server_error(errormsg=res)
+        SQL = render_template("/".join([self.template_path,
+                                        'create.sql']),
+                              data=data, conn=self.conn)
+        status, res = self.conn.execute_scalar(SQL)
+        if not status:
+            return internal_server_error(errormsg=res)
 
-            # We need oid to to add object in tree at browser
-            SQL = render_template("/".join([self.template_path,
-                                            'get_oid.sql']), data=data)
-            status, coid = self.conn.execute_scalar(SQL)
-            if not status:
-                return internal_server_error(errormsg=coid)
+        # We need oid to to add object in tree at browser
+        SQL = render_template("/".join([self.template_path,
+                                        'get_oid.sql']), data=data)
+        status, coid = self.conn.execute_scalar(SQL)
+        if not status:
+            return internal_server_error(errormsg=coid)
 
-            return jsonify(
-                node=self.blueprint.generate_browser_node(
-                    coid,
-                    scid,
-                    data['name'],
-                    icon="icon-collation"
-                )
+        return jsonify(
+            node=self.blueprint.generate_browser_node(
+                coid,
+                scid,
+                data['name'],
+                icon="icon-collation"
             )
-        except Exception as e:
-            return internal_server_error(errormsg=str(e))
+        )
 
     @check_precondition
     def delete(self, gid, sid, did, scid, coid):
@@ -504,35 +527,31 @@ class CollationView(PGChildNodeView):
         data = request.form if request.form else json.loads(
             request.data, encoding='utf-8'
         )
-        SQL = self.get_sql(gid, sid, data, scid, coid)
-        try:
-            if SQL and SQL.strip('\n') and SQL.strip(' '):
-                status, res = self.conn.execute_scalar(SQL)
-                if not status:
-                    return internal_server_error(errormsg=res)
+        SQL, name = self.get_sql(gid, sid, data, scid, coid)
+        SQL = SQL.strip('\n').strip(' ')
+        status, res = self.conn.execute_scalar(SQL)
 
-                return make_json_response(
-                    success=1,
-                    info="Collation updated",
-                    data={
-                        'id': coid,
-                        'scid': scid,
-                        'did': did
-                    }
-                )
-            else:
-                return make_json_response(
-                    success=1,
-                    info="Nothing to update",
-                    data={
-                        'id': coid,
-                        'scid': scid,
-                        'did': did
-                    }
-                )
+        if not status:
+            return internal_server_error(errormsg=res)
 
-        except Exception as e:
-            return internal_server_error(errormsg=str(e))
+        # We need oid to to add object in tree at browser
+        SQL = render_template("/".join([self.template_path,
+                                        'get_oid.sql']), coid=coid)
+
+        status, res = self.conn.execute_2darray(SQL)
+        if not status:
+            return internal_server_error(errormsg=res)
+
+        scid = res['rows'][0]['scid']
+
+        return jsonify(
+            node=self.blueprint.generate_browser_node(
+                coid,
+                scid,
+                name,
+                icon="icon-%s" % self.node_type
+            )
+        )
 
     @check_precondition
     def msql(self, gid, sid, did, scid, coid=None):
@@ -554,11 +573,13 @@ class CollationView(PGChildNodeView):
                 data[k] = v
 
         try:
-            SQL = self.get_sql(gid, sid, data, scid, coid)
-            if SQL and SQL.strip('\n') and SQL.strip(' '):
-                return make_json_response(
-                    data=SQL,
-                    status=200
+            SQL, name = self.get_sql(gid, sid, data, scid, coid)
+            if SQL == '':
+                SQL = "--modified SQL"
+
+            return make_json_response(
+                data=SQL,
+                status=200
                 )
         except Exception as e:
             return internal_server_error(errormsg=str(e))
@@ -579,6 +600,7 @@ class CollationView(PGChildNodeView):
                 "/".join([self.template_path, 'update.sql']),
                 data=data, o_data=old_data, conn=self.conn
             )
+            return SQL.strip('\n'), data['name'] if 'name' in data else old_data['name']
         else:
             required_args = [
                 'name'
@@ -594,7 +616,7 @@ class CollationView(PGChildNodeView):
             SQL = render_template("/".join([self.template_path,
                                             'create.sql']),
                                   data=data, conn=self.conn)
-        return SQL.strip('\n')
+            return SQL.strip('\n'), data['name']
 
     @check_precondition
     def sql(self, gid, sid, did, scid, coid):

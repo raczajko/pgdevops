@@ -20,12 +20,12 @@ from pgadmin.browser.server_groups.servers.databases.schemas.utils \
 from pgadmin.browser.server_groups.servers.utils import parse_priv_from_db, \
     parse_priv_to_db
 from pgadmin.browser.utils import PGChildNodeView
-from pgadmin.utils.ajax import make_json_response, \
-    make_response as ajax_response, internal_server_error
-from pgadmin.utils.ajax import precondition_required
+from pgadmin.utils.ajax import make_json_response, internal_server_error, \
+    make_response as ajax_response
 from pgadmin.utils.driver import get_driver
 
 from config import PG_DEFAULT_DRIVER
+from pgadmin.utils.ajax import gone
 
 
 class TypeModule(SchemaChildModule):
@@ -223,15 +223,10 @@ class TypeView(PGChildNodeView, DataTypeReader):
             self.conn = self.manager.connection(did=kwargs['did'])
 
             # We need datlastsysoid to check if current type is system type
-            self.datlastsysoid = self.manager.db_info[kwargs['did']]['datlastsysoid']
-
-            # If DB not connected then return error to browser
-            if not self.conn.connected():
-                return precondition_required(
-                    gettext(
-                        "Connection to the server has been lost!"
-                    )
-                )
+            self.datlastsysoid = self.manager.db_info[
+                kwargs['did']
+            ]['datlastsysoid'] if self.manager.db_info is not None and \
+                kwargs['did'] in self.manager.db_info else 0
 
             # Declare allows acl on type
             self.acl = ['U']
@@ -240,7 +235,6 @@ class TypeView(PGChildNodeView, DataTypeReader):
             self.template_path = 'type/sql/9.1_plus'
 
             return f(*args, **kwargs)
-
         return wrap
 
     @check_precondition
@@ -270,6 +264,47 @@ class TypeView(PGChildNodeView, DataTypeReader):
             return internal_server_error(errormsg=res)
         return ajax_response(
             response=res['rows'],
+            status=200
+        )
+
+    @check_precondition
+    def node(self, gid, sid, did, scid, tid):
+        """
+        This function will used to create all the child node within that collection.
+        Here it will create all the type node.
+
+        Args:
+            gid: Server Group ID
+            sid: Server ID
+            did: Database ID
+            scid: Schema ID
+            tid: Type ID
+
+        Returns:
+            JSON of available type child nodes
+        """
+
+        SQL = render_template("/".join([self.template_path,
+                                        'nodes.sql']),
+                              scid=scid,
+                              tid=tid,
+                              show_system_objects=self.blueprint.show_system_objects)
+        status, rset = self.conn.execute_2darray(SQL)
+        if not status:
+            return internal_server_error(errormsg=rset)
+
+        if len(rset['rows']) == 0:
+            return gone(gettext("""Could not find the type in the table."""))
+
+        res = self.blueprint.generate_browser_node(
+                rset['rows'][0]['oid'],
+                scid,
+                rset['rows'][0]['name'],
+                icon="icon-%s" % self.node_type
+            )
+
+        return make_json_response(
+            data=res,
             status=200
         )
 
@@ -304,7 +339,7 @@ class TypeView(PGChildNodeView, DataTypeReader):
                     row['oid'],
                     scid,
                     row['name'],
-                    icon="icon-type"
+                    icon="icon-%s" % self.node_type
                 ))
 
         return make_json_response(
@@ -457,6 +492,9 @@ class TypeView(PGChildNodeView, DataTypeReader):
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+
+        if len(res['rows']) == 0:
+            return gone(gettext("""Could not find the type in the table."""))
 
         # Making copy of output for future use
         copy_dict = dict(res['rows'][0])
@@ -904,36 +942,20 @@ class TypeView(PGChildNodeView, DataTypeReader):
             request.data, encoding='utf-8'
         )
         try:
-            SQL = self.get_sql(gid, sid, data, scid, tid)
-            if SQL and SQL.strip('\n') and SQL.strip(' '):
-                status, res = self.conn.execute_scalar(SQL)
-                if not status:
-                    return internal_server_error(errormsg=res)
+            SQL, name = self.get_sql(gid, sid, data, scid, tid)
+            SQL = SQL.strip('\n').strip(' ')
+            status, res = self.conn.execute_scalar(SQL)
+            if not status:
+                return internal_server_error(errormsg=res)
 
-                return make_json_response(
-                    success=1,
-                    info="Type updated",
-                    data={
-                        'id': tid,
-                        'scid': scid,
-                        'sid': sid,
-                        'gid': gid,
-                        'did': did
-                    }
+            return jsonify(
+                node=self.blueprint.generate_browser_node(
+                    tid,
+                    scid,
+                    name,
+                    icon="icon-%s" % self.node_type
                 )
-            else:
-                return make_json_response(
-                    success=1,
-                    info="Nothing to update",
-                    data={
-                        'id': tid,
-                        'scid': scid,
-                        'sid': sid,
-                        'gid': gid,
-                        'did': did
-                    }
-                )
-
+            )
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
@@ -1024,13 +1046,15 @@ class TypeView(PGChildNodeView, DataTypeReader):
                 data[key] = val
 
         try:
-            SQL = self.get_sql(gid, sid, data, scid, tid)
+            sql, name = self.get_sql(gid, sid, data, scid, tid)
+            sql = sql.strip('\n').strip(' ')
 
-            if SQL and SQL.strip('\n') and SQL.strip(' '):
-                return make_json_response(
-                    data=SQL,
-                    status=200
-                )
+            if sql == '':
+                sql = "--modified SQL"
+            return make_json_response(
+                data=sql,
+                status=200
+            )
         except Exception as e:
             internal_server_error(errormsg=str(e))
 
@@ -1134,7 +1158,7 @@ class TypeView(PGChildNodeView, DataTypeReader):
                                             'create.sql']),
                                   data=data, conn=self.conn)
 
-        return SQL
+        return SQL, data['name'] if 'name' in data else old_data['name']
 
     @check_precondition
     def sql(self, gid, sid, did, scid, tid):
@@ -1191,7 +1215,7 @@ class TypeView(PGChildNodeView, DataTypeReader):
             if data[k] == '-':
                 data[k] = None
 
-        SQL = self.get_sql(gid, sid, data, scid, tid=None)
+        SQL, name = self.get_sql(gid, sid, data, scid, tid=None)
 
         # We are appending headers here for sql panel
         sql_header = "-- Type: {0}\n\n-- ".format(data['name'])

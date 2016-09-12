@@ -16,10 +16,10 @@ from flask import render_template, make_response, request, jsonify
 from flask_babel import gettext
 from pgadmin.browser.collection import CollectionNodeModule
 from pgadmin.browser.utils import PGChildNodeView
-from pgadmin.utils.ajax import make_json_response, \
-    make_response as ajax_response, internal_server_error
-from pgadmin.utils.ajax import precondition_required
+from pgadmin.utils.ajax import make_json_response, internal_server_error, \
+    make_response as ajax_response
 from pgadmin.utils.driver import get_driver
+from pgadmin.utils.ajax import gone
 
 from config import PG_DEFAULT_DRIVER
 
@@ -188,22 +188,12 @@ class EventTriggerView(PGChildNodeView):
 
         @wraps(f)
         def wrap(*args, **kwargs):
-            # Here args[0] will hold self & kwargs will hold gid,sid,did
+
+            # Here - args[0] will always hold self & kwargs will hold gid, sid, did
             self = args[0]
             self.manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(kwargs['sid'])
             self.conn = self.manager.connection(did=kwargs['did'])
-
-            # If DB not connected then return error to browser
-            if not self.conn.connected():
-                return precondition_required(
-                    gettext(
-                        "Connection to the server has been lost!"
-                    )
-                )
-
-            ver = self.manager.version
-            if ver >= 90300:
-                self.template_path = 'event_triggers/sql/9.3_plus'
+            self.template_path = 'event_triggers/sql/9.3_plus'
 
             return f(*args, **kwargs)
 
@@ -269,6 +259,39 @@ class EventTriggerView(PGChildNodeView):
             status=200
         )
 
+    @check_precondition
+    def node(self, gid, sid, did, etid):
+        """
+        This function will fetch properties of trigger node.
+
+        Args:
+          gid: Server Group ID
+          sid: Server ID
+          did: Database ID
+          etid: Event trigger ID
+
+        Returns:
+          Json object of trigger node
+        """
+        sql = render_template("/".join([self.template_path, 'nodes.sql']),
+                              etid=etid)
+        status, res = self.conn.execute_2darray(sql)
+        if not status:
+            return internal_server_error(errormsg=res)
+
+        for row in res['rows']:
+            return make_json_response(
+                data=self.blueprint.generate_browser_node(
+                    row['oid'],
+                    did,
+                    row['name'],
+                    icon="icon-%s" % self.node_type
+                ),
+                status=200
+            )
+
+        return gone(gettext("Could not find the specified event trigger."))
+
     def _formatter(self, result):
         """
         This function is ued to parse security lables
@@ -304,6 +327,11 @@ class EventTriggerView(PGChildNodeView):
         status, res = self.conn.execute_dict(sql)
         if not status:
             return internal_server_error(errormsg=res)
+
+        if len(res['rows']) == 0:
+            return gone(
+                gettext("Couldnot find the event trigger information.")
+            )
 
         result = res['rows'][0]
         result = self._formatter(result)
@@ -459,6 +487,7 @@ class EventTriggerView(PGChildNodeView):
 
             if name is None:
                 return make_json_response(
+                    status=410,
                     success=0,
                     errormsg=gettext(
                         'Error: Object not found.'
@@ -511,7 +540,8 @@ class EventTriggerView(PGChildNodeView):
         try:
             sql = self.get_sql(data, etid)
             sql = sql.strip('\n').strip(' ')
-
+            if sql == '':
+                sql = "--modified SQL"
             return make_json_response(
                 data=sql,
                 status=200
@@ -540,6 +570,12 @@ class EventTriggerView(PGChildNodeView):
             status, res = self.conn.execute_dict(sql)
             if not status:
                 return internal_server_error(errormsg=res)
+
+            if len(res['rows']) == 0:
+                return gone(
+                    gettext("Couldnot find the event trigger information.")
+                )
+
             old_data = res['rows'][0]
             old_data = self._formatter(old_data)
 
@@ -561,7 +597,7 @@ class EventTriggerView(PGChildNodeView):
                     err.append(required_args.get(arg, arg))
             if err:
                 return make_json_response(
-                    status=400,
+                    status=410,
                     success=0,
                     errormsg=gettext(
                         "Could not find the required parameter %s." % err

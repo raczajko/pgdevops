@@ -18,10 +18,8 @@ from pgadmin.browser.collection import CollectionNodeModule, PGChildModule
 from pgadmin.browser.server_groups.servers.utils import parse_priv_from_db, \
     parse_priv_to_db
 from pgadmin.browser.utils import PGChildNodeView
-from pgadmin.utils.ajax import make_json_response, \
-    make_response as ajax_response, internal_server_error, gone, \
-    bad_request
-from pgadmin.utils.ajax import precondition_required
+from pgadmin.utils.ajax import make_json_response, internal_server_error, \
+    make_response as ajax_response, gone, bad_request
 from pgadmin.utils.driver import get_driver
 
 from config import PG_DEFAULT_DRIVER
@@ -128,14 +126,11 @@ def check_precondition(f):
         self.manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(
             kwargs['sid']
         )
-        self.conn = self.manager.connection(did=kwargs['did'])
-        # If DB not connected then return error to browser
-        if not self.conn.connected():
-            return precondition_required(
-                gettext("Connection to the server has been lost!")
-            )
+        if not self.manager:
+            return gone(errormsg="Couldn't find the server.")
 
-        # Set template path for sql scripts
+        self.conn = self.manager.connection(did=kwargs['did'])
+        # Set the template path for the SQL scripts
         self.template_path = self.template_initial + '/' + (
             self.ppas_template_path(self.manager.version)
             if self.manager.server_type == 'ppas' else
@@ -440,6 +435,53 @@ It may have been removed by another user.
         )
 
     @check_precondition
+    def node(self, gid, sid, did, scid):
+        """
+        This function will fetch the properties of the schema node.
+
+        Args:
+            gid: Server Group ID
+            sid: Server ID
+            did: Database ID
+            scid: Schema ID
+
+        Returns:
+            JSON of given schema child node
+        """
+        SQL = render_template(
+            "/".join([self.template_path, 'sql/nodes.sql']),
+            show_sysobj=self.blueprint.show_system_objects,
+            _=gettext,
+            scid=scid
+        )
+
+        status, rset = self.conn.execute_2darray(SQL)
+        if not status:
+            return internal_server_error(errormsg=rset)
+
+        if scid is not None:
+            if len(rset['rows']) == 0:
+                return gone(gettext("""
+Could not find the schema in the database.
+It may have been removed by another user.
+"""))
+
+        icon = 'icon-{0}'.format(self.node_type)
+
+        for row in rset['rows']:
+            return make_json_response(
+                data=self.blueprint.generate_browser_node(
+                        row['oid'],
+                        did,
+                        row['name'],
+                        icon=icon,
+                        can_create=row['can_create'],
+                        has_usage=row['has_usage']
+                    ),
+                status=200
+            )
+
+    @check_precondition
     def properties(self, gid, sid, did, scid):
         """
         This function will show the properties of the selected schema node.
@@ -466,10 +508,9 @@ It may have been removed by another user.
             return internal_server_error(errormsg=res)
 
         if len(res['rows']) == 0:
-            return gone(gettext("""
-Could not find the schema in the database.
-It may have been removed by another user.
-"""))
+            return gone(
+                gettext("Could not find the schema in the database. It may have been removed by another user."
+                ))
 
         # Making copy of output for future use
         copy_data = dict(res['rows'][0])
@@ -563,34 +604,21 @@ It may have been removed by another user.
             request.data, encoding='utf-8'
         )
         try:
-            SQL = self.get_sql(gid, sid, data, scid)
+            SQL, name = self.get_sql(gid, sid, data, scid)
 
-            if SQL and SQL.strip('\n') and SQL.strip(' '):
-                status, res = self.conn.execute_scalar(SQL)
-                if not status:
-                    return internal_server_error(errormsg=res)
+            SQL = SQL.strip('\n').strip(' ')
+            status, res = self.conn.execute_scalar(SQL)
+            if not status:
+                return internal_server_error(errormsg=res)
 
-                return make_json_response(
-                    success=1,
-                    info="Updated",
-                    data={
-                        'id': scid,
-                        'sid': sid,
-                        'gid': gid,
-                        'did': did
-                    }
+            return jsonify(
+                node=self.blueprint.generate_browser_node(
+                    scid,
+                    did,
+                    name,
+                    icon="icon-%s" % self.node_type
                 )
-            else:
-                return make_json_response(
-                    success=1,
-                    info="Nothing to update",
-                    data={
-                        'id': scid,
-                        'sid': sid,
-                        'gid': gid,
-                        'did': did
-                    }
-                )
+            )
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
@@ -620,6 +648,7 @@ It may have been removed by another user.
 
             if name is None:
                 return make_json_response(
+                    status=410,
                     success=0,
                     errormsg=gettext(
                         'Error: Object not found.'
@@ -713,6 +742,7 @@ It may have been removed by another user.
                 "/".join([self.template_path, 'sql/update.sql']),
                 _=gettext, data=data, o_data=old_data, conn=self.conn
             )
+            return SQL, data['name'] if 'name' in data else old_data['nam']
         else:
             required_args = ['name']
 
@@ -728,7 +758,7 @@ It may have been removed by another user.
                 data=data, conn=self.conn, _=gettext
             )
 
-        return SQL
+            return SQL, data['name']
 
     @check_precondition
     def sql(self, gid, sid, did, scid):
@@ -752,10 +782,7 @@ It may have been removed by another user.
             return internal_server_error(errormsg=res)
 
         if len(res['rows']) == 0:
-            return gone(gettext("""
-Could not find the schema in the database.
-It may have been removed by another user.
-"""))
+            return gone(gettext("""Could not find the schema in the database. It may have been removed by another user."""))
 
         data = res['rows'][0]
         data = self._formatter(data, scid)
@@ -968,7 +995,6 @@ It may have been removed by another user.
         SQL = sql_header + SQL
 
         return ajax_response(response=SQL.strip("\n"))
-
 
 SchemaView.register_node_view(schema_blueprint)
 CatalogView.register_node_view(catalog_blueprint)

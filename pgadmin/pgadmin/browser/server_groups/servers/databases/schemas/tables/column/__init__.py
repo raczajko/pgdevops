@@ -21,12 +21,12 @@ from pgadmin.browser.server_groups.servers.databases.schemas.utils \
 from pgadmin.browser.server_groups.servers.utils import parse_priv_from_db, \
     parse_priv_to_db
 from pgadmin.browser.utils import PGChildNodeView
-from pgadmin.utils.ajax import make_json_response, \
-    make_response as ajax_response, internal_server_error
-from pgadmin.utils.ajax import precondition_required
+from pgadmin.utils.ajax import make_json_response, internal_server_error, \
+    make_response as ajax_response
 from pgadmin.utils.driver import get_driver
 
 from config import PG_DEFAULT_DRIVER
+from pgadmin.utils.ajax import gone
 
 
 class ColumnsModule(CollectionNodeModule):
@@ -173,7 +173,7 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             {'get': 'list', 'post': 'create'}
         ],
         'children': [{'get': 'children'}],
-        'nodes': [{'get': 'node'}, {'get': 'nodes'}],
+        'nodes': [{'get': 'nodes'}, {'get': 'nodes'}],
         'sql': [{'get': 'sql'}],
         'msql': [{'get': 'msql'}, {'get': 'msql'}],
         'stats': [{'get': 'statistics'}],
@@ -199,17 +199,9 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             )
             self.conn = self.manager.connection(did=kwargs['did'])
             self.qtIdent = driver.qtIdent
-            # If DB not connected then return error to browser
-            if not self.conn.connected():
-                return precondition_required(
-                    gettext(
-                        "Connection to the server has been lost!"
-                    )
-                )
 
-            ver = self.manager.version
-            # we will set template path for sql scripts
-            if ver >= 90200:
+            # Set the template path for the SQL scripts
+            if self.manager.version >= 90200:
                 self.template_path = 'column/sql/9.2_plus'
             else:
                 self.template_path = 'column/sql/9.1_plus'
@@ -261,7 +253,7 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
         )
 
     @check_precondition
-    def nodes(self, gid, sid, did, scid, tid):
+    def nodes(self, gid, sid, did, scid, tid, clid=None):
         """
         This function will used to create all the child node within that collection.
         Here it will create all the schema node.
@@ -277,12 +269,32 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             JSON of available schema child nodes
         """
         res = []
-        SQL = render_template("/".join([self.template_path,
-                                        'nodes.sql']), tid=tid,
-                              show_sys_objects=self.blueprint.show_system_objects)
+        SQL = render_template(
+            "/".join([self.template_path, 'nodes.sql']),
+            tid=tid,
+            clid=clid,
+            show_sys_objects=self.blueprint.show_system_objects
+        )
         status, rset = self.conn.execute_2darray(SQL)
         if not status:
             return internal_server_error(errormsg=rset)
+
+        if clid is not None:
+            if len(rset['rows']) == 0:
+                return gone(
+                    errormsg=gettext("Couldn't find the column.")
+                )
+            row = rset['rows'][0]
+            return make_json_response(
+                data=self.blueprint.generate_browser_node(
+                    row['oid'],
+                    tid,
+                    row['name'],
+                    icon="icon-column",
+                    datatype=row['datatype']  # We need datatype somewhere in
+                ),
+                status=200
+            )
 
         for row in rset['rows']:
             res.append(
@@ -468,6 +480,9 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
         if not status:
             return internal_server_error(errormsg=res)
 
+        if len(res['rows']) == 0:
+            return gone(gettext("""Could not find the column in the table."""))
+
         # Making copy of output for future use
         data = dict(res['rows'][0])
         data = self._formatter(scid, tid, clid, data)
@@ -546,32 +561,30 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
         data['cltype'] = self._cltype_formatter(data['cltype'])
         data['hasSqrBracket'] = self.hasSqrBracket
 
-        try:
-            SQL = render_template("/".join([self.template_path,
-                                            'create.sql']),
-                                  data=data, conn=self.conn)
-            status, res = self.conn.execute_scalar(SQL)
-            if not status:
-                return internal_server_error(errormsg=res)
+        SQL = render_template("/".join([self.template_path,
+                                        'create.sql']),
+                              data=data, conn=self.conn)
+        status, res = self.conn.execute_scalar(SQL)
+        if not status:
+            return internal_server_error(errormsg=res)
 
-            # we need oid to to add object in tree at browser
-            SQL = render_template("/".join([self.template_path,
-                                            'get_position.sql']),
-                                  tid=tid, data=data)
-            status, clid = self.conn.execute_scalar(SQL)
-            if not status:
-                return internal_server_error(errormsg=tid)
+        # we need oid to to add object in tree at browser
+        SQL = render_template(
+            "/".join([self.template_path, 'get_position.sql']),
+            tid=tid, data=data
+        )
+        status, clid = self.conn.execute_scalar(SQL)
+        if not status:
+            return internal_server_error(errormsg=tid)
 
-            return jsonify(
-                node=self.blueprint.generate_browser_node(
-                    clid,
-                    scid,
-                    data['name'],
-                    icon="icon-column"
-                )
+        return jsonify(
+            node=self.blueprint.generate_browser_node(
+                clid,
+                tid,
+                data['name'],
+                icon="icon-column"
             )
-        except Exception as e:
-            return internal_server_error(errormsg=str(e))
+        )
 
     @check_precondition
     def delete(self, gid, sid, did, scid, tid, clid):
@@ -659,35 +672,20 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             data['cltype'] = self._cltype_formatter(data['cltype'])
             data['hasSqrBracket'] = self.hasSqrBracket
 
-        try:
-            SQL = self.get_sql(scid, tid, clid, data)
-            if SQL and SQL.strip('\n') and SQL.strip(' '):
-                status, res = self.conn.execute_scalar(SQL)
-                if not status:
-                    return internal_server_error(errormsg=res)
+        SQL, name = self.get_sql(scid, tid, clid, data)
+        SQL = SQL.strip('\n').strip(' ')
+        status, res = self.conn.execute_scalar(SQL)
+        if not status:
+            return internal_server_error(errormsg=res)
 
-                return make_json_response(
-                    success=1,
-                    info="Column updated",
-                    data={
-                        'id': clid,
-                        'tid': tid,
-                        'scid': scid
-                    }
-                )
-            else:
-                return make_json_response(
-                    success=1,
-                    info="Nothing to update",
-                    data={
-                        'id': clid,
-                        'tid': tid,
-                        'scid': scid
-                    }
-                )
-
-        except Exception as e:
-            return internal_server_error(errormsg=str(e))
+        return jsonify(
+            node=self.blueprint.generate_browser_node(
+                clid,
+                tid,
+                name,
+                icon="icon-%s" % self.node_type
+            )
+        )
 
     @check_precondition
     def msql(self, gid, sid, did, scid, tid, clid=None):
@@ -719,13 +717,15 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             data['hasSqrBracket'] = self.hasSqrBracket
 
         try:
-            SQL = self.get_sql(scid, tid, clid, data)
+            SQL, name = self.get_sql(scid, tid, clid, data)
 
-            if SQL and SQL.strip('\n') and SQL.strip(' '):
-                return make_json_response(
-                    data=SQL,
-                    status=200
-                )
+            SQL = SQL.strip('\n').strip(' ')
+            if SQL == '':
+                SQL = "--modified SQL"
+            return make_json_response(
+                data=SQL,
+                status=200
+            )
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
@@ -789,7 +789,7 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             # If the request for new object which do not have did
             SQL = render_template("/".join([self.template_path, 'create.sql']),
                                   data=data, conn=self.conn)
-        return SQL
+        return SQL, data['name'] if 'name' in data else old_data['name']
 
     @check_precondition
     def sql(self, gid, sid, did, scid, tid, clid):
@@ -828,7 +828,7 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             # We will add table & schema as well
             data = self._formatter(scid, tid, clid, data)
 
-            SQL = self.get_sql(scid, tid, None, data)
+            SQL, name = self.get_sql(scid, tid, None, data)
 
             sql_header = u"-- Column: {0}\n\n-- ".format(self.qtIdent(self.conn,
                                                                      data['schema'],

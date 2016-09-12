@@ -85,7 +85,8 @@ class CollectionNodeModule(PgAdminModule, PGChildModule):
             "_type": 'coll-%s' % (self.node_type),
             "_id": parent_id,
             "_pid": parent_id,
-            "module": 'pgadmin.node.%s' % self.node_type
+            "module": 'pgadmin.node.%s' % self.node_type,
+            "nodes": [self.node_type]
         }
 
         for key in kwargs:

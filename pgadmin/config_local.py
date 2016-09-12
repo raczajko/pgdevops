@@ -16,5 +16,9 @@ SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
 #SESSION_COOKIE_DOMAIN="0.0.0.0"
 #SESSION_TYPE="sqlalchemy"
 
+SECURITY_LOGIN_URL= "/auth"
 
-APP_ICON="bigsql-logo"
+SESSION_COOKIE_NAME = 'bam_session'
+
+
+#APP_ICON="bigsql-logo"

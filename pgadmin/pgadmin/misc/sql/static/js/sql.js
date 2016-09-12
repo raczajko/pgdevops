@@ -1,6 +1,7 @@
-define(
-   ['underscore', 'jquery', 'pgadmin.browser'],
-function(_, $, pgBrowser) {
+define([
+  'underscore', 'underscore.string', 'jquery', 'pgadmin.browser',
+  'alertify', 'pgadmin.alertifyjs'
+], function(_, S, $, pgBrowser, Alertify) {
 
   pgBrowser.ShowNodeSQL = pgBrowser.ShowNodeSQL || {};
 
@@ -22,6 +23,15 @@ function(_, $, pgBrowser) {
       pgBrowser.Events.on(
         'pgadmin-browser:panel-sql:' + wcDocker.EVENT.VISIBILITY_CHANGED,
         this.sqlPanelVisibilityChanged
+      );
+
+      pgBrowser.Events.on(
+        'pgadmin:browser:node:updated', function() {
+          if (this.sqlPanels && this.sqlPanels.length) {
+            $(this.sqlPanels[0]).data('node-prop', '');
+            this.sqlPanelVisibilityChanged(this.sqlPanels[0]);
+          }
+        }, this
       );
 
       // Hmm.. Did we find the SQL panel, and is it visible (opened)?
@@ -84,8 +94,26 @@ function(_, $, pgBrowser) {
                     pgAdmin.Browser.editor.setValue(res);
                   }
                 },
-                error:  function() {
-                  // TODO:: Report this
+                error: function(xhr, error, message) {
+                  var _label = treeHierarchy[n_type].label;
+                  pgBrowser.Events.trigger(
+                    'pgadmin:node:retrieval:error', 'sql', xhr, error, message, item
+                  );
+                  if (
+                    !Alertify.pgHandleItemError(xhr, error, message, {
+                      item: item, info: treeHierarchy
+                    })
+                  ) {
+                    Alertify.pgNotifier(
+                      error, xhr,
+                      S(
+                        pgBrowser.messages['ERR_RETRIEVAL_INFO']
+                      ).sprintf(message || _label).value(),
+                      function() {
+                        console.log(arguments);
+                      }
+                    );
+                  }
                 }
               });
             }

@@ -20,7 +20,7 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.pickleSessions import PickleSessionInterface
 import config
 
-config.APP_NAME="BigSQL Ops"
+config.APP_NAME="BigSQL Manager 4"
 application = Flask(__name__)
 
 babel = Babel(application)
