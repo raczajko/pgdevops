@@ -1040,7 +1040,7 @@ $templateCache.put("../app/menus/partials/leftMenu.html","<aside class=\"main-si
     "            </li>\n" +
     "            <li>\n" +
     "                <a href=\"/admin\" target=\"_blank\">\n" +
-    "                    <i class=\"fa fa-cog\"></i> <span>pgAdmin</span>\n" +
+    "                    <i class=\"fa fa-paw\"></i> <span>pgAdmin</span>\n" +
     "                </a>\n" +
     "            </li>\n" +
     "        </ul>\n" +
