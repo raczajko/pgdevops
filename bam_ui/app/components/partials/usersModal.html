@@ -1,0 +1,117 @@
+<div class="modal-header">
+    <h2 class="modal-title" id="updateModalLabel">BigSQL Users</h2>
+</div>
+<div class="container-fluid" ng-show="loadingSpinner">
+    <div class="row">
+        <div class="col-md-12 col-xs-12">
+            <div class="well">
+                <i class="fa fa-spinner fa-2x  fa-pulse"></i>&#160;&#160;&#160;Checking for users..
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-body" ng-show="body">
+    <div class="container-fluid">
+
+        <i class="fa fa-user-plus" aria-hidden="true" ng-click="addAuserForm()"></i>
+
+        <div class="row">
+            <div class="box-body">
+                <div class="col-md-1 col-xs-1"><strong></strong></div>
+                <div class="col-md-3 col-xs-3"><strong>Email</strong></div>
+                <div class="col-md-2 col-xs-2"><strong>Role</strong></div>
+                <div class="col-md-2 col-xs-2"><strong>Active</strong></div>
+                <div class="col-md-2 col-xs-2"><strong>New Password</strong></div>
+                <div class="col-md-2 col-xs-2"><strong>Confirm Password</strong></div>
+            </div>
+            <div class="col-md-12 col-xs-12" id="updatesTableTbody " ng-repeat="(key, value) in users">
+                <div class="component_box" id="{{ value.id }}">
+                    <div class="col-md-1 col-xs-1">
+                        <i class="fa fa-trash" aria-hidden="true" ng-click="deleteUser(value.id)"></i>
+                    </div>
+                    <div class="col-md-3 col-xs-3">
+                        {{ value.email }}
+                    </div>
+                    <div class="col-md-2 col-xs-2">
+
+                        <div class="form-group">
+                            <select class="form-control form-control-sm" id="exampleSelect1">
+                                <option ng-repeat="(key, role) in roles" value="{{ role.id }}"
+                                        ng-selected="role.id == value.role">{{ role.name }}</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="col-md-2 col-xs-2">
+                        <label class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" ng-checked="value.active">
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                    <div class="col-md-2 col-xs-2">
+                        <div class="form-group">
+                            <input type="password" class="form-control" id="exampleInputPassword1"
+                                   placeholder="New Password">
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-xs-2">
+                        <div class="form-group">
+                            <input type="password" class="form-control" id="exampleInputPassword1"
+                                   placeholder="Confirm Password">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12 col-xs-12" id="newuserRow">
+                <div class="component_box">
+                    <div class="col-md-1 col-xs-1">
+                        <i class="fa fa-trash" aria-hidden="true"></i>
+                    </div>
+                    <div class="col-md-3 col-xs-3">
+                        <div class="form-group">
+                            <input type="email" class="form-control" id="exampleInputEmail1"
+                                   aria-describedby="emailHelp" placeholder="Enter email">
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-xs-2">
+
+                        <div class="form-group">
+                            <select class="form-control" id="exampleSelect1">
+                                <option ng-repeat="(key, role) in roles" value="{{ role.id }}"
+                                        >{{ role.name }}</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="col-md-2 col-xs-2">
+                        <label class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input">
+                            <span class="custom-control-indicator"></span>
+                        </label>
+
+                    </div>
+                    <div class="col-md-2 col-xs-2">
+                        <div class="form-group">
+                            <input type="password" class="form-control" id="exampleInputPassword1"
+                                   placeholder="New Password">
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-xs-2">
+                        <div class="form-group">
+                            <input type="password" class="form-control" id="exampleInputPassword1"
+                                   placeholder="Confirm Password">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- /.box -->
+        <!-- /.box -->
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

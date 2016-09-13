@@ -867,6 +867,125 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"m
     "</div>\n" +
     "")
 
+$templateCache.put("../app/components/partials/usersModal.html","<div class=\"modal-header\">\n" +
+    "    <h2 class=\"modal-title\" id=\"updateModalLabel\">BigSQL Users</h2>\n" +
+    "</div>\n" +
+    "<div class=\"container-fluid\" ng-show=\"loadingSpinner\">\n" +
+    "    <div class=\"row\">\n" +
+    "        <div class=\"col-md-12 col-xs-12\">\n" +
+    "            <div class=\"well\">\n" +
+    "                <i class=\"fa fa-spinner fa-2x  fa-pulse\"></i>&#160;&#160;&#160;Checking for users..\n" +
+    "            </div>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div class=\"modal-body\" ng-show=\"body\">\n" +
+    "    <div class=\"container-fluid\">\n" +
+    "\n" +
+    "        <i class=\"fa fa-user-plus\" aria-hidden=\"true\" ng-click=\"addAuserForm()\"></i>\n" +
+    "\n" +
+    "        <div class=\"row\">\n" +
+    "            <div class=\"box-body\">\n" +
+    "                <div class=\"col-md-1 col-xs-1\"><strong></strong></div>\n" +
+    "                <div class=\"col-md-3 col-xs-3\"><strong>Email</strong></div>\n" +
+    "                <div class=\"col-md-2 col-xs-2\"><strong>Role</strong></div>\n" +
+    "                <div class=\"col-md-2 col-xs-2\"><strong>Active</strong></div>\n" +
+    "                <div class=\"col-md-2 col-xs-2\"><strong>New Password</strong></div>\n" +
+    "                <div class=\"col-md-2 col-xs-2\"><strong>Confirm Password</strong></div>\n" +
+    "            </div>\n" +
+    "            <div class=\"col-md-12 col-xs-12\" id=\"updatesTableTbody \" ng-repeat=\"(key, value) in users\">\n" +
+    "                <div class=\"component_box\" id=\"{{ value.id }}\">\n" +
+    "                    <div class=\"col-md-1 col-xs-1\">\n" +
+    "                        <i class=\"fa fa-trash\" aria-hidden=\"true\" ng-click=\"deleteUser(value.id)\"></i>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-3 col-xs-3\">\n" +
+    "                        {{ value.email }}\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-2 col-xs-2\">\n" +
+    "\n" +
+    "                        <div class=\"form-group\">\n" +
+    "                            <select class=\"form-control form-control-sm\" id=\"exampleSelect1\">\n" +
+    "                                <option ng-repeat=\"(key, role) in roles\" value=\"{{ role.id }}\"\n" +
+    "                                        ng-selected=\"role.id == value.role\">{{ role.name }}</option>\n" +
+    "                            </select>\n" +
+    "                        </div>\n" +
+    "\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-2 col-xs-2\">\n" +
+    "                        <label class=\"custom-control custom-checkbox\">\n" +
+    "                            <input type=\"checkbox\" class=\"custom-control-input\" ng-checked=\"value.active\">\n" +
+    "                            <span class=\"custom-control-indicator\"></span>\n" +
+    "                        </label>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-2 col-xs-2\">\n" +
+    "                        <div class=\"form-group\">\n" +
+    "                            <input type=\"password\" class=\"form-control\" id=\"exampleInputPassword1\"\n" +
+    "                                   placeholder=\"New Password\">\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-2 col-xs-2\">\n" +
+    "                        <div class=\"form-group\">\n" +
+    "                            <input type=\"password\" class=\"form-control\" id=\"exampleInputPassword1\"\n" +
+    "                                   placeholder=\"Confirm Password\">\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "            <div class=\"col-md-12 col-xs-12\" id=\"newuserRow\">\n" +
+    "                <div class=\"component_box\">\n" +
+    "                    <div class=\"col-md-1 col-xs-1\">\n" +
+    "                        <i class=\"fa fa-trash\" aria-hidden=\"true\"></i>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-3 col-xs-3\">\n" +
+    "                        <div class=\"form-group\">\n" +
+    "                            <input type=\"email\" class=\"form-control\" id=\"exampleInputEmail1\"\n" +
+    "                                   aria-describedby=\"emailHelp\" placeholder=\"Enter email\">\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-2 col-xs-2\">\n" +
+    "\n" +
+    "                        <div class=\"form-group\">\n" +
+    "                            <select class=\"form-control\" id=\"exampleSelect1\">\n" +
+    "                                <option ng-repeat=\"(key, role) in roles\" value=\"{{ role.id }}\"\n" +
+    "                                        >{{ role.name }}</option>\n" +
+    "                            </select>\n" +
+    "                        </div>\n" +
+    "\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-2 col-xs-2\">\n" +
+    "                        <label class=\"custom-control custom-checkbox\">\n" +
+    "                            <input type=\"checkbox\" class=\"custom-control-input\">\n" +
+    "                            <span class=\"custom-control-indicator\"></span>\n" +
+    "                        </label>\n" +
+    "\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-2 col-xs-2\">\n" +
+    "                        <div class=\"form-group\">\n" +
+    "                            <input type=\"password\" class=\"form-control\" id=\"exampleInputPassword1\"\n" +
+    "                                   placeholder=\"New Password\">\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-2 col-xs-2\">\n" +
+    "                        <div class=\"form-group\">\n" +
+    "                            <input type=\"password\" class=\"form-control\" id=\"exampleInputPassword1\"\n" +
+    "                                   placeholder=\"Confirm Password\">\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "\n" +
+    "        </div>\n" +
+    "\n" +
+    "        <!-- /.box -->\n" +
+    "        <!-- /.box -->\n" +
+    "    </div>\n" +
+    "</div>\n" +
+    "<div class=\"modal-footer\">\n" +
+    "    <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
+    "</div>\n" +
+    "")
+
 $templateCache.put("../app/components/partials/view.html","<section class=\"content-header\">\n" +
     "    <h1 class=\"components-update-title-wrapper\">\n" +
     "        Update Manager ({{pgcInfo.host_short}})\n" +
@@ -1089,7 +1208,9 @@ $templateCache.put("../app/menus/partials/topMenu.html","<header class=\"main-he
     "                        <ul class=\"dropdown-menu\" uib-dropdown-menu role=\"menu\"\n" +
     "                            aria-labelledby=\"btn-append-to-single-button\">\n" +
     "                            <li role=\"menuitem\"><a href=\"/change\">Change Password</a></li>\n" +
-    "                            <li role=\"menuitem\" ng-if=\"userInfo.isAdmin\"><a href=\"#\">Users</a></li>\n" +
+    "                            <li role=\"menuitem\" ng-if=\"userInfo.isAdmin\" ng-click=\"usersPopup()\">\n" +
+    "                                <a href=\"\">Users</a>\n" +
+    "                            </li>\n" +
     "                            <li role=\"menuitem\"><a href=\"/logout\">Logout</a></li>\n" +
     "                        </ul>\n" +
     "                    </div>\n" +

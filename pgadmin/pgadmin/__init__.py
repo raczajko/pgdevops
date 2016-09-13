@@ -384,6 +384,14 @@ def create_app(app_name=config.APP_NAME):
                 abort(401)
 
             login_user(user)
+        if config.SERVER_MODE is True:
+            from flask import request
+            from flask_security import current_user
+            from flask import redirect
+            if request.path == "/auth" and not current_user.is_authenticated:
+                return redirect("http://localhost:8050", code=302)
+            if request.path == "/change" and current_user.is_authenticated:
+                return redirect("http://localhost:8050/change", code=302)
 
     ##########################################################################
     # Minify output

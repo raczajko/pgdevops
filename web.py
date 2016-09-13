@@ -20,7 +20,8 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.pickleSessions import PickleSessionInterface
 import config
 
-config.APP_NAME="BigSQL Manager 4"
+config.APP_NAME = "BigSQL Manager 4"
+config.LOGIN_NAME = "BigSQL"
 application = Flask(__name__)
 
 babel = Babel(application)
@@ -76,6 +77,7 @@ class pgcApiCom(Resource):
 
 
 api.add_resource(pgcApiCom, '/api/info/<string:comp>')
+
 
 class bamUserInfo(Resource):
     def get(self):

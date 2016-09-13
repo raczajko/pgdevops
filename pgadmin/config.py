@@ -73,9 +73,9 @@ NODE_BLACKLIST = []
 # Data directory for storage of config settings etc. This shouldn't normally
 # need to be changed - it's here as various other settings depend on it.
 if os.name == 'nt':
-    DATA_DIR = os.path.realpath(os.getenv('APPDATA') + "/pgAdmin")
+    DATA_DIR = os.path.realpath(os.getenv('APPDATA') + "/bigsql")
 else:
-    DATA_DIR = os.path.realpath(os.path.expanduser('~/.pgadmin/'))
+    DATA_DIR = os.path.realpath(os.path.expanduser('~/.bigsql/'))
 
 ##########################################################################
 # Log settings

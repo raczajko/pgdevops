@@ -46,6 +46,17 @@ angular.module('bigSQL.menus').component('topMenu', {
                     controller: 'ComponentsUpdateController',
                 });
             };
+
+            $scope.usersPopup = function () {
+
+                UpdateComponentsService.setCheckUpdatesAuto();
+
+                var modalInstance = $uibModal.open({
+                    templateUrl: '../app/components/partials/usersModal.html',
+                    controller: 'usersController',
+                });
+            };
+
         // });
     },
     templateUrl: "../app/menus/partials/topMenu.html"
