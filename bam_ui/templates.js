@@ -868,7 +868,7 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"m
     "")
 
 $templateCache.put("../app/components/partials/usersModal.html","<div class=\"modal-header\">\n" +
-    "    <h2 class=\"modal-title\" id=\"updateModalLabel\">BigSQL Users</h2>\n" +
+    "    <h2 class=\"modal-title\" id=\"updateModalLabel\">BigSQL User Management</h2>\n" +
     "</div>\n" +
     "<div class=\"container-fluid\" ng-show=\"loadingSpinner\">\n" +
     "    <div class=\"row\">\n" +
