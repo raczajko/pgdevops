@@ -79,6 +79,24 @@ class pgcApiCom(Resource):
 api.add_resource(pgcApiCom, '/api/info/<string:comp>')
 
 
+class pgcApiHosts(Resource):
+    def get(self):
+        data = pgc.get_data('register --list')
+        return data
+
+
+api.add_resource(pgcApiHosts, '/api/hosts')
+
+
+class pgcApiHostCmd(Resource):
+    def get(self, pgc_cmd, host_name):
+        data = pgc.get_data(pgc_cmd + ' --host '+ host_name)
+        return data
+
+
+api.add_resource(pgcApiHostCmd, '/api/hostcmd/<string:pgc_cmd>/<string:host_name>')
+
+
 class bamUserInfo(Resource):
     def get(self):
         userInfo = {}

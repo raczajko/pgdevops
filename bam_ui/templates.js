@@ -471,6 +471,140 @@ $templateCache.put("../app/components/partials/detailspg95.html","<!-- Content H
     "</section>\n" +
     "")
 
+$templateCache.put("../app/components/partials/hosts.html","<section class=\"content-header\">\n" +
+    "    <h1 class=\"components-update-title-wrapper\">\n" +
+    "        Remote Hosts Manager\n" +
+    "    </h1>\n" +
+    "</section>\n" +
+    "\n" +
+    "<span id=\"components\"></span>\n" +
+    "<section class=\"content\">\n" +
+    "    <div ng-if=\"loading\"\n" +
+    "         style=\"position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;\">\n" +
+    "        <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
+    "        <span><h3>Loading...</h3></span>\n" +
+    "    </div>\n" +
+    "    <span ng-if=\"retry\" style=\"text-align: center;\"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>\n" +
+    "\n" +
+    "    <div ng-if=\"nothingInstalled\" class=\"jumbotron\"\n" +
+    "         style=\"background-color: #fff; margin-top: 15px; text-align: center;\"><h3> You haven't registered any\n" +
+    "        hosts.</h3></div>\n" +
+    "\n" +
+    "\n" +
+    "    <uib-accordion close-others=\"true\">\n" +
+    "        <uib-accordion-group ng-repeat=\"host in hostsList\" is-open=\"host.open\">\n" +
+    "            <uib-accordion-heading>\n" +
+    "                    <span ng-click=\"loadHost($index,false)\"> {{ host.host }}\n" +
+    "                    <i class=\"pull-left glyphicon\"\n" +
+    "                            ng-class=\"{'fa fa-plus': !host.open, 'fa fa-minus': host.open}\"></i>\n" +
+    "                    </span>\n" +
+    "            </uib-accordion-heading>\n" +
+    "            <div ng-if=\"!host.hostInfo.home\">\n" +
+    "                <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
+    "                <span><h3>Loading...</h3></span>\n" +
+    "            </div>\n" +
+    "            <div class=\"col-md-6 col-sm-12 col-xs-12\" ng-if=\"host.hostInfo.home\">\n" +
+    "                <span style=\"float: right;\" ng-click=\"loadHost($index,true)\">\n" +
+    "\n" +
+    "                    <i class=\"glyphicon glyphicon-refresh\"></i>\n" +
+    "\n" +
+    "                </span>\n" +
+    "                <p><strong>PGC : </strong>{{ host.hostInfo.version }} {{ host.hostInfo.home }}</p>\n" +
+    "\n" +
+    "                <p><strong>User & Host : </strong> {{ host.hostInfo.user }}  {{ host.hostInfo.host }}</p>\n" +
+    "\n" +
+    "                <p><strong>Hardware : </strong>{{ host.hostInfo.cores }}GB, {{ host.hostInfo.cores }} x {{ host.hostInfo.cpu }}</p>\n" +
+    "\n" +
+    "                <p><strong>Platform & OS : </strong>{{ host.hostInfo.platform }} {{ host.hostInfo.os }}</p>\n" +
+    "\n" +
+    "                <p><strong>Repo URL : </strong>{{ host.hostInfo.repo }}</p>\n" +
+    "            </div>\n" +
+    "\n" +
+    "            <div class=\"col-md-6 col-sm-12 col-xs-12\">\n" +
+    "                <div ng-if=\"host.showMsg\" class=\"jumbotron\"\n" +
+    "                     style=\"background-color: #fff; margin-top: 15px; text-align: center;\">\n" +
+    "                    <h4> No PostgreSQL or server components installed.<br \\> Visit the <a ui-sref=\"components.view\">Update\n" +
+    "                        Manager</a> to install components.</h4>\n" +
+    "                </div>\n" +
+    "                <div class=\"box\" ng-if='host.showMsg == false'>\n" +
+    "                    <div class=\"box-header with-border\">\n" +
+    "                        <h3 class=\"box-title\">Services</h3>\n" +
+    "                    </div>\n" +
+    "                    <!-- /.box-header -->\n" +
+    "                    <div class=\"box-body\">\n" +
+    "                        <table class=\"table\" id=\"serversTable\">\n" +
+    "                            <thead>\n" +
+    "                            <tr>\n" +
+    "                                <th class=\"col-md-3 col-xs-3\">Component</th>\n" +
+    "                                <th class=\"col-md-5 col-xs-5\">Status</th>\n" +
+    "                                <th class=\"col-md-1 col-xs-1\"></th>\n" +
+    "                                <th class=\"col-md-3 col-xs-3\">Actions</th>\n" +
+    "                            </tr>\n" +
+    "                            </thead>\n" +
+    "                            <tbody id=\"serversTableBody\">\n" +
+    "                            <tr ng-repeat=\"comp in host.comps\" ng-if=\"comp.component != 'bam2'\">\n" +
+    "                                <td class=\"col-md-3 col-xs-3\">\n" +
+    "                                    <div ng-if=\"comp.category != 1\">\n" +
+    "                                        <a ui-sref=\"components.detailsView({component:comp.component}) \">\n" +
+    "                                            {{ comp.component }}\n" +
+    "                                        </a>\n" +
+    "                                    </div>\n" +
+    "                                    <div ng-if=\"comp.category == 1\">\n" +
+    "                                        <a ui-sref=\"components.detailspg95({component:comp.component}) \">\n" +
+    "                                            {{ comp.component }}\n" +
+    "                                        </a>\n" +
+    "                                    </div>\n" +
+    "                                </td>\n" +
+    "                                <td class=\"col-md-5 col-xs-5\"><i ng-class=\"statusColors[comp.state]\"\n" +
+    "                                                                 style=\"margin-top:2px;margin-right:10px\"\n" +
+    "                                                                 class=\"fa fa-stop fa-2x pull-left\"></i>\n" +
+    "\n" +
+    "                                    <div style=\"margin-top: 5px\" ng-show=\"comp.port\">{{ comp.state }} on\n" +
+    "                                        port {{ comp.port }}</div>\n" +
+    "                                    <div style=\"margin-top: 5px\" ng-show=\"!comp.port\">{{ comp.state }}</div>\n" +
+    "                                </td>\n" +
+    "                                <td class=\"col-md-1 col-xs-1\">\n" +
+    "                                    <span ng-show=\"comp.showingSpinner\"><i\n" +
+    "                                            class='fa fa-spinner fa-2x  fa-pulse'></i></span>\n" +
+    "                                </td>\n" +
+    "                                <td class=\"col-md-3 col-xs-3\" value=\"{{ comp.component }}\" ng-click=\"action($event)\">\n" +
+    "                                    <a class=\"btn btn-default\" ng-show=\"comp.state =='Not Initialized' \"\n" +
+    "                                       ng-disabled=\" comp.showingSpinner != undefined\">Initialize</a>\n" +
+    "                                    <a class=\"btn btn-default\" id=\"install\" ng-show=\"comp.state =='Stopped'\"\n" +
+    "                                       ng-disabled=\" comp.showingSpinner != undefined\">Start</a>\n" +
+    "\n" +
+    "                                    <div class=\"btn-group\" uib-dropdown ng-show=\"comp.state =='Running'\">\n" +
+    "                                        <button id=\"split-button\" type=\"button\" class=\"btn btn-default\"\n" +
+    "                                                ng-disabled=\"{{ comp.component=='bam2' }}\">Action\n" +
+    "                                        </button>\n" +
+    "                                        <button type=\"button\" class=\"btn btn-default\" uib-dropdown-toggle\n" +
+    "                                                ng-disabled=\"{{ comp.component=='bam2' }}\">\n" +
+    "                                            <span class=\"caret\"></span>\n" +
+    "                                            <span class=\"sr-only\">Split button!</span>\n" +
+    "                                        </button>\n" +
+    "                                        <ul uib-dropdown-menu role=\"menu\" aria-labelledby=\"split-button\">\n" +
+    "                                            <li role=\"menuitem\"><a>Stop</a></li>\n" +
+    "                                            <li role=\"menuitem\"><a>Restart</a></li>\n" +
+    "                                        </ul>\n" +
+    "                                    </div>\n" +
+    "                                </td>\n" +
+    "                            </tr>\n" +
+    "                            </tbody>\n" +
+    "                        </table>\n" +
+    "                    </div>\n" +
+    "                    <!-- /.box-body -->\n" +
+    "                </div>\n" +
+    "                <!-- /.box -->\n" +
+    "                <!-- /.box -->\n" +
+    "            </div>\n" +
+    "\n" +
+    "\n" +
+    "        </uib-accordion-group>\n" +
+    "    </uib-accordion>\n" +
+    "\n" +
+    "\n" +
+    "</section>")
+
 $templateCache.put("../app/components/partials/loading.html","<section class=\"content\">\n" +
     "    <div ng-if=\"bamLoading\" style=\"position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;\">\n" +
     "        <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
@@ -1136,6 +1270,12 @@ $templateCache.put("../app/menus/partials/leftMenu.html","<aside class=\"main-si
     "        <!-- sidebar menu: : style can be found in sidebar.less -->\n" +
     "        <ul class=\"sidebar-menu\">\n" +
     "            <li class=\"header\">MAIN NAVIGATION</li>\n" +
+    "            <li>\n" +
+    "                <a ui-sref=\"components.hosts\">\n" +
+    "                    <i class=\"fa fa-cloud\"></i> <span>Hosts</span>\n" +
+    "                    <!-- <i class=\"fa fa-angle-left pull-right\"></i> -->\n" +
+    "                </a>\n" +
+    "            </li>\n" +
     "            <li>\n" +
     "                <a ui-sref=\"components.view\">\n" +
     "                    <i class=\"fa fa-th\"></i> <span>Update Manager</span>\n" +

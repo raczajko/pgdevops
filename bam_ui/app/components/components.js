@@ -67,6 +67,14 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
                 templateUrl: '../app/components/partials/log.html',
             }
         }
+    }).state('components.hosts', {
+        url: '^/hosts',
+        views: {
+            "sub": {
+                controller: 'HostsController',
+                templateUrl: '../app/components/partials/hosts.html',
+            }
+        }
     }).state('components.loading', {
         url: '^/',
         views: {
