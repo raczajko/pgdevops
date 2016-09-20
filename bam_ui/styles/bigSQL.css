@@ -266,6 +266,7 @@ body.hold-transition .main-header .logo {
 /* Content */
 
 .content {
+    clear: right;
     min-height: 250px;
     padding: 15px;
     margin-right: auto;
@@ -517,16 +518,30 @@ a:focus {
     content: '>\00a0';
 }
 
-.content-header > .components-update-button-wrapper {
+.content-header  .components-update-button-wrapper {
     float: right;
     background-color: white;
     padding: 5px;
     display: inline-block;
 }
 
-.content-header > .components-update-title-wrapper {
+.content-header  .components-update-title-wrapper{
     display: inline-block;
 }
+
+.content-header  .components-update-title-wrapper h1, .content-header  .components-update-title-wrapper h3 {
+  margin-top: 5px;
+  margin-bottom: 8px;
+}
+
+.content-header  .components-update-title-wrapper h1 {
+  font-size: 2.4rem;
+}
+
+.content-header  .components-update-title-wrapper h3 {
+  font-size: 1.5rem;
+}
+
 
 @media (max-width: 991px) {
     .content-header > .components-update-button-wrapper {
@@ -6210,6 +6225,7 @@ table.text-center th {
 
 table.settings-table-pgc-info > tbody > tr > td {
     border-top: none;
+    padding: 0px;
 }
 
 .settings-table-pgc-info td p {
@@ -6404,7 +6420,7 @@ table.settings-table-pgc-info > tbody > tr > td {
 }
 
  .masonry {
-        margin: 1.5em 0;
+        margin: 0;
         padding: 0;
         -moz-column-gap: 1.5em;
         -webkit-column-gap: 1.5em;
@@ -6613,25 +6629,37 @@ table.settings-table-pgc-info > tbody > tr > td {
     background-color: #FF0000;
 }
 
-.btn-dropdown {
-    background-color: #1e2129;
-    border-color: #1e2129;
-    color: #fff;
-    padding-top: 15px;
-
-}
-.btn-dropdown.hover {
-    background-color: #1e2129;
-    border-color: #1e2129;
-    color: #fff;
-}
-.userinfo-btn .dropdown-menu {
-    background-color: #1e2129;
-    color: #fff;
-    right:0;
+.update-modal-table span{
+  float: left;
 }
 
+.update-modal-table a{
+  float: left;
+}
 
-.userinfo-btn .dropdown-menu>li>a {
-    color: #fff;
+.update-modal-table-header strong{
+  float: left;
+}
+
+.updateModal {
+  margin-left: auto;
+  margin-right: auto;
+  width: 800px;
+}
+
+.components-update-msg > .well {
+  padding: 0px;
+  border: 0px solid #e3e3e3;
+}
+
+.components-update-msg .lead {
+  padding: 4px;
+}
+
+.initialize-params .row{
+  padding: 5px;
+}
+
+.autostart-input {
+  margin-top : 7px ;
 }

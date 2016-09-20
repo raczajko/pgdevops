@@ -49,7 +49,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         return pgComps.reverse().concat(nonPgComps);
     }
 
-    $scope.loadHost = function (idx, refresh=false) {
+    $scope.loadHost = function (idx, refresh) {
         var isOpened = false;
         if (typeof $scope.hostsList[idx].open == "undefined") {
             isOpened = true;
@@ -145,6 +145,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
         ;
     }, 5000);
+
+    function wait() {
+        $window.location.reload();
+    };
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {

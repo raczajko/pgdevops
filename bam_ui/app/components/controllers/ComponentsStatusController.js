@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsStatusController', ['$scope', 'PubSubService', 'MachineInfo', '$interval', '$rootScope', '$http', '$window', function ($scope, PubSubService, MachineInfo, $interval, $rootScope, $http, $window) {
+angular.module('bigSQL.components').controller('ComponentsStatusController', ['$scope', 'PubSubService', 'MachineInfo', '$interval', '$rootScope', '$window', 'bamAjaxCall', function ($scope, PubSubService, MachineInfo, $interval, $rootScope, $window, bamAjaxCall) {
 
     var subscriptions = [];
     $scope.comps = {};
@@ -8,8 +8,8 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
     var graphData = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10];
 
     function callStatus(argument) {
-        $http.get($window.location.origin + '/api/status')
-        .success(function(data) {
+        var statusData = bamAjaxCall.getCmdData('status')
+        statusData.then(function(data) {
             $scope.comps = data;
             if($scope.comps.length == 0){
                 $scope.showMsg = true;
@@ -20,8 +20,8 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
     }
 
     function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info')
-        .success(function(data) {
+        var infoData = bamAjaxCall.getCmdData('info')
+        infoData.then(function(data) {
             $scope.pgcInfo = data[0];
         });
     }
@@ -127,35 +127,6 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
     sessionPromise.then(function (val) {
         $rootScope.$emit('topMenuEvent');
         session = val;
-        // var promise = MachineInfo.get(session);
-        // promise.then(function (data) {
-        //     $scope.pgcInfo = data;
-        // }, function (msg) {
-        //     throw new Error(msg);
-        // });
-
-
-        // session.subscribe("com.bigsql.onServerStatus", function (components) {
-        //     $scope.comps = JSON.parse(components[0]);
-        //     if($scope.comps.length == 0){
-        //         $scope.showMsg = true;
-        //     } else{
-        //         $scope.showMsg = false;
-        //     }
-        // }).then(function (subscription) {
-        //     subscriptions.push(subscription);
-        // });
-
-        // session.subscribe("com.bigsql.status", function (components) {
-        //     $scope.comps = JSON.parse(components[0]);
-        //     if($scope.comps.length == 0){
-        //         $scope.showMsg = true;
-        //     }else{
-        //         $scope.showMsg = false;
-        //     }
-        // }).then(function (subscription) {
-        //     subscriptions.push(subscription);
-        // });
 
         session.subscribe("com.bigsql.graphs", function (data) {
             if($scope.cpuData[0].values.length > 60){

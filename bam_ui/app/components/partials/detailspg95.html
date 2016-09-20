@@ -1,9 +1,7 @@
 <!-- Content Header (Page header) -->
 <section class="content-header">
-    <h1>
-        Component Details
-    </h1>
-    
+    <server-info-details title="Component Details"></server-info-details>
+
 </section>
 <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
 <!-- Main content -->
@@ -63,7 +61,7 @@
                         <a ng-show="component.status == 'Stopped'" action="start" class="btn btn-success" ng-disabled=" component.spinner != undefined">Start</a>
                         <a ng-show="component.status == 'Stopped'" action="remove" class="btn btn-warning" ng-disabled=" component.spinner != undefined">Remove</a>
                         <div ng-show="component.status == 'NotInitialized'">
-                            <a class="btn btn-danger" action="init" ng-disabled=" component.spinner != undefined">Initialize</a>
+                            <a class="btn btn-danger" ng-click="openInitPopup(component.component)" ng-disabled=" component.spinner != undefined">Initialize</a>
                             <a class="btn btn-warning" action="remove" ng-disabled=" component.spinner != undefined">Remove</a>
                         </div>
                         <div ng-show="component.status == 'Running'">

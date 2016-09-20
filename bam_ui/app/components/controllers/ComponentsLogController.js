@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$http', '$window', '$rootScope', function ($scope, PubSubService, $state, $interval, $location, $http, $window, $rootScope) {
+angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall) {
 
     var subscriptions = [];
     var count = 1;
@@ -18,15 +18,11 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         });
     });
 
-    function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info')
-        .success(function(data) {
-            $scope.pgcInfo = data[0];
-        });
-    }
+    var infoData = bamAjaxCall.getCmdData('info')
+    infoData.then(function(data) {
+        $scope.pgcInfo = data[0];
+    });
 
-
-    callInfo();
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;

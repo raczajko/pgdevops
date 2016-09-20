@@ -1,8 +1,6 @@
 <!-- Content Header (Page header) -->
 <section class="content-header">
-    <h1>
-        Component Details
-    </h1>
+    <server-info-details title="Component Details"></server-info-details>
     <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
 </section>
 

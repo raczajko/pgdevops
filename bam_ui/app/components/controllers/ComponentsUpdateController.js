@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window) {
+angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall) {
 
     var session;
     var subscriptions = [];
@@ -9,8 +9,8 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
     var checkUpdates;   
 
     function getList(argument) {
-        $http.get($window.location.origin + '/api/list')
-        .success(function(data) {
+        var listData = bamAjaxCall.getCmdData('list')
+        listData.then(function(data) {
             $scope.noUpdates = true;
             $scope.components = data;
             $scope.hideLatestInstalled = false;
@@ -33,6 +33,18 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                         $scope.components[i]['selected'] = false;
                     }
                 } catch(err){}
+
+                if ($scope.noUpdates) {
+                    $scope.uibStatus = {
+                        newComponents : true,
+                        installedComponents : true
+                    }
+                }else{
+                    $scope.uibStatus = {
+                        newComponents : false,
+                        installedComponents : false
+                    }
+                }
             }
         });
     };
