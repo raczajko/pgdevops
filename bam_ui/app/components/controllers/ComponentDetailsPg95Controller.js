@@ -61,8 +61,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     };
 
     function callStatus(argument) {
-        var infoData = bamAjaxCall.getCmdData('status');
-        infoData.then(function(data) {
+        var statusData = bamAjaxCall.getCmdData('status');
+        statusData.then(function(data) {
             componentStatus = getCurrentObject(data, $stateParams.component);
             $rootScope.$emit('componentStatus', componentStatus);
             if (componentStatus.state != $scope.component.status) {
@@ -133,7 +133,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         session.call('com.bigsql.autostart',[autoStartVal,$stateParams.component]).then(
             function (sub) {
                 callInfo();
-                // session.call('com.bigsql.infoComponent', [$stateParams.component]); 
             });
     }
 
@@ -246,7 +245,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         }
         if (data.status == "complete") {
             callInfo();
-            // session.call('com.bigsql.infoComponent', [$stateParams.component]);
         }
     };
 
@@ -277,10 +275,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);
     };
-
-    // function callInfo() {
-        // session.call('com.bigsql.infoComponent', [$stateParams.component]);
-    // }
 
     session.subscribe('com.bigsql.onActivity', function (data) {
         if(data[0].component == $stateParams.component){
@@ -321,7 +315,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
         if (data.status == "complete" || data.status == "cancelled") {
             if (data.state == 'unpack') {
-                // session.call('com.bigsql.infoComponent', [$stateParams.component]);
                 compAction('init');
             }
 

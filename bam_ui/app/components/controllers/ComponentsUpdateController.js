@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall) {
+angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', '$rootScope', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall, $rootScope) {
 
     var session;
     var subscriptions = [];
@@ -66,7 +66,6 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         session = val;
         if (!checkUpdates) {
             $scope.body = true;
-            // session.call('com.bigsql.list');
             getList();
         } else {
             $scope.loadingSpinner = true;
@@ -76,7 +75,6 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                     $scope.loadingSpinner = false;
                     $scope.body = true;
                     getList();
-                    // session.call('com.bigsql.list');
                 });
         }
 
@@ -87,29 +85,6 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         $scope.cancel = function () {
             $uibModalInstance.dismiss('cancel');
         };
-
-
-        // session.subscribe("com.bigsql.onList", function (components) {
-        //     $scope.noUpdates = true;
-        //     $scope.components = JSON.parse(components[0][0]);
-
-        //     for (var i = 0; i < $scope.components.length; i++) {
-        //         if($scope.components[i].is_current == 0 && $scope.components[i].current_version){
-        //             $scope.noUpdates = false;
-        //         }
-        //         try{
-        //             if (UpdateComponentsService.get().component == $scope.components[i].component) {
-        //                 $scope.components[i]['selected'] = true;
-        //             } else {
-        //                 $scope.components[i]['selected'] = false;
-        //             }
-        //         } catch(err){}
-        //     }
-            
-        //     $scope.$apply();
-        // }).then(function (subscription) {
-        //     subscriptions.push(subscription);
-        // });
 
         var getCurrentComponent = function (name) {
             for (var i = 0; i < $scope.components.length; i++) {
@@ -171,7 +146,6 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 $scope.compAction('update', popComp);
             } else {
                 session.call('com.bigsql.update', [selUpdatedComp[0].component]).then(function (sub) {
-                    // session.call("com.bigsql.list");
                     $uibModalInstance.dismiss('cancel');
                 }, function (err) {
                     throw new Error('failed to update comp', err);
@@ -189,6 +163,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
      Unsubscribe to all the apis on the template and scope destroy
      **/
     $scope.$on('$destroy', function () {
+        $rootScope.$emit('topMenuEvent');
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);
         }

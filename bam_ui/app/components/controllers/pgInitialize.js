@@ -31,21 +31,8 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             if(args[0] != 'Linux'){
                 
                 session.call('com.bigsql.autostart',['on',$scope.comp]).then(function (argument) {
-                    // session.call('com.bigsql.infoComponent',[$scope.comp]);
                     getInfoComp();
                 });
-
-                // session.subscribe('com.bigsql.onInfoComponent', function (args) {
-                //     var jsonD = JSON.parse(args[0][0]);
-                //     if (jsonD[0].component == $scope.comp) {
-                //         if(jsonD[0]['autostart'] == "on" ){
-                //             $scope.autostart = true;
-                //         }else if(jsonD[0]['autostart'] == "off" ){
-                //             $scope.autostart = false;
-                //         }
-                //         $scope.$apply();
-                //     }
-                // });
                 
             }else{
                 $scope.autostartDisable = true;
