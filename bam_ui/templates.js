@@ -37,9 +37,7 @@ $templateCache.put("../app/components/partials/bamUpdate.html","<!-- <div ng-cli
 
 $templateCache.put("../app/components/partials/details.html","<!-- Content Header (Page header) -->\n" +
     "<section class=\"content-header\">\n" +
-    "    <h1>\n" +
-    "        Component Details\n" +
-    "    </h1>\n" +
+    "    <server-info-details title=\"Component Details\"></server-info-details>\n" +
     "    <uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" dismiss-on-timeout=\"8000\" close=\"closeAlert()\" class=\"uib-text\">{{alert.msg}}</uib-alert>\n" +
     "</section>\n" +
     "\n" +
@@ -138,10 +136,8 @@ $templateCache.put("../app/components/partials/details.html","<!-- Content Heade
 
 $templateCache.put("../app/components/partials/detailspg95.html","<!-- Content Header (Page header) -->\n" +
     "<section class=\"content-header\">\n" +
-    "    <h1>\n" +
-    "        Component Details\n" +
-    "    </h1>\n" +
-    "    \n" +
+    "    <server-info-details title=\"Component Details\"></server-info-details>\n" +
+    "\n" +
     "</section>\n" +
     "<uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" dismiss-on-timeout=\"8000\" close=\"closeAlert()\" class=\"uib-text\">{{alert.msg}}</uib-alert>\n" +
     "<!-- Main content -->\n" +
@@ -201,7 +197,7 @@ $templateCache.put("../app/components/partials/detailspg95.html","<!-- Content H
     "                        <a ng-show=\"component.status == 'Stopped'\" action=\"start\" class=\"btn btn-success\" ng-disabled=\" component.spinner != undefined\">Start</a>\n" +
     "                        <a ng-show=\"component.status == 'Stopped'\" action=\"remove\" class=\"btn btn-warning\" ng-disabled=\" component.spinner != undefined\">Remove</a>\n" +
     "                        <div ng-show=\"component.status == 'NotInitialized'\">\n" +
-    "                            <a class=\"btn btn-danger\" action=\"init\" ng-disabled=\" component.spinner != undefined\">Initialize</a>\n" +
+    "                            <a class=\"btn btn-danger\" ng-click=\"openInitPopup(component.component)\" ng-disabled=\" component.spinner != undefined\">Initialize</a>\n" +
     "                            <a class=\"btn btn-warning\" action=\"remove\" ng-disabled=\" component.spinner != undefined\">Remove</a>\n" +
     "                        </div>\n" +
     "                        <div ng-show=\"component.status == 'Running'\">\n" +
@@ -613,9 +609,7 @@ $templateCache.put("../app/components/partials/loading.html","<section class=\"c
     "</section>")
 
 $templateCache.put("../app/components/partials/log.html","<section class=\"content-header\">\n" +
-    "    <h1>\n" +
-    "        Log Tailer ({{pgcInfo.host_short}})\n" +
-    "     </h1>\n" +
+    "    <server-info-details title=\"Log Tailer\"></server-info-details>\n" +
     "</section>\n" +
     "<section class=\"content\">\n" +
     "    <div class=\"row\">\n" +
@@ -676,6 +670,55 @@ $templateCache.put("../app/components/partials/log.html","<section class=\"conte
     "</section>\n" +
     "")
 
+$templateCache.put("../app/components/partials/pgInitialize.html","<div class=\"modal-header\">\n" +
+    "    <h2 class=\"modal-title\" id=\"updateModalLabel\">Setup {{comp}}</h2>\n" +
+    "</div>\n" +
+    "<div class=\"modal-body\">\n" +
+    "	Please provide a password for the superuser (postgres) database user\n" +
+    "	<br>\n" +
+    "	<br>\n" +
+    "	<form class=\"form-horizontal\" name=\"initForm\">\n" +
+    "	  <div class=\"form-group\">\n" +
+    "	    <label for=\"password\" class=\"col-sm-4 control-label\">Password</label>\n" +
+    "	    <div class=\"col-sm-6\">\n" +
+    "	      <input type=\"password\"  class=\"form-control\" id=\"password\" name=\"password\" ng-model=\"formData.password\" required />\n" +
+    "	    </div>\n" +
+    "	  </div>\n" +
+    "	  <div class=\"form-group\">\n" +
+    "	    <label for=\"password_c\" class=\"col-sm-4 control-label\">Retype Password</label>\n" +
+    "	    <div class=\"col-sm-6\">\n" +
+    "	      <input type=\"password\" class=\"form-control\" id=\"password_c\" name=\"password_c\" ng-model=\"formData.password_c\" valid-password-c required  />\n" +
+    "	      <span ng-show=\"!initForm.password_c.$error.required && initForm.password_c.$error.noMatch && initForm.password.$dirty\">Passwords do not match.</span>\n" +
+    "	    </div>\n" +
+    "	  </div>\n" +
+    "	  <div class=\"form-group\">\n" +
+    "	  	<label for=\"dataDir\" class=\"col-sm-4 control-label\">Data Directory</label>\n" +
+    "	  	<div class=\"col-sm-6\">\n" +
+    "	  		<input type=\"text\" class=\"form-control\" name=\"dataDir\" ng-disabled=\"true\" ng-model=\"dataDir\" value=\"{{dataDir}}\" />\n" +
+    "	  	</div>\n" +
+    "	  </div>\n" +
+    "	  <div class=\"form-group\">\n" +
+    "	  		<label for=\"portNumber\" class=\"col-sm-4 control-label\">Port Number</label>\n" +
+    "	  		<div class=\"col-sm-6\">\n" +
+    "	  			<input type=\"text\" class=\"form-control\" id=\"portNumber\" name=\"portNumber\" ng-model=\"portNumber\" value=\"{{initForm.portNumber.$viewValue}}\" valid-port />\n" +
+    "	  			<span ng-show=\"!!initForm.portNumber.$error.invalidLen\">Port must be between 1000 and 9999.</span>\n" +
+    "	  		</div>\n" +
+    "	  </div>\n" +
+    "	  <div class=\"form-group\">\n" +
+    "	  		<label for=\"autoStart\" class=\"col-sm-4 control-label\">Auto Start</label>\n" +
+    "	  		<div class=\"col-sm-6 autostart-input\">\n" +
+    "	  			<input type=\"checkbox\" ng-model=\"autostart\" ng-disabled=\"autostartDisable\" ng-change=\"autostartChange(autostart)\" />\n" +
+    "	  		</div>\n" +
+    "	  </div>\n" +
+    "	  <div class=\"form-group\">\n" +
+    "	    <div class=\"col-sm-offset-8 col-sm-10\">\n" +
+    "	    	<button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
+    "			<button type=\"submit\" class=\"btn btn-primary\" ng-disabled=\"!(initForm.password.$valid && initForm.password.$viewValue == initForm.password_c.$viewValue)\" ng-click=\"init() \">Start</button>\n" +
+    "	    </div>\n" +
+    "	  </div>\n" +
+    "	</form>\n" +
+    "</div>")
+
 $templateCache.put("../app/components/partials/settings.html","<script type=\"text/ng-template\" id=\"alert.html\">\n" +
     "    <div class=\"alert\" style=\"background-color:#fa39c3;color:white;\" role=\"alert\">\n" +
     "        <div ng-transclude></div>\n" +
@@ -683,15 +726,13 @@ $templateCache.put("../app/components/partials/settings.html","<script type=\"te
     "</script>\n" +
     "<uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" dismiss-on-timeout=\"8000\" close=\"closeAlert($index)\" class=\"uib-text\">{{alert.msg}}</uib-alert>\n" +
     "<section class=\"content-header\">\n" +
-    "    <h1>\n" +
-    "        Settings ({{pgcInfo.host_short}})\n" +
-    "     </h1>\n" +
+    "     <server-info-details title=\"Settings\"></server-info-details>\n" +
     "    <div id=\"pgcInfoText\" class=\"pull-left\"></div>\n" +
     "</section>\n" +
     "<section class=\"content\">\n" +
     "    <div class=\"box\">\n" +
     "        <div class=\"box-header with-border\">\n" +
-    "            <h4>Check for updates</h4>\n" +
+    "            <h4><strong> Check for updates </strong></h4>\n" +
     "        </div>\n" +
     "        <div class=\"box-body\">\n" +
     "            <form class=\"form-horizontal\">\n" +
@@ -734,7 +775,7 @@ $templateCache.put("../app/components/partials/settings.html","<script type=\"te
     "    </div>\n" +
     "    <div class=\"box\">\n" +
     "        <div class=\"box-header with-border\">\n" +
-    "            <h4>PGC Server Info</h4></div>\n" +
+    "            <h4><strong> PGC Server Info </strong></h4></div>\n" +
     "        <div class=\"box-body\">\n" +
     "            <div class=\"col-sm-12\">\n" +
     "                <table class=\"table table-condensed settings-table-pgc-info\">\n" +
@@ -747,35 +788,35 @@ $templateCache.put("../app/components/partials/settings.html","<script type=\"te
     "                    <tbody>\n" +
     "                        <tr>\n" +
     "                            <td>\n" +
-    "                                <h5>PGC:</h5></td>\n" +
+    "                                <h5><strong>PGC:</strong></h5></td>\n" +
     "                            <td>\n" +
     "                                <p>{{pgcInfo.version}}</p>\n" +
     "                            </td>\n" +
     "                        </tr>\n" +
     "                        <tr>\n" +
     "                            <td>\n" +
-    "                                <h5>User &amp; Host:</h5></td>\n" +
+    "                                <h5><strong>User &amp; Host:</strong></h5></td>\n" +
     "                            <td>\n" +
     "                                <p>{{pgcInfo.user}} &nbsp; {{pgcInfo.host}} </p>\n" +
     "                            </td>\n" +
     "                        </tr>\n" +
     "                        <tr>\n" +
     "                            <td>\n" +
-    "                                <h5>OS:</h5></td>\n" +
+    "                                <h5><strong>OS:</strong></h5></td>\n" +
     "                            <td>\n" +
     "                                <p>{{pgcInfo.os}}</p>\n" +
     "                            </td>\n" +
     "                        </tr>\n" +
     "                        <tr>\n" +
     "                            <td>\n" +
-    "                                <h5>Hardware:</h5></td>\n" +
+    "                                <h5><strong>Hardware:</strong></h5></td>\n" +
     "                            <td>\n" +
     "                                <p>{{pgcInfo.mem}} GB, {{pgcInfo.cpu}}</p>\n" +
     "                            </td>\n" +
     "                        </tr>\n" +
     "                        <tr>\n" +
     "                            <td>\n" +
-    "                                <h5>Repo URL:</h5></td>\n" +
+    "                                <h5><strong>Repo URL:</strong></h5></td>\n" +
     "                            <td>\n" +
     "                                <p>{{pgcInfo.repo}}</p>\n" +
     "                            </td>\n" +
@@ -789,11 +830,7 @@ $templateCache.put("../app/components/partials/settings.html","<script type=\"te
     "")
 
 $templateCache.put("../app/components/partials/status.html","<section class=\"content-header\">\n" +
-    "    <h1>\n" +
-    "        Server Status ({{pgcInfo.host_short}})\n" +
-    "    </h1>\n" +
-    "    <div></div>\n" +
-    "    <div id=\"pgcInfoText\" class=\"pull-left\"><span><b>OS:&nbsp;&nbsp;</b>{{pgcInfo.os}}&nbsp;&nbsp;</span><span><b>Cores:&nbsp;&nbsp;</b></span>{{pgcInfo.cores}}&nbsp;&nbsp;<span><b>CPU:&nbsp;</b></span>{{pgcInfo.cpu}}&nbsp;&nbsp;<span><b>Memory:&nbsp;</b></span>{{pgcInfo.mem}} GB</div>\n" +
+    "    <server-info-details title=\"Server Status\"></server-info-details>\n" +
     "</section>\n" +
     "<uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" dismiss-on-timeout=\"8000\" close=\"closeAlert()\" class=\"uib-text\">{{alert.msg}}</uib-alert>\n" +
     "<div id=\"pgcInfoText\" class=\"pull-left\"></div>\n" +
@@ -885,8 +922,15 @@ $templateCache.put("../app/components/partials/status.html","<section class=\"co
     "    </div>\n" +
     "</section>")
 
-$templateCache.put("../app/components/partials/updateModal.html","<div class=\"modal-header\">\n" +
+$templateCache.put("../app/components/partials/updateModal.html","<div class=\"updateModal\">\n" +
+    "<div class=\"modal-header\">\n" +
     "    <h2 class=\"modal-title\" id=\"updateModalLabel\">Updates</h2>\n" +
+    "</div>\n" +
+    "<div ng-click=\"cancel()\" class=\"close-modal\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "    <div class=\"lr\">\n" +
+    "        <div class=\"rl\">\n" +
+    "        </div>\n" +
+    "    </div>\n" +
     "</div>\n" +
     "<div class=\"container-fluid\" ng-show=\"loadingSpinner\">\n" +
     "    <div class=\"row\">\n" +
@@ -904,8 +948,8 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"m
     "        <div class=\"row\" id=\"updatesTable\" ng-hide=\"noUpdates\">\n" +
     "            <div style=\"border-bottom: 2px solid #f4f4f4;width: 100%;height: 30px;vertical-align: middle;\">\n" +
     "                <div class=\"col-md-2 col-xs-2\"></div>\n" +
-    "                <div class=\"col-md-4 col-xs-4\"><b>Component</b></div>\n" +
-    "                <div class=\"col-md-5 col-xs-5\"><b>Description</b></div>\n" +
+    "                <div class=\"col-md-4 col-xs-4\"><strong>Component</strong></div>\n" +
+    "                <div class=\"col-md-5 col-xs-5\"><strong>Description</strong></div>\n" +
     "            </div>\n" +
     "            <div class=\"col-md-12 col-xs-12\" id=\"updatesTableTbody \" ng-repeat=\"(key, value) in components\" ng-if=\"value.updates>0 && value.component != 'bam2'\">\n" +
     "                <div class=\"component_box\" id=\"{{value.component}}\">\n" +
@@ -913,9 +957,13 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"m
     "                        <input type=\"checkbox\" ng-model=\"value.selected\" ng-checked=\"selectedComp.component == value.component\">\n" +
     "                    </div>\n" +
     "                    <div class=\"col-md-4 col-xs-4\">\n" +
-    "                        <a ui-sref=\"components.detailsView({component:value.component}) \">\n" +
+    "                        <a ng-if=\"value.category != 1\" ui-sref=\"components.detailsView({component:value.component}) \" ng-click=\"cancel()\">\n" +
     "                                    {{value.component}}\n" +
     "                                </a>\n" +
+    "                        <a ng-if=\"value.category == 1\" ui-sref=\"components.detailspg95({component:value.component}) \" ng-click=\"cancel()\">\n" +
+    "                                    {{value.component}}\n" +
+    "                                </a>\n" +
+    "\n" +
     "                    </div>\n" +
     "                    <div class=\"col-md-5 col-xs-5\">update {{value.version}} to {{value.current_version}}</div>\n" +
     "                </div>\n" +
@@ -938,68 +986,102 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"m
     "                </div>\n" +
     "            </div>\n" +
     "        </div>\n" +
-    "        <div class=\"row\" ng-show=\"noUpdates\">\n" +
+    "        <div class=\"row components-update-msg\" ng-show=\"noUpdates\">\n" +
     "        <div class=\"well\">\n" +
-    "            <p class=\"lead\">All components are up-to-date. </p>\n" +
-    "            </div>\n" +
+    "            <p class=\"lead\">All installed components are up-to-date. </p>\n" +
+    "        </div>\n" +
     "        </div>\n" +
     "        <div class=\"modal-footer\">\n" +
     "            <button class=\"btn btn-primary\" type=\"button\" ng-click=\"selectedUpdate()\" ng-hide=\"noUpdates\">Update</button>\n" +
     "        </div>\n" +
-    "        <div class=\"row\">\n" +
-    "            <div class=\"box-header with-border\">\n" +
-    "                <strong> New Components </strong>\n" +
-    "            </div>\n" +
-    "            <div class=\"box-body\">\n" +
-    "                <div class=\"col-md-4 col-xs-4\"><strong>Release Date</strong></div>\n" +
-    "                <div class=\"col-md-4 col-xs-4\"><strong>Component Type</strong></div>\n" +
-    "                <div class=\"col-md-4 col-xs-4\"><strong>Component</strong></div>\n" +
-    "            </div>\n" +
-    "            <div class=\"col-md-12 col-xs-12\" id=\"updatesTableTbody \" ng-repeat=\"(key, value) in components\" ng-if=\"value.is_new == 1 && value.component != 'bam2' \">\n" +
-    "                <div class=\"component_box\" id=\"{{value.component}}\">\n" +
-    "                    <div class=\"col-md-4 col-xs-4\">\n" +
-    "                        {{value.release_date}}\n" +
-    "                    </div>\n" +
-    "                    <div class=\"col-md-4 col-xs-4\">\n" +
-    "                        {{value.category_desc}}\n" +
-    "                    </div>\n" +
-    "                    <div class=\"col-md-4 col-xs-4\">\n" +
-    "                        {{value.component}}-{{value.version}}\n" +
-    "                    </div>\n" +
-    "                </div>\n" +
-    "            </div>\n" +
-    "        </div>\n" +
     "        <div class=\"row\" ng-hide=\"hideLatestInstalled\">\n" +
-    "            <div class=\"box-header with-border\">\n" +
-    "                <strong>Components Installed/ Updated in last 30 days</strong>\n" +
-    "            </div>\n" +
-    "            <div class=\"box-body\">\n" +
-    "                <div class=\"col-md-4 col-xs-4\"><strong>Release Date</strong></div>\n" +
-    "                <div class=\"col-md-4 col-xs-4\"><strong>Component Type</strong></div>\n" +
-    "                <div class=\"col-md-4 col-xs-4\"><strong>Component</strong></div>\n" +
-    "            </div>\n" +
-    "            <div class=\"col-md-12 col-xs-12\" id=\"updatesTableTbody \" ng-repeat=\"(key, value) in components\" ng-if=\"value.is_updated == 1  && value.component != 'bam2' \">\n" +
-    "                <div class=\"component_box\" id=\"{{value.component}}\">\n" +
-    "                    <div class=\"col-md-4 col-xs-4\">\n" +
-    "                        {{value.release_date}}\n" +
-    "                    </div>\n" +
-    "                    <div class=\"col-md-4 col-xs-4\">\n" +
-    "                        {{value.category_desc}}\n" +
-    "                    </div>\n" +
-    "                    <div class=\"col-md-4 col-xs-4\">\n" +
-    "                        {{value.component}}-{{value.version}}\n" +
+    "            <uib-accordion>\n" +
+    "                <uib-accordion-group is-open=\"uibStatus.newComponents\">\n" +
+    "                  <uib-accordion-heading>\n" +
+    "                    <span> Components installed/updated in last 30 days\n" +
+    "                    <i class=\"pull-right glyphicon\" ng-class=\"{'fa fa-plus': !uibStatus.newComponents, 'fa fa-minus': uibStatus.newComponents}\"></i>\n" +
+    "                    </span> \n" +
+    "                  </uib-accordion-heading>\n" +
+    "            \n" +
+    "                <div class=\"box-body update-modal-table-header\">\n" +
+    "                    <div class=\"col-md-4 col-xs-4\"><strong>Installed/Updated Date</strong></div>\n" +
+    "                    <div class=\"col-md-4 col-xs-4\"><strong>Component Type</strong></div>\n" +
+    "                    <div class=\"col-md-4 col-xs-4\"><strong>Component</strong></div>\n" +
+    "                </div>\n" +
+    "                <div class=\"col-md-12 col-xs-12 update-modal-table\" id=\"updatesTableTbody \" ng-repeat=\" value in components | toArray:false | orderBy : 'install_date' : true\" ng-if=\"value.is_updated == 1  && value.component != 'bam2' \">\n" +
+    "                    <div class=\"component_box\" id=\"{{value.component}}\">\n" +
+    "                        <div class=\"col-md-4 col-xs-4\">\n" +
+    "                            <span>{{value.install_date}}</span>\n" +
+    "                        </div>\n" +
+    "                        <div class=\"col-md-4 col-xs-4\">\n" +
+    "                            <span>{{value.category_desc}}</span>\n" +
+    "                        </div>\n" +
+    "                        <div class=\"col-md-4 col-xs-4\">\n" +
+    "                            <a ng-if=\"value.category != 1\" ui-sref=\"components.detailsView({component:value.component}) \" ng-click=\"cancel()\">\n" +
+    "                                {{value.component}}-{{value.version}}\n" +
+    "                            </a>\n" +
+    "                            <a ng-if=\"value.category == 1\" ui-sref=\"components.detailspg95({component:value.component}) \" ng-click=\"cancel()\">\n" +
+    "                                {{value.component}}-{{value.version}}\n" +
+    "                            </a>\n" +
+    "                        </div>\n" +
     "                    </div>\n" +
     "                </div>\n" +
-    "            </div>\n" +
+    "                </uib-accordion-group>    \n" +
+    "            </uib-accordion>\n" +
+    "\n" +
     "        </div>\n" +
+    "        <div class=\"row components-update-msg\" ng-hide=\"!hideLatestInstalled\">\n" +
+    "        <div class=\"well\">\n" +
+    "            <p class=\"lead\">No components installed/updated in the last 30 days </p>\n" +
+    "        </div>\n" +
+    "        </div>\n" +
+    "\n" +
+    "        <div class=\"row\" ng-if=\"hideNewComponents\">\n" +
+    "            <uib-accordion>\n" +
+    "                <uib-accordion-group is-open=\"uibStatus.installedComponents\">\n" +
+    "                  <uib-accordion-heading>\n" +
+    "                    <span> New components released in the last 30 days \n" +
+    "                    <i class=\"pull-right glyphicon\" ng-class=\"{'fa fa-plus': !uibStatus.installedComponents, 'fa fa-minus': uibStatus.installedComponents}\"></i>\n" +
+    "                    </span> \n" +
+    "                  </uib-accordion-heading>\n" +
+    "                    <div class=\"box-body update-modal-table-header\">\n" +
+    "                        <div class=\"col-md-4 col-xs-4\"><strong>Release Date</strong></div>\n" +
+    "                        <div class=\"col-md-4 col-xs-4\"><strong>Component Type</strong></div>\n" +
+    "                        <div class=\"col-md-4 col-xs-4\"><strong>Component</strong></div>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-md-12 col-xs-12 update-modal-table\" id=\"updatesTableTbody \" ng-repeat=\"(key, value) in components | toArray:false | orderBy : 'release_date' : true\" ng-if=\"value.is_new == 1 && value.component != 'bam2' \">\n" +
+    "                        <div class=\"component_box\" id=\"{{value.component}}\">\n" +
+    "                            <div class=\"col-md-4 col-xs-4\">\n" +
+    "                                <span>{{value.release_date}}</span>\n" +
+    "                            </div>\n" +
+    "                            <div class=\"col-md-4 col-xs-4\">\n" +
+    "                                <span>{{value.category_desc}}</span>\n" +
+    "                            </div>\n" +
+    "                            <div class=\"col-md-4 col-xs-4\">\n" +
+    "                                <a ng-if=\"value.category != 1\" ui-sref=\"components.detailsView({component:value.component}) \" ng-click=\"cancel()\">\n" +
+    "                                    {{value.component}}-{{value.version}}\n" +
+    "                                </a> \n" +
+    "                                <a ng-if=\"value.category == 1\" ui-sref=\"components.detailspg95({component:value.component}) \" ng-click=\"cancel()\">\n" +
+    "                                {{value.component}}-{{value.version}}\n" +
+    "                                </a>                   \n" +
+    "                            </div>\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                </uib-accordion-group>    \n" +
+    "             </uib-accordion>\n" +
+    "\n" +
     "        <!-- /.box -->\n" +
     "        <!-- /.box -->\n" +
     "    </div>\n" +
-    "</div>\n" +
+    "    <div class=\"row components-update-msg\" ng-if=\"!hideNewComponents\">\n" +
+    "        <div class=\"well\">\n" +
+    "            <p class=\"lead\">No new components released in the last 30 days </p>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
     "<div class=\"modal-footer\">\n" +
     "    <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
     "</div>\n" +
-    "")
+    "</div>")
 
 $templateCache.put("../app/components/partials/usersModal.html","<div class=\"modal-header\">\n" +
     "    <h2 class=\"modal-title\" id=\"updateModalLabel\">BigSQL User Management</h2>\n" +
@@ -1121,10 +1203,7 @@ $templateCache.put("../app/components/partials/usersModal.html","<div class=\"mo
     "")
 
 $templateCache.put("../app/components/partials/view.html","<section class=\"content-header\">\n" +
-    "    <h1 class=\"components-update-title-wrapper\">\n" +
-    "        Update Manager ({{pgcInfo.host_short}})\n" +
-    "     </h1>\n" +
-    "  \n" +
+    "    <server-info-details title=\"Update Manager\"></server-info-details>\n" +
     "    <div class=\"components-update-button-wrapper\">\n" +
     "        <input type=\"checkbox\" ng-model=\"isList\" ng-click=\"setTest()\">&nbsp; Show test components</input>\n" +
     "        &nbsp;\n" +
@@ -1189,26 +1268,27 @@ $templateCache.put("../app/components/partials/view.html","<section class=\"cont
     "                                </div>\n" +
     "                                <div class=\"col-md-3 col-sm-3 col-xs-3\" style=\"padding-left: 10px;\">\n" +
     "                                    <a class=\"btn btn-default\" ng-click=\"compAction( 'install', c.component) \" id=\"install\" ng-if=\"c.status == 'NotInstalled'\" ng-disabled=\" c.installation != undefined\">Install</a>\n" +
-    "                                    <a class=\"btn btn-default\" ng-click=\"compAction( 'remove', c.component) \" id=\"install\" ng-if=\"c.status == 'Installed' && c.updates == 0\" ng-disabled=\" c.installation != undefined\">Remove</a>\n" +
-    "                                     <div class=\"btn-group \" uib-dropdown id=\"install\" ng-if=\"c.status == 'NotInitialized'\" ng-disabled=\"c.installation != undefined\">\n" +
-    "                                    <button id=\"split-button \" type=\"button\" ng-click=\"compAction('init', c.component)\" class=\"btn btn-default \">Initialize</button>\n" +
-    "                                        <button type=\"button \" class=\"btn btn-default \" uib-dropdown-toggle>\n" +
+    "                                    <a class=\"btn btn-default\" ng-click=\"compAction( 'remove', c.component) \" id=\"install\" ng-if=\"c.status == 'Installed' && c.updates == 0 \" ng-disabled=\" c.removing != undefined\">Remove</a>\n" +
+    "                                    <div class=\"btn-group \" uib-dropdown id=\"install\" ng-if=\"c.status == 'NotInitialized'\">\n" +
+    "                                    <button id=\"split-button \" type=\"button\" ng-click=\"openInitPopup(c.component)\" ng-disabled=\"c.init != undefined || c.removing != undefined\" class=\"btn btn-default \">Initialize</button>\n" +
+    "                                        <button type=\"button \" class=\"btn btn-default \" uib-dropdown-toggle ng-disabled=\"c.init != undefined || c.removing != undefined\">\n" +
     "                                            <span class=\"caret \"></span>\n" +
     "                                            <span class=\"sr-only \">Split button!</span>\n" +
     "                                        </button>\n" +
     "                                        <ul uib-dropdown-menu role=\"menu \" aria-labelledby=\"split-button \">\n" +
+    "                                            <li ng-if=\"c.updates > 0\" role=\"menuitem \"><a  ng-click=\"compAction( 'update', c.component) \" href=\"\" ng-hide=\"{{c.component=='bam2'}}\">Update</a></li>\n" +
     "                                            <li role=\"menuitem \"><a ng-click=\"compAction( 'remove', c.component) \" href=\"\" ng-hide=\"{{c.component=='bam2'}}\">Remove</a></li>\n" +
     "                                        </ul>\n" +
     "                                    </div>\n" +
-    "                                    <div class=\"btn-group\" uib-dropdown ng-if=\"c.updates > 0\">\n" +
-    "                                        <button id=\"split-button \" type=\"button \" class=\"btn btn-default\" ng-click=\"compAction( 'update', c.component) \">Update</button>\n" +
-    "                                        <button type=\"button \" class=\"btn btn-default\" uib-dropdown-toggle>\n" +
-    "                                            <span class=\"caret \"></span>\n" +
-    "                                            <span class=\"sr-only \">Split button!</span>\n" +
-    "                                        </button>\n" +
-    "                                        <ul uib-dropdown-menu role=\"menu \" aria-labelledby=\"split-button \">\n" +
-    "                                            <li role=\"menuitem \"><a ng-click=\"compAction( 'remove', c.component) \" href=\"\">Remove</a></li>\n" +
-    "                                        </ul>\n" +
+    "                                    <div class=\"btn-group\" uib-dropdown ng-if=\"c.updates > 0 && c.status != 'NotInitialized'\">\n" +
+    "                                            <button id=\"split-button \" type=\"button \" class=\"btn btn-default\" ng-click=\"compAction( 'update', c.component) \" ng-disabled=\"c.installation != undefined || c.removing != undefined\">Update</button>\n" +
+    "                                            <button type=\"button \" class=\"btn btn-default\" uib-dropdown-toggle ng-disabled=\"c.installation != undefined || c.removing != undefined\">\n" +
+    "                                                <span class=\"caret \"></span>\n" +
+    "                                                <span class=\"sr-only \">Split button!</span>\n" +
+    "                                            </button>\n" +
+    "                                            <ul uib-dropdown-menu role=\"menu \" aria-labelledby=\"split-button \">\n" +
+    "                                                <li role=\"menuitem \"><a ng-click=\"compAction( 'remove', c.component) \" href=\"\">Remove</a></li>\n" +
+    "                                            </ul>\n" +
     "                                    </div>\n" +
     "                                </div>\n" +
     "                            </div>\n" +

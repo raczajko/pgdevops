@@ -4,7 +4,7 @@
 @REM #########   Copyright (c) 2016 BigSQL    ##########
 @REM ###################################################
 
-set BAM_SERVICE_NAME="bigsql.devops"
+set BAM_SERVICE_NAME="bigsql.bam4"
 set BAM_SERVICE_DESCRIPTION="BigSQL DevOps Console for Develoeprs &/or Operations"
 set BAM_SERVICE_DISPLAY_NAME="BigSQL DevOps"
 set CWD=%~sdp0

@@ -161,6 +161,45 @@ angular.module('bigSQL.common').directive('progressbar', function () {
         }
     }
 });
+angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjaxCall) {
+
+    return {
+        scope: {
+            title : '@'
+        },
+        restrict: 'E',
+        template: '<div class="components-update-title-wrapper">  <h1><strong>{{title}}</strong> : {{data.host}} </h1>  <h3><strong> OS </strong> : {{data.os}} &nbsp; <strong>HW </strong>: {{data.mem}} GB, {{data.cores}} x {{data.cpu}} &nbsp; <strong>PGC</strong> : {{data.version}}</h3></div>',
+        controller: ['$scope', '$http', '$window', function serverInfoDetailsController($scope, $http, $window) {
+            
+            var infoData = bamAjaxCall.getCmdData('info')
+            infoData.then(function(data) {
+                $scope.data = data[0];
+            });
+        }]
+    }
+});
+angular.module('bigSQL.common').directive('validPasswordC', function () {
+    return {
+        require: 'ngModel',
+        link: function (scope, elm, attrs, ctrl) {
+            ctrl.$parsers.unshift(function (viewValue, $scope) {
+                var noMatch = viewValue != scope.initForm.password.$viewValue
+                ctrl.$setValidity('noMatch', !noMatch)
+            })
+        }
+    }
+}).directive('validPort', function () {
+    return {
+        require: 'ngModel',
+        link: function (scope, elm, attrs, ctrl) {
+            ctrl.$parsers.unshift(function (viewValue, $scope) {
+                var invalidLen = parseInt(viewValue) < 1000 || parseInt(viewValue) > 9999
+                ctrl.$setValidity('invalidLen', !invalidLen)
+                scope.portGood = !invalidLen
+            })
+        }
+    }
+});
 angular.module('bigSQL.common').factory('MachineInfo', function (PubSubService, $q, $filter) {
     var machineInfo;
     var logdir;
@@ -415,7 +454,7 @@ angular.module('bigSQL.components').controller('ComponentBamUpdateController', [
     });
 
 }]);
-angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$http', '$window', '$interval', function ($scope, $stateParams, PubSubService, $rootScope, $http, $window, $interval) {
+angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'bamAjaxCall', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, bamAjaxCall) {
 
     var subscriptions = [];
     var session;
@@ -443,56 +482,32 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     };
 
     function compAction(action) {
-            if(action == 'init'){
-                $scope.component.spinner = 'Initializing..';
-            }else if(action == 'start'){
-                $scope.component.spinner = 'Starting..';
-            }else if(action == 'stop'){
-                $scope.component.spinner = 'Stopping..';
-            }else if(action == 'remove'){
-                $scope.component.spinner = 'Removing..';
-            }else if(action == 'restart'){
-                $scope.component.spinner = 'Restarting..';
-            }
-            var sessionKey = "com.bigsql." + action;
-            session.call(sessionKey, [$scope.component.component]);
+        if(action == 'start'){
+            $scope.component.spinner = 'Starting..';
+        }else if(action == 'stop'){
+            $scope.component.spinner = 'Stopping..';
+        }else if(action == 'remove'){
+            $scope.component.spinner = 'Removing..';
+        }else if(action == 'restart'){
+            $scope.component.spinner = 'Restarting..';
+        }
+        var sessionKey = "com.bigsql." + action;
+        session.call(sessionKey, [$scope.component.component]);
     };
 
     function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info/' + $stateParams.component)
-        .success(function(data) {
-            if(data[0]['autostart']== "on" ){
-                data[0]['autostart']=true;
-            }else{
-                data[0]['autostart']=false;
-            }
+        var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+        infoData.then(function(data) {
             if(window.location.href.split('/').pop(-1) == data[0].component){
                 $scope.component = data[0];
-                if($scope.component.status != "Running"){
-                    $scope.uibStatus = {
-                        tpsChartCollapsed : false,
-                        rpsChartCollapsed : false,
-                        diskChartCollapsed : true,
-                        cpuChartCollapsed : true,
-                        connectionsCollapsed : false
-                    };
-                } else {
-                    $scope.uibStatus = {
-                        tpsChartCollapsed : true,
-                        rpsChartCollapsed : true,
-                        diskChartCollapsed : false,
-                        cpuChartCollapsed : true,
-                        connectionsCollapsed : false
-                    };
-                }
             }
         });
     };
 
     function callStatus(argument) {
-        $http.get($window.location.origin + '/api/status')
-        .success(function(data) {
-            componentStatus = getCurrentObject(data, $stateParams.component);
+        var statusData = bamAjaxCall.getCmdData('status')
+        statusData.then(function(data) {
+            componentStatus = getCurrentObject($stateParams.component);
             $rootScope.$emit('componentStatus', componentStatus);
             if (componentStatus.state != $scope.component.status) {
                 callInfo();
@@ -509,17 +524,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     sessionPromise.then(function (val) {
         session = val;
         $scope.component = {};
-        // session.call('com.bigsql.infoComponent', [$stateParams.component]);
-
-        // session.subscribe('com.bigsql.status', function (data) {
-        //     var list = JSON.parse(data[0]);
-        //     componentStatus = getCurrentObject(list, $stateParams.component)
-        //     if (componentStatus.state != $scope.component.status) {
-        //         session.call('com.bigsql.infoComponent', [$stateParams.component]);
-        //     }
-        // }).then(function (sub) {
-        //     subscriptions.push(sub);
-        // });
 
         var onRemove = function (response) {
             var data = JSON.parse(response[0])[0];
@@ -542,42 +546,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 subscriptions.push(sub);
             });
 
-        session.subscribe('com.bigsql.onInit', function (data) {
-            var res = JSON.parse(data[0])[0];
-            if(res['status'] == 'error'){
-                $scope.alerts.push({
-                    msg: res['msg'],
-                    type: "danger"
-                });
-            } else {
-                $scope.alerts.push({
-                    msg: res['msg']
-                });
-                $scope.component.spinner = res['msg'];
-                compAction('start');
-            }
-            $scope.$apply();
-        }).then(function (sub) {
-            subscriptions.push(sub);
-        });
-        
-        session.subscribe('com.bigsql.onInfoComponent', function (args) {
-            var jsonD = JSON.parse(args[0][0]);
-            if(window.location.href.split('/').pop(-1) == jsonD[0].component){
-                $scope.component = jsonD[0];
-                $scope.$apply();
-            }
-        }).then(function (sub) {
-            $rootScope.$emit('topMenuEvent');
-            subscriptions.push(sub);
-        });
-        $scope.isCollapsed2 = true;
-
         $scope.action = function (event) {
             if (event.target.tagName === "A") {
-                if(event.target.attributes.action.value == 'init'){
-                    $scope.component.spinner = 'Initializing..';
-                }else if(event.target.attributes.action.value == 'start'){
+                if(event.target.attributes.action.value == 'start'){
                     $scope.component.spinner = 'Starting..';
                 }else if(event.target.attributes.action.value == 'stop'){
                     $scope.component.spinner = 'Stopping..';
@@ -613,7 +584,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 if (data.state == 'unpack') {
                     // session.call('com.bigsql.infoComponent', [$stateParams.component])
                     callInfo();
-                    compAction('init');
                 } 
                 if (data.status == "cancelled") {
                         $scope.alerts.push({
@@ -658,7 +628,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     });
 
 }]);
-angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', '$http', '$window', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $http, $window) {
+angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', '$window', 'bamAjaxCall', '$uibModal', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal) {
 
     $scope.alerts = [];
     var subscriptions = [];
@@ -690,8 +660,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     }
 
     function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info/' + $stateParams.component)
-        .success(function(data) {
+        var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+        infoData.then(function(data) {
             if(data[0]['autostart']== "on" ){
                 data[0]['autostart']=true;
             }else{
@@ -721,8 +691,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     };
 
     function callStatus(argument) {
-        $http.get($window.location.origin + '/api/status')
-        .success(function(data) {
+        var statusData = bamAjaxCall.getCmdData('status');
+        statusData.then(function(data) {
             componentStatus = getCurrentObject(data, $stateParams.component);
             $rootScope.$emit('componentStatus', componentStatus);
             if (componentStatus.state != $scope.component.status) {
@@ -778,19 +748,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     infoRefreshRate = $interval(callInfo, 60000);
     $scope.component = {};
     callInfo();
-    // session.call('com.bigsql.infoComponent', [$stateParams.component]);
-
-    // session.subscribe('com.bigsql.status', function (data) {
-    //     var list = JSON.parse(data[0]);
-    //     componentStatus = getCurrentObject(list, $stateParams.component);
-    //     $rootScope.$emit('componentStatus', componentStatus);
-    //     if (componentStatus.state != $scope.component.status) {
-    //         callInfo();
-    //         session.call('com.bigsql.infoComponent', [$stateParams.component]);
-    //     }
-    // }).then(function (sub) {
-    //     subscriptions.push(sub);
-    // });
 
     $scope.changeOption = function (value) {
         $rootScope.$emit('refreshRateVal',$scope.opt.interval);
@@ -806,7 +763,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         session.call('com.bigsql.autostart',[autoStartVal,$stateParams.component]).then(
             function (sub) {
                 callInfo();
-                // session.call('com.bigsql.infoComponent', [$stateParams.component]); 
             });
     }
 
@@ -819,6 +775,14 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     $scope.cancelInstallation = function (action) {
         session.call("com.bigsql.cancelInstall");
     }
+
+    $scope.openInitPopup = function (comp) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/pgInitialize.html',
+            controller: 'pgInitializeController',
+        });
+        modalInstance.component = comp;
+    };
 
     session.subscribe('com.bigsql.ondblist', function (data) {
         if(data[0].component == $stateParams.component){
@@ -911,7 +875,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         }
         if (data.status == "complete") {
             callInfo();
-            // session.call('com.bigsql.infoComponent', [$stateParams.component]);
         }
     };
 
@@ -943,10 +906,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         $scope.alerts.splice(index, 1);
     };
 
-    // function callInfo() {
-        // session.call('com.bigsql.infoComponent', [$stateParams.component]);
-    // }
-
     session.subscribe('com.bigsql.onActivity', function (data) {
         if(data[0].component == $stateParams.component){
             var parseData =  data[0].activity;
@@ -962,38 +921,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     }).then(function (sub) {
         subscriptions.push(sub);
     });
-
-    // session.subscribe('com.bigsql.onInfoComponent', function (args) {
-    //     var jsonD = JSON.parse(args[0][0]);
-    //     if(jsonD[0]['autostart']== "on" ){
-    //         jsonD[0]['autostart']=true;
-    //     }else{
-    //         jsonD[0]['autostart']=false;
-    //     }
-    //     if(window.location.href.split('/').pop(-1) == jsonD[0].component){
-    //         $scope.component = jsonD[0];
-    //         if($scope.component.status != "Running"){
-    //             $scope.uibStatus = {
-    //                 tpsChartCollapsed : false,
-    //                 rpsChartCollapsed : false,
-    //                 diskChartCollapsed : true,
-    //                 cpuChartCollapsed : true,
-    //                 connectionsCollapsed : false
-    //             };
-    //         } else {
-    //             $scope.uibStatus = {
-    //                 tpsChartCollapsed : true,
-    //                 rpsChartCollapsed : true,
-    //                 diskChartCollapsed : false,
-    //                 cpuChartCollapsed : true,
-    //                 connectionsCollapsed : false
-    //             };
-    //         }
-    //         $scope.$apply();
-    //     }
-    // }).then(function (sub) {
-    //     subscriptions.push(sub);
-    // });
 
     $scope.logdirSelect = function () {
         $interval.cancel(infoRefreshRate);
@@ -1018,7 +945,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
         if (data.status == "complete" || data.status == "cancelled") {
             if (data.state == 'unpack') {
-                // session.call('com.bigsql.infoComponent', [$stateParams.component]);
                 compAction('init');
             }
 
@@ -1057,7 +983,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     });
 
     $scope.action = function (event) {
-        if (event.target.tagName === "A") {
+        if (event.target.tagName === "A" && event.target.attributes.action != undefined) {
             if(event.target.attributes.action.value == 'init'){
                 $scope.component.spinner = 'Initializing..';
             }else if(event.target.attributes.action.value == 'start'){
@@ -1087,7 +1013,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     });
 
 }]);
-angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$http', '$window', '$rootScope', function ($scope, PubSubService, $state, $interval, $location, $http, $window, $rootScope) {
+angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall) {
 
     var subscriptions = [];
     var count = 1;
@@ -1107,15 +1033,11 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         });
     });
 
-    function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info')
-        .success(function(data) {
-            $scope.pgcInfo = data[0];
-        });
-    }
+    var infoData = bamAjaxCall.getCmdData('info')
+    infoData.then(function(data) {
+        $scope.pgcInfo = data[0];
+    });
 
-
-    callInfo();
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
@@ -1250,7 +1172,7 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
 
 }]);
 
-angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$http', '$window', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $http, $window) {
+angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall) {
     $scope.alerts = [];
 
     var session;
@@ -1269,37 +1191,30 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/updateModal.html',
+            windowClass: 'bam-update-modal modal',
             controller: 'ComponentsUpdateController',
         });
     };
+
+    var infoData = bamAjaxCall.getCmdData('info')
+    infoData.then(function(data) {
+        $scope.pgcInfo = data[0];
+        if (data[0].last_update_utc) {
+            $scope.lastUpdateStatus = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
+        }
+        if (MachineInfo.getUpdationMode() == "manual") {
+            $scope.settingType = 'manual';
+        } else {
+            $scope.settingType = 'auto';
+            session.call('com.bigsql.get_host_settings');
+        }
+
+    });
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         $rootScope.$emit('topMenuEvent');
         session = val;
-
-        function callInfo(argument) {
-            $http.get($window.location.origin + '/api/info')
-            .success(function(data) {
-                $scope.pgcInfo = data[0];
-                if (data[0].last_update_utc) {
-                    $scope.lastUpdateStatus = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
-                }
-                if (MachineInfo.getUpdationMode() == "manual") {
-                    $scope.settingType = 'manual';
-                } else {
-                    $scope.settingType = 'auto';
-                    session.call('com.bigsql.get_host_settings');
-                }
-
-            });
-        }
-        callInfo();
-        // var promise = MachineInfo.get(session);
-        // promise.then(function (data) {
-        //     $scope.pgcInfo = data;
-            
-        // });
         
         $scope.updateManualSettings = function () {
             session.call('com.bigsql.update_host_settings', ['localhost', "None", '']).then(
@@ -1337,15 +1252,6 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
     });
 
-    function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info')
-        .success(function(data) {
-            $scope.pgcInfo = data[0];
-        });
-    }
-
-
-    callInfo();
 
     /**
      Unsubscribe to all the apis on the template and scope destroy
@@ -1358,7 +1264,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     });
 
 }]);
-angular.module('bigSQL.components').controller('ComponentsStatusController', ['$scope', 'PubSubService', 'MachineInfo', '$interval', '$rootScope', '$http', '$window', function ($scope, PubSubService, MachineInfo, $interval, $rootScope, $http, $window) {
+angular.module('bigSQL.components').controller('ComponentsStatusController', ['$scope', 'PubSubService', 'MachineInfo', '$interval', '$rootScope', '$window', 'bamAjaxCall', function ($scope, PubSubService, MachineInfo, $interval, $rootScope, $window, bamAjaxCall) {
 
     var subscriptions = [];
     $scope.comps = {};
@@ -1368,8 +1274,8 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
     var graphData = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10];
 
     function callStatus(argument) {
-        $http.get($window.location.origin + '/api/status')
-        .success(function(data) {
+        var statusData = bamAjaxCall.getCmdData('status')
+        statusData.then(function(data) {
             $scope.comps = data;
             if($scope.comps.length == 0){
                 $scope.showMsg = true;
@@ -1380,8 +1286,8 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
     }
 
     function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info')
-        .success(function(data) {
+        var infoData = bamAjaxCall.getCmdData('info')
+        infoData.then(function(data) {
             $scope.pgcInfo = data[0];
         });
     }
@@ -1487,35 +1393,6 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
     sessionPromise.then(function (val) {
         $rootScope.$emit('topMenuEvent');
         session = val;
-        // var promise = MachineInfo.get(session);
-        // promise.then(function (data) {
-        //     $scope.pgcInfo = data;
-        // }, function (msg) {
-        //     throw new Error(msg);
-        // });
-
-
-        // session.subscribe("com.bigsql.onServerStatus", function (components) {
-        //     $scope.comps = JSON.parse(components[0]);
-        //     if($scope.comps.length == 0){
-        //         $scope.showMsg = true;
-        //     } else{
-        //         $scope.showMsg = false;
-        //     }
-        // }).then(function (subscription) {
-        //     subscriptions.push(subscription);
-        // });
-
-        // session.subscribe("com.bigsql.status", function (components) {
-        //     $scope.comps = JSON.parse(components[0]);
-        //     if($scope.comps.length == 0){
-        //         $scope.showMsg = true;
-        //     }else{
-        //         $scope.showMsg = false;
-        //     }
-        // }).then(function (subscription) {
-        //     subscriptions.push(subscription);
-        // });
 
         session.subscribe("com.bigsql.graphs", function (data) {
             if($scope.cpuData[0].values.length > 60){
@@ -1618,7 +1495,7 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
 
 
 }]);
-angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window) {
+angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', '$rootScope', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall, $rootScope) {
 
     var session;
     var subscriptions = [];
@@ -1629,8 +1506,8 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
     var checkUpdates;   
 
     function getList(argument) {
-        $http.get($window.location.origin + '/api/list')
-        .success(function(data) {
+        var listData = bamAjaxCall.getCmdData('list')
+        listData.then(function(data) {
             $scope.noUpdates = true;
             $scope.components = data;
             $scope.hideLatestInstalled = false;
@@ -1653,6 +1530,18 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                         $scope.components[i]['selected'] = false;
                     }
                 } catch(err){}
+
+                if ($scope.noUpdates) {
+                    $scope.uibStatus = {
+                        newComponents : true,
+                        installedComponents : true
+                    }
+                }else{
+                    $scope.uibStatus = {
+                        newComponents : false,
+                        installedComponents : false
+                    }
+                }
             }
         });
     };
@@ -1674,7 +1563,6 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         session = val;
         if (!checkUpdates) {
             $scope.body = true;
-            // session.call('com.bigsql.list');
             getList();
         } else {
             $scope.loadingSpinner = true;
@@ -1684,7 +1572,6 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                     $scope.loadingSpinner = false;
                     $scope.body = true;
                     getList();
-                    // session.call('com.bigsql.list');
                 });
         }
 
@@ -1695,29 +1582,6 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         $scope.cancel = function () {
             $uibModalInstance.dismiss('cancel');
         };
-
-
-        // session.subscribe("com.bigsql.onList", function (components) {
-        //     $scope.noUpdates = true;
-        //     $scope.components = JSON.parse(components[0][0]);
-
-        //     for (var i = 0; i < $scope.components.length; i++) {
-        //         if($scope.components[i].is_current == 0 && $scope.components[i].current_version){
-        //             $scope.noUpdates = false;
-        //         }
-        //         try{
-        //             if (UpdateComponentsService.get().component == $scope.components[i].component) {
-        //                 $scope.components[i]['selected'] = true;
-        //             } else {
-        //                 $scope.components[i]['selected'] = false;
-        //             }
-        //         } catch(err){}
-        //     }
-            
-        //     $scope.$apply();
-        // }).then(function (subscription) {
-        //     subscriptions.push(subscription);
-        // });
 
         var getCurrentComponent = function (name) {
             for (var i = 0; i < $scope.components.length; i++) {
@@ -1779,7 +1643,6 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 $scope.compAction('update', popComp);
             } else {
                 session.call('com.bigsql.update', [selUpdatedComp[0].component]).then(function (sub) {
-                    // session.call("com.bigsql.list");
                     $uibModalInstance.dismiss('cancel');
                 }, function (err) {
                     throw new Error('failed to update comp', err);
@@ -1797,6 +1660,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
      Unsubscribe to all the apis on the template and scope destroy
      **/
     $scope.$on('$destroy', function () {
+        $rootScope.$emit('topMenuEvent');
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);
         }
@@ -1805,7 +1669,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
 
 }]);
 
-angular.module('bigSQL.components').controller('ComponentsViewController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http) {
+angular.module('bigSQL.components').controller('ComponentsViewController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', 'bamAjaxCall', '$http', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, bamAjaxCall, $http) {
 
     $scope.alerts = [];
 
@@ -1849,45 +1713,66 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     }
 
     function getList(argument) {
-        $http.get($window.location.origin + '/api/list')
-        .success(function(data) {
-            $scope.nothingInstalled = false;
-            if ($scope.showInstalled) {
-                $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
-                if($scope.components.length == 0){
-                    $scope.components = [];
-                    $scope.nothingInstalled = true;
+
+        var listData = bamAjaxCall.getCmdData('list');
+        listData.then(function (data) {
+            if(data == "error"){
+                $timeout(wait, 5000);
+                $scope.loading = false;
+                $scope.retry = true;
+            } else {
+                $scope.nothingInstalled = false;
+                if ($scope.showInstalled) {
+                    $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
+                    if($scope.components.length == 0){
+                        $scope.components = [];
+                        $scope.nothingInstalled = true;
+                    }
+                } else{
+                        $scope.components = changePostgresOrder(data);
                 }
-            } else{
-                    $scope.components = changePostgresOrder(data);
+                $scope.loading = false;
+                for (var i = 0; i < $scope.components.length; i++) {
+                    $scope.components[i].progress = 0;
+                }
+                var Checkupdates = 0;
+                for (var i = 0; i < $scope.components.length; i++) {
+                    Checkupdates += $scope.components[i].updates;
+                } 
             }
-            $scope.loading = false;
-            for (var i = 0; i < $scope.components.length; i++) {
-                $scope.components[i].progress = 0;
-            }
-            var Checkupdates = 0;
-            for (var i = 0; i < $scope.components.length; i++) {
-                Checkupdates += $scope.components[i].updates;
-            }
-        })
-        .error(function(error) {
-            $timeout(wait, 5000);
-            $scope.loading = false;
-            $scope.retry = true;
         });
+        
+        // $http.get($window.location.origin + '/api/list')
+        // .success(function(data) {
+        //     $scope.nothingInstalled = false;
+        //     if ($scope.showInstalled) {
+        //         $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
+        //         if($scope.components.length == 0){
+        //             $scope.components = [];
+        //             $scope.nothingInstalled = true;
+        //         }
+        //     } else{
+        //             $scope.components = changePostgresOrder(data);
+        //     }
+        //     $scope.loading = false;
+        //     for (var i = 0; i < $scope.components.length; i++) {
+        //         $scope.components[i].progress = 0;
+        //     }
+        //     var Checkupdates = 0;
+        //     for (var i = 0; i < $scope.components.length; i++) {
+        //         Checkupdates += $scope.components[i].updates;
+        //     }
+        // })
+        // .error(function(error) {
+        //     $timeout(wait, 5000);
+        //     $scope.loading = false;
+        //     $scope.retry = true;
+        // });
     };
 
-    function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info')
-        .success(function(data) {
-            $scope.pgcInfo = data[0];
-        });
-    }
-
-
-    callInfo();
-
     getList();
+
+
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -1900,7 +1785,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     sessionPromise.then(function (val) {
         session = val;
 
-        session.call('com.bigsql.info');
+        // session.call('com.bigsql.info');
 
         $scope.open = function (manual) {
 
@@ -1915,8 +1800,17 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             }
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/updateModal.html',
+                windowClass: 'bam-update-modal modal',
                 controller: 'ComponentsUpdateController',
             });
+        };
+
+        $scope.openInitPopup = function (comp) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/pgInitialize.html',
+                controller: 'pgInitializeController',
+            });
+            modalInstance.component = comp;
         };
 
         session.call('com.bigsql.getBamConfig', ['showInstalled']);
@@ -1926,16 +1820,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
-
-        // session.call('com.bigsql.list').then(
-        //     function (subscribe) {
-        //         $rootScope.$emit('topMenuEvent');
-        //     }, function (error) {
-        //         $timeout(wait, 5000);
-        //         $scope.loading = false;
-        //         $scope.retry = true;
-        //     }
-        // );
 
         session.call('com.bigsql.getTestSetting');
         session.subscribe("com.bigsql.onGetTestSetting", function (settings) {
@@ -1953,32 +1837,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             $window.location.reload();
         };
 
-        session.subscribe("com.bigsql.onList", function (components) {
-            $scope.nothingInstalled = false;
-            if ($scope.showInstalled) {
-                $scope.components = $(JSON.parse(components[0][0])).filter(function(i,n){ return n.status != "NotInstalled" ;});
-                if($scope.components.length == 0){
-                    $scope.components = [];
-                    $scope.nothingInstalled = true;
-                }
-            } else{
-                $scope.components = JSON.parse(components[0][0]);                
-            }
-            $scope.loading = false;
-            for (var i = 0; i < $scope.components.length; i++) {
-                $scope.components[i].progress = 0;
-            }
-            var Checkupdates = 0;
-            for (var i = 0; i < $scope.components.length; i++) {
-                Checkupdates += $scope.components[i].updates;
-            }
-            $scope.$apply();
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
-        });
-
-        session.subscribe("com.bigsql.onInfo", function (machineInfo) {
-            $scope.machineInfo = JSON.parse(machineInfo[0][0]);
+        var infoData = bamAjaxCall.getCmdData('info');
+        infoData.then(function (data) {
+            $scope.machineInfo =  data[0];
             var myDate = new Date();
             var previousDay = new Date(myDate);
             previousDay.setDate(myDate.getDate() - 7);
@@ -1995,8 +1856,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             } else {
                 $scope.updateSettings = 'auto';
             }
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
         });
 
         session.subscribe('com.bigsql.onInit', function (data) {
@@ -2061,8 +1920,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 if (data.state == 'unpack' && data.status == "complete") {
                     if(["pg96","pg95","pg94","pg93","pg92"].indexOf(data.component) >= 0){
                         currentComponent.status = 'NotInitialized';
-                        getList();
-                        $scope.compAction('init', data.component);
+                        // getList();
+                        $scope.openInitPopup(data.component);
+                        // $scope.compAction('init', data.component);
                         // session.call('com.bigsql.list');
                     }else{
                         currentComponent.status = 'Installed';
@@ -2090,7 +1950,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 
                 delete currentComponent.installationStart;
                 delete currentComponent.installationRunning;
-                // delete currentComponent.installation;
+                delete currentComponent.installation;
                 $scope.disableShowInstalled = false;
                 if (data.state == "update") {
                     currentComponent.updates -= 1;
@@ -2110,6 +1970,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 delete currentComponent.installationStart;
                 delete currentComponent.installationRunning;
                 delete currentComponent.installation;
+                delete parentComponent.installation;
                 $scope.disableShowInstalled = false;
             }
             else if (data.state == "locked") {
@@ -2172,6 +2033,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         if (action == 'update' && compName == 'bam2') {
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/bamUpdateModal.html',
+                windowClass: 'bam-update-modal modal',
                 controller: 'bamUpdateModalController',
             });
         }
@@ -2184,6 +2046,15 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
 
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);
+    };
+
+    $rootScope.$on('initComp', function (event, comp) {
+        currentComponent = getCurrentComponent(comp);
+        currentComponent.init = true;
+    });
+
+    function wait() {
+        $window.location.reload();
     };
 
     $timeout(function() {
@@ -2199,20 +2070,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         }
     });
 }]);
-/**
- * Created by mahesh on 16/09/16.
- */
-angular.module('bigSQL.components').controller('HostDetailController', ['$scope', function ($scope) {
-
-                $scope.$parent.isopen = ($scope.$parent.default === $scope.host);
-
-                $scope.$watch('isopen', function ($scope) {
-                    console.log("yahoo");
-                    console($scope.$parent.isopen);
-                    //scope.$parent.isopen = newvalue;
-                });
-
-            }]);
 angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http) {
 
     $scope.alerts = [];
@@ -2264,7 +2121,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         return pgComps.reverse().concat(nonPgComps);
     }
 
-    $scope.loadHost = function (idx, refresh=false) {
+    $scope.loadHost = function (idx, refresh) {
         var isOpened = false;
         if (typeof $scope.hostsList[idx].open == "undefined") {
             isOpened = true;
@@ -2360,6 +2217,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
         ;
     }, 5000);
+
+    function wait() {
+        $window.location.reload();
+    };
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
@@ -2700,6 +2561,91 @@ angular.module('bigSQL.components').controller('graphsTabController', ['$scope',
     });
 
 }]);
+angular.module('bigSQL.components').controller('pgInitializeController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', 'bamAjaxCall', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, bamAjaxCall) {
+
+	var session;
+    var subscriptions = [];
+
+	$scope.cancel = function () {
+        $uibModalInstance.dismiss('cancel');
+    };
+
+    $scope.comp = $uibModalInstance.component;
+
+    function getInfoComp(argument) {
+        var infoData = bamAjaxCall.getCmdData('info/' + $scope.comp)
+        infoData.then(function(args) {
+            var data = args[0];
+            if (data.component == $scope.comp) {
+                if(data['autostart'] == "on" ){
+                    $scope.autostart = true;
+                }else if(data['autostart'] == "off" ){
+                    $scope.autostart = false;
+                }
+            }
+        });
+    }
+
+    var sessionPromise = PubSubService.getSession();
+    sessionPromise.then(function (val) {
+    	session = val;
+        session.call('com.bigsql.checkOS');
+        session.subscribe('com.bigsql.onCheckOS', function (args) {
+            if(args[0] != 'Linux'){
+                
+                session.call('com.bigsql.autostart',['on',$scope.comp]).then(function (argument) {
+                    getInfoComp();
+                });
+                
+            }else{
+                $scope.autostartDisable = true;
+            }
+        });
+        session.call('com.bigsql.getAvailPort',[$scope.comp,'']);
+
+        var promise = MachineInfo.get(val);
+        promise.then(function (data) {
+            $scope.dataDir = data.home + '/data/' + $scope.comp;
+        });
+
+        $scope.portNumber = '';
+
+        $scope.autostartChange = function (args) {
+            var autoStartVal;
+            if(args){
+                autoStartVal = 'on';
+            } else {
+                autoStartVal = 'off';       
+            }
+            session.call('com.bigsql.autostart',[autoStartVal,$scope.comp]);
+        }
+
+
+        session.subscribe('com.bigsql.onPortSelect', 
+            function (data) {
+                $scope.portNumber = data.join();
+            }).then(
+            function (subscription){
+                subscriptions.push(subscription);
+            });
+    });
+
+    $scope.init = function() {
+    	if(!$scope.portNumber){
+            $scope.portNumber = document.getElementById('portNumber').value;
+        }
+        session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDir, $scope.portNumber ] );
+	    $rootScope.$emit('initComp', [$scope.comp]);    		
+		$uibModalInstance.dismiss('cancel');
+    }
+
+    $scope.$on('$destroy', function () {
+        for (var i = 0; i < subscriptions.length; i++) {
+            session.unsubscribe(subscriptions[i])
+        }
+    });
+
+}]);
 angular.module('bigSQL.components').controller('usersController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window) {
 
     var session;
@@ -2912,6 +2858,28 @@ angular.module('bigSQL.components').factory('UpdateComponentsService', function 
     }
 })
 
+angular.module('bigSQL.components').factory('bamAjaxCall', function ($q, $http, $window) {
+
+
+    var getCmdData = function (cmd) {
+
+        return $q(function (resolve, reject) {
+            $http.get($window.location.origin + '/api/' + cmd)
+            .success(function(data) {
+                resolve(data);
+            }).error(function (data) {
+                resolve('error');
+            });
+            
+
+        });
+    }
+
+    return {
+        getCmdData: getCmdData,
+    }
+})
+
 angular.module('bigSQL.menus').component('bamUpdate', {
     bindings: {},
     controller: function ($rootScope, $scope, PubSubService, MachineInfo, $uibModal, UpdateComponentsService, UpdateBamService) {
@@ -2976,64 +2944,62 @@ angular.module('bigSQL.menus').component('leftMenu', {
 });
 angular.module('bigSQL.menus').component('topMenu', {
     bindings: {},
-    controller: function ($rootScope, $scope, PubSubService, $uibModal, UpdateComponentsService, MachineInfo, $http, $window) {
-
-        var subscriptions = [];
+    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, bamAjaxCall) {
 
         /**Below function is for displaying update badger on every page.
          **/
-        
-        // $rootScope.$on('topMenuEvent',function () {
 
-            var sessPromise = PubSubService.getSession();
-
-            sessPromise.then(function (session) {
-                $http.get($window.location.origin + '/api/list')
-                .success(function(data) {
-                    var Checkupdates = 0;
-                    $scope.components = data;
-                    for (var i = 0; i < $scope.components.length; i++) {
-                        if ($scope.components[i].component != 'bam2') {
-                            Checkupdates += $scope.components[i].updates;
-                        }
+        function callList(argument) {
+            var listData = bamAjaxCall.getCmdData('list');
+            listData.then(function(data) {
+                var Checkupdates = 0;
+                $scope.components = data;
+                for (var i = 0; i < $scope.components.length; i++) {
+                    if ($scope.components[i].component != 'bam2') {
+                        Checkupdates += $scope.components[i].updates;
                     }
-                    $scope.updates = Checkupdates;
-                });
-
-                $http.get($window.location.origin + '/api/info')
-                .success(function(data) {
-                    $scope.pgcInfo = data[0];
-                });
-
-                $http.get($window.location.origin + '/api/userinfo')
-                .success(function(data) {
-                        $scope.userInfo = data;
-                });
-
-
+                }
+                $scope.updates = Checkupdates;
             });
+        }
+        
+        callList();
 
-            $scope.open = function () {
+        $rootScope.$on('topMenuEvent', function () {
+            callList();
+        });
 
-                UpdateComponentsService.setCheckUpdatesAuto();
+        var infoData = bamAjaxCall.getCmdData('info');
+        infoData.then(function(data) {
+            $scope.pgcInfo = data[0];
+        });
 
-                var modalInstance = $uibModal.open({
-                    templateUrl: '../app/components/partials/updateModal.html',
-                    controller: 'ComponentsUpdateController',
-                });
-            };
+        var userInfoData = bamAjaxCall.getCmdData('userinfo');
+        userInfoData.then(function(data) {
+            $scope.userInfo = data;
+        });
 
-            $scope.usersPopup = function () {
+        $scope.open = function () {
 
-                UpdateComponentsService.setCheckUpdatesAuto();
+            UpdateComponentsService.setCheckUpdatesAuto();
 
-                var modalInstance = $uibModal.open({
-                    templateUrl: '../app/components/partials/usersModal.html',
-                    controller: 'usersController',
-                });
-            };
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/updateModal.html',
+                windowClass: 'bam-update-modal modal',
+                controller: 'ComponentsUpdateController',
+            });
+        };
 
-        // });
+        $scope.usersPopup = function () {
+
+            UpdateComponentsService.setCheckUpdatesAuto();
+
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/usersModal.html',
+                controller: 'usersController',
+            });
+        };
+
     },
     templateUrl: "../app/menus/partials/topMenu.html"
 });
