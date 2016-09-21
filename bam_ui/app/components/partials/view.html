@@ -1,8 +1,5 @@
 <section class="content-header">
-    <h1 class="components-update-title-wrapper">
-        Update Manager ({{pgcInfo.host_short}})
-     </h1>
-  
+    <server-info-details title="Update Manager"></server-info-details>
     <div class="components-update-button-wrapper">
         <input type="checkbox" ng-model="isList" ng-click="setTest()">&nbsp; Show test components</input>
         &nbsp;
@@ -67,26 +64,27 @@
                                 </div>
                                 <div class="col-md-3 col-sm-3 col-xs-3" style="padding-left: 10px;">
                                     <a class="btn btn-default" ng-click="compAction( 'install', c.component) " id="install" ng-if="c.status == 'NotInstalled'" ng-disabled=" c.installation != undefined">Install</a>
-                                    <a class="btn btn-default" ng-click="compAction( 'remove', c.component) " id="install" ng-if="c.status == 'Installed' && c.updates == 0" ng-disabled=" c.installation != undefined">Remove</a>
-                                     <div class="btn-group " uib-dropdown id="install" ng-if="c.status == 'NotInitialized'" ng-disabled="c.installation != undefined">
-                                    <button id="split-button " type="button" ng-click="compAction('init', c.component)" class="btn btn-default ">Initialize</button>
-                                        <button type="button " class="btn btn-default " uib-dropdown-toggle>
+                                    <a class="btn btn-default" ng-click="compAction( 'remove', c.component) " id="install" ng-if="c.status == 'Installed' && c.updates == 0 " ng-disabled=" c.removing != undefined">Remove</a>
+                                    <div class="btn-group " uib-dropdown id="install" ng-if="c.status == 'NotInitialized'">
+                                    <button id="split-button " type="button" ng-click="openInitPopup(c.component)" ng-disabled="c.init != undefined || c.removing != undefined" class="btn btn-default ">Initialize</button>
+                                        <button type="button " class="btn btn-default " uib-dropdown-toggle ng-disabled="c.init != undefined || c.removing != undefined">
                                             <span class="caret "></span>
                                             <span class="sr-only ">Split button!</span>
                                         </button>
                                         <ul uib-dropdown-menu role="menu " aria-labelledby="split-button ">
+                                            <li ng-if="c.updates > 0" role="menuitem "><a  ng-click="compAction( 'update', c.component) " href="" ng-hide="{{c.component=='bam2'}}">Update</a></li>
                                             <li role="menuitem "><a ng-click="compAction( 'remove', c.component) " href="" ng-hide="{{c.component=='bam2'}}">Remove</a></li>
                                         </ul>
                                     </div>
-                                    <div class="btn-group" uib-dropdown ng-if="c.updates > 0">
-                                        <button id="split-button " type="button " class="btn btn-default" ng-click="compAction( 'update', c.component) ">Update</button>
-                                        <button type="button " class="btn btn-default" uib-dropdown-toggle>
-                                            <span class="caret "></span>
-                                            <span class="sr-only ">Split button!</span>
-                                        </button>
-                                        <ul uib-dropdown-menu role="menu " aria-labelledby="split-button ">
-                                            <li role="menuitem "><a ng-click="compAction( 'remove', c.component) " href="">Remove</a></li>
-                                        </ul>
+                                    <div class="btn-group" uib-dropdown ng-if="c.updates > 0 && c.status != 'NotInitialized'">
+                                            <button id="split-button " type="button " class="btn btn-default" ng-click="compAction( 'update', c.component) " ng-disabled="c.installation != undefined || c.removing != undefined">Update</button>
+                                            <button type="button " class="btn btn-default" uib-dropdown-toggle ng-disabled="c.installation != undefined || c.removing != undefined">
+                                                <span class="caret "></span>
+                                                <span class="sr-only ">Split button!</span>
+                                            </button>
+                                            <ul uib-dropdown-menu role="menu " aria-labelledby="split-button ">
+                                                <li role="menuitem "><a ng-click="compAction( 'remove', c.component) " href="">Remove</a></li>
+                                            </ul>
                                     </div>
                                 </div>
                             </div>

@@ -118,6 +118,10 @@ class AppSession(ApplicationSession):
 
         self.register(components.checkLogdir, 'com.bigsql.checkLogdir')
 
+        self.register(components.getAvailPort, 'com.bigsql.getAvailPort')
+
+        self.register(components.checkOS, 'com.bigsql.checkOS')
+
         self.register(monitoring.activity, 'com.bigsql.activity')
 
         ## PUBLISH and CALL every second .. forever

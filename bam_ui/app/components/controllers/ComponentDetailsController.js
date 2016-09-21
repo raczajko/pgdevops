@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$http', '$window', '$interval', function ($scope, $stateParams, PubSubService, $rootScope, $http, $window, $interval) {
+angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'bamAjaxCall', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, bamAjaxCall) {
 
     var subscriptions = [];
     var session;
@@ -26,56 +26,32 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     };
 
     function compAction(action) {
-            if(action == 'init'){
-                $scope.component.spinner = 'Initializing..';
-            }else if(action == 'start'){
-                $scope.component.spinner = 'Starting..';
-            }else if(action == 'stop'){
-                $scope.component.spinner = 'Stopping..';
-            }else if(action == 'remove'){
-                $scope.component.spinner = 'Removing..';
-            }else if(action == 'restart'){
-                $scope.component.spinner = 'Restarting..';
-            }
-            var sessionKey = "com.bigsql." + action;
-            session.call(sessionKey, [$scope.component.component]);
+        if(action == 'start'){
+            $scope.component.spinner = 'Starting..';
+        }else if(action == 'stop'){
+            $scope.component.spinner = 'Stopping..';
+        }else if(action == 'remove'){
+            $scope.component.spinner = 'Removing..';
+        }else if(action == 'restart'){
+            $scope.component.spinner = 'Restarting..';
+        }
+        var sessionKey = "com.bigsql." + action;
+        session.call(sessionKey, [$scope.component.component]);
     };
 
     function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info/' + $stateParams.component)
-        .success(function(data) {
-            if(data[0]['autostart']== "on" ){
-                data[0]['autostart']=true;
-            }else{
-                data[0]['autostart']=false;
-            }
+        var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+        infoData.then(function(data) {
             if(window.location.href.split('/').pop(-1) == data[0].component){
                 $scope.component = data[0];
-                if($scope.component.status != "Running"){
-                    $scope.uibStatus = {
-                        tpsChartCollapsed : false,
-                        rpsChartCollapsed : false,
-                        diskChartCollapsed : true,
-                        cpuChartCollapsed : true,
-                        connectionsCollapsed : false
-                    };
-                } else {
-                    $scope.uibStatus = {
-                        tpsChartCollapsed : true,
-                        rpsChartCollapsed : true,
-                        diskChartCollapsed : false,
-                        cpuChartCollapsed : true,
-                        connectionsCollapsed : false
-                    };
-                }
             }
         });
     };
 
     function callStatus(argument) {
-        $http.get($window.location.origin + '/api/status')
-        .success(function(data) {
-            componentStatus = getCurrentObject(data, $stateParams.component);
+        var statusData = bamAjaxCall.getCmdData('status')
+        statusData.then(function(data) {
+            componentStatus = getCurrentObject($stateParams.component);
             $rootScope.$emit('componentStatus', componentStatus);
             if (componentStatus.state != $scope.component.status) {
                 callInfo();
@@ -92,17 +68,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     sessionPromise.then(function (val) {
         session = val;
         $scope.component = {};
-        // session.call('com.bigsql.infoComponent', [$stateParams.component]);
-
-        // session.subscribe('com.bigsql.status', function (data) {
-        //     var list = JSON.parse(data[0]);
-        //     componentStatus = getCurrentObject(list, $stateParams.component)
-        //     if (componentStatus.state != $scope.component.status) {
-        //         session.call('com.bigsql.infoComponent', [$stateParams.component]);
-        //     }
-        // }).then(function (sub) {
-        //     subscriptions.push(sub);
-        // });
 
         var onRemove = function (response) {
             var data = JSON.parse(response[0])[0];
@@ -125,42 +90,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 subscriptions.push(sub);
             });
 
-        session.subscribe('com.bigsql.onInit', function (data) {
-            var res = JSON.parse(data[0])[0];
-            if(res['status'] == 'error'){
-                $scope.alerts.push({
-                    msg: res['msg'],
-                    type: "danger"
-                });
-            } else {
-                $scope.alerts.push({
-                    msg: res['msg']
-                });
-                $scope.component.spinner = res['msg'];
-                compAction('start');
-            }
-            $scope.$apply();
-        }).then(function (sub) {
-            subscriptions.push(sub);
-        });
-        
-        session.subscribe('com.bigsql.onInfoComponent', function (args) {
-            var jsonD = JSON.parse(args[0][0]);
-            if(window.location.href.split('/').pop(-1) == jsonD[0].component){
-                $scope.component = jsonD[0];
-                $scope.$apply();
-            }
-        }).then(function (sub) {
-            $rootScope.$emit('topMenuEvent');
-            subscriptions.push(sub);
-        });
-        $scope.isCollapsed2 = true;
-
         $scope.action = function (event) {
             if (event.target.tagName === "A") {
-                if(event.target.attributes.action.value == 'init'){
-                    $scope.component.spinner = 'Initializing..';
-                }else if(event.target.attributes.action.value == 'start'){
+                if(event.target.attributes.action.value == 'start'){
                     $scope.component.spinner = 'Starting..';
                 }else if(event.target.attributes.action.value == 'stop'){
                     $scope.component.spinner = 'Stopping..';
@@ -196,7 +128,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 if (data.state == 'unpack') {
                     // session.call('com.bigsql.infoComponent', [$stateParams.component])
                     callInfo();
-                    compAction('init');
                 } 
                 if (data.status == "cancelled") {
                         $scope.alerts.push({

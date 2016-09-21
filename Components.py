@@ -119,6 +119,16 @@ class ComponentAction(object):
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
 
     @inlineCallbacks
+    def getAvailPort(self, comp, port):
+        """
+        Method to return server status.
+        """
+        if port == '':
+            port = 5432
+        selPort = util.get_avail_port("PG Port", port, comp)
+        yield self.session.publish('com.bigsql.onPortSelect', selPort)
+
+    @inlineCallbacks
     def serverStatus(self):
         """
         Method to return server status.
@@ -129,14 +139,17 @@ class ComponentAction(object):
         yield self.session.publish('com.bigsql.onServerStatus', pgcInfo[0])
 
     @inlineCallbacks
-    def init(self, name):
+    def init(self, name, password, dataDir, port):
         """
         Method to initialize a server component.
         :param name: Name of the component to be initialized.
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc --json init " + name
+        pgcCmd = PGC_HOME + os.sep + "pgc --json init " + name + " --datadir " + dataDir + " --port " + port
+        if port == '':
+            pgcCmd = pgcCmd.split(' --port')[0]
+        if dataDir == '':
+            pgcCmd = pgcCmd.split(' --datadir')[0]
         if (name > 'pg90') and (name < 'pg99'):
-            password = "password"
             pgpass_file = PGC_HOME + os.sep + name + os.sep + ".pgpass"
             if not os.path.isfile(pgpass_file):
                 password_file = open(pgpass_file, 'w')
@@ -372,6 +385,14 @@ class Components(ComponentAction):
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         data = pgcProcess.communicate()
         return data
+
+    @inlineCallbacks
+    def checkOS(self):
+        """
+        Method to get the machine OS information.
+        :return: It yields the platform.
+        """
+        yield self.session.publish('com.bigsql.onCheckOS', platform.system())
 
     @staticmethod
     def get_data(command, component=None):

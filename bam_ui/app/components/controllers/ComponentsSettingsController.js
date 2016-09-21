@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$http', '$window', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $http, $window) {
+angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall) {
     $scope.alerts = [];
 
     var session;
@@ -17,37 +17,30 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/updateModal.html',
+            windowClass: 'bam-update-modal modal',
             controller: 'ComponentsUpdateController',
         });
     };
+
+    var infoData = bamAjaxCall.getCmdData('info')
+    infoData.then(function(data) {
+        $scope.pgcInfo = data[0];
+        if (data[0].last_update_utc) {
+            $scope.lastUpdateStatus = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
+        }
+        if (MachineInfo.getUpdationMode() == "manual") {
+            $scope.settingType = 'manual';
+        } else {
+            $scope.settingType = 'auto';
+            session.call('com.bigsql.get_host_settings');
+        }
+
+    });
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         $rootScope.$emit('topMenuEvent');
         session = val;
-
-        function callInfo(argument) {
-            $http.get($window.location.origin + '/api/info')
-            .success(function(data) {
-                $scope.pgcInfo = data[0];
-                if (data[0].last_update_utc) {
-                    $scope.lastUpdateStatus = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
-                }
-                if (MachineInfo.getUpdationMode() == "manual") {
-                    $scope.settingType = 'manual';
-                } else {
-                    $scope.settingType = 'auto';
-                    session.call('com.bigsql.get_host_settings');
-                }
-
-            });
-        }
-        callInfo();
-        // var promise = MachineInfo.get(session);
-        // promise.then(function (data) {
-        //     $scope.pgcInfo = data;
-            
-        // });
         
         $scope.updateManualSettings = function () {
             session.call('com.bigsql.update_host_settings', ['localhost', "None", '']).then(
@@ -85,15 +78,6 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
     });
 
-    function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info')
-        .success(function(data) {
-            $scope.pgcInfo = data[0];
-        });
-    }
-
-
-    callInfo();
 
     /**
      Unsubscribe to all the apis on the template and scope destroy
