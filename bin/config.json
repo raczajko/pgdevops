@@ -40,7 +40,7 @@
                     "type": "web",
                     "endpoint": {
                         "type": "tcp",
-                        "interface": "0.0.0.0",
+                        "interface": "127.0.0.1",
                         "port": 8050
                     },
                     "paths": {
@@ -121,10 +121,10 @@
                         "type": "websocket",
                         "endpoint": {
                             "type": "tcp",
-                            "host": "0.0.0.0",
+                            "host": "127.0.0.1",
                             "port": 8050
                         },
-                        "url": "ws://0.0.0.0:8050/ws"
+                        "url": "ws://127.0.0.1:8050/ws"
                     }
                 }
             ]
