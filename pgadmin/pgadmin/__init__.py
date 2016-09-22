@@ -24,6 +24,7 @@ from htmlmin.minify import html_minify
 from pgadmin.utils import PgAdminModule, driver
 from pgadmin.utils.session import create_session_interface
 from pgadmin.utils.pickleSessions import PickleSessionInterface
+from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 from werkzeug.local import LocalProxy
 from werkzeug.utils import find_modules
 
@@ -131,7 +132,8 @@ def create_app(app_name=config.APP_NAME):
     # Setup session management
     ##########################################################################
     #app.session_interface = ItsdangerousSessionInterface()
-    app.session_interface = PickleSessionInterface(config.SESSION_DB_PATH)
+    #app.session_interface = PickleSessionInterface(config.SESSION_DB_PATH)
+    app.session_interface = SqliteSessionInterface(config.SESSION_DB_PATH)
 
     ##########################################################################
     # Setup logging and log the application startup

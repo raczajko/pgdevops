@@ -18,6 +18,7 @@ from pgadmin.utils.session import create_session_interface
 from pgadmin.model import db, Role, User
 from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.pickleSessions import PickleSessionInterface
+from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 import config
 
 config.APP_NAME = "BigSQL Manager 4"
@@ -35,7 +36,8 @@ application.config.from_object(config)
 ##########################################################################
 # Setup session management
 ##########################################################################
-application.session_interface = PickleSessionInterface(config.SESSION_DB_PATH)
+#application.session_interface = PickleSessionInterface(config.SESSION_DB_PATH)
+application.session_interface = SqliteSessionInterface(config.SESSION_DB_PATH)
 # application.session_interface = ItsdangerousSessionInterface()
 # application.secret_key=config.SECRET_KEY
 

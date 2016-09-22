@@ -14,6 +14,7 @@
 import os
 from logging import *
 
+
 ##########################################################################
 # Application settings
 ##########################################################################
@@ -73,7 +74,8 @@ NODE_BLACKLIST = []
 # Data directory for storage of config settings etc. This shouldn't normally
 # need to be changed - it's here as various other settings depend on it.
 if os.name == 'nt':
-    DATA_DIR = os.path.realpath(os.getenv('APPDATA') + "/bigsql")
+    DATA_DIR = os.path.join(os.getenv("PGC_HOME"), "data", "bam4")
+    #DATA_DIR = os.path.realpath(os.getenv('APPDATA') + "/bigsql")
 else:
     DATA_DIR = os.path.realpath(os.path.expanduser('~/.bigsql/'))
 
