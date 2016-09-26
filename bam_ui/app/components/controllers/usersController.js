@@ -1,12 +1,14 @@
-angular.module('bigSQL.components').controller('usersController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window) {
+angular.module('bigSQL.components').controller('usersController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope) {
 
     var session;
     var subscriptions = [];
     $scope.components = {};
+    $scope.alerts = [];
 
     var updateSelectedList = [];
     var currentComponent = {};
     var checkUpdates;
+    $scope.users;
 
     // new user url = /admin/user_management/user/
     // post data format {email: "test@test.com", active: true, role: "2", newPassword: "password", confirmPassword: "password"}
@@ -30,12 +32,14 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
         $http.get($window.location.origin + '/admin/user_management/role/')
             .success(function (data) {
                 $scope.roles = data;
+                console.log(data);
 
             });
 
         $http.get($window.location.origin + '/admin/user_management/user/')
             .success(function (data) {
                 $scope.users = data;
+                console.log(data);
 
             });
 
@@ -44,6 +48,14 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
 
     }
 
+    // $interval(saveUser, 10000);
+
+    $http.get($window.location.origin + '/api/userinfo')
+                .success(function(data) {
+                    $scope.userInfo = data;
+
+                });
+
     $scope.cancel = function () {
 
         $uibModalInstance.dismiss('cancel');
@@ -51,7 +63,16 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
     };
 
     $scope.addAuserForm = function () {
-
+        if ($scope.users[$scope.users.length - 1].email) {
+            var newUser = {
+                id : $scope.users.length + 1,
+                active: true,
+                email: '',
+                role: 2,
+                new: true,
+            };
+        $scope.users.push(newUser);
+        }
     };
 
     $scope.deleteUser = function (user_id) {
@@ -60,7 +81,7 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
 
         $http.delete(delete_url)
             .success(function (data) {
-
+                getList();
             })
             .error(function (data, status, header, config) {
 
@@ -68,49 +89,77 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
 
     };
 
-    $scope.updateUser = function (user_id) {
+    $rootScope.$on('updateUser' ,function (event, updateData) {
 
-        var url = $window.location.origin + '/admin/user_management/user/' + user_id;
-        var userData = {};
-
-        $http.put(url, userData)
+        var url = $window.location.origin + '/admin/user_management/user/' + updateData.id;
+        $http.put(url, updateData)
             .success(function (data) {
-
+                $scope.alerts.push({
+                    msg: data.email + " updated sucessfully."
+                });
+                getList();
             })
             .error(function (data, status, header, config) {
-
+                $scope.alerts.push({
+                    msg: JSON.stringify({data: data})
+                });
             });
 
-    };
+    });
 
-    $scope.saveUser = function () {
+    $rootScope.$on('saveUser', function(event, userData) {
 
-        var userData = {};
-        userData.email = "";
-        userData.active = true;
-        userData.role = 2;
-        userData.newPassword = "";
-        userData.confirmPassword = "";
+        var isUpdate = true;
 
-        var res = $http.post($window.location.origin + '/admin/user_management/user/', userData);
-        res.success(function (data, status, headers, config) {
+        //checking new filed in $scope.user for new users
+        for(var i=0; i < $scope.users.length ; i++){ 
+            if($scope.users[i].new){
+                isUpdate = false;
+                var res = $http.post($window.location.origin + '/admin/user_management/user/', userData);
+        
+                res.success(function (data, status, headers, config) {
 
-            $scope.alerts.push({
-                msg: data.email + " has been added sucessfully."
+                    $scope.statusMsg = data;
+                    $scope.alerts.push({
+                        msg: data.email + " has been added sucessfully."
+
+                    });
+                    getList();
+
+                });
+
+                res.error(function (data, status, headers, config) {
+                    $scope.statusMsg = data;
+                    $scope.alerts.push({
+                        msg: JSON.stringify({data: data})
+                    });
+                });
+            }
+        }
+
+        //update already exists user
+        if(isUpdate){
+            var url = $window.location.origin + '/admin/user_management/user/' + userData.id;
+            $http.put(url, userData)
+            .success(function (data) {
+                $scope.alerts.push({
+                    msg: data.email + " updated sucessfully."
+                });
+                getList();
+            })
+            .error(function (data, status, header, config) {
+                $scope.alerts.push({
+                    msg: JSON.stringify({data: data})
+                });
             });
+            
+        }
 
-        });
+    });
 
-        res.error(function (data, status, headers, config) {
-
-            $scope.alerts.push({
-                msg: JSON.stringify({data: data})
-
-            });
-
-        });
-
-    };
+    $rootScope.$on('callGetList', function(event) {
+        getList();
+    })
 
     var sessionPromise = PubSubService.getSession();
 
@@ -118,6 +167,9 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
         getList();
     });
 
+    $scope.closeAlert = function (index) {
+        $scope.alerts.splice(index, 1);
+    };
     /**
      Unsubscribe to all the apis on the template and scope destroy
      **/
