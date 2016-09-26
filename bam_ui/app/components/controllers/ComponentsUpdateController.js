@@ -13,7 +13,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         listData.then(function(data) {
             $scope.noUpdates = true;
             $scope.components = data;
-            $scope.hideLatestInstalled = false;
+            $scope.hideLatestInstalled = true;
 
 
             for (var i = 0; i < $scope.components.length; i++) {

@@ -52,6 +52,8 @@ angular.module('bigSQL.menus').component('topMenu', {
 
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/usersModal.html',
+                windowClass: 'modal',
+                size: 'lg',
                 controller: 'usersController',
             });
         };

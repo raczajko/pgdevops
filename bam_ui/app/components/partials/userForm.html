@@ -1,0 +1,38 @@
+<form class="form" name="userForm">
+    <div class="col-md-1">
+        <button class="btn btn-default" ng-model="value.id" ng-disabled="value.id == 1" ng-click="deleteUser(value.id)"> 
+            <i class="fa fa-trash"></i>
+        </button>
+    </div>
+    <div class="col-md-4">
+        <input class="form-control" type="email" id="inputUsermail" name="usermail" ng-disabled="!value.new" ng-model="value.email" ng-class="{ error: !value.email }" />
+        <span ng-if="!value.email"><br>Invalid Email</span>
+    </div>
+    <div class="col-md-2">
+        <div class="form-group">
+            <select class="form-control form-control-sm" ng-disabled="value.id == 1">
+                <option ng-repeat="(key, role) in roles" ng-value="role.id" ng-model="value.role" ng-change="updateRole()" ng-selected="role.id == value.role">{{ role.name }}</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-md-1">
+        <label>
+            <input type="checkbox" ng-model="value.active" ng-disabled="value.id == 1" ng-change="updateActive()" ng-checked="value.active">
+            <span class="custom-control-indicator"></span>
+        </label>
+    </div>
+    <div class="col-md-2">
+        <div class="form-group">
+            <input class="form-control" ng-disabled="!value.email" type="password" id="inputPassword" name="password" ng-model="formdata.password" valid-user-password required />
+            <span ng-show="!!userForm.password.$error.invalidLen">Must be 6 characters.</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="form-group">
+            <input class="form-control" ng-disabled="!value.email" type="password" id="password_c" name="password_c" ng-model="formdata.password_c" confirm-password required/>
+        </div>
+    </div>
+    <span ng-show="!userForm.password_c.$error.required && userForm.password_c.$error.noMatch && userForm.password.$dirty">Passwords do not match.</span>
+    <span class="form-actions" ng-show="formSave()">
+    </span>
+</form>
