@@ -40,7 +40,16 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     };
 
     function callInfo(argument) {
-        var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+        var remote_host = $rootScope.remote_host;
+        remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
+
+        if (remote_host == "" || remote_host == "localhost") {
+            var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+        } else {
+            var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component + "/" + remote_host);
+        }
+
+        //var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
         infoData.then(function(data) {
             if(window.location.href.split('/').pop(-1) == data[0].component){
                 $scope.component = data[0];

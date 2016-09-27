@@ -39,6 +39,7 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
             gethostInfo(remote_host);
 
             $scope.hostChange = function(host){
+                $rootScope.remote_host=host;
                 gethostInfo(host);
                 $scope.$parent.refreshData(host);
             }

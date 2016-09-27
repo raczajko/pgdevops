@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', '$window', 'bamAjaxCall', '$uibModal', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal) {
+angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'bamAjaxCall', '$uibModal', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal) {
 
     $scope.alerts = [];
     var subscriptions = [];
@@ -9,51 +9,61 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
     var componentStatus = 0;
 
-    var activityTab = angular.element( document.querySelector( '#activityTab' ) );
+    var activityTab = angular.element(document.querySelector('#activityTab'));
 
     function compAction(action) {
-        if(action == 'init'){
+        if (action == 'init') {
             $scope.component.spinner = 'Initializing..';
-        }else if(action == 'start'){
+        } else if (action == 'start') {
             $scope.component.spinner = 'Starting..';
-        }else if(action == 'stop'){
+        } else if (action == 'stop') {
             $scope.component.spinner = 'Stopping..';
-        }else if(action == 'remove'){
+        } else if (action == 'remove') {
             $scope.component.spinner = 'Removing..';
-        }else if(action == 'restart'){
+        } else if (action == 'restart') {
             $scope.component.spinner = 'Restarting..';
         }
         var sessionKey = "com.bigsql." + action;
-        session.call(sessionKey, [$scope.component.component]).then(function(argument) {
+        session.call(sessionKey, [$scope.component.component]).then(function (argument) {
             callInfo();
         })
     }
 
     function callInfo(argument) {
-        var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
-        infoData.then(function(data) {
-            if(data[0]['autostart']== "on" ){
-                data[0]['autostart']=true;
-            }else{
-                data[0]['autostart']=false;
+        var remote_host = $rootScope.remote_host;
+        remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
+
+        if (remote_host == "" || remote_host == "localhost") {
+            var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+        } else {
+            var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component + "/" + remote_host);
+        }
+
+
+        //var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+        infoData.then(function (data) {
+            if (data[0]['autostart'] == "on") {
+                data[0]['autostart'] = true;
+            } else {
+                data[0]['autostart'] = false;
             }
-            if(window.location.href.split('/').pop(-1) == data[0].component){
+            if (window.location.href.split('/').pop(-1) == data[0].component) {
                 $scope.component = data[0];
-                if($scope.component.status != "Running"){
+                if ($scope.component.status != "Running") {
                     $scope.uibStatus = {
-                        tpsChartCollapsed : false,
-                        rpsChartCollapsed : false,
-                        diskChartCollapsed : true,
-                        cpuChartCollapsed : true,
-                        connectionsCollapsed : false
+                        tpsChartCollapsed: false,
+                        rpsChartCollapsed: false,
+                        diskChartCollapsed: true,
+                        cpuChartCollapsed: true,
+                        connectionsCollapsed: false
                     };
                 } else {
                     $scope.uibStatus = {
-                        tpsChartCollapsed : true,
-                        rpsChartCollapsed : true,
-                        diskChartCollapsed : false,
-                        cpuChartCollapsed : true,
-                        connectionsCollapsed : false
+                        tpsChartCollapsed: true,
+                        rpsChartCollapsed: true,
+                        diskChartCollapsed: false,
+                        cpuChartCollapsed: true,
+                        connectionsCollapsed: false
                     };
                 }
             }
@@ -62,7 +72,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
     function callStatus(argument) {
         var statusData = bamAjaxCall.getCmdData('status');
-        statusData.then(function(data) {
+        statusData.then(function (data) {
             componentStatus = getCurrentObject(data, $stateParams.component);
             $rootScope.$emit('componentStatus', componentStatus);
             if (componentStatus.state != $scope.component.status) {
@@ -82,16 +92,16 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         "Running": "green"
     };
 
-    $scope.optionList = [ 
-        {label :"Off", value: "0"},
-        {label :"5", value: ""},
-        {label :"10", value: "10000"},
-        {label :"15", value: "15000"},
-        {label :"30", value: "30000"}
+    $scope.optionList = [
+        {label: "Off", value: "0"},
+        {label: "5", value: ""},
+        {label: "10", value: "10000"},
+        {label: "15", value: "15000"},
+        {label: "30", value: "30000"}
     ]
 
     $scope.opt = {
-        interval : ''
+        interval: ''
     }
 
     var getCurrentObject = function (list, name) {
@@ -114,255 +124,264 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
-    session = val;
-    infoRefreshRate = $interval(callInfo, 60000);
-    $scope.component = {};
-    callInfo();
+        session = val;
+        infoRefreshRate = $interval(callInfo, 60000);
+        $scope.component = {};
+        callInfo();
 
-    $scope.changeOption = function (value) {
-        $rootScope.$emit('refreshRateVal',$scope.opt.interval);
-    };
-
-    $scope.autostartChange = function (args) {
-        var autoStartVal;
-        if(args){
-            autoStartVal = 'on';
-        } else {
-            autoStartVal = 'off';       
-        }
-        session.call('com.bigsql.autostart',[autoStartVal,$stateParams.component]).then(
-            function (sub) {
-                callInfo();
-            });
-    }
-
-    $scope.dataBaseTabEvent = function (args) {
-        if ($scope.component.status == "Running"){
-            session.call('com.bigsql.db_list', [$stateParams.component]);
-        }
-    };
-
-    $scope.cancelInstallation = function (action) {
-        session.call("com.bigsql.cancelInstall");
-    }
-
-    $scope.openInitPopup = function (comp) {
-        var modalInstance = $uibModal.open({
-            templateUrl: '../app/components/partials/pgInitialize.html',
-            controller: 'pgInitializeController',
-        });
-        modalInstance.component = comp;
-    };
-
-    session.subscribe('com.bigsql.ondblist', function (data) {
-        if(data[0].component == $stateParams.component){
-            $scope.myData = data[0].list;
-            $scope.gridOptions = { data : 'myData', columnDefs: [{
-                field: "datname", displayName: "Database"
-            },{
-                field:'owner', displayName: "Owner"
-            },{
-                field: 'size', displayName: "Size (MB)", cellClass:'numberCell',headerTooltip: 'This is the total disk space used by the database, which includes all the database objects like Tables and Indexes within that database' , sort: { direction: 'desc', priority: 0 }
-            }], enableColumnMenus: false
+        $scope.changeOption = function (value) {
+            $rootScope.$emit('refreshRateVal', $scope.opt.interval);
         };
-            $scope.$apply();
-        }
-    });
 
-    $scope.configureTabEvent = function (args) {
-        if ($scope.component.status == "Running"){
-            session.call('com.bigsql.pg_settings', [$stateParams.component]);
-        }
-    };
-
-    session.subscribe('com.bigsql.onPGsettings', function (data) {
-        if(data[0].component == $stateParams.component){
-            $scope.settingsData = data[0].list;
-            $scope.gridSettings = {
-                expandableRowTemplate: '<div ui-grid="row.entity.subGridOptions" style="height: 140px"></div>',
-            };
-
-            $scope.gridSettings.columnDefs = [
-                { field:"name", displayName:'Category'}
-              ];
-
-            $scope.gridSettings.enableColumnMenus = false;
-
-            data = data[0].list;
-            for(var i = 0; i < data.length; i++){
-                data[i].subGridOptions = {
-                  columnDefs: [ 
-                  { field: "name", displayName: "Parameter", cellTemplate: '<div class="ui-grid-cell-contents" title="{{row.entity.short_desc}}"><a>{{ COL_FIELD }}</a></div>'},
-                  { field:"setting", displayName:"value"},
-                  { field:"short_desc", visible: false}],
-                  data: data[i].settings,
-                  enableColumnMenus : false
-                }
+        $scope.autostartChange = function (args) {
+            var autoStartVal;
+            if (args) {
+                autoStartVal = 'on';
+            } else {
+                autoStartVal = 'off';
             }
-            $scope.gridSettings.data = data;
-
-            $scope.$apply();
+            session.call('com.bigsql.autostart', [autoStartVal, $stateParams.component]).then(
+                function (sub) {
+                    callInfo();
+                });
         }
-    });
 
-    $scope.securityTabEvent = function (args) {
-        session.call('com.bigsql.read_pg_hba_conf', [$stateParams.component]);
-    };
+        $scope.dataBaseTabEvent = function (args) {
+            if ($scope.component.status == "Running") {
+                session.call('com.bigsql.db_list', [$stateParams.component]);
+            }
+        };
 
-    session.subscribe('com.bigsql.onPGhba', function (data) {
-        if(data[0].component == $stateParams.component){
-            $scope.securityTabContent = data[0].contents;
-            $scope.$apply();
+        $scope.cancelInstallation = function (action) {
+            session.call("com.bigsql.cancelInstall");
         }
-    });
 
-    session.subscribe('com.bigsql.onAutostart', function (data) {
-        var res = JSON.parse(data[0])[0];
-        if(res['status'] == "error"){
-            $scope.alerts.push({
-                msg: res['msg'],
-                type: "danger"
+        $scope.openInitPopup = function (comp) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/pgInitialize.html',
+                controller: 'pgInitializeController',
             });
-        }else if(res['status'] == "completed"){
-           $scope.alerts.push({
-                msg: res['msg']
-            }); 
-        }
-        $scope.$apply();
-    }).then(function (sub) {
-        subscriptions.push(sub);
-    });
+            modalInstance.component = comp;
+        };
 
-    var onRemove = function (response) {
-        var data = JSON.parse(response[0])[0];
-        if (data.status == "error") {
-            var alertObj = {
-                msg: data.msg,
-                type: "danger"
+        session.subscribe('com.bigsql.ondblist', function (data) {
+            if (data[0].component == $stateParams.component) {
+                $scope.myData = data[0].list;
+                $scope.gridOptions = {
+                    data: 'myData', columnDefs: [{
+                        field: "datname", displayName: "Database"
+                    }, {
+                        field: 'owner', displayName: "Owner"
+                    }, {
+                        field: 'size',
+                        displayName: "Size (MB)",
+                        cellClass: 'numberCell',
+                        headerTooltip: 'This is the total disk space used by the database, which includes all the database objects like Tables and Indexes within that database',
+                        sort: {direction: 'desc', priority: 0}
+                    }], enableColumnMenus: false
+                };
+                $scope.$apply();
             }
-            $scope.alerts.push(alertObj);
-            $scope.$apply();
-        }
-        if (data.status == "complete") {
-            callInfo();
-        }
-    };
+        });
 
-    session.subscribe('com.bigsql.onRemove', onRemove).then(
-        function (sub) {
+        $scope.configureTabEvent = function (args) {
+            if ($scope.component.status == "Running") {
+                session.call('com.bigsql.pg_settings', [$stateParams.component]);
+            }
+        };
+
+        session.subscribe('com.bigsql.onPGsettings', function (data) {
+            if (data[0].component == $stateParams.component) {
+                $scope.settingsData = data[0].list;
+                $scope.gridSettings = {
+                    expandableRowTemplate: '<div ui-grid="row.entity.subGridOptions" style="height: 140px"></div>',
+                };
+
+                $scope.gridSettings.columnDefs = [
+                    {field: "name", displayName: 'Category'}
+                ];
+
+                $scope.gridSettings.enableColumnMenus = false;
+
+                data = data[0].list;
+                for (var i = 0; i < data.length; i++) {
+                    data[i].subGridOptions = {
+                        columnDefs: [
+                            {
+                                field: "name",
+                                displayName: "Parameter",
+                                cellTemplate: '<div class="ui-grid-cell-contents" title="{{row.entity.short_desc}}"><a>{{ COL_FIELD }}</a></div>'
+                            },
+                            {field: "setting", displayName: "value"},
+                            {field: "short_desc", visible: false}],
+                        data: data[i].settings,
+                        enableColumnMenus: false
+                    }
+                }
+                $scope.gridSettings.data = data;
+
+                $scope.$apply();
+            }
+        });
+
+        $scope.securityTabEvent = function (args) {
+            session.call('com.bigsql.read_pg_hba_conf', [$stateParams.component]);
+        };
+
+        session.subscribe('com.bigsql.onPGhba', function (data) {
+            if (data[0].component == $stateParams.component) {
+                $scope.securityTabContent = data[0].contents;
+                $scope.$apply();
+            }
+        });
+
+        session.subscribe('com.bigsql.onAutostart', function (data) {
+            var res = JSON.parse(data[0])[0];
+            if (res['status'] == "error") {
+                $scope.alerts.push({
+                    msg: res['msg'],
+                    type: "danger"
+                });
+            } else if (res['status'] == "completed") {
+                $scope.alerts.push({
+                    msg: res['msg']
+                });
+            }
+            $scope.$apply();
+        }).then(function (sub) {
             subscriptions.push(sub);
         });
 
+        var onRemove = function (response) {
+            var data = JSON.parse(response[0])[0];
+            if (data.status == "error") {
+                var alertObj = {
+                    msg: data.msg,
+                    type: "danger"
+                }
+                $scope.alerts.push(alertObj);
+                $scope.$apply();
+            }
+            if (data.status == "complete") {
+                callInfo();
+            }
+        };
 
-    session.subscribe('com.bigsql.onInit', function (data) {
-        var res = JSON.parse(data[0])[0];
-        if(res['status'] == 'error'){
-            $scope.alerts.push({
-                msg: res['msg'],
-                type: "danger"
+        session.subscribe('com.bigsql.onRemove', onRemove).then(
+            function (sub) {
+                subscriptions.push(sub);
             });
-        } else {
-            $scope.alerts.push({
-                msg: res['msg']
-            });
-            compAction('start');
-        }
-        $scope.$apply();
-    }).then(function (sub) {
-        subscriptions.push(sub);
-    });
 
-    $scope.closeAlert = function (index) {
-        $scope.alerts.splice(index, 1);
-    };
 
-    session.subscribe('com.bigsql.onActivity', function (data) {
-        if(data[0].component == $stateParams.component){
-            var parseData =  data[0].activity;
-            if (parseData === undefined || parseData.length == 0) {
-                $scope.activities = '';
-                $scope.noActivities = true;
-                activityTab.empty();
-            } else {
-                $scope.noActivities = false;
-                $scope.activities = parseData;
-            }
-        }
-    }).then(function (sub) {
-        subscriptions.push(sub);
-    });
-
-    $scope.logdirSelect = function () {
-        $interval.cancel(infoRefreshRate);
-    }
-
-    session.subscribe('com.bigsql.onInstall', function (response) {
-        var data = JSON.parse(response[0])[0];
-        if (data.state == "deplist") {
-            if (data.deps.length > 1) {
-                dependentCount = data.deps.length;
-                $scope.component.installationDependents = true;
-            }
-        }
-        if (data.status == "start") {
-            $scope.component.installationStart = data;
-            $scope.component.installation = true;
-        }
-        if (data.status == "wip") {
-            $scope.component.installationRunning = data;
-            $scope.component.progress = data.pct;
-        }
-
-        if (data.status == "complete" || data.status == "cancelled") {
-            if (data.state == 'unpack') {
-                compAction('init');
-            }
-
-            if (data.status == "cancelled") {
+        session.subscribe('com.bigsql.onInit', function (data) {
+            var res = JSON.parse(data[0])[0];
+            if (res['status'] == 'error') {
                 $scope.alerts.push({
-                    msg:  data.msg,
-                    type: 'danger'
+                    msg: res['msg'],
+                    type: "danger"
                 });
+            } else {
+                $scope.alerts.push({
+                    msg: res['msg']
+                });
+                compAction('start');
             }
+            $scope.$apply();
+        }).then(function (sub) {
+            subscriptions.push(sub);
+        });
 
-            if (dependentCount != 0) {
-                dependentCount = dependentCount - 1;
-                if (dependentCount == 0) {
-                    delete $scope.component.installationDependents;
+        $scope.closeAlert = function (index) {
+            $scope.alerts.splice(index, 1);
+        };
+
+        session.subscribe('com.bigsql.onActivity', function (data) {
+            if (data[0].component == $stateParams.component) {
+                var parseData = data[0].activity;
+                if (parseData === undefined || parseData.length == 0) {
+                    $scope.activities = '';
+                    $scope.noActivities = true;
+                    activityTab.empty();
+                } else {
+                    $scope.noActivities = false;
+                    $scope.activities = parseData;
                 }
             }
+        }).then(function (sub) {
+            subscriptions.push(sub);
+        });
 
-            delete $scope.component.installationStart;
-            delete $scope.component.installationRunning;
-            // delete $scope.component.installation;
+        $scope.logdirSelect = function () {
+            $interval.cancel(infoRefreshRate);
+        }
 
-        }
-        if (data.state == "error") {
-            $scope.alerts.push({
-                msg: data.msg,
-                type: 'danger'
-            });
-            delete $scope.component.installationStart;
-            delete $scope.component.installationRunning;
-            delete $scope.component.installation;
-        }
-        $scope.$apply();
-    }).then(function (sub) {
-        subscriptions.push(sub);
-    });
+        session.subscribe('com.bigsql.onInstall', function (response) {
+            var data = JSON.parse(response[0])[0];
+            if (data.state == "deplist") {
+                if (data.deps.length > 1) {
+                    dependentCount = data.deps.length;
+                    $scope.component.installationDependents = true;
+                }
+            }
+            if (data.status == "start") {
+                $scope.component.installationStart = data;
+                $scope.component.installation = true;
+            }
+            if (data.status == "wip") {
+                $scope.component.installationRunning = data;
+                $scope.component.progress = data.pct;
+            }
+
+            if (data.status == "complete" || data.status == "cancelled") {
+                if (data.state == 'unpack') {
+                    compAction('init');
+                }
+
+                if (data.status == "cancelled") {
+                    $scope.alerts.push({
+                        msg: data.msg,
+                        type: 'danger'
+                    });
+                }
+
+                if (dependentCount != 0) {
+                    dependentCount = dependentCount - 1;
+                    if (dependentCount == 0) {
+                        delete $scope.component.installationDependents;
+                    }
+                }
+
+                delete $scope.component.installationStart;
+                delete $scope.component.installationRunning;
+                // delete $scope.component.installation;
+
+            }
+            if (data.state == "error") {
+                $scope.alerts.push({
+                    msg: data.msg,
+                    type: 'danger'
+                });
+                delete $scope.component.installationStart;
+                delete $scope.component.installationRunning;
+                delete $scope.component.installation;
+            }
+            $scope.$apply();
+        }).then(function (sub) {
+            subscriptions.push(sub);
+        });
     });
 
     $scope.action = function (event) {
         if (event.target.tagName === "A" && event.target.attributes.action != undefined) {
-            if(event.target.attributes.action.value == 'init'){
+            if (event.target.attributes.action.value == 'init') {
                 $scope.component.spinner = 'Initializing..';
-            }else if(event.target.attributes.action.value == 'start'){
+            } else if (event.target.attributes.action.value == 'start') {
                 $scope.component.spinner = 'Starting..';
-            }else if(event.target.attributes.action.value == 'stop'){
+            } else if (event.target.attributes.action.value == 'stop') {
                 $scope.component.spinner = 'Stopping..';
-            }else if(event.target.attributes.action.value == 'remove'){
+            } else if (event.target.attributes.action.value == 'remove') {
                 $scope.component.spinner = 'Removing..';
-            }else if(event.target.attributes.action.value == 'restart'){
+            } else if (event.target.attributes.action.value == 'restart') {
                 $scope.component.spinner = 'Restarting..';
             }
             var sessionKey = "com.bigsql." + event.target.attributes.action.value;

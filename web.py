@@ -73,12 +73,12 @@ api.add_resource(pgcApi, '/api/<string:pgc_command>')
 
 
 class pgcApiCom(Resource):
-    def get(self, comp):
-        data = pgc.get_data('info', comp)
+    def get(self, comp, pgc_host=None):
+        data = pgc.get_data('info', comp,pgc_host=pgc_host)
         return data
 
 
-api.add_resource(pgcApiCom, '/api/info/<string:comp>')
+api.add_resource(pgcApiCom, '/api/info/<string:comp>', '/api/info/<string:comp>/<string:pgc_host>')
 
 
 class pgcApiHosts(Resource):
