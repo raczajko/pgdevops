@@ -24,12 +24,10 @@ angular.module('bigSQL.common').directive('userDetailsRow', function () {
 		    };
 
 		    $scope.updateRole = function() {
-		    	debugger
 		    	if(!$scope.value.new){
 		    		var updateData = {};
             		updateData.id = $scope.value.id;
 			        updateData.role = $scope.value.role;
-	            	console.log(updateData);
 	            	$rootScope.$emit('updateUser', updateData);
 		    	}
 			}
@@ -39,7 +37,6 @@ angular.module('bigSQL.common').directive('userDetailsRow', function () {
 		    		var updateData = {};
             		updateData.id = $scope.value.id;
 			        updateData.active = $scope.value.active;
-	            	console.log(updateData);
 	            	$rootScope.$emit('updateUser', updateData);
 		    	}
 			}

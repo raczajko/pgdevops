@@ -5,13 +5,15 @@
         </button>
     </div>
     <div class="col-md-4">
-        <input class="form-control" type="email" id="inputUsermail" name="usermail" ng-disabled="!value.new" ng-model="value.email" ng-class="{ error: !value.email }" />
-        <span ng-if="!value.email"><br>Invalid Email</span>
+        <div class="form-group">
+            <input type="email" ng-disabled="!value.new" ng-model="value.email" name="email" class="form-control" ng-model="main.email" ng-minlength="5" ng-maxlength="20" required>
+            <span ng-show = "userForm.email.$error.email"> Invalid Email</span>
+            <!-- ngMessages goes here -->
+        </div>
     </div>
     <div class="col-md-2">
         <div class="form-group">
-            <select class="form-control form-control-sm" ng-disabled="value.id == 1">
-                <option ng-repeat="(key, role) in roles" ng-value="role.id" ng-model="value.role" ng-change="updateRole()" ng-selected="role.id == value.role">{{ role.name }}</option>
+            <select class="form-control form-control-sm" ng-disabled="value.id == 1" ng-model="value.role" ng-change="updateRole()" ng-options="role.id as role.name for (key, role) in roles" required>
             </select>
         </div>
     </div>
@@ -31,8 +33,8 @@
         <div class="form-group">
             <input class="form-control" ng-disabled="!value.email" type="password" id="password_c" name="password_c" ng-model="formdata.password_c" confirm-password required/>
         </div>
+        <span ng-show="!userForm.password_c.$error.required && userForm.password_c.$error.noMatch && userForm.password.$dirty">Passwords do not match.</span>
     </div>
-    <span ng-show="!userForm.password_c.$error.required && userForm.password_c.$error.noMatch && userForm.password.$dirty">Passwords do not match.</span>
     <span class="form-actions" ng-show="formSave()">
     </span>
 </form>

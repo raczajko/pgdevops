@@ -32,14 +32,12 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
         $http.get($window.location.origin + '/admin/user_management/role/')
             .success(function (data) {
                 $scope.roles = data;
-                console.log(data);
 
             });
 
         $http.get($window.location.origin + '/admin/user_management/user/')
             .success(function (data) {
                 $scope.users = data;
-                console.log(data);
 
             });
 
