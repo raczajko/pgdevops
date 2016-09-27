@@ -14,7 +14,7 @@ angular.module('bigSQL.common').factory('MachineInfo', function (PubSubService, 
             session.unsubscribe(subscription);
         }).then(function (sub) {
             subscription = sub;
-        })
+        });
         session.call('com.bigsql.info');
     };
 

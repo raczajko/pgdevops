@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http) {
+angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location) {
 
     $scope.alerts = [];
 
@@ -65,11 +65,20 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
 
         if (isOpened) {
-            console.log("opened");
+            //console.log("opened");
+            var remote_host = $scope.hostsList[idx].host;
+            var info_url = $window.location.origin + '/api/hostcmd/info/' + remote_host;
+            var status_url = $window.location.origin + '/api/hostcmd/status/' + remote_host;
 
-            $http.get($window.location.origin + '/api/hostcmd/info/' + $scope.hostsList[idx].host)
+            if (remote_host=="localhost") {
+                info_url = $window.location.origin + '/api/info';
+                status_url = $window.location.origin + '/api/status';
+                remote_host = "";
+            }
+
+            $http.get(info_url)
                 .success(function (data) {
-                    console.log(data[0]);
+                    //console.log(data[0]);
                     $scope.hostsList[idx].hostInfo = data[0];
 
                 })
@@ -77,7 +86,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 });
 
 
-            $http.get($window.location.origin + '/api/hostcmd/status/' + $scope.hostsList[idx].host)
+            $http.get(status_url)
                 .success(function (data) {
                     $scope.hostsList[idx].comps = data;
                     if ($scope.hostsList[idx].comps.length == 0) {
@@ -91,11 +100,26 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     };
 
+    $scope.UpdateManager = function (idx) {
+        var remote_host = $scope.hostsList[idx].host;
+        if (remote_host=="localhost") {
+            remote_host = "";
+        }
+
+        $rootScope.remote_host = remote_host;
+        $location.path('/components/view');
+
+
+    };
+
 
     function getList(argument) {
         $http.get($window.location.origin + '/api/hosts')
             .success(function (data) {
-                $scope.hostsList = data;
+                var localhost = [{"host": "localhost"}];
+                var all_hosts = localhost.concat(data);
+                //all_hosts.
+                $scope.hostsList = all_hosts;
                 $scope.nothingInstalled = false;
                 $scope.loading = false;
             })

@@ -1,0 +1,13 @@
+<div class="components-update-title-wrapper">
+    <h1><strong>{{ title }}</strong>
+        <select ng-change="hostChange(selecthost)" ng-model="selecthost">
+        <option value="" >localhost</option>
+        <option ng-repeat="host in hosts" value="{{ host.host }}">{{ host.host }}</option> </select>
+         </h1>
+
+    <h3>
+        <strong> OS </strong> : {{ data.os }} &nbsp;
+        <strong>HW </strong>: {{ data.mem }} GB, {{ data.cores }} x {{ data.cpu }} &nbsp;
+        <strong>PGC</strong> : {{ data.version }}
+    </h3>
+</div>

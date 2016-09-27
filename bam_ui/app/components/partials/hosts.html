@@ -23,7 +23,7 @@
             <uib-accordion-heading>
                     <span ng-click="loadHost($index,false)"> {{ host.host }}
                     <i class="pull-left glyphicon"
-                            ng-class="{'fa fa-plus': !host.open, 'fa fa-minus': host.open}"></i>
+                       ng-class="{'fa fa-plus': !host.open, 'fa fa-minus': host.open}"></i>
                     </span>
             </uib-accordion-heading>
             <div ng-if="!host.hostInfo.home">
@@ -36,21 +36,28 @@
                     <i class="glyphicon glyphicon-refresh"></i>
 
                 </span>
+
                 <p><strong>PGC : </strong>{{ host.hostInfo.version }} {{ host.hostInfo.home }}</p>
 
-                <p><strong>User & Host : </strong> {{ host.hostInfo.user }}  {{ host.hostInfo.host }}</p>
+                <p><strong>User & Host : </strong> {{ host.hostInfo.user }} {{ host.hostInfo.host }}</p>
 
-                <p><strong>Hardware : </strong>{{ host.hostInfo.cores }}GB, {{ host.hostInfo.cores }} x {{ host.hostInfo.cpu }}</p>
+                <p><strong>Hardware : </strong>{{ host.hostInfo.cores }}GB, {{ host.hostInfo.cores }}
+                    x {{ host.hostInfo.cpu }}</p>
 
                 <p><strong>Platform & OS : </strong>{{ host.hostInfo.platform }} {{ host.hostInfo.os }}</p>
 
                 <p><strong>Repo URL : </strong>{{ host.hostInfo.repo }}</p>
+                <span style="float: right;">
+                    <a ng-click="UpdateManager($index)" class="ng-binding" href="">Update Manager</a>
+                </span>
             </div>
+
+
 
             <div class="col-md-6 col-sm-12 col-xs-12">
                 <div ng-if="host.showMsg" class="jumbotron"
                      style="background-color: #fff; margin-top: 15px; text-align: center;">
-                    <h4> No PostgreSQL or server components installed.<br \> Visit the <a ui-sref="components.view">Update
+                    <h4> No PostgreSQL or server components installed.<br \> Visit the <a ng-click="UpdateManager($index)" href="">Update
                         Manager</a> to install components.</h4>
                 </div>
                 <div class="box" ng-if='host.showMsg == false'>

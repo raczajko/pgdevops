@@ -42,8 +42,14 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     }
 
     function getList(argument) {
+        argument = typeof argument !== 'undefined' ? argument : "";
 
-        var listData = bamAjaxCall.getCmdData('list');
+        if (argument==""){
+            var listData = bamAjaxCall.getCmdData('list');
+        } else{
+            var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
+        }
+
         listData.then(function (data) {
             if(data == "error"){
                 $timeout(wait, 5000);
@@ -99,9 +105,12 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         // });
     };
 
-    getList();
+    getList($rootScope.remote_host);
 
 
+    $scope.refreshData=function(hostArgument){
+        getList(hostArgument);
+    };
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -221,7 +230,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             session.call('com.bigsql.setTestSetting',[param]);
             getList();
             // session.call('com.bigsql.list');
-        }
+        };
 
         session.subscribe("com.bigsql.onInstall", function (installStream) {
 

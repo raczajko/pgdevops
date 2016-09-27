@@ -8,7 +8,7 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
     var graphData = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10];
 
     function callStatus(argument) {
-        var statusData = bamAjaxCall.getCmdData('status')
+        var statusData = bamAjaxCall.getCmdData('status');
         statusData.then(function(data) {
             $scope.comps = data;
             if($scope.comps.length == 0){
@@ -20,7 +20,7 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
     }
 
     function callInfo(argument) {
-        var infoData = bamAjaxCall.getCmdData('info')
+        var infoData = bamAjaxCall.getCmdData('info');
         infoData.then(function(data) {
             $scope.pgcInfo = data[0];
         });

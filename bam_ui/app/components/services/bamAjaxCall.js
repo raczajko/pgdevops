@@ -13,9 +13,9 @@ angular.module('bigSQL.components').factory('bamAjaxCall', function ($q, $http, 
             
 
         });
-    }
+    };
 
     return {
         getCmdData: getCmdData,
     }
-})
+});

@@ -144,7 +144,7 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
     $scope.onLogCompChange = function () {
         $interval.cancel($scope.intervalPromise);
         $window.location.href = $scope.selectComp;
-    }
+    };
 
     /**
      Unsubscribe to all the apis on the template and scope destroy
