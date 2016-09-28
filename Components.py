@@ -194,6 +194,16 @@ class ComponentAction(object):
             self.session.publish('com.bigsql.onUpdatesCheck', ln)
             yield sleep(0.001)
 
+    @inlineCallbacks
+    def registerHost(self, hostName, pgcDir, userName, password):
+        """
+        Method to Register remote host
+        """
+        pgcCmd = PGC_HOME + os.sep + "pgc register HOST " + hostName + ':' + pgcDir + ':' + userName + ':' +password
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
+        pgcData = pgcProcess.communicate()
+        yield self.session.publish('com.bigsql.onRegisterHost', pgcData)
+
 
 class Components(ComponentAction):
     """
