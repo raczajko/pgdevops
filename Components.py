@@ -395,7 +395,7 @@ class Components(ComponentAction):
         yield self.session.publish('com.bigsql.onCheckOS', platform.system())
 
     @staticmethod
-    def get_data(command, component=None):
+    def get_data(command, component=None, pgc_host=None):
         """
         Method to get the host settings.
         :param p_host: Name of the host to retrieve the settings.
@@ -404,6 +404,9 @@ class Components(ComponentAction):
         pgcCmd = PGC_HOME + os.sep + "pgc --json " + command
         if component:
             pgcCmd = pgcCmd + " " + component
+        if pgc_host:
+            pgcCmd = pgcCmd + " --host " + pgc_host
+
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         pgcInfo = pgcProcess.communicate()       
         return json.loads(pgcInfo[0])
