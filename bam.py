@@ -121,6 +121,8 @@ class AppSession(ApplicationSession):
         self.register(components.getAvailPort, 'com.bigsql.getAvailPort')
 
         self.register(components.checkOS, 'com.bigsql.checkOS')
+        
+        self.register(components.registerHost, 'com.bigsql.registerHost')
 
         self.register(monitoring.activity, 'com.bigsql.activity')
 

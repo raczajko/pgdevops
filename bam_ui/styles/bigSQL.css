@@ -6663,3 +6663,8 @@ table.settings-table-pgc-info > tbody > tr > td {
 .autostart-input {
   margin-top : 7px ;
 }
+
+.requiredSymbol { 
+    color:red; 
+    margin-bottom : -10px
+}

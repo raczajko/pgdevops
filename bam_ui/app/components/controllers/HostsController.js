@@ -119,6 +119,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     getList();
 
+    $rootScope.$on('addedHost', function () {
+        getList();
+    });
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -149,6 +152,17 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     function wait() {
         $window.location.reload();
     };
+
+    $scope.open = function () {
+
+            UpdateComponentsService.setCheckUpdatesAuto();
+
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/addHostModal.html',
+                windowClass: 'modal',
+                controller: 'addHostController',
+            });
+        };
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
