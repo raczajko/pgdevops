@@ -61,7 +61,7 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
     };
 
     $scope.addAuserForm = function () {
-        if ($scope.users[$scope.users.length - 1].email) {
+        if ($scope.users[$scope.users.length - 1].email || $scope.users.length == 1) {
             var newUser = {
                 id : $scope.users.length + 1,
                 active: true,
