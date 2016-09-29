@@ -44,7 +44,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             } else {
                 nonPgComps.push(comps[i]);
             }
-            ;
         }
         return pgComps.reverse().concat(nonPgComps);
     }
@@ -145,7 +144,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
 
 
-    callInfo();
+    //callInfo();
 
     getList();
 

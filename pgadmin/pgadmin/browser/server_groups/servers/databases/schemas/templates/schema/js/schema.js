@@ -112,8 +112,11 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
     id: 'security', label: '{{ _("Security")  }}', type: 'group',
     // Show/Hide security group for nodes under the catalog
     visible: function(args) {
-      if (args && 'node_info' in args && 'catalog' in args.node_info) {
-        return false;
+      if (args && 'node_info' in args) {
+        // If node_info is not present in current object then it might in its
+        // parent in case if we used sub node control
+        var node_info = args.node_info || args.handler.node_info;
+        return 'catalog' in node_info ? false : true;
       }
       return true;
     }
@@ -348,16 +351,16 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
           id: 'acl', label: '{{ _('Privileges') }}', type: 'text',
           group: '{{ _('Security') }}', mode: ['properties'], disabled: true
         },{
-          id: 'tblacl', label: '{{ _('Default TABLE Privileges') }}', type: 'text',
+          id: 'tblacl', label: '{{ _('Default TABLE privileges') }}', type: 'text',
           group: '{{ _('Security') }}', mode: ['properties'], disabled: true
         },{
-          id: 'seqacl', label: '{{ _('Default SEQUENCE Privileges') }}', type: 'text',
+          id: 'seqacl', label: '{{ _('Default SEQUENCE privileges') }}', type: 'text',
           group: '{{ _('Security') }}', mode: ['properties'], disabled: true
         },{
-          id: 'funcacl', label: '{{ _('Default FUNCTION Privileges') }}',
+          id: 'funcacl', label: '{{ _('Default FUNCTION privileges') }}',
           group: '{{ _('Security') }}', type: 'text', mode: ['properties'], disabled: true
         },{
-          id: 'typeacl', label: '{{ _('Default TYPE Privileges') }}', type: 'text',
+          id: 'typeacl', label: '{{ _('Default TYPE privileges') }}', type: 'text',
           group: '{{ _('Security') }}', mode: ['properties'], disabled: true, min_version: 90200,
           visible: function() {
             return this.version_compatible;
@@ -456,9 +459,9 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
     });
   }
 
-  // Switch Cell with Deps
-  var SwitchDepCell =
-    Backgrid.Extension.SwitchDepCell =  Backgrid.Extension.SwitchCell.extend({
+  // Switch Cell with Deps (specifically for table children)
+  var TableChildSwitchCell =
+    Backgrid.Extension.TableChildSwitchCell = Backgrid.Extension.SwitchCell.extend({
       initialize: function() {
         Backgrid.Extension.SwitchCell.prototype.initialize.apply(this, arguments);
         Backgrid.Extension.DependentCell.prototype.initialize.apply(this, arguments);

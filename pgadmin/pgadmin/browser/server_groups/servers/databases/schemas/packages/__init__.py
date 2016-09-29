@@ -226,7 +226,7 @@ class PackageView(PGChildNodeView):
             return make_json_response(
                 data=self.blueprint.generate_browser_node(
                     row['oid'],
-                    sid,
+                    scid,
                     row['name'],
                     icon="icon-%s" % self.node_type
                 )
@@ -236,7 +236,7 @@ class PackageView(PGChildNodeView):
             res.append(
                 self.blueprint.generate_browser_node(
                     row['oid'],
-                    sid,
+                    scid,
                     row['name'],
                     icon="icon-%s" % self.node_type
                 ))
@@ -409,7 +409,7 @@ class PackageView(PGChildNodeView):
 
             return make_json_response(
                 success=1,
-                info=_("Package dropped"),
+                info=_("Packge dropped"),
                 data={
                     'id': pkgid,
                     'scid': scid,
@@ -517,9 +517,8 @@ class PackageView(PGChildNodeView):
             u'name'
         ]
 
-        data['schema'] = self.schema
-
         if pkgid is not None:
+            data['schema'] = self.schema
             SQL = render_template("/".join([self.template_path, 'properties.sql']), scid=scid, pkgid=pkgid)
             status, res = self.conn.execute_dict(SQL)
             if not status:

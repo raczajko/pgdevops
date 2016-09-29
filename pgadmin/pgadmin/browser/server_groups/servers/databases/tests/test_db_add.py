@@ -7,57 +7,56 @@
 #
 # ##################################################################
 
+import json
 
 from pgadmin.utils.route import BaseTestGenerator
 from regression import test_utils as utils
+from regression import test_server_dict
 from pgadmin.browser.server_groups.servers.tests import utils as server_utils
 from . import utils as database_utils
 
 
 class DatabaseAddTestCase(BaseTestGenerator):
-    """
-    This class will check server group node present on the object browser's
-    tree node by response code.
-    """
+    """This class will test the ADD database API"""
 
     scenarios = [
         # Fetching default URL for database node.
         ('Check Databases Node URL', dict(url='/browser/database/obj/'))
     ]
 
-    @classmethod
-    def setUpClass(cls):
-        """
-        This function used to add the sever
-
-        :return: None
-        """
-
-        # Add the server
-        server_utils.add_server(cls.tester)
-
-        # Connect to server
-        cls.server_connect_response, cls.server_group, cls.server_ids = \
-            server_utils.connect_server(cls.tester)
-
-        if len(cls.server_connect_response) == 0:
-            raise Exception("No Server(s) connected to add the database!!!")
+    def setUp(self):
+        pass
 
     def runTest(self):
         """ This function will add database under 1st server of tree node. """
+        self.db_name = ''
+        self.server_id = test_server_dict["server"][0]["server_id"]
+        server_response = server_utils.connect_server(self, self.server_id)
+        if server_response["info"] == "Server connected.":
+            db_owner = server_response['data']['user']['name']
+            self.data = database_utils.get_db_data(db_owner)
+            self.db_name = self.data['name']
+            response = self.tester.post(self.url + str(utils.SERVER_GROUP) +
+                                        "/" + str(self.server_id) + "/",
+                                        data=json.dumps(self.data),
+                                        content_type='html/json')
+            self.assertEquals(response.status_code, 200)
+            response_data = json.loads(response.data.decode('utf-8'))
+            db_id = response_data['node']['_id']
+            db_dict = {"db_id": db_id, "db_name": self.db_name}
+            utils.write_node_info(int(self.server_id), "did", db_dict)
+        else:
+            raise Exception("Error while connecting server to add the"
+                            " database.")
 
-        database_utils.add_database(self.tester, self.server_connect_response,
-                                    self.server_ids)
-
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         """
-        This function deletes the added database, added server and the
-        'parent_id.pkl' file which is created in setup()
-
-        :return: None
+        This function delete the database from server added in SQLite.
         """
+        connection = utils.get_db_connection(self.server['db'],
+                                             self.server['username'],
+                                             self.server['db_password'],
+                                             self.server['host'],
+                                             self.server['port'])
+        utils.drop_database(connection, self.db_name)
 
-        database_utils.delete_database(cls.tester)
-        server_utils.delete_server(cls.tester)
-        utils.delete_parent_id_file()
