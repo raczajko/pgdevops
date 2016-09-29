@@ -110,11 +110,11 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
         var isUpdate = true;
 
         //checking new filed in $scope.user for new users
-        for(var i=0; i < $scope.users.length ; i++){ 
+        for(var i=0; i < $scope.users.length ; i++){
             if($scope.users[i].new){
                 isUpdate = false;
                 var res = $http.post($window.location.origin + '/admin/user_management/user/', userData);
-        
+
                 res.success(function (data, status, headers, config) {
 
                     $scope.statusMsg = data;
@@ -150,7 +150,7 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
                     msg: JSON.stringify({data: data})
                 });
             });
-            
+
         }
 
     });

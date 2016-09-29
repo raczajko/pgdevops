@@ -70,7 +70,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             var info_url = $window.location.origin + '/api/hostcmd/info/' + remote_host;
             var status_url = $window.location.origin + '/api/hostcmd/status/' + remote_host;
 
-            if (remote_host=="localhost") {
+            if (remote_host == "localhost") {
                 info_url = $window.location.origin + '/api/info';
                 status_url = $window.location.origin + '/api/status';
                 remote_host = "";
@@ -102,7 +102,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     $scope.UpdateManager = function (idx) {
         var remote_host = $scope.hostsList[idx].host;
-        if (remote_host=="localhost") {
+        if (remote_host == "localhost") {
             remote_host = "";
         }
 
@@ -117,7 +117,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $http.get($window.location.origin + '/api/hosts')
             .success(function (data) {
                 var localhost = [{"host": "localhost"}];
-                var all_hosts = localhost.concat(data);
+                if (data[0].status == "error") {
+                    var all_hosts = localhost;
+
+                } else {
+                    var all_hosts = localhost.concat(data);
+                }
+
                 //all_hosts.
                 $scope.hostsList = all_hosts;
                 $scope.nothingInstalled = false;
@@ -179,14 +185,33 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     $scope.open = function () {
 
-            UpdateComponentsService.setCheckUpdatesAuto();
+        UpdateComponentsService.setCheckUpdatesAuto();
 
-            var modalInstance = $uibModal.open({
-                templateUrl: '../app/components/partials/addHostModal.html',
-                windowClass: 'modal',
-                controller: 'addHostController',
-            });
-        };
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/addHostModal.html',
+            windowClass: 'modal',
+            controller: 'addHostController',
+        });
+    };
+
+    $scope.showTop = function (idx) {
+        var remote_host = $scope.hostsList[idx].host;
+        if (remote_host == "localhost") {
+            remote_host = "";
+        }
+
+        $rootScope.top_host = remote_host;
+
+
+        var modalInstance = $uibModal.open({
+            //scope:scope,
+            templateUrl: '../app/components/partials/topModal.html',
+            windowClass: 'modal',
+            size: 'lg',
+            controller: 'topController',
+        });
+    };
+
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
