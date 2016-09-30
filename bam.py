@@ -124,6 +124,8 @@ class AppSession(ApplicationSession):
         
         self.register(components.registerHost, 'com.bigsql.registerHost')
 
+        self.register(components.deleteHost, 'com.bigsql.deleteHost')
+
         self.register(monitoring.activity, 'com.bigsql.activity')
 
         ## PUBLISH and CALL every second .. forever

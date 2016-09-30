@@ -5,6 +5,18 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	var subscriptions = [];
 	$scope.tryToConnect = false;
 	$scope.registerResponse;
+	$scope.type = 'Add';
+
+	$scope.hostName = '';
+	$scope.pgcDir = '';
+	$scope.userName = '';
+
+	if($scope.editHost){
+		$scope.type = 'Edit';
+		$scope.hostName = $scope.editHost.host;
+		$scope.pgcDir = $scope.editHost.pgc_home;
+		$scope.userName = $scope.editHost.user;
+	}
 
     sessPromise.then(function (sessParam) {
         session = sessParam;

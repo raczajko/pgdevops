@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location) {
+angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall) {
 
     $scope.alerts = [];
 
@@ -44,6 +44,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             } else {
                 nonPgComps.push(comps[i]);
             }
+            ;
         }
         return pgComps.reverse().concat(nonPgComps);
     }
@@ -66,27 +67,22 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         if (isOpened) {
             //console.log("opened");
             var remote_host = $scope.hostsList[idx].host;
-            var info_url = $window.location.origin + '/api/hostcmd/info/' + remote_host;
-            var status_url = $window.location.origin + '/api/hostcmd/status/' + remote_host;
+            var info_url = 'hostcmd/info/' + remote_host;
+            var status_url = 'hostcmd/status/' + remote_host;
 
             if (remote_host == "localhost") {
-                info_url = $window.location.origin + '/api/info';
-                status_url = $window.location.origin + '/api/status';
+                info_url = 'info';
+                status_url = 'status';
                 remote_host = "";
             }
 
-            $http.get(info_url)
-                .success(function (data) {
-                    //console.log(data[0]);
+            var infoData = bamAjaxCall.getCmdData(info_url);
+            infoData.then(function(data) {
                     $scope.hostsList[idx].hostInfo = data[0];
-
-                })
-                .error(function (error) {
                 });
 
-
-            $http.get(status_url)
-                .success(function (data) {
+            var statusData = bamAjaxCall.getCmdData(status_url);
+            statusData.then(function(data) {
                     $scope.hostsList[idx].comps = data;
                     if ($scope.hostsList[idx].comps.length == 0) {
                         $scope.hostsList[idx].showMsg = true;
@@ -101,7 +97,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     $scope.UpdateManager = function (idx) {
         var remote_host = $scope.hostsList[idx].host;
-        if (remote_host == "localhost") {
+        if (remote_host=="localhost") {
             remote_host = "";
         }
 
@@ -111,12 +107,21 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     };
 
+    $scope.deleteHost = function (idx) {
+        var hostToDelete = $scope.hostsList[idx].host;
+        session.call('com.bigsql.deleteHost', [$scope.hostsList[idx].host]);
+        session.subscribe("com.bigsql.onDeleteHost", function (data) {
+            getList();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+    }
 
     function getList(argument) {
         $http.get($window.location.origin + '/api/hosts')
             .success(function (data) {
                 var localhost = [{"host": "localhost"}];
-                if (data[0].status == "error") {
+                if (data[0] == undefined || data[0].status == "error") {
                     var all_hosts = localhost;
 
                 } else {
@@ -137,10 +142,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
 
     function callInfo(argument) {
-        $http.get($window.location.origin + '/api/info')
-            .success(function (data) {
-                $scope.pgcInfo = data[0];
-            });
+        var localInfo = bamAjaxCall.getCmdData($window.location.origin + '/api/info')
+        localInfo.then(function(data) {
+            $scope.pgcInfo = data[0];
+        });
     }
 
 
@@ -182,16 +187,20 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $window.location.reload();
     };
 
-    $scope.open = function () {
+    $scope.open = function (idx) {
+            $scope.editHost = '';
+            if(idx){
+                $scope.editHost = $scope.hostsList[idx];
+            }
+            UpdateComponentsService.setCheckUpdatesAuto();
 
-        UpdateComponentsService.setCheckUpdatesAuto();
-
-        var modalInstance = $uibModal.open({
-            templateUrl: '../app/components/partials/addHostModal.html',
-            windowClass: 'modal',
-            controller: 'addHostController',
-        });
-    };
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/addHostModal.html',
+                windowClass: 'modal',
+                controller: 'addHostController',
+                scope: $scope,
+            });
+        };
 
     $scope.showTop = function (idx) {
         var remote_host = $scope.hostsList[idx].host;
@@ -210,7 +219,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             controller: 'topController',
         });
     };
-
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {

@@ -6567,6 +6567,36 @@ table.settings-table-pgc-info > tbody > tr > td {
   font-size: 10px;
 }
 
+.hostmanager-accordian-wrapper .box {
+ border-top-color: #fff;
+ border-top-width: 0;
+ box-shadow: none;
+ padding: 0 8px;
+ margin-bottom: 5px;
+}
+
+.hostmanager-accordian-wrapper .box .box-header {
+  padding: 5px;
+  border-bottom: 1px solid #dcdcdc;
+}
+
+.hostmanager-accordian-wrapper .box-body  {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 3px;
+  border-bottom-left-radius: 3px;
+  padding: 1px;
+}
+
+.hostmanager-accordian-wrapper .panel-default>.panel-heading {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.hostmanager-accordian-wrapper .panel-default {
+    border-color: transparent;
+}
+
 .graphsTab .panel-title {
     margin-top: 0;
     margin-bottom: 0;
