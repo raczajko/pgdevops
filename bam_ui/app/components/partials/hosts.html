@@ -37,9 +37,10 @@
                                 </span>&nbsp; -->
                                 <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation()" class="btn btn-default" ng-if="host.open">Refresh</button>&nbsp;
                                 <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)" class="btn btn-default" ng-if="host.open" class="ng-binding" href="" >Update Manager</button>&nbsp;
-                                <div class="btn-group" ng-if="host.host!='localhost'" uib-dropdown >
-                                    <button id="split-button " type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); open($index)" class="btn btn-default ">Edit</button>
-                                    <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation()" class="btn btn-default " uib-dropdown-toggle>
+                                <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); showTop($index)" class="btn btn-default" ng-if="host.open" class="ng-binding" href="">Top</button>&nbsp;
+                                <div class="btn-group" uib-dropdown >
+                                    <button id="split-button " type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); open($index)" class="btn btn-default " ng-disabled="host.host=='localhost'" >Edit</button>
+                                    <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation()" class="btn btn-default " ng-disabled="host.host=='localhost'"  uib-dropdown-toggle>
                                         <span class="caret "></span>
                                         <span class="sr-only ">Split button!</span>
                                     </button>

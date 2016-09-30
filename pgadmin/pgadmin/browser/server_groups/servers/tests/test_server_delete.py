@@ -6,12 +6,8 @@
 # This software is released under the PostgreSQL Licence
 #
 # ##################################################################
-
-
 from pgadmin.utils.route import BaseTestGenerator
 from regression import test_utils as utils
-
-from . import utils as server_utils
 
 
 class ServerDeleteTestCase(BaseTestGenerator):
@@ -22,30 +18,19 @@ class ServerDeleteTestCase(BaseTestGenerator):
         ('Default Server Node url', dict(url='/browser/server/obj/'))
     ]
 
-    @classmethod
-    def setUpClass(cls):
-        """
-        This function is used to add the server
-
-        :return: None
-        """
-
-        # Firstly, add the server
-        server_utils.add_server(cls.tester)
+    def setUp(self):
+        """This function add the server to test the DELETE API"""
+        self.server_id = utils.create_server(self.server)
 
     def runTest(self):
-        """ This function will get all available servers under object browser
-        and delete the last server using server id."""
+        """This function deletes the added server"""
+        url = self.url + str(utils.SERVER_GROUP) + "/"
+        if not self.server_id:
+            raise Exception("No server to delete!!!")
+        # Call API to delete the servers
+        response = self.tester.delete(url + str(self.server_id))
+        self.assertEquals(response.status_code, 200)
 
-        server_utils.delete_server(self.tester)
-
-    @classmethod
-    def tearDownClass(cls):
-        """
-        This function deletes the 'parent_id.pkl' file which is created in
-        setup() function.
-
-        :return: None
-        """
-
-        utils.delete_parent_id_file()
+    def tearDown(self):
+        """This function delete the server from SQLite """
+        utils.delete_server(self.tester, self.server_id)

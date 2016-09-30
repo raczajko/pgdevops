@@ -230,6 +230,16 @@
       var data = defaultValue = item[args.column.field];
       if (typeof data === "object" && !Array.isArray(data)) {
         data = JSON.stringify(data);
+      } else if (Array.isArray(data)) {
+        var temp = [];
+        $.each(data, function(i, val) {
+          if (typeof val === "object") {
+            temp.push(JSON.stringify(val));
+          } else {
+            temp.push(val)
+          }
+        });
+        data = "[" + temp.join() + "]";
       }
       $input.val(data);
       $input.select();
@@ -279,7 +289,7 @@
       $input = $("<TEXTAREA hidefocus rows=5 style='backround:white;width:250px;height:80px;border:0;outline:0' readonly>")
           .appendTo($wrapper);
 
-      $("<DIV style='text-align:right'><BUTTON class='btn btn-danger fa fa-lg fa-times long_text_editor pg-alertify-button'>Cancel</BUTTON></DIV>")
+      $("<DIV style='text-align:right'><BUTTON class='btn btn-primary fa fa-lg fa-times long_text_editor pg-alertify-button'>Close</BUTTON></DIV>")
        .appendTo($wrapper);
 
       $wrapper.find("button:first").bind("click", this.cancel);
@@ -395,7 +405,7 @@
       $input = $("<TEXTAREA hidefocus rows=5 style='backround:white;width:250px;height:80px;border:0;outline:0' readonly>")
           .appendTo($wrapper);
 
-      $("<DIV style='text-align:right'><BUTTON class='btn btn-danger fa fa-lg fa-times long_text_editor pg-alertify-button'>Cancel</BUTTON></DIV>")
+      $("<DIV style='text-align:right'><BUTTON class='btn btn-primary fa fa-lg fa-times long_text_editor pg-alertify-button'>Close</BUTTON></DIV>")
        .appendTo($wrapper);
 
       $wrapper.find("button:first").bind("click", this.cancel);
@@ -466,6 +476,16 @@
       var data = defaultValue = item[args.column.field];
       if (typeof data === "object" && !Array.isArray(data)) {
         data = JSON.stringify(data);
+      } else if (Array.isArray(data)) {
+        var temp = [];
+        $.each(data, function(i, val) {
+          if (typeof val === "object") {
+            temp.push(JSON.stringify(val));
+          } else {
+            temp.push(val)
+          }
+        });
+        data = "[" + temp.join() + "]";
       }
       $input.val(data);
       $input.select();

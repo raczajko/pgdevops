@@ -35,7 +35,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
 
   var processTreeData = function(payload) {
     var data = JSON.parse(payload).data.sort(function(a, b) {
-      return pgAdmin.natural_sort(a.label, b.label, {});
+        return pgAdmin.natural_sort(a.label, b.label, {'_type': a._type});
     });
     _.each(data, function(d){
       d._label = d.label;
@@ -820,6 +820,10 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
               ctx.b._findTreeChildNode(
                 ctx.i, d, ctx
               );
+              // if parent node is null
+              if (!_data._pid) {
+                addItemNode.apply(ctx, arguments);
+              }
             }
             return true;
           }.bind(ctx),
@@ -855,7 +859,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label, {}
+                              d._label, _data._label, {'_type': d._type}
                             ) == 1
                           )
                             return true;
@@ -880,7 +884,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label, {}
+                              d._label, _data._label, {'_type': d._type}
                             ) != -1
                           )
                             return true;
@@ -888,7 +892,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label, {}
+                              d._label, _data._label, {'_type': d._type}
                             ) != 1
                           )
                             return true;
@@ -897,7 +901,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label, {}
+                              d._label, _data._label, {'_type': d._type}
                             ) == 1
                           ) {
                             s = m + 1;
@@ -958,9 +962,11 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                           });
                         }.bind(ctx);
 
-                    if (!ctx.t.isInode(ctx.i) && ctx.d.inode) {
+                    if (ctx.i && !ctx.t.isInode(ctx.i)) {
                         ctx.t.setInode(ctx.i, {success: _append});
                     } else {
+                        // Handle case for node without parent i.e. server-group
+                        // or if parent node's inode is true.
                         _append();
                     }
                   }
@@ -1140,16 +1146,24 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
           }.bind(ctx),
           updateNode = function() {
             if (
-              this.i && this.d && this.new._id == this.d._id &&
-              this.new._type == this.d._type
+              this.i && this.d && this.new._type == this.d._type
             ) {
-              // Found the currect
-              _.extend(this.d, this.new._id);
-              this.t.setLabel(ctx.i, {label: this.new.label});
-              this.t.addIcon(ctx.i, {icon: this.new.icon});
-              this.t.setId(ctx.id, {id: this.new.id});
-              this.t.openPath(this.i);
-              this.t.select(this.i);
+              var _id = this.d._id;
+              if (this.new._id != this.d._id) {
+                // Found the new oid, update its node_id
+                var node_data = this.t.itemData(ctx.i);
+                node_data._id = _id = this.new._id;
+              }
+              if (this.new._id == _id) {
+                // Found the currect
+                _.extend(this.d, this.new._id);
+                this.t.setLabel(ctx.i, {label: this.new.label});
+                this.t.addIcon(ctx.i, {icon: this.new.icon});
+                this.t.setId(ctx.id, {id: this.new.id});
+                this.t.openPath(this.i);
+                this.t.deselect(this.i);
+                this.t.select(this.i);
+              }
             }
             var success = this.o && this.o.success;
             if (success && typeof(success) == 'function') {
@@ -1430,10 +1444,10 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                   success();
                 }
               },
-              error: function(jqx, error, status) {
+              error: function(xhr, error, status) {
                 if (
                   !Alertify.pgHandleItemError(
-                    xhr, error, message, {item: _i, info: info}
+                    xhr, error, status, {item: _i, info: info}
                   )
                 ) {
                   var msg = xhr.responseText,
@@ -1599,6 +1613,13 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
     }
 
   });
+
+  /* Remove paste event mapping from CodeMirror's emacsy KeyMap binding
+   * specific to Mac LineNumber:5797 - lib/Codemirror.js
+   * It is preventing default paste event(Cmd-V) from triggering
+   * in runtime.
+   */
+  delete CodeMirror.keyMap.emacsy["Ctrl-V"];
 
   // Use spaces instead of tab
   if ('{{ editor_use_spaces }}' == 'True') {

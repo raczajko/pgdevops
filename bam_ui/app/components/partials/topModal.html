@@ -1,0 +1,59 @@
+<div class="modal-header">
+    <h2 class="modal-title" id="updateModalLabel"> Top ({{ host }}) </h2>
+</div>
+<div ng-click="cancel()" class="close-modal" data-dismiss="modal" aria-hidden="true">
+    <div class="lr">
+        <div class="rl">
+        </div>
+    </div>
+</div>
+<uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
+
+<div class="container-fluid" ng-show="loadingSpinner">
+    <div class="row">
+        <div class="col-md-12 col-xs-12">
+            <div class="well">
+                <i class="fa fa-spinner fa-2x  fa-pulse"></i>&#160;&#160;&#160;Checking for Top Process..
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-body">
+
+    <h5>
+        <strong> CPU Usage </strong>: {{ topProcess.cpu_user }} %user &nbsp; {{ topProcess.cpu_system }} %sys &nbsp;
+        {{ topProcess.cpu_idle }} %idle &nbsp;
+    </h5>
+    <h5>
+        <strong>DISK </strong>: kB_read {{ topProcess.kb_read }}  &nbsp; , kB_written {{ topProcess.kb_write }}  &nbsp;
+    </h5>
+    <h5>    <strong>Load Average </strong>: {{ topProcess.load_avg }}  &nbsp;
+        <strong>Uptime </strong>: {{ topProcess.uptime }}  &nbsp;
+    </h5>
+
+
+            <div class="row" >
+                <div class="col-md-1 col-xs-1"><strong>PID</strong></div>
+                <div class="col-md-3 col-xs-3"><strong>User</strong></div>
+                <div class="col-md-1 col-xs-1"><strong>%CPU</strong></div>
+                <div class="col-md-1 col-xs-1"><strong>%MEM</strong></div>
+                <div class="col-md-2 col-xs-2"><strong>TIME+</strong></div>
+                <div class="col-md-4 col-xs-4"><strong>COMMAND</strong></div>
+            </div>
+            <div class="row" id="updatesTableTbody " ng-repeat="(key, value) in topProcess.top">
+                <div class="col-md-1 col-xs-1">{{ value.pid }}</div>
+                <div class="col-md-3 col-xs-3">{{ value.username }}</div>
+                <div class="col-md-1 col-xs-1">{{ value.cpu_percent }}</div>
+                <div class="col-md-1 col-xs-1">{{ value.memory_percent }}</div>
+                <div class="col-md-2 col-xs-2">{{ value.ctime }}</div>
+                <div class="col-md-4 col-xs-4">{{ value.name }}</div>
+
+            </div>
+
+        <!-- /.box -->
+        <!-- /.box -->
+</div>
+<div class="modal-footer">
+    <button class="btn btn-danger" type="button" ng-click="cancel()">Close</button>
+</div>

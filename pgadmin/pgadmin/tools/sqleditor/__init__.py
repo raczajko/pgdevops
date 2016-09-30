@@ -531,25 +531,28 @@ def fetch_pg_types(trans_id):
 
         # List of oid for which we need type name from pg_type
         oid = ''
-        for col in session_obj['columns_info']:
-            type_obj = session_obj['columns_info'][col]
-            oid += str(type_obj['type_code']) + ','
+        res = {}
+        if 'columns_info' in session_obj \
+                and session_obj['columns_info'] is not None:
+            for col in session_obj['columns_info']:
+                type_obj = session_obj['columns_info'][col]
+                oid += str(type_obj['type_code']) + ','
 
-        # Remove extra comma
-        oid = oid[:-1]
-        status, res = conn.execute_dict(
-            """SELECT oid, format_type(oid,null) as typname FROM pg_type WHERE oid IN ({0}) ORDER BY oid;
+            # Remove extra comma
+            oid = oid[:-1]
+            status, res = conn.execute_dict(
+                """SELECT oid, format_type(oid,null) as typname FROM pg_type WHERE oid IN ({0}) ORDER BY oid;
 """.format(oid))
 
-        if status:
-            # iterate through pg_types and update the type name in session object
-            for record in res['rows']:
-                for col in session_obj['columns_info']:
-                    type_obj = session_obj['columns_info'][col]
-                    if type_obj['type_code'] == record['oid']:
-                        type_obj['type_name'] = record['typname']
+            if status:
+                # iterate through pg_types and update the type name in session object
+                for record in res['rows']:
+                    for col in session_obj['columns_info']:
+                        type_obj = session_obj['columns_info'][col]
+                        if type_obj['type_code'] == record['oid']:
+                            type_obj['type_name'] = record['typname']
 
-            update_session_grid_transaction(trans_id, session_obj)
+                update_session_grid_transaction(trans_id, session_obj)
     else:
         status = False
         res = error_msg
@@ -1301,16 +1304,18 @@ def start_query_download_tool(trans_id):
 
                 sync_conn.connect(autocommit=False)
 
+                def cleanup():
+                    conn.manager.connections[sync_conn.conn_id]._release()
+                    del conn.manager.connections[sync_conn.conn_id]
+
                 # This returns generator of records.
                 status, gen = sync_conn.execute_on_server_as_csv(sql, records=2000)
 
                 if not status:
-                    conn.manager.release(conn_id=conn_id, did=trans_obj.did)
-                    return internal_server_error(errormsg=str(gen))
-
-                def cleanup():
-                    conn.manager.connections[sync_conn.conn_id]._release()
-                    del conn.manager.connections[sync_conn.conn_id]
+                    r = Response('"{0}"'.format(gen), mimetype='text/csv')
+                    r.headers["Content-Disposition"] = "attachment;filename=error.csv"
+                    r.call_on_close(cleanup)
+                    return r
 
                 r = Response(gen(), mimetype='text/csv')
 
@@ -1323,11 +1328,12 @@ def start_query_download_tool(trans_id):
                 r.headers["Content-Disposition"] = "attachment;filename={0}".format(filename)
 
                 r.call_on_close(cleanup)
-
                 return r
 
         except Exception as e:
-            conn.manager.release(conn_id=conn_id, did=trans_obj.did)
-            return internal_server_error(errormsg=str(e))
+            r = Response('"{0}"'.format(e), mimetype='text/csv')
+            r.headers["Content-Disposition"] = "attachment;filename=error.csv"
+            r.call_on_close(cleanup)
+            return r
     else:
         return internal_server_error(errormsg=gettext("Transaction status check failed."))

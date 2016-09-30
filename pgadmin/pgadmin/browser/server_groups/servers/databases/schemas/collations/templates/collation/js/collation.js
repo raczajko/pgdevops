@@ -73,7 +73,7 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
             var schemaInfo = args.node_info.schema;
 
             this.set({'owner': userInfo.name}, {silent: true});
-            this.set({'schema': schemaInfo.label}, {silent: true});
+            this.set({'schema': schemaInfo._label}, {silent: true});
           }
           pgAdmin.Browser.Node.Model.prototype.initialize.apply(this, arguments);
         },
@@ -100,19 +100,8 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
               return false;
             }
             return true;
-          },
-          control: Backform.NodeListByNameControl.extend({
-            render: function(){
-            // Initialize parent's render method
-            Backform.NodeListByNameControl.prototype.render.apply(this, arguments);
-
-            // Set schema default value to its parent Schema
-            if(this.model.isNew()){
-              this.model.set({'schema': this.model.node_info.schema.label});
-            }
-            return this;
-            }
-          })
+          }, control: 'node-list-by-name',
+          cache_node: 'database', cached_level: 'database'
         },{
           id: 'copy_collation', label:'{{ _('Copy collation') }}', cell: 'string',
           control: 'node-ajax-options',
