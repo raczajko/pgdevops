@@ -204,6 +204,16 @@ class ComponentAction(object):
         pgcData = pgcProcess.communicate()
         yield self.session.publish('com.bigsql.onRegisterHost', pgcData)
 
+    @inlineCallbacks
+    def deleteHost(self, hostName):
+        """
+        Method to unregister remote host
+        """
+        pgcCmd = PGC_HOME + os.sep + "pgc unregister HOST " + hostName
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
+        pgcData = pgcProcess.communicate()
+        yield self.session.publish('com.bigsql.onDeleteHost', pgcData)
+
 
 class Components(ComponentAction):
     """

@@ -25,13 +25,13 @@
     </div>
     <div class="col-md-2">
         <div class="form-group">
-            <input class="form-control" ng-disabled="!value.email" type="password" id="inputPassword" name="password" ng-model="formdata.password" valid-user-password required />
+            <input class="form-control" ng-disabled="!value.email && value.id != 1" type="password" id="inputPassword" name="password" ng-model="formdata.password" valid-user-password required />
             <span ng-show="!!userForm.password.$error.invalidLen">Must be 6 characters.</span>
         </div>
     </div>
     <div class="col-md-2">
         <div class="form-group">
-            <input class="form-control" ng-disabled="!value.email" type="password" id="password_c" name="password_c" ng-model="formdata.password_c" confirm-password required/>
+            <input class="form-control" ng-disabled="!value.email && value.id != 1" type="password" id="password_c" name="password_c" ng-model="formdata.password_c" confirm-password required/>
         </div>
         <span ng-show="!userForm.password_c.$error.required && userForm.password_c.$error.noMatch && userForm.password.$dirty">Passwords do not match.</span>
     </div>

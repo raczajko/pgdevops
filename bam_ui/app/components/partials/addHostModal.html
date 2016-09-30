@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h4 class="modal-title"> Add/Replace PGC SSH Server </h4>
+    <h4 class="modal-title"> {{type}} PGC SSH Server </h4>
 </div>
 <div class="modal-body">
 
@@ -8,7 +8,7 @@
     </div>
     <div ng-if="registerResponse"><strong>{{registerResponse}}</strong></div>
     <div ng-hide="tryToConnect">
-        <form ng-submit="addHost()">
+        <form>
             <div class="form-group">
                 <div class="requiredSymbol">*</div>
                 <input type="text" ng-model="hostName" class="form-control" placeholder="Hostname">

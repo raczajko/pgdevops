@@ -112,6 +112,15 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     };
 
+    $scope.deleteHost = function (idx) {
+        var hostToDelete = $scope.hostsList[idx].host;
+        session.call('com.bigsql.deleteHost', [$scope.hostsList[idx].host]);
+        session.subscribe("com.bigsql.onDeleteHost", function (data) {
+            getList();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+    }
 
     function getList(argument) {
         $http.get($window.location.origin + '/api/hosts')
@@ -177,14 +186,18 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $window.location.reload();
     };
 
-    $scope.open = function () {
-
+    $scope.open = function (idx) {
+            $scope.editHost = '';
+            if(idx){
+                $scope.editHost = $scope.hostsList[idx];
+            }
             UpdateComponentsService.setCheckUpdatesAuto();
 
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/addHostModal.html',
                 windowClass: 'modal',
                 controller: 'addHostController',
+                scope: $scope,
             });
         };
 
