@@ -23,6 +23,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         "Running": "green"
     };
 
+    var host_info ;
 
     var getCurrentComponent = function (name) {
         for (var i = 0; i < $scope.components.length; i++) {
@@ -192,13 +193,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             if(idx){
                 $scope.editHost = $scope.hostsList[idx];
             }
-            UpdateComponentsService.setCheckUpdatesAuto();
+            //UpdateComponentsService.setCheckUpdatesAuto();
 
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/addHostModal.html',
                 windowClass: 'modal',
                 controller: 'addHostController',
-                scope: $scope,
+                scope: $scope
             });
         };
 
@@ -208,7 +209,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             remote_host = "";
         }
 
-        $rootScope.top_host = remote_host;
+        $scope.top_host = remote_host;
+        $scope.host_info = $scope.hostsList[idx].hostInfo;
 
 
         var modalInstance = $uibModal.open({
@@ -217,6 +219,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             windowClass: 'modal',
             size: 'lg',
             controller: 'topController',
+            scope : $scope
         });
     };
 
