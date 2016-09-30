@@ -35,7 +35,7 @@
                                 <!-- <span ng-if="!host.open">
                                     {{ host.host }}
                                 </span>&nbsp; -->
-                                <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation()" class="btn btn-default" ng-if="host.open">Refresh</button>&nbsp;
+                                <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); loadHost($index,true)" class="btn btn-default" ng-if="host.open">Refresh</button>&nbsp;
                                 <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)" class="btn btn-default" ng-if="host.open" class="ng-binding" href="" >Update Manager</button>&nbsp;
                                 <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); showTop($index)" class="btn btn-default" ng-if="host.open" class="ng-binding" href="">Top</button>&nbsp;
                                 <div class="btn-group" uib-dropdown >
