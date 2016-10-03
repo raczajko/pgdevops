@@ -7,7 +7,8 @@
         </div>
     </div>
 </div>
-<uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
+<uib-alert ng-repeat="alert in alerts" type="{{ alert.type }}" dismiss-on-timeout="8000" close="closeAlert()"
+           class="uib-text">{{ alert.msg }}</uib-alert>
 
 <div class="container-fluid" ng-show="loadingSpinner">
     <div class="row">
@@ -31,33 +32,52 @@
         {{ topProcess.cpu_idle }} %idle &nbsp;
     </h5>
     <h5>
-        <strong>DISK </strong>: kB_read {{ topProcess.kb_read_sec }}/sec  &nbsp; , kB_written {{ topProcess.kb_write_sec }}/sec  &nbsp;
+        <strong>DISK </strong>: kB_read {{ topProcess.kb_read_sec }}/sec &nbsp; ,
+        kB_written {{ topProcess.kb_write_sec }}/sec &nbsp;
     </h5>
-    <h5 ng-if="topProcess.load_avg">    <strong>Load Average </strong>: {{ topProcess.load_avg }}  &nbsp;
-        <strong>Uptime </strong>: {{ topProcess.uptime }}  &nbsp;
+    <h5 ng-if="topProcess.load_avg"><strong>Load Average </strong>: {{ topProcess.load_avg }} &nbsp;
+        <strong>Uptime </strong>: {{ topProcess.uptime }} &nbsp;
     </h5>
 
 
-            <div class="row" >
-                <div class="col-md-1 col-xs-1"><strong>PID</strong></div>
-                <div class="col-md-2 col-xs-2"><strong>User</strong></div>
-                <div class="col-md-1 col-xs-1"><strong>%CPU</strong></div>
-                <div class="col-md-1 col-xs-1"><strong>%MEM</strong></div>
-                <div class="col-md-1 col-xs-1"><strong>TIME+</strong></div>
-                <div class="col-md-4 col-xs-4"><strong>COMMAND</strong></div>
-            </div>
-            <div class="row" id="updatesTableTbody " ng-repeat="(key, value) in topProcess.top">
-                <div class="col-md-1 col-xs-1" style="text-align:right;">{{ value.pid }}</div>
-                <div class="col-md-2 col-xs-2">{{ value.username }}</div>
-                <div class="col-md-1 col-xs-1" style="text-align:right;">{{ value.cpu_percent }}</div>
-                <div class="col-md-1 col-xs-1" style="text-align:right;">{{ value.memory_percent }}</div>
-                <div class="col-md-1 col-xs-1" style="text-align:right;">{{ value.ctime }}</div>
-                <div class="col-md-4 col-xs-4">{{ value.name }}</div>
+    <div class="row">
+        <div class="col-md-1 col-xs-1"><strong>PID</strong></div>
+        <div class="col-md-2 col-xs-2"><strong>User</strong></div>
+        <div class="col-md-1 col-xs-1"><strong>%CPU</strong></div>
+        <div class="col-md-1 col-xs-1"><strong>%MEM</strong></div>
+        <div class="col-md-1 col-xs-1"><strong>TIME+</strong></div>
+        <div class="col-md-4 col-xs-4"><strong>COMMAND</strong></div>
+    </div>
+    <div class="row" id="updatesTableTbody " ng-repeat="(key, value) in topProcess.top">
+        <div class="col-md-1 col-xs-1" style="text-align:right;">{{ value.pid }}</div>
+        <div class="col-md-2 col-xs-2">{{ value.username }}</div>
+        <div class="col-md-1 col-xs-1" style="text-align:right;">{{ value.cpu_percent }}</div>
+        <div class="col-md-1 col-xs-1" style="text-align:right;">{{ value.memory_percent }}</div>
+        <div class="col-md-1 col-xs-1" style="text-align:right;">{{ value.ctime }}</div>
+        <div class="col-md-4 col-xs-4">{{ value.name }}</div>
 
-            </div>
+    </div>
 
-        <!-- /.box -->
-        <!-- /.box -->
+    <!-- /.box -->
+    <!-- /.box -->
+    <div class="col-md-12 col-sm-12 col-xs-12" ng-if="showGraphsDiv">
+        <div class="box">
+            <div class="box-header with-border">
+                <h3 class="box-title">CPU Load</h3>
+            </div>
+            <nvd3 options="cpuChart" data="cpuData"></nvd3>
+        </div>
+    </div>
+    <div class="col-md-12 col-sm-12 col-xs-12" ng-if="showGraphsDiv">
+        <div class="box">
+            <div class="box-header with-border">
+                <h3 class="box-title">Disk IO</h3>
+            </div>
+            <nvd3 options="ioChart" data="diskIO"></nvd3>
+        </div>
+    </div>
+
+    <!--    -->
 </div>
 <div class="modal-footer">
     <button class="btn btn-danger" type="button" ng-click="cancel()">Close</button>

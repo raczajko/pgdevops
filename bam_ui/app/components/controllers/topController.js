@@ -12,10 +12,79 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
     var topRefresh;
 
     var previousTopData = "";
+    $scope.cpuChart = {
+        chart: {
+            type: 'lineChart',
+            height: 150,
+            margin: {
+                top: 20,
+                right: 40,
+                bottom: 40,
+                left: 55
+            },
+            x: function (d) {
+                return d.x;
+            },
+            y: function (d) {
+                return d.y;
+            },
+            noData: "Loading...",
+            interactiveLayer: {
+                tooltip: {
+                    headerFormatter: function (d) {
+                        var point = new Date(d);
+                        return d3.time.format('%Y/%m/%d %H:%M:%S')(point);
+                    },
+                },
+            },
+            xAxis: {
+                xScale: d3.time.scale(),
+                tickFormat: function (d) {
+                    var point = new Date(d);
+                    return d3.time.format('%H:%M:%S')(point)
+                },
+            },
+            yAxis: {
+                tickFormat: function (d) {
+                    return d3.format(',')(d);
+                }
+            },
+            forceY: [0, 100],
+            useInteractiveGuideline: true,
+            duration: 500
+        }
+    };
+    $scope.ioChart = angular.copy($scope.cpuChart);
+    $scope.cpuChart.chart.type = "stackedAreaChart";
+    $scope.cpuChart.chart.showControls = false;
+
+    $scope.cpuData = [{
+        values: [],
+        key: 'CPU System %',
+        color: '#006994',
+        area: true
+    }, {
+        values: [],
+        key: 'CPU User %',
+        color: '#FF5733',
+        area: true
+    }
+    ];
+
+    $scope.diskIO = [{
+        values: [],
+        key: 'Read Bytes (MB)',
+        color: '#FF5733'
+    }, {
+        values: [],
+        key: 'Write Bytes (MB)',
+        color: '#006994'
+    }];
+
 
     function getTopCmdData() {
 
-        console.log($scope.top_host);
+        //console.log($scope.top_host);
 
         var selectedHost = $scope.top_host;
         $scope.loadingSpinner = true;
@@ -35,6 +104,7 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
             $scope.topProcess = data[0];
             $scope.topProcess.kb_read_sec = 0;
             $scope.topProcess.kb_write_sec = 0;
+            $scope.showGraphsDiv = false;
 
 
             if (previousTopData != "") {
@@ -42,11 +112,33 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
                 var kb_read_diff = data[0].kb_read - previousTopData.kb_read;
                 var kb_write_diff = data[0].kb_write - previousTopData.kb_write;
 
+                var read_bytes = Math.round(kb_read_diff / diff);
 
-                $scope.topProcess.kb_read_sec = Math.round(kb_read_diff / diff);
+                $scope.topProcess.kb_read_sec = read_bytes;
 
 
-                $scope.topProcess.kb_write_sec = Math.round(kb_write_diff / diff);
+                var write_bytes = Math.round(kb_write_diff / diff);
+                $scope.topProcess.kb_write_sec = write_bytes;
+
+
+                var timeVal =  Math.round(new Date(data[0].current_timestamp*1000).getTime());
+
+                if ($scope.cpuData[0].values.length > 60) {
+                    $scope.cpuData[0].values.shift();
+                    $scope.cpuData[1].values.shift();
+                    $scope.diskIO[0].values.shift();
+                    $scope.diskIO[1].values.shift();
+                }
+
+
+                //var timeVal = data[0].current_timestamp;
+                $scope.cpuData[0].values.push({x: timeVal, y: parseFloat(data[0].cpu_system)});
+                $scope.cpuData[1].values.push({x: timeVal, y: parseFloat(data[0].cpu_user)});
+
+                $scope.diskIO[0].values.push({x: timeVal, y: read_bytes});
+                $scope.diskIO[1].values.push({x: timeVal, y: write_bytes});
+                $scope.showGraphsDiv = true;
+
 
             }
             previousTopData = data[0];
