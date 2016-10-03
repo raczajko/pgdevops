@@ -104,7 +104,6 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
             $scope.topProcess = data[0];
             $scope.topProcess.kb_read_sec = 0;
             $scope.topProcess.kb_write_sec = 0;
-            $scope.showGraphsDiv = false;
 
 
             if (previousTopData != "") {
@@ -137,7 +136,6 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
 
                 $scope.diskIO[0].values.push({x: timeVal, y: read_bytes});
                 $scope.diskIO[1].values.push({x: timeVal, y: write_bytes});
-                $scope.showGraphsDiv = true;
 
 
             }
