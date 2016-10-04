@@ -29,7 +29,7 @@
 
     <h5 ng-if="topProcess.cpu_user">
         <strong> CPU Usage </strong>: {{ topProcess.cpu_user }} %user &nbsp; {{ topProcess.cpu_system }} %sys &nbsp;
-        {{ topProcess.cpu_idle }} %idle &nbsp;
+        {{ topProcess.cpu_idle }} %idle &nbsp; <span ng-if="topProcess.iowait">{{ topProcess.iowait }} %wait &nbsp;</span>
     </h5>
     <h5>
         <strong>DISK </strong>: kB_read {{ topProcess.kb_read_sec }}/sec &nbsp; ,

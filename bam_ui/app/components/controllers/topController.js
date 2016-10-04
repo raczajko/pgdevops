@@ -73,11 +73,11 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
 
     $scope.diskIO = [{
         values: [],
-        key: 'Read Bytes (MB)',
+        key: 'Read Bytes (kB)',
         color: '#FF5733'
     }, {
         values: [],
-        key: 'Write Bytes (MB)',
+        key: 'Write Bytes (kB)',
         color: '#006994'
     }];
 
