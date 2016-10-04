@@ -55,6 +55,7 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
         }
     };
     $scope.ioChart = angular.copy($scope.cpuChart);
+    $scope.networkChart = angular.copy($scope.cpuChart);
     $scope.cpuChart.chart.type = "stackedAreaChart";
     $scope.cpuChart.chart.showControls = false;
 
@@ -78,6 +79,16 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
     }, {
         values: [],
         key: 'Write Bytes (kB)',
+        color: '#006994'
+    }];
+
+    $scope.NetworkIO = [{
+        values: [],
+        key: 'Sent Bytes (kB)',
+        color: '#FF5733'
+    }, {
+        values: [],
+        key: 'Received Bytes (kB)',
         color: '#006994'
     }];
 
@@ -110,6 +121,8 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
                 var diff = data[0].current_timestamp - previousTopData.current_timestamp;
                 var kb_read_diff = data[0].kb_read - previousTopData.kb_read;
                 var kb_write_diff = data[0].kb_write - previousTopData.kb_write;
+                var kb_sent_diff = data[0].kb_sent - previousTopData.kb_sent;
+                var kb_recv_diff = data[0].kb_recv - previousTopData.kb_recv;
 
                 var read_bytes = Math.round(kb_read_diff / diff);
 
@@ -119,6 +132,9 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
                 var write_bytes = Math.round(kb_write_diff / diff);
                 $scope.topProcess.kb_write_sec = write_bytes;
 
+                var kb_sent = Math.round(kb_sent_diff / diff);
+                var kb_recv = Math.round(kb_recv_diff / diff);
+
 
                 var timeVal =  Math.round(new Date(data[0].current_timestamp*1000).getTime());
 
@@ -127,6 +143,8 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
                     $scope.cpuData[1].values.shift();
                     $scope.diskIO[0].values.shift();
                     $scope.diskIO[1].values.shift();
+                    $scope.NetworkIO[0].values.shift();
+                    $scope.NetworkIO[1].values.shift();
                 }
 
 
@@ -136,6 +154,9 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
 
                 $scope.diskIO[0].values.push({x: timeVal, y: read_bytes});
                 $scope.diskIO[1].values.push({x: timeVal, y: write_bytes});
+
+                $scope.NetworkIO[0].values.push({x: timeVal, y: kb_sent});
+                $scope.NetworkIO[1].values.push({x: timeVal, y: kb_recv});
 
 
             }
