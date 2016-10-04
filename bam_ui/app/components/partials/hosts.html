@@ -32,9 +32,9 @@
                                 <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !host.open, 'fa fa-minus': host.open}"></i>
                             </span>
                             <div class="pull-right" style="margin-top: -10px">
-                                <!-- <span ng-if="!host.open">
-                                    {{ host.host }}
-                                </span>&nbsp; -->
+                                <span ng-click="loadHost($index,false)" ng-if="!host.open && host.hostInfo">
+                                    {{host.hostInfo.os}} {{ host.hostInfo.mem }} GB, {{ host.hostInfo.cores }} x {{host.hostInfo.cpu}}
+                                </span>&nbsp;
                                 <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); loadHost($index,true)" class="btn btn-default" ng-if="host.open">Refresh</button>&nbsp;
                                 <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)" class="btn btn-default" ng-if="host.open" class="ng-binding" href="" >Update Manager</button>&nbsp;
                                 <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); showTop($index)" class="btn btn-default" ng-if="host.open" class="ng-binding" href="">Top</button>&nbsp;
@@ -50,10 +50,7 @@
                                 </div>
                             </div>
                     </uib-accordion-heading>
-                    <div ng-if="!host.hostInfo.home">
-                        <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
-                        <span><h3>Loading...</h3></span>
-                    </div>
+                    
                     <div class="col-md-6 col-sm-12 col-xs-12" ng-if="host.hostInfo.home">
                         <span style="float: right;" ng-click="loadHost($index,true)">
 
@@ -72,9 +69,12 @@
                         <p><strong>Repo URL : </strong>{{ host.hostInfo.repo }}</p>
                     </div>
 
+                    <div ng-if="!host.comps">
+                        <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+                        <span><h3>Loading...</h3></span>
+                    </div> 
 
-
-                    <div class="col-md-6 col-sm-12 col-xs-12">
+                    <div class="col-md-6 col-sm-12 col-xs-12" ng-if="host.comps">
                         <div ng-if="host.showMsg" class="jumbotron"
                              style="background-color: #fff; margin-top: 15px; text-align: center;">
                             <h4> No PostgreSQL or server components installed.<br \> Visit the <a ng-click="UpdateManager($index)" href="">Update

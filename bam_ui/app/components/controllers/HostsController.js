@@ -51,6 +51,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
 
     $scope.loadHost = function (idx, refresh) {
+        $scope.hostsList[idx].comps = '';
         var isOpened = false;
         if (typeof $scope.hostsList[idx].open == "undefined") {
             isOpened = true;
@@ -66,21 +67,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
 
         if (isOpened) {
-            //console.log("opened");
             var remote_host = $scope.hostsList[idx].host;
-            var info_url = 'hostcmd/info/' + remote_host;
             var status_url = 'hostcmd/status/' + remote_host;
 
             if (remote_host == "localhost") {
-                info_url = 'info';
                 status_url = 'status';
                 remote_host = "";
             }
-
-            var infoData = bamAjaxCall.getCmdData(info_url);
-            infoData.then(function(data) {
-                    $scope.hostsList[idx].hostInfo = data[0];
-                });
 
             var statusData = bamAjaxCall.getCmdData(status_url);
             statusData.then(function(data) {
@@ -96,9 +89,25 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     };
 
+    $scope.loadHostsInfo = function (idx) {
+        
+            var remote_host = $scope.hostsList[idx].host;
+            var info_url = 'hostcmd/info/' + remote_host;
+
+            if (remote_host == "localhost") {
+                info_url = 'info';
+                remote_host = "";
+            }
+
+            var infoData = bamAjaxCall.getCmdData(info_url);
+            infoData.then(function(data) {
+                $scope.hostsList[idx].hostInfo = data[0];
+            });
+    };
+
     $scope.UpdateManager = function (idx) {
         var remote_host = $scope.hostsList[idx].host;
-        if (remote_host=="localhost") {
+        if (remote_host == "localhost") {
             remote_host = "";
         }
 
@@ -118,6 +127,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         });
     }
 
+    function hostsInfo(){
+        $scope.hostsInfoData = [];
+        for (var i = $scope.hostsList.length - 1; i >= 0; i--) {
+            $scope.loadHostsInfo(i);
+        }
+    }
+
     function getList(argument) {
         $http.get($window.location.origin + '/api/hosts')
             .success(function (data) {
@@ -133,6 +149,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 $scope.hostsList = all_hosts;
                 $scope.nothingInstalled = false;
                 $scope.loading = false;
+                hostsInfo();
             })
             .error(function (error) {
                 $timeout(wait, 5000);
@@ -141,16 +158,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             });
 
     };
-
-    function callInfo(argument) {
-        var localInfo = bamAjaxCall.getCmdData($window.location.origin + '/api/info')
-        localInfo.then(function(data) {
-            $scope.pgcInfo = data[0];
-        });
-    }
-
-
-    //callInfo();
 
     getList();
 
@@ -169,7 +176,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.installedComps = function (event) {
         session.call('com.bigsql.setBamConfig', ['showInstalled', $scope.showInstalled]);
         getList();
-        // session.call('com.bigsql.list');
     };
 
 
@@ -193,13 +199,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             if(idx){
                 $scope.editHost = $scope.hostsList[idx];
             }
-            //UpdateComponentsService.setCheckUpdatesAuto();
 
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/addHostModal.html',
                 windowClass: 'modal',
                 controller: 'addHostController',
-                scope: $scope
+                scope: $scope,
             });
         };
 
