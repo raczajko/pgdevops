@@ -121,7 +121,7 @@
                                             <span ng-show="comp.showingSpinner"><i
                                                     class='fa fa-spinner fa-2x  fa-pulse'></i></span>
                                         </td>
-                                        <td class="col-md-3 col-xs-3" value="{{ comp.component }}" ng-click="action($event)">
+                                        <td class="col-md-3 col-xs-3" value="{{ comp.component }}" ng-click="action( $event, host.host)">
                                             <a class="btn btn-default" ng-show="comp.state =='Not Initialized' "
                                                ng-disabled=" comp.showingSpinner != undefined">Initialize</a>
                                             <a class="btn btn-default" id="install" ng-show="comp.state =='Stopped'"

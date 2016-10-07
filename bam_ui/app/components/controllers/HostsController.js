@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall) {
+angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', '$interval', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, $interval) {
 
     $scope.alerts = [];
 
@@ -11,6 +11,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var depList = [];
     var session;
     var pid;
+    var stopStatusCall;
     var getListCmd = false;
     $scope.updateSettings;
     $scope.loading = true;
@@ -23,13 +24,25 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         "Running": "green"
     };
 
+    var apis = {
+        "Stop": "com.bigsql.stop",
+        "Restart": "com.bigsql.restart",
+        "Initialize": "com.bigsql.init",
+        "Start": "com.bigsql.start",
+        "Remove": "com.bigsql.remove"
+    };
+
     var host_info ;
 
-    var getCurrentComponent = function (name) {
-        for (var i = 0; i < $scope.components.length; i++) {
-            if ($scope.components[i].component == name) {
-                currentComponent = $scope.components[i];
-                return currentComponent;
+    var getCurrentComponent = function (name, host) {
+        for (var i = 0; i < $scope.hostsList.length; i++) {
+            if($scope.hostsList[i].host == host){
+                for (var j = 0; j < $scope.hostsList[i].comps.length; j++) {
+                    if ($scope.hostsList[i].comps[j].component == name) {
+                        currentComponent = $scope.hostsList[i].comps[j];
+                        return currentComponent;
+                    }
+                }
             }
         }
     };
@@ -50,7 +63,28 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         return pgComps.reverse().concat(nonPgComps);
     }
 
+    $scope.updateComps =  function (idx) {
+        var remote_host = $scope.hostsList[idx].host;
+        var status_url = 'hostcmd/status/' + remote_host;
+
+        if (remote_host == "localhost") {
+            status_url = 'status';
+            remote_host = "";
+        }
+
+        var statusData = bamAjaxCall.getCmdData(status_url);
+        statusData.then(function(data) {
+                $scope.hostsList[idx].comps = data;
+                if ($scope.hostsList[idx].comps.length == 0) {
+                    $scope.hostsList[idx].showMsg = true;
+                } else {
+                    $scope.hostsList[idx].showMsg = false;
+                }
+            });
+    }
+
     $scope.loadHost = function (idx, refresh) {
+        $interval.cancel(stopStatusCall);
         $scope.hostsList[idx].comps = '';
         var isOpened = false;
         if (typeof $scope.hostsList[idx].open == "undefined") {
@@ -85,7 +119,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     }
                 });
 
-
+            stopStatusCall = $interval(function (){$scope.updateComps(idx)}, 5000);
         }
     };
 
@@ -172,6 +206,26 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         });
     });
 
+    $scope.action = function ( event, host) {
+        var showingSpinnerEvents = ['Initialize', 'Start', 'Stop'];
+        if(showingSpinnerEvents.indexOf(event.target.innerText) >= 0 ){
+            currentComponent = getCurrentComponent( event.currentTarget.getAttribute('value'), host);
+            currentComponent.showingSpinner = true;
+        }
+        if (event.target.tagName == "A") {
+            if(host == 'localhost'){
+                session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value')]);
+            }else{
+                var cmd = event.target.innerText.toLowerCase();
+                if( cmd == 'initialize'){
+                    cmd = 'init';
+                }
+                var event_url = cmd + '/' + event.currentTarget.getAttribute('value') + '/' + host;
+                var eventData = bamAjaxCall.getCmdData(event_url);
+            }
+        }
+        ;
+    };
 
     $scope.installedComps = function (event) {
         session.call('com.bigsql.setBamConfig', ['showInstalled', $scope.showInstalled]);
@@ -219,7 +273,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
 
         var modalInstance = $uibModal.open({
-            //scope:scope,
             templateUrl: '../app/components/partials/topModal.html',
             windowClass: 'modal',
             size: 'lg',

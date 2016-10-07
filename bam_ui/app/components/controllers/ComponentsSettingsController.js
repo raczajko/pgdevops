@@ -5,6 +5,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     var subscriptions = [];
     $scope.updateSettings;
     $scope.components = {};
+    $scope.currentHost
     $scope.settingsOptions = [{name:'Weekly'},{name:'Daily'},{name:'Monthly'}]
 
     $scope.open = function (manual) {
@@ -22,20 +23,20 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         });
     };
 
-    var infoData = bamAjaxCall.getCmdData('info')
-    infoData.then(function(data) {
-        $scope.pgcInfo = data[0];
-        if (data[0].last_update_utc) {
-            $scope.lastUpdateStatus = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
-        }
-        if (MachineInfo.getUpdationMode() == "manual") {
-            $scope.settingType = 'manual';
-        } else {
-            $scope.settingType = 'auto';
-            session.call('com.bigsql.get_host_settings');
-        }
+    // var infoData = bamAjaxCall.getCmdData('info')
+    // infoData.then(function(data) {
+    //     $scope.pgcInfo = data[0];
+    //     if (data[0].last_update_utc) {
+    //         $scope.lastUpdateStatus = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
+    //     }
+    //     if (MachineInfo.getUpdationMode() == "manual") {
+    //         $scope.settingType = 'manual';
+    //     } else {
+    //         $scope.settingType = 'auto';
+    //         session.call('com.bigsql.get_host_settings');
+    //     }
 
-    });
+    // });
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
@@ -78,6 +79,37 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
     });
 
+    function getInfo(argument) {
+        argument = typeof argument !== 'undefined' ? argument : "";
+        debugger
+        $scope.currentHost = argument;
+        if (argument==""){
+            var infoData = bamAjaxCall.getCmdData('info');
+        } else{
+            var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
+        }
+
+        infoData.then(function(data) {
+        $scope.pgcInfo = data[0];
+        if (data[0].last_update_utc) {
+            $scope.lastUpdateStatus = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
+        }
+        if (MachineInfo.getUpdationMode() == "manual") {
+            $scope.settingType = 'manual';
+        } else {
+            $scope.settingType = 'auto';
+            session.call('com.bigsql.get_host_settings');
+        }
+
+    });
+    };
+
+    getInfo();
+
+    $scope.refreshData=function(hostArgument){
+        $scope.currentHost = hostArgument;
+        getInfo(hostArgument);
+    };
 
     /**
      Unsubscribe to all the apis on the template and scope destroy

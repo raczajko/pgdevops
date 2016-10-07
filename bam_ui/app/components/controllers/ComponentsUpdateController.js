@@ -9,7 +9,12 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
     var checkUpdates;   
 
     function getList(argument) {
-        var listData = bamAjaxCall.getCmdData('list')
+        argument = typeof argument !== 'undefined' ? argument : "";
+        if (argument==""){
+            var listData = bamAjaxCall.getCmdData('list');
+        } else{
+            var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
+        }
         listData.then(function(data) {
             $scope.noUpdates = true;
             $scope.components = data;
@@ -66,7 +71,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         session = val;
         if (!checkUpdates) {
             $scope.body = true;
-            getList();
+            getList($rootScope.remote_host);
         } else {
             $scope.loadingSpinner = true;
             $scope.body = false;
@@ -74,7 +79,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 function (sub) {
                     $scope.loadingSpinner = false;
                     $scope.body = true;
-                    getList();
+                    getList($rootScope.remote_host);
                 });
         }
 

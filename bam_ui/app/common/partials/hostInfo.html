@@ -1,10 +1,10 @@
 <div class="components-update-title-wrapper">
-    <h1><strong>{{ title }}</strong>
-        <select class="btn btn-secondary" ng-change="hostChange(selecthost)" ng-model="selecthost">
-        <option value="" >localhost</option>
-        <option ng-repeat="host in hosts" value="{{ host.host }}">{{ host.host }}</option> </select>
-         </h1>
-
+    <h1 style="float:left; display: inline; padding-right: 10px;"><strong>{{ title }}</strong></h1>
+    <form class="form form-inline ">
+            <select class="form-control" ng-change="hostChange(selecthost)" ng-model="selecthost">
+            <option value="" >localhost</option>
+            <option ng-repeat="host in hosts" value="{{ host.host }}">{{ host.host }}</option> </select>
+        </form>
     <h3>
         <strong> OS </strong> : {{ data.os }} &nbsp;
         <strong>HW </strong>: {{ data.mem }} GB, {{ data.cores }} x {{ data.cpu }} &nbsp;

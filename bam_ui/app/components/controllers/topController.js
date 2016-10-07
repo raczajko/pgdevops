@@ -35,6 +35,7 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
                         var point = new Date(d);
                         return d3.time.format('%Y/%m/%d %H:%M:%S')(point);
                     },
+                    gravity : 'n',
                 },
             },
             xAxis: {

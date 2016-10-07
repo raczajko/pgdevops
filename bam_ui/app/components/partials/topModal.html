@@ -60,33 +60,35 @@
 
     <!-- /.box -->
     <!-- /.box -->
-    <div class="col-md-4 col-sm-4 col-xs-4">
-        <div class="box">
-            <div class="box-header with-border">
-                <h3 class="box-title">CPU Load</h3>
-            </div>
-            <nvd3 options="cpuChart" data="cpuData"></nvd3>
-        </div>
-    </div>
-    <div class="col-md-4 col-sm-4 col-xs-4">
-        <div class="box">
-            <div class="box-header with-border">
-                <h3 class="box-title">Disk IO</h3>
-            </div>
-            <nvd3 options="ioChart" data="diskIO"></nvd3>
-        </div>
-    </div>
-    <div class="col-md-4 col-sm-4 col-xs-4">
-        <div class="box">
-            <div class="box-header with-border">
-                <h3 class="box-title">Network IO</h3>
-            </div>
-            <nvd3 options="networkChart" data="NetworkIO"></nvd3>
-        </div>
     </div>
 
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="col-md-4 col-sm-4 col-xs-4">
+            <div class="box">
+                <div class="box-header with-border">
+                    <h3 class="box-title">CPU Load</h3>
+                </div>
+                <nvd3 options="cpuChart" data="cpuData"></nvd3>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-4 col-xs-4">
+            <div class="box">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Disk IO</h3>
+                </div>
+                <nvd3 options="ioChart" data="diskIO"></nvd3>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-4 col-xs-4">
+            <div class="box">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Network IO</h3>
+                </div>
+                <nvd3 options="networkChart" data="NetworkIO"></nvd3>
+            </div>
+        </div>
+    </div>
     <!--    -->
-</div>
 <div class="modal-footer">
     <button class="btn btn-danger" type="button" ng-click="cancel()">Close</button>
 </div>

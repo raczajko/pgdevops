@@ -12,6 +12,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     var session;
     var pid;
     var getListCmd = false;
+    $scope.currentHost;
     $scope.updateSettings;
     $scope.loading = true;
     $scope.retry = false;
@@ -43,7 +44,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
 
     function getList(argument) {
         argument = typeof argument !== 'undefined' ? argument : "";
-
+        $scope.currentHost = argument;
         if (argument==""){
             var listData = bamAjaxCall.getCmdData('list');
         } else{
@@ -58,7 +59,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             } else {
                 $scope.nothingInstalled = false;
                 if ($scope.showInstalled) {
-                    $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
+                    $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" && n.component != 'bam2' ;}));
                     if($scope.components.length == 0){
                         $scope.components = [];
                         $scope.nothingInstalled = true;
@@ -107,8 +108,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
 
     getList($rootScope.remote_host);
 
-
     $scope.refreshData=function(hostArgument){
+        $scope.loading = true;
+        $scope.currentHost = hostArgument;
         getList(hostArgument);
     };
 
@@ -353,7 +355,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
 
     $scope.installedComps = function (event) {
         session.call('com.bigsql.setBamConfig',['showInstalled', $scope.showInstalled]);
-        getList(); 
+        getList($scope.currentHost); 
         // session.call('com.bigsql.list');
     }
 
@@ -367,15 +369,24 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             currentComponent = getCurrentComponent(compName);
             currentComponent.removing = true;
         }
-        session.call(sessionKey, [compName]);
+        if($scope.currentHost == ''){
+            session.call(sessionKey, [compName]);
+        }else {
+            currentComponent = getCurrentComponent(compName);
+            currentComponent.init = true;
+            var event_url = action + '/' + compName + '/' + $scope.currentHost ;
+            var eventData = bamAjaxCall.getCmdData(event_url);
+            eventData.then(function(data) {
+                getList($scope.currentHost);
+            });
+        }
         if (action == 'update' && compName == 'bam2') {
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/bamUpdateModal.html',
                 windowClass: 'bam-update-modal modal',
                 controller: 'bamUpdateModalController',
             });
-        }
-
+        } 
     };
 
     $scope.cancelInstallation = function (action) {
