@@ -20,6 +20,10 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.pickleSessions import PickleSessionInterface
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 import config
+from flask_restful import reqparse
+
+parser = reqparse.RequestParser()
+#parser.add_argument('data')
 
 config.APP_NAME = "BigSQL Manager 4"
 config.LOGIN_NAME = "BigSQL"
@@ -109,6 +113,32 @@ class bamUserInfo(Resource):
 
 
 api.add_resource(bamUserInfo, '/api/userinfo')
+
+
+class GenerateReports(Resource):
+    def post(self):
+        args = request.json['data']
+        from ProfilerReport import ProfilerReport
+        #print args.get('hostName')
+        try:
+            plReport = ProfilerReport(args)
+            report_file = plReport.generateSQLReports(args.get('pgQuery'),
+                                                      args.get('pgTitle'),
+                                                      args.get('pgDesc'))
+            result = {}
+            result['report_file'] = report_file
+            result['error'] = 0
+        except Exception as e:
+            #import traceback
+            #print traceback.format_exc()
+            #print e
+            result = {}
+            result['error'] = 1
+            result['msg'] = str(e)
+        return result
+
+
+api.add_resource(GenerateReports, '/api/generate_profiler_reports')
 
 
 @application.route('/list')

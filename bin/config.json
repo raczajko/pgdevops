@@ -100,6 +100,13 @@
                             "options" : {
                                 "cache_timeout" : 0
                             }
+                        },
+                        "reports": {
+                            "type": "static",
+                            "directory": "../reports",
+                            "options" : {
+                                "cache_timeout" : 0
+                            }
                         }
                     }
                 }

@@ -1,0 +1,68 @@
+<section class="content-header">
+    <h1 class="components-update-title-wrapper">
+        Pl Profiler
+    </h1>
+</section>
+
+<section class="content">
+     <div class="row">
+    <div class="col-md-6 col-sm-6 col-xs-6">
+        <form>
+            <div class="form-group">
+                <div class="requiredSymbol">*</div>
+                <input type="text" ng-model="hostName" class="form-control" placeholder="Hostname">
+            </div>
+            <div class="form-group">
+                <div class="requiredSymbol">*</div>
+                <input type="text" ng-model="pgUser" class="form-control" placeholder="DB User">
+            </div>
+            <div class="form-group">
+                <input type="password" ng-model="pgPass" class="form-control" placeholder="DB Password">
+            </div>
+            <div class="form-group">
+                <div class="requiredSymbol">*</div>
+                <input type="text" ng-model="pgDB" class="form-control" placeholder="DB Name">
+            </div>
+            <div class="form-group">
+                <div class="requiredSymbol">*</div>
+                <input type="text" ng-model="pgPort" class="form-control" placeholder="DB Port">
+            </div>
+            <div class="form-group">
+                <div class="requiredSymbol">*</div>
+                <textarea ng-model="pgQuery" class="form-control" placeholder="Report Query"></textarea>
+            </div>
+            <div class="form-group">
+                <div class="requiredSymbol">*</div>
+                <input type="text" ng-model="pgTitle" class="form-control" placeholder="Report Title">
+            </div>
+             <div class="form-group">
+                <input type="text" ng-model="pgDesc" class="form-control" placeholder="Report Desc">
+            </div>
+            <div class="text-left">
+                <span style="color:red;">*</span> Required Field
+            </div>
+            <div class="form-actions">
+                <div class="text-right">
+                    <button type="submit" class="btn btn-primary"
+                            ng-disabled="!(hostName && pgUser && pgDB && pgPort && pgQuery && pgTitle)"
+                            ng-click="generateReport()">Generate
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-6 col-sm-6 col-xs-6">
+        <span ng-if="report_file"><a href="/reports/{{ report_file }}" target="_blank">Click Here to See the Report in New Tab</a>
+        </span>
+
+
+    </div>
+    <div class="col-md-6 col-sm-6 col-xs-6">
+        <iframe ng-if="report_file" ng-src="{{ report_url }}" width="100%" height="500px">
+
+        </iframe>
+
+
+    </div>
+ </div>
+</section>
