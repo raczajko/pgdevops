@@ -324,6 +324,42 @@
                         </div>
                     </div>
                     </uib-tab>
+                    <uib-tab heading="Performance" disable="component.status != 'Running'">
+                    <div class="gridStyle">
+                        <div class="box box-primary">
+                            <div class="box-body">
+                                <div class="row">
+                                    <div style="padding-top: 20px;" class="col-md-12 col-sm-12 col-xs-1">
+                                        <a style="margin-right: 10px;" class="btn btn-lg btn-default" tooltip-append-to-body="true" uib-tooltip="{{ component.logdir }}" ng-show="component.logdir != ''" ui-sref="components.componentLog({component:component.component})" ng-click="logdir(component.logdir) ; logdirSelect()" tooltip-class="logDataDirHover">
+                                            <i class="fa fa-file-text-o fa-2x pull-left"></i>
+                                            Log Tailer
+                                        </a>
+
+                                        <a style="margin-right: 10px;" class="btn btn-lg btn-default" ui-sref="components.profiler">
+                                            <i class="bgs bgs-lg bgs-plprofiler pull-left"></i> plProfiler
+                                        </a>
+
+                                        <a class="btn btn-lg btn-default" tooltip-append-to-body="true" ng-disabled="true" uib-tooltip="Coming soon">
+                                            <i class="bgs bgs-lg bgs-pgbadger pull-left"></i> 
+                                            pgBadger
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </uib-tab>
+                    <uib-tab heading="Release Notes" ng-click="releaseTabEvent()">
+                        <div class="gridStyle">
+                            <div class="box box-primary">
+                                <div class="box-body">
+                                    <div class="col-md-12 col-xs-12">
+                                        <span ng-bind-html="relnotes"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </uib-tab>
                 </uib-tabset>
             </div>
         </div>

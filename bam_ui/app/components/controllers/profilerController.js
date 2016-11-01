@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall) {
+angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location) {
 
     $scope.alerts = [];
 
@@ -11,30 +11,6 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     $scope.retry = false;
     $scope.disableShowInstalled = false;
 
-    $scope.statusColors = {
-        "Stopped": "orange",
-        "Not Initialized": "yellow",
-        "Running": "green"
-    };
-
-
-
-
-    $scope.loadHostsInfo = function (idx) {
-
-            var remote_host = $scope.hostsList[idx].host;
-            var info_url = 'hostcmd/info/' + remote_host;
-
-            if (remote_host == "localhost") {
-                info_url = 'info';
-                remote_host = "";
-            }
-
-            var infoData = bamAjaxCall.getCmdData(info_url);
-            infoData.then(function(data) {
-                $scope.hostsList[idx].hostInfo = data[0];
-            });
-    };
 
 
 
@@ -44,13 +20,30 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
             session = sessParam;
         });
     });
+    var sessionPromise = PubSubService.getSession();
+    sessionPromise.then(function (val) {
+        session = val;
+        session.subscribe("com.bigsql.profilerReports", function (data) {
+            var result=data[0];
+            if (result.error == 0) {
+
+                $scope.report_file = result.report_file;
+                $scope.report_url = "/reports/" + result.report_file;
+                $scope.$apply();
+                //$scope.message = data;
+            } else {
+                alert(result.msg);
+            }
+
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+    });
 
 
     $scope.generateReport = function () {
-        $scope.report_file="";
-        $scope.report_url="";
-        //console.log($scope.hostName);
-        //console.log($scope.pgUser);
+        $scope.report_file = "";
+        $scope.report_url = "";
         var dataObj = {};
         dataObj['hostName'] = $scope.hostName;
         dataObj['pgUser'] = $scope.pgUser;
@@ -60,21 +53,14 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         dataObj['pgTitle'] = $scope.pgTitle;
         dataObj['pgDesc'] = $scope.pgDesc;
         dataObj['pgDB'] = $scope.pgDB;
-        var res = $http.post('/api/generate_profiler_reports', {'data':dataObj});
-		res.success(function(data, status, headers, config) {
-            //console.log(data);
-            if (data.error==0){
-                $scope.report_file=data.report_file;
-                $scope.report_url = "/reports/"+data.report_file;
-			    //$scope.message = data;
-            } else{
-                alert(data.msg);
-            }
 
-		});
-		res.error(function(data, status, headers, config) {
-			alert( "failure message: " + JSON.stringify({data: data}));
-		});
+
+        session.call('com.bigsql.plprofiler', [
+            $scope.hostName, $scope.pgUser,
+            $scope.pgPort, $scope.pgDB,
+            $scope.pgPass, $scope.pgQuery,
+            $scope.pgTitle, $scope.pgDesc
+        ]);
 
 
 

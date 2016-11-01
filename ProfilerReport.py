@@ -6,6 +6,7 @@ import plprofiler
 import sys
 import time
 import StringIO
+import re
 
 """prof = plprofiler.plprofiler()
 prof = plprofiler.plprofiler()
@@ -60,6 +61,3 @@ class ProfilerReport(object):
 
     def close(self):
         self.prof.close()
-
-
-

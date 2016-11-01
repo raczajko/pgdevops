@@ -211,6 +211,16 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
         ;
     };
 
+    function handleVisibilityChange() {
+      if (document.visibilityState == "hidden") {
+        $interval.cancel(refreshRate);
+      } else if(document.visibilityState == "visible"){
+        session.call("com.bigsql.initial_graphs");
+        refreshRate = $interval(callGraphs,5000);
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange, false);
 
     function callGraphs() {
         session.call('com.bigsql.live_graphs');

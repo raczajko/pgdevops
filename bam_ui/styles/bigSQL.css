@@ -6225,7 +6225,6 @@ table.text-center th {
 
 table.settings-table-pgc-info > tbody > tr > td {
     border-top: none;
-    padding: 0px;
 }
 
 .settings-table-pgc-info td p {
@@ -6567,35 +6566,6 @@ table.settings-table-pgc-info > tbody > tr > td {
   font-size: 10px;
 }
 
-.hostmanager-accordian-wrapper .box {
- border-top-color: #fff;
- border-top-width: 0;
- box-shadow: none;
- padding: 0 8px;
- margin-bottom: 5px;
-}
-
-.hostmanager-accordian-wrapper .box .box-header {
-  padding: 5px;
-}
-
-.hostmanager-accordian-wrapper .box-body  {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 3px;
-  border-bottom-left-radius: 3px;
-  padding: 1px;
-}
-
-.hostmanager-accordian-wrapper .panel-default>.panel-heading {
-    background-color: transparent;
-    border-color: transparent;
-}
-
-.hostmanager-accordian-wrapper .panel-default {
-    border-color: transparent;
-}
-
 .graphsTab .panel-title {
     margin-top: 0;
     margin-bottom: 0;
@@ -6689,11 +6659,83 @@ table.settings-table-pgc-info > tbody > tr > td {
   padding: 5px;
 }
 
-.autostart-input {
-  margin-top : 7px ;
-}
-
 .requiredSymbol { 
     color:red; 
     margin-bottom : -10px
+}
+
+.plProfiler-form .form-group {
+  position: relative;
+}
+
+.required-plprofiler-form {
+  color: red;
+    position: absolute;
+    right: -20px;
+    top: 0px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.required-symbol{
+   color: red;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+  .bgs {
+    
+  }
+
+  .bgs-lg {
+    width: 41px;
+    height: 38px;
+  }
+
+  .bgs-sm {
+    width: 19px;
+    height: 19px;
+    display: block;
+  }
+
+  .bgs-plprofiler {
+    background-image: url('../assets/img/plProfiler-40.png');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    margin-left: -2px;
+    margin-right: 7px;
+  }
+
+  .bgs-plprofiler-menu {
+    background-image: url('../assets/img/plProfiler-15.png');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+  }
+
+  .bgs-pgbadger {
+    background-image: url('../assets/img/pgBadger-40.png');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    margin-left: -2px;
+    margin-right: 7px;
+  }
+
+  .userinfo-btn > .btn {
+    background-color: #1e2129;
+    color: #fff;
+    margin-top: 8px;
+  }
+
+  .userinfo-btn > .dropdown-menu {
+    background-color: #1e2129;
+    color: #fff;
+    border: none;
+    margin-left: 44px;
+  }
+
+  .userinfo-btn > .dropdown-menu > li > a {
+    color: #fff;
+}
+.userinfo-btn > .dropdown-menu > li > a:hover {
+    color: #333;
 }

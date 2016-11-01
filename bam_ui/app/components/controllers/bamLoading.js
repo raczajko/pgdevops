@@ -26,7 +26,7 @@ angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubS
         if ($scope.bamLoading) {
             $window.location.reload();
         };
-    }, 5000);
+    }, 10000);
 
 	$scope.$on('$destroy', function () {
         for (var i = 0; i < subscriptions.length; i++) {

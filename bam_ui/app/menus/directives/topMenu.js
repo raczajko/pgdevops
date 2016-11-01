@@ -5,8 +5,16 @@ angular.module('bigSQL.menus').component('topMenu', {
         /**Below function is for displaying update badger on every page.
          **/
 
+        $scope.currentHost = '';
         function callList(argument) {
-            var listData = bamAjaxCall.getCmdData('list');
+            argument = typeof argument !== 'undefined' ? argument : "";
+            $scope.currentHost = argument;
+            // var listData = bamAjaxCall.getCmdData('list');
+            if (argument==""){
+                var listData = bamAjaxCall.getCmdData('list');
+            } else{
+                var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
+            }
             listData.then(function(data) {
                 var Checkupdates = 0;
                 $scope.components = data;
@@ -19,10 +27,10 @@ angular.module('bigSQL.menus').component('topMenu', {
             });
         }
         
-        callList();
+        callList($rootScope.remote_host);
 
-        $rootScope.$on('topMenuEvent', function () {
-            callList();
+        $rootScope.$on('refreshData', function (argument, host) {
+            callList(host);
         });
 
         var infoData = bamAjaxCall.getCmdData('info');

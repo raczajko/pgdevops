@@ -125,6 +125,28 @@ angular.module('bigSQL.components').controller('graphsTabController', ['$scope',
             color: '#9932CC',
         }];
 
+    function clear() {
+        $scope.rowsData[0].values.splice(0, $scope.rowsData[0].values.length);
+        $scope.rowsData[1].values.splice(0, $scope.rowsData[1].values.length);
+        $scope.rowsData[2].values.splice(0, $scope.rowsData[2].values.length);
+        $scope.rowsData[3].values.splice(0, $scope.rowsData[3].values.length);
+
+
+        $scope.commitRollbackData[0].values.splice(0, $scope.commitRollbackData[0].values.length);
+        $scope.commitRollbackData[1].values.splice(0, $scope.commitRollbackData[1].values.length);
+
+
+        $scope.connectionsData[0].values.splice(0, $scope.connectionsData[0].values.length);
+        $scope.connectionsData[1].values.splice(0, $scope.connectionsData[1].values.length);
+        $scope.connectionsData[2].values.splice(0, $scope.connectionsData[2].values.length);
+
+        $scope.cpuData[0].values.splice(0, $scope.cpuData[0].values.length);
+        $scope.cpuData[1].values.splice(0, $scope.cpuData[1].values.length);
+
+        $scope.diskIOData[0].values.splice(0, $scope.diskIOData[0].values.length);
+        $scope.diskIOData[1].values.splice(0, $scope.diskIOData[1].values.length);
+    }
+
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
         sessPromise.then(function (sessParam) {
@@ -280,6 +302,21 @@ angular.module('bigSQL.components').controller('graphsTabController', ['$scope',
 	    }).then(function (subscription) {
 	        subscriptions.push(subscription);
 	    });
+
+        // Handle page visibility change events
+        function handleVisibilityChange() {
+            if (document.visibilityState == "hidden") {
+                $interval.cancel(refreshRate);
+                clear();
+            } else if (document.visibilityState == "visible") {
+                clear();
+                session.call('com.bigsql.initial_dbstats', [$stateParams.component]);
+                session.call("com.bigsql.initial_graphs");
+                refreshRate = $interval(callStatus, 5000);
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange, false);
 	});
 
 	//need to destroy all the subscriptions on a template before exiting it
@@ -287,6 +324,7 @@ angular.module('bigSQL.components').controller('graphsTabController', ['$scope',
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);
         }
+        clear();
         $interval.cancel(refreshRate);
     });
 

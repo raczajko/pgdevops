@@ -45,9 +45,11 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
             gethostInfo(remote_host);
 
             $scope.hostChange = function (host) {
+                $rootScope.$emit('refreshData', host);
+                // $rootScope.$emit('topMenuEvent', host);
                 $rootScope.remote_host = host;
                 gethostInfo(host);
-                $scope.$parent.refreshData(host);
+                // $scope.$parent.refreshData(host);
             }
         }]
     }

@@ -128,6 +128,8 @@ class AppSession(ApplicationSession):
 
         self.register(monitoring.activity, 'com.bigsql.activity')
 
+        self.register(monitoring.generate_profiler_reports, 'com.bigsql.plprofiler')
+
         ## PUBLISH and CALL every second .. forever
         ##
         counter = 0

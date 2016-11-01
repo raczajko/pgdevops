@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'bamAjaxCall', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, bamAjaxCall) {
+angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'bamAjaxCall', '$sce', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, bamAjaxCall, $sce) {
 
     var subscriptions = [];
     var session;
@@ -53,6 +53,10 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
         infoData.then(function(data) {
             if(window.location.href.split('/').pop(-1) == data[0].component){
                 $scope.component = data[0];
+                var relnotes = bamAjaxCall.getCmdData('relnotes/' + $stateParams.component + '/' +$scope.component.version)
+                relnotes.then(function (data) {
+                    $scope.relnotes = $sce.trustAsHtml(data);
+                });
             }
         });
     };
@@ -98,6 +102,14 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
             function (sub) {
                 subscriptions.push(sub);
             });
+
+        session.call('com.bigsql.getRelNotes', [$stateParams.component, $scope.component.version]);
+
+        session.subscribe('com.bigsql.onGetRelNotes', function (argument) {
+            $scope.relnotes = $sce.trustAsHtml(argument[0]);
+        }).then(function (sub) {
+            subscriptions.push(sub);
+        });
 
         $scope.action = function (event) {
             if (event.target.tagName === "A") {

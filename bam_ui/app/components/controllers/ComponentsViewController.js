@@ -108,11 +108,15 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
 
     getList($rootScope.remote_host);
 
-    $scope.refreshData=function(hostArgument){
+    $rootScope.$on('refreshData', function (argument, host) {
         $scope.loading = true;
-        $scope.currentHost = hostArgument;
-        getList(hostArgument);
-    };
+        $scope.currentHost = host;
+        getList(host);
+    });
+
+    // $scope.refreshData=function(hostArgument){
+        
+    // };
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -229,7 +233,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             }else{
                 param = 'prod'
             }
-            session.call('com.bigsql.setTestSetting',[param]);
+            session.call('com.bigsql.',[param]);
             getList();
             // session.call('com.bigsql.list');
         };
@@ -410,7 +414,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         if ($scope.loading) {
             $window.location.reload();
         };
-    }, 5000);
+    }, 10000);
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
