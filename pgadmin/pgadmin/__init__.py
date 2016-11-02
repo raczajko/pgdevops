@@ -23,12 +23,11 @@ from flask_security.utils import login_user
 from htmlmin.minify import html_minify
 from pgadmin.utils import PgAdminModule, driver
 from pgadmin.utils.session import create_session_interface
-from pgadmin.utils.pickleSessions import PickleSessionInterface
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 from werkzeug.local import LocalProxy
 from werkzeug.utils import find_modules
 
-from pgadmin.model import db, Role, Server, ServerGroup, User, Version
+from pgadmin.model import db, Role, Server, ServerGroup, User, Version, Keys
 # Configuration settings
 import config
 
@@ -129,13 +128,6 @@ def create_app(app_name=config.APP_NAME):
     app.config.update(dict(PROPAGATE_EXCEPTIONS=True))
 
     ##########################################################################
-    # Setup session management
-    ##########################################################################
-    #app.session_interface = ItsdangerousSessionInterface()
-    #app.session_interface = PickleSessionInterface(config.SESSION_DB_PATH)
-    app.session_interface = SqliteSessionInterface(config.SESSION_DB_PATH)
-
-    ##########################################################################
     # Setup logging and log the application startup
     ##########################################################################
 
@@ -210,7 +202,7 @@ def create_app(app_name=config.APP_NAME):
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-    security = Security(app, user_datastore)
+    security = Security(None, user_datastore)
 
     # Upgrade the schema (if required)
     with app.app_context():
@@ -224,9 +216,31 @@ def create_app(app_name=config.APP_NAME):
                 )
             )
             from setup import do_upgrade
-            do_upgrade(app, user_datastore, security, version)
+            do_upgrade(app, user_datastore, version)
 
+    ##########################################################################
+    # Setup security
+    ##########################################################################
+    with app.app_context():
+        config.CSRF_SESSION_KEY = Keys.query.filter_by(name = 'CSRF_SESSION_KEY').first().value
+        config.SECRET_KEY = Keys.query.filter_by(name = 'SECRET_KEY').first().value
+        config.SECURITY_PASSWORD_SALT = Keys.query.filter_by(name = 'SECURITY_PASSWORD_SALT').first().value
+
+    # Update the app.config with proper security keyes for signing CSRF data,
+    # signing cookies, and the SALT for hashing the passwords.
+    app.config.update(dict(CSRF_SESSION_KEY=config.CSRF_SESSION_KEY))
+    app.config.update(dict(SECRET_KEY=config.SECRET_KEY))
+    app.config.update(dict(SECURITY_PASSWORD_SALT=config.SECURITY_PASSWORD_SALT))
+
+    security.init_app(app)
+
+    #app.session_interface = create_session_interface(app)
+    app.session_interface = SqliteSessionInterface(config.SESSION_DB_PATH)
+
+
+    ##########################################################################
     # Load all available server drivers
+    ##########################################################################
     driver.init_app(app)
 
     ##########################################################################

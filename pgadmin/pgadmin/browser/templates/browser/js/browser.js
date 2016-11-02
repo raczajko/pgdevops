@@ -936,13 +936,25 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                     });
                   } else {
                     var _append = function() {
-                          var ctx = this;
+                          var ctx = this,
+                            is_parent_loaded_before = ctx.t.wasLoad(ctx.i),
+                            _parent_data = ctx.t.itemData(ctx.i);
+
                           ctx.t.append(ctx.i, {
                             itemData: _data,
                             success: function(item, options) {
                               var i = $(options.items[0]);
-                              ctx.t.openPath(i);
-                              ctx.t.select(i);
+                              // Open the item path only if its parent is loaded
+                              // or parent type is same as nodes
+                              if(_parent_data._type.search(_data._type) > -1 ||
+                                is_parent_loaded_before) {
+                                ctx.t.openPath(i);
+                                ctx.t.select(i);
+                              } else {
+                                // Unload the parent node so that we'll get
+                                // latest data when we try to expand it
+                                ctx.t.unload(ctx.i);
+                              }
                               if (
                                 ctx.o && ctx.o.success &&
                                 typeof(ctx.o.success) == 'function'
@@ -1148,7 +1160,8 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
             if (
               this.i && this.d && this.new._type == this.d._type
             ) {
-              var _id = this.d._id;
+              var self = this,
+              _id = this.d._id;
               if (this.new._id != this.d._id) {
                 // Found the new oid, update its node_id
                 var node_data = this.t.itemData(ctx.i);
@@ -1162,7 +1175,10 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                 this.t.setId(ctx.id, {id: this.new.id});
                 this.t.openPath(this.i);
                 this.t.deselect(this.i);
-                this.t.select(this.i);
+                // select tree item after few milliseconds
+                setTimeout(function() {
+                  self.t.select(self.i);
+                }, 10);
               }
             }
             var success = this.o && this.o.success;

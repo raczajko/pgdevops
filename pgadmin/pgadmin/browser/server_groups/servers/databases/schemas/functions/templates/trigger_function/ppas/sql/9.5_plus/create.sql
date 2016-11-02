@@ -9,8 +9,7 @@ CREATE FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}()
 {% if data.procost %}
     COST {{data.procost}}
 {% endif %}
-{% if query_type != 'create' %}
-    {% if data.provolatile %}{{ data.provolatile }} {% endif %}{% if data.proleakproof %}LEAKPROOF {% else %}NOT LEAKPROOF {% endif %}
+    {% if data.provolatile %}{% if data.provolatile == 'i' %}IMMUTABLE{% elif data.provolatile == 's' %}STABLE{% else %}VOLATILE{% endif %} {% endif %}{% if data.proleakproof %}LEAKPROOF {% else %}NOT LEAKPROOF {% endif %}
 {% if data.proisstrict %}STRICT {% endif %}
 {% if data.prosecdef %}SECURITY DEFINER {% endif %}
 {% if data.proiswindow %}WINDOW{% endif %}
@@ -21,7 +20,7 @@ CREATE FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}()
     SET {{ conn|qtIdent(v.name) }}={{ v.value|qtLiteral }}{% endfor %}
 {% endif %}
 
-{% endif %}AS {% if data.lanname == 'c' %}
+AS {% if data.lanname == 'c' %}
 {{ data.probin|qtLiteral }}, {{ data.prosrc_c|qtLiteral }}
 {% else %}
 $BODY$

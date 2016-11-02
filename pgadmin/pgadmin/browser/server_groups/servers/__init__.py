@@ -587,6 +587,7 @@ class ServerNode(PGChildNodeView):
             connected = False
             icon = "icon-server-not-connected"
             user = None
+            manager = None
 
             if 'connect_now' in data and data['connect_now']:
                 manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(server.id)
@@ -623,18 +624,17 @@ class ServerNode(PGChildNodeView):
 
                     user = manager.user_info
                     connected = True
-                    icon = "icon-pg"
 
             return jsonify(
                 node=self.blueprint.generate_browser_node(
                     "%d" % server.id, server.servergroup_id,
                     server.name,
-                    icon,
+                    'icon-{0}'.format(manager.server_type) if manager and manager.server_type else "icon-pg",
                     True,
                     self.node_type,
                     user=user,
                     connected=connected,
-                    server_type='pg'  # Default server type
+                    server_type=manager.server_type if manager and manager.server_type else 'pg'
                 )
             )
 
@@ -830,6 +830,9 @@ class ServerNode(PGChildNodeView):
                     server.id, server.name, errmsg
                 )
             )
+
+            if hasattr(str, 'decode'):
+                errmsg = errmsg.decode('utf-8')
 
             return make_json_response(
                 success=0,

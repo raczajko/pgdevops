@@ -1573,6 +1573,7 @@
       // After validation we need to set that value into model (only if all flags are true)
       if (isValid) {
         this.stopListening(this.model, "change:" + name, this.render);
+        this.model.errorModel.unset(name);
         this.model.set(name, value);
         this.listenTo(this.model, "change:" + name, this.render);
       } else {
@@ -1666,6 +1667,7 @@
       // After validation we need to set that value into model (only if all flags are true)
       if (isValid) {
         this.stopListening(this.model, "change:" + name, this.render);
+        this.model.errorModel.unset(name);
         this.model.set(name, value);
         this.listenTo(this.model, "change:" + name, this.render);
       } else {
@@ -1892,7 +1894,8 @@
     ].join("\n")),
     render: function() {
 
-      if(this.$sel && this.$sel.select2) {
+      if(this.$sel && this.$sel.select2 &&
+        this.$sel.select2.hasOwnProperty('destroy')) {
         this.$sel.select2('destroy');
       }
 
@@ -2362,10 +2365,12 @@
       ' <span class="input-group-addon">',
       '  <span class="fa fa-calendar"></span>',
       ' </span>',
-      ' <% if (helpMessage && helpMessage.length) { %>',
-      '  <span class="<%=Backform.helpMessageClassName%>"><%=helpMessage%></span>',
-      ' <% } %>',
-      '</div>'
+      '</div>',
+      '<% if (helpMessage && helpMessage.length) { %>',
+      ' <div class="<%=Backform.controlsClassName%>">',
+      '   <span class="<%=Backform.helpMessageClassName%>"><%=helpMessage%></span>',
+      ' </div>',
+      '<% } %>'
     ].join("\n")),
     render: function() {
       var field = _.defaults(this.field.toJSON(), this.defaults),

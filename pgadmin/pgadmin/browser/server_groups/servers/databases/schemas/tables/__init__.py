@@ -275,6 +275,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             self.manager = driver.connection_manager(kwargs['sid'])
             self.conn = self.manager.connection(did=kwargs['did'])
             self.qtIdent = driver.qtIdent
+            self.qtTypeIdent = driver.qtTypeIdent
             # We need datlastsysoid to check if current table is system table
             self.datlastsysoid = self.manager.db_info[
                 did
@@ -289,7 +290,11 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                 self.template_path = 'table/sql/9.1_plus'
 
             # Template for Column ,check constraint and exclusion constraint node
-            if ver >= 90200:
+            if ver >= 90600:
+                self.column_template_path = 'column/sql/9.2_plus'
+                self.check_constraint_template_path = 'check_constraint/sql/9.2_plus'
+                self.exclusion_constraint_template_path = 'exclusion_constraint/sql/9.6_plus'
+            elif ver >= 90200:
                 self.column_template_path = 'column/sql/9.2_plus'
                 self.check_constraint_template_path = 'check_constraint/sql/9.2_plus'
                 self.exclusion_constraint_template_path = 'exclusion_constraint/sql/9.2_plus'
@@ -681,7 +686,13 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
                 edit_types_list = list()
                 # We will need present type in edit mode
-                edit_types_list.append(present_type)
+
+                if column['typnspname'] == "pg_catalog" or column['typnspname'] == "public":
+                    edit_types_list.append(present_type)
+                else:
+                    t = self.qtTypeIdent(self.conn, column['typnspname'], present_type)
+                    edit_types_list.append(t)
+                    column['cltype'] = t
 
                 if int(is_reference) == 0:
                     SQL = render_template("/".join([self.column_template_path,
@@ -710,10 +721,6 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
                 if isArray:
                     column['cltype'] += "[]"
-
-                if column['typnspname'] != 'pg_catalog':
-                    column['cltype'] = self.qtIdent(self.conn, column['typnspname']) \
-                                       + '.' + column['cltype']
 
                 if 'indkey' in column:
                     # Current column
@@ -1442,9 +1449,17 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             if not status:
                 return internal_server_error(errormsg=res)
 
+            # Get updated schema oid
+            SQL = render_template("/".join([self.template_path,
+                                  'get_schema_oid.sql']), tname=data['name'])
+
+            status, scid = self.conn.execute_scalar(SQL)
+            if not status:
+                return internal_server_error(errormsg=scid)
+
             # we need oid to to add object in tree at browser
             SQL = render_template("/".join([self.template_path,
-                                            'get_oid.sql']), scid=scid, data=data)
+                                  'get_oid.sql']), scid=scid, data=data)
             status, tid = self.conn.execute_scalar(SQL)
             if not status:
                 return internal_server_error(errormsg=tid)

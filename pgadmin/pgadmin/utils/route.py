@@ -7,8 +7,12 @@
 #
 ##############################################################
 
+import traceback
 import sys
-import unittest
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
@@ -49,15 +53,6 @@ class TestsGeneratorRegistry(ABCMeta):
 
         ABCMeta.__init__(cls, name, bases, d)
 
-    @staticmethod
-    def import_app_modules(module_name):
-        """As we are running test suite for each server. To catch
-        the test cases, delete the previously imported  module
-        """
-        if str(module_name) in sys.modules.keys():
-            del sys.modules[module_name]
-        import_module(module_name)
-
     @classmethod
     def load_generators(cls, pkg):
 
@@ -68,18 +63,19 @@ class TestsGeneratorRegistry(ABCMeta):
             for module_name in find_modules(pkg, False, True):
                 try:
                     if "tests." in str(module_name):
-                        cls.import_app_modules(module_name)
+                        import_module(module_name)
                 except ImportError:
-                    pass
+                    traceback.print_exc(file=sys.stderr)
         else:
             for module_name in find_modules(pkg, False, True):
                 try:
                     # Exclude the test cases in browser node if SERVER_MODE
                     # is False
                     if "pgadmin.browser.tests" not in module_name:
-                        cls.import_app_modules(module_name)
+                        import_module(module_name)
                 except ImportError:
-                    pass
+                    traceback.print_exc(file=sys.stderr)
+
 
 import six
 

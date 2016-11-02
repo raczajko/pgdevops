@@ -415,7 +415,7 @@ class Filemanager(object):
                 except:
                     drive_size = 0
                 protected = 1 if drive_size == 0 else 0
-                files[drive] = {
+                files[file_name] = {
                     "Filename": file_name,
                     "Path": path,
                     "file_type": 'drive',
@@ -441,7 +441,8 @@ class Filemanager(object):
 
         orig_path = unquote(orig_path)
         try:
-            for f in sorted(os.listdir(orig_path)):
+            mylist = [x for x in sorted(os.listdir(orig_path))]
+            for f in mylist:
                 protected = 0
                 system_path = os.path.join(os.path.join(orig_path, f))
 
@@ -474,7 +475,7 @@ class Filemanager(object):
                             continue
 
                 # create a list of files and folders
-                files[user_path] = {
+                files[f] = {
                     "Filename": f,
                     "Path": user_path,
                     "file_type": file_extension,
@@ -486,10 +487,11 @@ class Filemanager(object):
                     }
                 }
         except Exception as e:
-            if e.strerror == gettext('Permission denied'):
+            if (hasattr(e, 'strerror') and
+                    e.strerror == gettext('Permission denied')):
                 err_msg = "Error: {0}".format(e.strerror)
             else:
-                err_msg = "Error: {0}".format(e.strerror)
+                err_msg = "Error: {0}".format(e)
             files = {
                 'Code': 0,
                 'err_msg': err_msg

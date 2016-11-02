@@ -159,6 +159,13 @@ class ExclusionConstraintView(PGChildNodeView):
     * get_operator():
       - Returns operators for selected column.
 
+    * dependency():
+      - This function will generate dependency list show it in dependency
+        pane for the selected Exclusion.
+
+    * dependent():
+      - This function will generate dependent list to show it in dependent
+        pane for the selected Exclusion.
     """
 
     node_type = 'exclusion_constraint'
@@ -184,6 +191,8 @@ class ExclusionConstraintView(PGChildNodeView):
         'sql': [{'get': 'sql'}],
         'msql': [{'get': 'msql'}, {'get': 'msql'}],
         'stats': [{'get': 'statistics'}],
+        'dependency': [{'get': 'dependencies'}],
+        'dependent': [{'get': 'dependents'}],
         'module.js': [{}, {}, {'get': 'module_js'}]
     })
 
@@ -217,7 +226,9 @@ class ExclusionConstraintView(PGChildNodeView):
             self.conn = self.manager.connection(did=kwargs['did'])
 
             ver = self.manager.version
-            if ver >= 90200:
+            if ver >= 90600:
+                self.template_path = 'exclusion_constraint/sql/9.6_plus'
+            elif ver >= 90200:
                 self.template_path = 'exclusion_constraint/sql/9.2_plus'
             elif ver >= 90100:
                 self.template_path = 'exclusion_constraint/sql/9.1_plus'
@@ -398,7 +409,8 @@ class ExclusionConstraintView(PGChildNodeView):
 
         SQL = render_template("/".join([self.template_path,
                                         'nodes.sql']),
-                              cid=exid)
+                              tid=tid,
+                              exid=exid)
         status, rset = self.conn.execute_2darray(SQL)
 
         if len(rset['rows']) == 0:
@@ -804,7 +816,7 @@ class ExclusionConstraintView(PGChildNodeView):
             sql = render_template("/".join([self.template_path, 'create.sql']),
                                   data=data, conn=self.conn)
 
-        return sql
+        return sql, data['name'] if 'name' in data else old_data['name']
 
     @check_precondition
     def sql(self, gid, sid, did, scid, tid, exid=None):
@@ -936,6 +948,53 @@ class ExclusionConstraintView(PGChildNodeView):
 
         return make_json_response(
             data=res,
+            status=200
+        )
+
+    @check_precondition
+    def dependents(self, gid, sid, did, scid, tid, exid):
+        """
+        This function get the dependents and return ajax response
+        for the constraint node.
+
+        Args:
+            gid: Server Group ID
+            sid: Server ID
+            did: Database ID
+            scid: Schema ID
+            tid: Table ID
+            exid: Exclusion constraint ID
+        """
+        dependents_result = self.get_dependents(
+            self.conn, exid
+        )
+
+        return ajax_response(
+            response=dependents_result,
+            status=200
+        )
+
+    @check_precondition
+    def dependencies(self, gid, sid, did, scid, tid, exid):
+        """
+        This function get the dependencies and return ajax response
+        for the constraint node.
+
+        Args:
+            gid: Server Group ID
+            sid: Server ID
+            did: Database ID
+            scid: Schema ID
+            tid: Table ID
+            exid: Exclusion constraint ID
+
+        """
+        dependencies_result = self.get_dependencies(
+            self.conn, exid
+        )
+
+        return ajax_response(
+            response=dependencies_result,
             status=200
         )
 

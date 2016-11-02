@@ -16,7 +16,7 @@ CREATE{% if query_type is defined %}{{' OR REPLACE'}}{% endif %} FUNCTION {{ con
     RETURNS{% if data.proretset and data.prorettypename.startswith('SETOF ') %} {{ data.prorettypename }} {% elif data.proretset %} SETOF {{ conn|qtTypeIdent(data.prorettypename) }}{% else %} {{ conn|qtTypeIdent(data.prorettypename) }}{% endif %}
 
     LANGUAGE {{ data.lanname|qtLiteral }}
-    {% if data.provolatile %}{{ data.provolatile }} {% endif %}{% if data.proleakproof %}LEAKPROOF {% else %}NOT LEAKPROOF {% endif %}
+    {% if data.provolatile %}{% if data.provolatile == 'i' %}IMMUTABLE{% elif data.provolatile == 's' %}STABLE{% else %}VOLATILE{% endif %} {% endif %}{% if data.proleakproof %}LEAKPROOF {% else %}NOT LEAKPROOF {% endif %}
 {% if data.proisstrict %}STRICT {% endif %}
 {% if data.prosecdef %}SECURITY DEFINER {% endif %}
 {% if data.proiswindow %}WINDOW{% endif %}{% if data.procost %}
@@ -37,7 +37,7 @@ $function${% endif -%};
 {% if data.funcowner %}
 
 ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})
-    OWNER TO {{ data.funcowner }};
+    OWNER TO {{ conn|qtIdent(data.funcowner) }};
 {% endif -%}
 {% if data.acl %}
 {% for p in data.acl %}

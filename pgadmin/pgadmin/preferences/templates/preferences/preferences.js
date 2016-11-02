@@ -107,8 +107,9 @@ define(
              */
             _.each(prefs, function(p) {
 
-              var m = preferences.get(p.id),
-                  f = new Backform.Field(
+              var m = preferences.get(p.id);
+              m.errorModel = new Backbone.Model();
+              var f = new Backform.Field(
                     _.extend({}, p, {id: 'value', name: 'value'})
                     ),
                   cntr = new (f.get("control")) ({

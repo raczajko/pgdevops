@@ -22,6 +22,7 @@ function($, _, S, pgAdmin, pgBrowser, Alertify, Backform) {
     pgBrowser.Nodes['pga_jobstep'] = pgBrowser.Node.extend({
       parent_type: 'pga_job',
       type: 'pga_jobstep',
+      dialogHelp: '{{ url_for('help.static', filename='pgagent_jobs.html') }}',
       hasSQL: true,
       hasDepends: false,
       hasStatistics: true,
@@ -97,7 +98,7 @@ function($, _, S, pgAdmin, pgBrowser, Alertify, Backform) {
           disabled: function(m) { return false; },
           cellHeaderClasses: 'width_percent_60'
         },{
-          id: 'jstenabled', label: '{{ _('Enabled') }}', type: 'switch',
+          id: 'jstenabled', label: '{{ _('Enabled?') }}', type: 'switch',
           disabled: function(m) { return false; }
         },{
           id: 'jstkind', label: '{{ _('Kind') }}', type: 'switch',

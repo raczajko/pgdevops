@@ -22,8 +22,8 @@ from pgadmin.utils.ajax import make_json_response, \
     make_response as ajax_response, internal_server_error
 from pgadmin.utils.ajax import precondition_required
 from pgadmin.utils.driver import get_driver
-
 from config import PG_DEFAULT_DRIVER
+from pgadmin.utils.ajax import gone
 
 
 class SynonymModule(SchemaChildModule):
@@ -149,8 +149,13 @@ class SynonymView(PGChildNodeView):
         {'type': 'int', 'id': 'did'},
         {'type': 'int', 'id': 'scid'}
     ]
+    # If URL has an identifier containing slash character '/'
+    # into the URI, then set param type to path. Because if
+    # param name contains '/' in syid, it gets confused and
+    # wrong url is generated.
+    # Reference:- http://flask.pocoo.org/snippets/76/
     ids = [
-        {'type': 'string', 'id': 'syid'}
+        {'type': 'path', 'id': 'syid'}
     ]
 
     operations = dict({
@@ -265,6 +270,44 @@ class SynonymView(PGChildNodeView):
             data=res,
             status=200
         )
+
+    @check_precondition
+    def node(self, gid, sid, did, scid, syid=None):
+        """
+        Return Synonym node to generate node
+
+        Args:
+            gid: Server Group Id
+            sid: Server Id
+            did: Database Id
+            scid: Schema Id
+            syid: Synonym id
+        """
+
+        sql = render_template(
+            "/".join([self.template_path, 'properties.sql']),
+            syid=syid, scid=scid
+        )
+        status, rset = self.conn.execute_2darray(sql)
+
+        if not status:
+            return internal_server_error(errormsg=rset)
+
+        if len(rset['rows']) == 0:
+            return gone(
+                gettext("""Could not find the Synonym node.""")
+            )
+
+        for row in rset['rows']:
+            return make_json_response(
+                data=self.blueprint.generate_browser_node(
+                    row['name'],
+                    scid,
+                    row['name'],
+                    icon="icon-%s" % self.node_type
+                ),
+                status=200
+            )
 
     @check_precondition
     def get_target_objects(self, gid, sid, did, scid, syid=None):
@@ -387,14 +430,23 @@ class SynonymView(PGChildNodeView):
             SQL = render_template("/".join([self.template_path,
                                             'create.sql']),
                                   data=data, conn=self.conn, comment=False)
+
             status, res = self.conn.execute_scalar(SQL)
+            if not status:
+                return internal_server_error(errormsg=res)
+
+            # Find parent oid to add properly in tree browser
+            SQL = render_template("/".join([self.template_path,
+                                            'get_parent_oid.sql']),
+                                  data=data, conn=self.conn)
+            status, parent_id = self.conn.execute_scalar(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
 
             return jsonify(
                 node=self.blueprint.generate_browser_node(
                     data['name'],
-                    scid,
+                    int(parent_id),
                     data['name'],
                     icon="icon-synonym"
                 )
@@ -483,25 +535,14 @@ class SynonymView(PGChildNodeView):
                 if not status:
                     return internal_server_error(errormsg=res)
 
-                return make_json_response(
-                    success=1,
-                    info="Synonym updated",
-                    data={
-                        'id': syid,
-                        'scid': scid,
-                        'did': did
-                    }
+            return jsonify(
+                node=self.blueprint.generate_browser_node(
+                    syid,
+                    scid,
+                    syid,
+                    icon="icon-synonym"
                 )
-            else:
-                return make_json_response(
-                    success=1,
-                    info="Nothing to update",
-                    data={
-                        'id': syid,
-                        'scid': scid,
-                        'did': did
-                    }
-                )
+            )
 
         except Exception as e:
             return internal_server_error(errormsg=str(e))

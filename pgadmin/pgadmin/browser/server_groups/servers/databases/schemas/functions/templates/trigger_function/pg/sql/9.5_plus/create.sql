@@ -9,8 +9,7 @@ CREATE FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({% if data.proa
 {% if data.procost %}
     COST {{data.procost}}
 {% endif %}
-{% if query_type != 'create' %}
-    {% if data.provolatile %}{{ data.provolatile }} {% endif %}{% if data.proleakproof %}LEAKPROOF {% else %}NOT LEAKPROOF {% endif %}
+    {% if data.provolatile %}{% if data.provolatile == 'i' %}IMMUTABLE{% elif data.provolatile == 's' %}STABLE{% else %}VOLATILE{% endif %} {% endif %}{% if data.proleakproof %}LEAKPROOF {% else %}NOT LEAKPROOF {% endif %}
 {% if data.proisstrict %}STRICT {% endif %}
 {% if data.prosecdef %}SECURITY DEFINER {% endif %}
 {% if data.proiswindow %}WINDOW{% endif %}
@@ -21,7 +20,7 @@ CREATE FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({% if data.proa
     SET {{ conn|qtIdent(v.name) }}={{ v.value|qtLiteral }}{% endfor %}
 {% endif %}
 
-{% endif %}AS {% if data.lanname == 'c' %}
+AS {% if data.lanname == 'c' %}
 {{ data.probin|qtLiteral }}, {{ data.prosrc_c|qtLiteral }}
 {% else %}
 $BODY$
@@ -30,7 +29,7 @@ $BODY${% endif -%};
 {% if data.funcowner %}
 
 ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args}})
-    OWNER TO {{ data.funcowner }};
+    OWNER TO {{ conn|qtIdent(data.funcowner) }};
 {% endif -%}
 {% if data.acl %}
 {% for p in data.acl %}

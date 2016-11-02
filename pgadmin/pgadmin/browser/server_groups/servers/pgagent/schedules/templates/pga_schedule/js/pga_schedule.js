@@ -183,7 +183,8 @@ function($, _, S, pgAdmin, moment, pgBrowser, Alertify, Backform) {
     pgBrowser.Nodes['pga_schedule'] = pgBrowser.Node.extend({
       parent_type: 'pga_job',
       type: 'pga_schedule',
-      hasSQL: false,
+      dialogHelp: '{{ url_for('help.static', filename='pgagent_jobs.html') }}',
+      hasSQL: true,
       hasDepends: false,
       hasStatistics: false,
       canDrop: function(node) {
@@ -258,32 +259,32 @@ function($, _, S, pgAdmin, moment, pgBrowser, Alertify, Backform) {
           cellHeaderClasses: 'width_percent_45',
           disabled: function() { return false; }
         },{
-          id: 'jscenabled', label: '{{ _('Enabled') }}', type: 'switch',
+          id: 'jscenabled', label: '{{ _('Enabled?') }}', type: 'switch',
           disabled: function() { return false; },
           cellHeaderClasses: 'width_percent_5'
         },{
           id: 'jscstart', label: '{{ _('Start') }}', type: 'text',
           control: 'datetimepicker', cell: 'moment',
           disabled: function() { return false; },
-          displayFormat: 'YYYY-MM-DD HH:mm:SS Z',
-          modelFormat: 'YYYY-MM-DD HH:mm:SS Z', options: {
-            format: 'YYYY-MM-DD HH:mm:SS Z',
+          displayFormat: 'YYYY-MM-DD HH:mm:ss Z',
+          modelFormat: 'YYYY-MM-DD HH:mm:ss Z', options: {
+            format: 'YYYY-MM-DD HH:mm:ss Z',
           }, cellHeaderClasses: 'width_percent_25'
         },{
           id: 'jscend', label: '{{ _('End') }}', type: 'text',
           control: 'datetimepicker', cell: 'moment',
           disabled: function() { return false; }, displayInUTC: false,
-          displayFormat: 'YYYY-MM-DD HH:mm:SS Z', options: {
-            format: 'YYYY-MM-DD HH:mm:SS Z', useCurrent: false
+          displayFormat: 'YYYY-MM-DD HH:mm:ss Z', options: {
+            format: 'YYYY-MM-DD HH:mm:ss Z', useCurrent: false
           }, cellHeaderClasses: 'width_percent_25',
-          modelFormat: 'YYYY-MM-DD HH:mm:SS Z'
+          modelFormat: 'YYYY-MM-DD HH:mm:ss Z'
         },{
-          id: 'jscweekdays', label:'{{ _('Week Days') }}', type: 'text',
+          id: 'jscweekdays', label:'{{ _('Week days') }}', type: 'text',
           control: Backform.Control.extend({
             formatter: new BooleanArrayFormatter(weekdays, false)
           }), mode: ['properties']
         },{
-          id: 'jscmonthdays', label:'{{ _('Month Days') }}', type: 'text',
+          id: 'jscmonthdays', label:'{{ _('Month days') }}', type: 'text',
           control: Backform.Control.extend({
             formatter: new BooleanArrayFormatter(monthdays, false)
           }), mode: ['properties']
