@@ -22,6 +22,11 @@ reports_path = os.path.join(current_path, "reports")
 if not os.path.exists(reports_path):
     os.mkdir(reports_path)
 
+
+badger_reports_path = os.path.join(reports_path, "badger")
+if not os.path.exists(badger_reports_path):
+    os.mkdir(badger_reports_path)
+
 this_uname = str(platform.system())
 
 PGC_HOME = os.getenv("PGC_HOME", "")
@@ -63,7 +68,11 @@ class BadgerReport(object):
         if title:
             options = options + " -T '" + title + "'"
 
-        options = options + " -o " + os.path.join(reports_path, report_file)
+        if title:
+            file_title=re.sub('[^A-Za-z0-9]+', '-', title)
+            report_file = file_title + "-" +file_name + ".html"
+
+        options = options + " -o " + os.path.join(badger_reports_path, report_file)
 
         report_cmd = pgbadger_command + " " + options
         proc = subprocess.Popen(report_cmd, shell=True, stdout=subprocess.PIPE ,stderr=subprocess.PIPE)
@@ -71,7 +80,7 @@ class BadgerReport(object):
         result['error']=None
         if proc.returncode != 0:
             result['error']=stderr_data
-        result['file']=report_file
+        result['file']="badger/" + report_file
         return result
 
     def getLoggingSettings(self,comp):

@@ -99,6 +99,9 @@
         </div>
         <span ng-if="report_file"><a href="/reports/{{ report_file }}" target="_blank">Click Here to See the Report in New Tab</a>
         </span>
+        <a class="btn btn-default pull-right" ng-click="openRecentReports()">
+                            Recent Reports
+                            </a>
         <span ng-if="badgerError">
             {{badgerError}}
         </span>

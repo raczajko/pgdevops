@@ -21,11 +21,12 @@ from pgadmin.utils.pickleSessions import PickleSessionInterface
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 import config
 from flask_restful import reqparse
+from datetime import datetime
 
 parser = reqparse.RequestParser()
 #parser.add_argument('data')
 
-config.APP_NAME = "BigSQL Manager 4"
+config.APP_NAME = "BigSQL DevOps"
 config.LOGIN_NAME = "BigSQL"
 application = Flask(__name__)
 
@@ -35,6 +36,10 @@ Triangle(application)
 api = Api(application)
 
 application.config.from_object(config)
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+
+reports_path = os.path.join(current_path, "reports")
 
 
 ##########################################################################
@@ -126,6 +131,31 @@ class bamUserInfo(Resource):
 
 api.add_resource(bamUserInfo, '/api/userinfo')
 
+
+class getRecentReports(Resource):
+    def get(self, report_type):
+        print report_type
+        recent_reports_path = os.path.join(reports_path, report_type)
+        jsonDict = {}
+        jsonList = []
+        if os.path.isdir(recent_reports_path):
+            mtime = lambda f: os.stat(os.path.join(recent_reports_path, f)).st_mtime
+            sorted_list=sorted(os.listdir(recent_reports_path),
+                                        key=mtime, reverse=True)
+            for d in sorted_list:
+                if d.endswith(".html"):
+                    jsonDict = {}
+                    html_file_path = os.path.join(recent_reports_path, d)
+                    jsonDict['file']=d
+                    jsonDict["file_link"] = "reports/"+report_type+"/"+d
+                    mtime=os.stat(html_file_path).st_mtime
+                    mdate=datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')
+                    jsonDict['mtime']=mdate
+                    jsonList.append(jsonDict)
+        return {'data':jsonList}
+
+
+api.add_resource(getRecentReports, '/api/getrecentreports/<string:report_type>')
 
 class GenerateReports(Resource):
     def post(self):

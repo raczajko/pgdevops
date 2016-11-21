@@ -101,6 +101,16 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         modalInstance.currentLogfile = $scope.logfiles[0].file;
     };
 
+
+    $scope.openRecentReports = function (argument) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/recentReports.html',
+            controller: 'recentReportsController',
+            windowClass: 'switch-modal-window'
+        });
+        modalInstance.reportsType="badger";
+    };
+
     $scope.generateReport = function () {
         $scope.report_file = "";
         $scope.report_url = "";

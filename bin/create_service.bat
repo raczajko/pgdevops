@@ -4,16 +4,16 @@
 @REM #########   Copyright (c) 2016 BigSQL    ##########
 @REM ###################################################
 
-set BAM_SERVICE_NAME="bigsql.bam4"
+set BAM_SERVICE_NAME="bigsql.devops"
 set BAM_SERVICE_DESCRIPTION="BigSQL DevOps Console for Develoeprs &/or Operations"
 set BAM_SERVICE_DISPLAY_NAME="BigSQL DevOps"
 set CWD=%~sdp0
-set PR_BAM_PID_FILE="bam.pid"
+set PR_BAM_PID_FILE="devops.pid"
 
 REM Startup configuration
 set PR_STARTUP=auto
 set PR_STARTMODE=EXE
-set BAM_STARTPARAM="%CWD%start_crossbar.py;start;--cbdir;%CWD%.;--loglevel;info;--logtofile;--logdir;%CWD%..\..\data\logs\bam4"
+set BAM_STARTPARAM="%CWD%start_crossbar.py;start;--cbdir;%CWD%.;--loglevel;info;--logtofile;--logdir;%CWD%..\..\data\logs\devops"
 set PR_ENV="USERNAME=%USERNAME%#PYTHONPATH=%CWD%..\lib#PATH=%CWD%..\..\python2#PGC_HOME=%CWD%..\..#PGC_LOGS=%CWD%..\..\logs\pgcli_log.out"
 
 set BAM_STARTIMAGE=%CWD%..\..\python2\python.exe
