@@ -6726,6 +6726,30 @@ table.settings-table-pgc-info > tbody > tr > td {
     background-position: 0 0;
   }
 
+  #comp-details-tabs-wrapper>.nav>li.disabled>a {
+     background-color: #d8d8d8;
+}
+
+.plProfiler-form .btn .fa {
+  font-size: 1.7em;
+  margin-top: -2px;
+}
+
+.app-modal-window .modal-dialog {
+  width: 1000px;
+}
+
+.switch-modal-window .modal-dialog{
+  width: 750px;
+}
+
+.pg-badger-select-log{
+  height: 100px;
+  overflow: auto;
+  padding: 3px;
+  border-style: inset; ;
+}
+
   .userinfo-btn > .btn {
     background-color: #1e2129;
     color: #fff;
