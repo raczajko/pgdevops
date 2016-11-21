@@ -405,9 +405,9 @@ def create_app(app_name=config.APP_NAME):
             from flask_security import current_user
             from flask import redirect
             if request.path == "/auth" and not current_user.is_authenticated:
-                return redirect("http://localhost:8050", code=302)
+                return redirect("http://localhost:8051", code=302)
             if request.path == "/change" and current_user.is_authenticated:
-                return redirect("http://localhost:8050/change", code=302)
+                return redirect("http://localhost:8051/change", code=302)
 
     ##########################################################################
     # Minify output

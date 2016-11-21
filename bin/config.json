@@ -41,7 +41,7 @@
                     "endpoint": {
                         "type": "tcp",
                         "interface": "127.0.0.1",
-                        "port": 8050
+                        "port": 8051
                     },
                     "paths": {
                         "/": {
@@ -129,9 +129,9 @@
                         "endpoint": {
                             "type": "tcp",
                             "host": "127.0.0.1",
-                            "port": 8050
+                            "port": 8051
                         },
-                        "url": "ws://127.0.0.1:8050/ws"
+                        "url": "ws://127.0.0.1:8051/ws"
                     }
                 }
             ]
