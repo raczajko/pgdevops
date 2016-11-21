@@ -100,9 +100,9 @@ class ProfilerReport(object):
             file_title=re.sub('[^A-Za-z0-9]+', '-', title)
             report_file = file_title + "-" +file_name + ".html"
 
-        with open(os.path.join(reports_path, report_file), 'w') as fd:
+        with open(os.path.join(profiler_reports_path, report_file), 'w') as fd:
             fd.write(html)
-        return "reports/" + report_file
+        return "profiler/" + report_file
 
     def generateGlobalReports(self, title=None, desc=None):
         data = self.prof.get_shared_report_data(title, 10, None)
@@ -116,9 +116,12 @@ class ProfilerReport(object):
         time_stamp = str(datetime.now())
         file_name = re.sub('[^A-Za-z0-9]+', '', time_stamp)
         report_file = file_name + ".html"
-        with open(os.path.join(reports_path, report_file), 'w') as fd:
+        if title:
+            file_title=re.sub('[^A-Za-z0-9]+', '-', title)
+            report_file = file_title + "-" +file_name + ".html"
+        with open(os.path.join(profiler_reports_path, report_file), 'w') as fd:
             fd.write(html)
-        return report_file
+        return "profiler/" + report_file
 
 
     def close(self):
