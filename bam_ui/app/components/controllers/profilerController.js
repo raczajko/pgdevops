@@ -14,6 +14,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
 
 
 
+
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
         sessPromise.then(function (sessParam) {
@@ -53,6 +54,12 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         });
     });
 
+    $scope.hostName = localStorage.getItem('hostName');
+    $scope.pgUser = localStorage.getItem('pgUser');
+    $scope.pgDB = localStorage.getItem('pgDB');
+    $scope.pgPort = localStorage.getItem('pgPort');
+
+
 
     $scope.generateReport = function () {
         $scope.report_file = "";
@@ -81,6 +88,13 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     };
 
     $scope.queryProfiler = function (hostName, pgUser, pgPass, pgDB, pgPort) {
+
+        localStorage.setItem('hostName',hostName);
+        localStorage.setItem('pgUser',pgUser);
+        localStorage.setItem('pgDB',pgDB);
+        localStorage.setItem('pgPort',pgPort);
+
+
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/statementProfilingModal.html',
             controller: 'statementProfilingController',
@@ -93,6 +107,12 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     };
 
     $scope.globalProfiling = function (hostName, pgUser, pgPass, pgDB, pgPort) {
+
+        localStorage.setItem('hostName',hostName);
+        localStorage.setItem('pgUser',pgUser);
+        localStorage.setItem('pgDB',pgDB);
+        localStorage.setItem('pgPort',pgPort);
+
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/globalProfilingModal.html',
             controller: 'globalProfilingController',
