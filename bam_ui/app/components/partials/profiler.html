@@ -60,6 +60,9 @@
         </div>
         <span ng-if="report_file"><a href="/reports/{{ report_file }}" target="_blank">Click Here to See the Report in New Tab</a>
         </span>
+        <a class="btn btn-default pull-right" ng-click="openRecentReports()">
+                            Recent Reports
+                            </a>
         <iframe ng-if="report_file" ng-src="{{ report_url }}" width="100%" height="500px">
         </iframe>
         <span ng-if="!report_file" ng-bind="errorMsg"></span>

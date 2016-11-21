@@ -71,6 +71,15 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
 
     };
 
+    $scope.openRecentReports = function (argument) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/recentReports.html',
+            controller: 'recentReportsController',
+            windowClass: 'switch-modal-window'
+        });
+        modalInstance.reportsType="profiler";
+    };
+
     $scope.queryProfiler = function (hostName, pgUser, pgPass, pgDB, pgPort) {
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/statementProfilingModal.html',
