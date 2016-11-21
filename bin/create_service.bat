@@ -5,7 +5,7 @@
 @REM ###################################################
 
 set BAM_SERVICE_NAME="bigsql.devops"
-set BAM_SERVICE_DESCRIPTION="BigSQL DevOps Console for Develoeprs &/or Operations"
+set BAM_SERVICE_DESCRIPTION="BigSQL DevOps Console for Developers &/or Operations"
 set BAM_SERVICE_DISPLAY_NAME="BigSQL DevOps"
 set CWD=%~sdp0
 set PR_BAM_PID_FILE="devops.pid"
