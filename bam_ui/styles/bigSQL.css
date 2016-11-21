@@ -6720,6 +6720,12 @@ table.settings-table-pgc-info > tbody > tr > td {
     margin-right: 7px;
   }
 
+  .bgs-pgbadger-menu {
+    background-image: url('../assets/img/pgbadger15.png');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+  }
+
   .userinfo-btn > .btn {
     background-color: #1e2129;
     color: #fff;

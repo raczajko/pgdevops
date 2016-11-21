@@ -1,68 +1,68 @@
 <section class="content-header">
     <h1 class="components-update-title-wrapper">
-        plProfiler GUI (beta)
+        plProfiler Console
     </h1>
 </section>
 
 <section class="content">
-     <div class="row">
-    <div class="col-md-4 col-sm-4 col-xs-4">
-        <form class="form plProfiler-form">
-            <div class="form-group">
-                <input type="text" ng-model="hostName" required class="form-control" placeholder="Hostname">
-                <span class="required-plprofiler-form">*</span>
+    <div class="row">
+    <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="box">
+            <div class="box-header with-border">
+                <strong>Connection Information</strong>
             </div>
-            <div class="form-group">
-                <input type="text" ng-model="pgUser" required class="form-control" placeholder="DB User">
-                <span class="required-plprofiler-form">*</span>
-            </div>
-            <div class="form-group">
-                <input type="password" ng-model="pgPass" class="form-control" placeholder="DB Password">
-            </div>
-            <div class="form-group">
-                <input type="text" ng-model="pgDB" required class="form-control" placeholder="DB Name">
-                <span class="required-plprofiler-form">*</span>
-            </div>
-            <div class="form-group">
-                <input type="text" ng-model="pgPort" required class="form-control" placeholder="DB Port">
-                <span class="required-plprofiler-form">*</span>
-            </div>
-            <div class="form-group">
-                <textarea ng-model="pgQuery" required class="form-control" placeholder="Report Query"></textarea>
-                <span class="required-plprofiler-form">*</span>
-            </div>
-            <div class="form-group">
-                <input type="text" ng-model="pgTitle" required class="form-control" placeholder="Report Title">
-                <span class="required-plprofiler-form">*</span>
-            </div>
-             <div class="form-group">
-                <input type="text" ng-model="pgDesc" class="form-control" placeholder="Report Desc">
-            </div>
-            <div class="text-left">
-                <span class="required-symbol">*</span> Required Field
-            </div>
-            <div class="form-actions">
-                <div class="text-right">
-                    <button type="submit" class="btn btn-primary"
-                            ng-disabled="!(hostName && pgUser && pgDB && pgPort && pgQuery && pgTitle)"
-                            ng-click="generateReport()">Generate
-                    </button>
+            <div class="box-body">
+                <form class="form plProfiler-form">
+                    <div class="col-md-12">
+                    <div class="form-group">
+                        <input type="text" ng-model="hostName" required class="form-control" placeholder="Hostname">
+                        <span class="required-plprofiler-form">*</span>
+                    </div>
+                    </div>
+                    <div class="col-md-12">
+                    <div class="form-group">
+                        <input type="text" ng-model="pgUser" required class="form-control" placeholder="DB User">
+                        <span class="required-plprofiler-form">*</span>
+                    </div>
+                    </div>
+                    <div class="col-md-12">
+                    <div class="form-group">
+                        <input type="password" ng-model="pgPass" class="form-control" placeholder="DB Password">
+                    </div>
+                    </div>
+                    <div class="col-md-12">
+                    <div class="form-group">
+                        <input type="text" ng-model="pgDB" required class="form-control" placeholder="DB Name">
+                        <span class="required-plprofiler-form">*</span>
+                    </div>
+                    </div>
+                    <div class="col-md-12">
+                    <div class="form-group">
+                        <input type="text" ng-model="pgPort" required class="form-control" placeholder="DB Port">
+                        <span class="required-plprofiler-form">*</span>
+                    </div>
+                    </div>
+                </form>
+                <div class="text-left col-md-12">
+                   <span class="required-symbol">*</span> Required Field
                 </div>
             </div>
-        </form>
+        </div>
+
+        <button class="btn btn-default pull-left" ng-disabled="!(hostName && pgUser && pgDB && pgPort)" ng-click="queryProfiler(hostName, pgUser, pgPass, pgDB, pgPort, pgTitle, pgDesc)"> Statement Profiling </button>
+        <button class="btn btn-default pull-right" ng-disabled="!(hostName && pgUser && pgDB && pgPort)" ng-click="globalProfiling(hostName, pgUser, pgPass, pgDB, pgPort, pgTitle, pgDesc)"> Global Profiling </button>
     </div>
-    <div class="col-md-8 col-sm-8 col-xs-8">
+    <div class="col-md-9 col-sm-6 col-xs-12">
+        <div ng-if="generatingReportSpinner">
+            <span>
+                <i class="fa fa-cog fa-spin fa-3x fa-fw margin-bottom"></i>Generating...
+            </span>
+        </div>
         <span ng-if="report_file"><a href="/reports/{{ report_file }}" target="_blank">Click Here to See the Report in New Tab</a>
         </span>
-
-
-    </div>
-    <div class="col-md-8 col-sm-8 col-xs-8">
         <iframe ng-if="report_file" ng-src="{{ report_url }}" width="100%" height="500px">
-
         </iframe>
-
-
+        <span ng-if="!report_file" ng-bind="errorMsg"></span>
     </div>
  </div>
 </section>

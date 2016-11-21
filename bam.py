@@ -30,6 +30,7 @@ if this_uname == "Windows":
 from Components import Components
 from HostSettings import HostSettings
 from Monitoring import Monitoring
+from Reporting import Reporting
 
 BAM_VERSION = "bam_version_number"
 PGC_HOME = os.getenv("PGC_HOME", "")
@@ -53,6 +54,8 @@ class AppSession(ApplicationSession):
         hostSettings = HostSettings(self)
 
         monitoring = Monitoring(self)
+
+        reporting = Reporting(self)
 
         self.register(monitoring.live_graphs_data, 'com.bigsql.live_graphs')
 
@@ -128,7 +131,15 @@ class AppSession(ApplicationSession):
 
         self.register(monitoring.activity, 'com.bigsql.activity')
 
-        self.register(monitoring.generate_profiler_reports, 'com.bigsql.plprofiler')
+        self.register(reporting.generate_profiler_reports, 'com.bigsql.plprofiler')
+
+        self.register(reporting.generate_badger_reports, 'com.bigsql.pgbadger')
+
+        self.register(reporting.get_pg_log_files, 'com.bigsql.get_log_files_list')
+
+        self.register(reporting.get_log_settings, 'com.bigsql.get_logging_parameters')
+
+        self.register(reporting.switch_log_file, 'com.bigsql.switch_log_file')
 
         ## PUBLISH and CALL every second .. forever
         ##

@@ -91,6 +91,14 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
                 templateUrl: '../app/components/partials/loading.html',
             }
         }
+    }).state('components.badger', {
+        url: '^/badger',
+        views: {
+            "sub": {
+                controller: 'badgerController',
+                templateUrl: '../app/components/partials/badger.html',
+            }
+        }
     });
 }).controller('ComponentsController', ['$scope', function ($scope) {
 

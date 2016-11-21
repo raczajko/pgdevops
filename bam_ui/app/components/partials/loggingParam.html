@@ -1,0 +1,43 @@
+<div class="modal-header">
+    <h3 class="modal-title">Set Logging Parameters</h3>
+</div>
+<div class="modal-body">
+    <table class="table table-striped">
+	  <thead>
+	    <tr>
+	      <th><h4 style="font-weight: bold;">Parameter</h4></th>
+	      <th><h4 style="font-weight: bold;">Setting</h4></th>
+	    </tr>
+	  </thead>
+	  <tbody>
+        <tr ng-repeat="(key, value) in data ">
+        	<td><h4 style="font-weight: bold;">{{value.name}}</h4></td>
+        	<!-- <td ng-if=" value.recommended == 'on' || value.recommended == 'off'">
+        		<input type="checkbox" name="{{value.name}}" ng-model="value.enabled" ng-change="changeSetting(value.name, value.setting)">
+        		Enable
+        	</td> -->
+        	<td>
+        		<input type="radio" name="{{value.name}}" ng-checked="value.setting = 'on'">
+        		&nbsp;Enable all
+        		&nbsp;
+        		<input type="radio" name="{{value.name}}" ng-checked="value.setting = 'off'">
+        		&nbsp;Disable all
+        	</td>
+        	<td ng-if=" value.recommended == 0 || value.recommended == -1" >
+        		<input type="radio" name="{{value.name}}" class="pull-left">
+        		&nbsp;
+        		<span ng-if="value.name == 'log_min_duration_statement'">Log statements</span>
+        		<span ng-if="value.name == 'log_autovacuum_min_duration'">Log autovacuum</span>
+        		<span ng-if="value.name == 'log_temp_files'">Log temp files</span>
+        		>=
+        		<input ng-if="value.name != 'log_temp_files'" type="text" ng-model="test" placeholder=" duration milliseconds ">
+        		<input ng-if="value.name == 'log_temp_files'" type="text" ng-model="test" placeholder=" size KB ">
+        	</td>
+        	</tr>
+    	</tbody>
+	</table>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-primary" type="button" ng-click="save(changedVales)">Save & Reload</button>
+    <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

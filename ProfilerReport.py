@@ -1,63 +1,115 @@
+####################################################################
+#########            Copyright 2016 BigSQL               ###########
+####################################################################
+
 import os
-import subprocess
-import sys
-import json
+import platform
 import plprofiler
-import sys
-import time
 import StringIO
-import re
-
-"""prof = plprofiler.plprofiler()
-prof = plprofiler.plprofiler()
-out = StringIO.StringIO()
-
-# prof.connect({'dsn': 'host=db1 dbname=bench1 user=postgres port=54395'})
-prof.connect({'dsn': ''})
-prof.enable()
-prof.execute_sql("SELECT tpcb(1,2,3,100); SELECT tpcb(1,2,3,100); SELECT tpcb(1,2,3,100); SELECT tpcb(1,2,3,100); SELECT tpcb(1,2,3,100);")
-
-data = prof.get_local_report_data('test2', 10, None)
-data['config']['title'] = "Demo Title"
-prof.report(data, out)
-
-html = out.getvalue()
-print "html length =", len(html)
-with open('test2.html', 'w') as fd:
-    fd.write(html)
-"""
-
 from datetime import datetime
+import re
+import time
 
-current_path=os.path.dirname(os.path.realpath(__file__))
+current_path = os.path.dirname(os.path.realpath(__file__))
+
+reports_path = os.path.join(current_path, "reports")
+
+if not os.path.exists(reports_path):
+    os.mkdir(reports_path)
+
+this_uname = str(platform.system())
+
+PGC_HOME = os.getenv("PGC_HOME", "")
+
+perl_path = os.path.join(PGC_HOME, "perl5", "perl", "bin")
+
+path_env = os.environ.get("PATH")
+
+if this_uname == "Windows" and perl_path not in path_env:
+    os.environ['PATH'] = path_env + ";" + perl_path + ";"
+
 
 class ProfilerReport(object):
-
     def __init__(self, *args, **kwargs):
-        profiler_args=args[0]
+        profiler_args = args[0]
         self.prof = plprofiler.plprofiler()
-        os.environ['PGPASSWORD']=profiler_args['pgPass']
+        if profiler_args['pgPass']:
+            os.environ['PGPASSWORD'] = profiler_args['pgPass']
         self.prof.connect({'dsn': 'host={0} dbname={1} user={2} port={3}'.format(
             profiler_args['hostName'], profiler_args['pgDB'],
             profiler_args['pgUser'], profiler_args['pgPort']
         )})
-        self.prof.enable()
-        del os.environ['PGPASSWORD']
 
-    def generateSQLReports(self, queries, title=None, desc=None):
+        if "PGPASSWORD" in os.environ.keys():
+            del os.environ['PGPASSWORD']
+
+    def enableProfiler(self):
+        self.prof.enable_monitor()
+
+    def disableProfiler(self):
+        self.prof.disable_monitor()
+
+    def resetSharedData(self):
+        self.prof.reset_shared()
+
+    def is_enabled(self):
+        check_query = "select name,setting from pg_settings where name='plprofiler.enabled'"
+
+        cur = self.prof.dbconn.cursor()
+        cur.execute(check_query)
+        row = cur.fetchone()
+        if row is None:
+            pass
+        else:
+            if row[1] == "on":
+                return True
+            else:
+                return False
+        return False
+
+    def has_data(self):
+        query = "select * from pl_profiler_callgraph_shared()"
+
+        cur = self.prof.dbconn.cursor()
+        cur.execute(query)
+        if cur.rowcount==0:
+            return False
+        return True
+
+    def generateQueryReports(self, queries, title=None, desc=None):
+        self.prof.enable()
         self.prof.execute_sql(queries)
         data = self.prof.get_local_report_data(title, 10, None)
-        data['config']['title'] = title
+        if title:
+            data['config']['title'] = title
         if desc:
             data['config']['desc'] = desc
         out = StringIO.StringIO()
         self.prof.report(data, out)
         html = out.getvalue()
-        #print "html length =", len(html)
-        report_file = str(datetime.now()) + ".html"
-        with open(os.path.join(current_path, 'reports', report_file), 'w') as fd:
+        time_stamp = str(datetime.now())
+        file_name = re.sub('[^A-Za-z0-9]+', '', time_stamp)
+        report_file = file_name + ".html"
+        with open(os.path.join(reports_path, report_file), 'w') as fd:
             fd.write(html)
         return report_file
+
+    def generateGlobalReports(self, title=None, desc=None):
+        data = self.prof.get_shared_report_data(title, 10, None)
+        if title:
+            data['config']['title'] = title
+        if desc:
+            data['config']['desc'] = desc
+        out = StringIO.StringIO()
+        self.prof.report(data, out)
+        html = out.getvalue()
+        time_stamp = str(datetime.now())
+        file_name = re.sub('[^A-Za-z0-9]+', '', time_stamp)
+        report_file = file_name + ".html"
+        with open(os.path.join(reports_path, report_file), 'w') as fd:
+            fd.write(html)
+        return report_file
+
 
     def close(self):
         self.prof.close()

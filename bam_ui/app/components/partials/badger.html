@@ -1,0 +1,107 @@
+<section class="content-header">
+    <h1 class="components-update-title-wrapper">
+        pgBadger Console
+    </h1>
+</section>
+
+<section class="content">
+     <div class="row">
+    <div class="col-md-6 col-sm-6 col-xs-12">
+        <div class="box">
+            <div class="box-header with-border">
+                <div class="col-md-12">
+                    <strong> Settings</strong>
+                </div>
+            </div>
+            <div class="box-body">
+                <form class="form plProfiler-form">
+                    <div class="form-group">
+                        <div class="col-md-3 col-sm-3 col-xs-3">
+                            <select class="form-control" id="logComponents" ng-model="selectComp" ng-change="onSelectChange(selectComp)">
+                                <option value="">Select DB</option>
+                                <option value="{{c.component}}" ng-repeat="c in components">{{c.component}}</option>
+                            </select>
+                            <span class="required-plprofiler-form">*</span>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-4">
+                            <button class="btn btn-default pull-right" ng-click="openSwitchlog()" ng-disabled="disableLog">Switch log file</button>
+                        </div>
+                        <div class="col-md-5 col-sm-5 col-xs-5">
+                            <a class="btn btn-default pull-right" ng-click="openLoggingParam()" ng-disabled="disableLog">
+                            Change logging parameters
+                            </a>
+                        </div>
+                        <br />
+                        <br />
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <input type="text" ng-model="logDir" class="form-control" placeholder="Log Dir" ng-disabled="true">
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            Select log files
+                            <div class="pg-badger-select-log" ng-model="selectLog">
+                                <div ng-repeat="c in logfiles">
+                                    <label>
+                                        <input type="checkbox" name="selectLog" ng-if="$index == 0" ng-checked="true" value="{{c.log_file}}">
+                                        <input type="checkbox" name="selectLog" ng-if="$index != 0" ng-checked="logFileChecked()" value="{{c.log_file}}">
+                                        <span>&nbsp;{{c.file}}</span>
+                                    </label>
+                                    <span class="pull-right">{{c.file_size}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{c.mtime}}</span>
+                                </div>
+                            </div>
+                            <span class="required-plprofiler-form">*</span>
+                        </div>
+                    </div>
+                    <div class="text-left col-md-12">
+                        <span class="required-symbol">*</span> Required Field
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+        <div class="box">
+            <div class="box-body">
+                <form>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <input type="text" ng-model="pgTitile"  class="form-control" placeholder="Badger Title">
+
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <input type="text" ng-model="pgJobs"  class="form-control" placeholder="Number of jobs">
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-actions">
+                            <div class="text-right">
+                                <button type="submit" class="btn btn-primary"
+                                        ng-disabled="generatingReportSpinner"
+                                        ng-click="generateReport()">Generate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-sm-6 col-xs-12">
+        <div ng-if="generatingReportSpinner" style="text-align: center;">
+            <div>
+                <i class="fa fa-cog fa-spin fa-5x"></i>
+            </div>
+            <strong> Generating Reports....</strong>
+        </div>
+        <span ng-if="report_file"><a href="/reports/{{ report_file }}" target="_blank">Click Here to See the Report in New Tab</a>
+        </span>
+        <span ng-if="badgerError">
+            {{badgerError}}
+        </span>
+    </div>
+ </div>
+</section>

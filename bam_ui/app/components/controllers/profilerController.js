@@ -24,16 +24,29 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     sessionPromise.then(function (val) {
         session = val;
         session.subscribe("com.bigsql.profilerReports", function (data) {
+            $scope.generatingReportSpinner=false;
             var result=data[0];
             if (result.error == 0) {
 
-                $scope.report_file = result.report_file;
-                $scope.report_url = "/reports/" + result.report_file;
-                $scope.$apply();
+                if(result.action == "profile_query" || result.action == "generate"){
+                    $scope.report_file = result.report_file;
+                    $scope.report_url = "/reports/" + result.report_file;
+                }
+                else{
+                    $scope.errorMsg = result.msg;
+                    $scope.report_file = '';
+                }
+
+                //$scope.report_file = result.report_file;
+                //$scope.report_url = "/reports/" + result.report_file;
+                // $window.open("http://localhost:8050/reports/" + result.report_file);
+                //$scope.$apply();
                 //$scope.message = data;
             } else {
-                alert(result.msg);
+                $scope.errorMsg = result.msg;
+                $scope.report_file = '';
             }
+            $scope.$apply();
 
         }).then(function (subscription) {
             subscriptions.push(subscription);
@@ -44,26 +57,42 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     $scope.generateReport = function () {
         $scope.report_file = "";
         $scope.report_url = "";
-        var dataObj = {};
-        dataObj['hostName'] = $scope.hostName;
-        dataObj['pgUser'] = $scope.pgUser;
-        dataObj['pgPass'] = $scope.pgPass;
-        dataObj['pgPort'] = $scope.pgPort;
-        dataObj['pgQuery'] = $scope.pgQuery;
-        dataObj['pgTitle'] = $scope.pgTitle;
-        dataObj['pgDesc'] = $scope.pgDesc;
-        dataObj['pgDB'] = $scope.pgDB;
+
+        $scope.generatingReportSpinner=true;
 
 
         session.call('com.bigsql.plprofiler', [
             $scope.hostName, $scope.pgUser,
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
+            $scope.enableProfiler, $scope.enableProfiler,
             $scope.pgTitle, $scope.pgDesc
         ]);
 
+    };
 
+    $scope.queryProfiler = function (hostName, pgUser, pgPass, pgDB, pgPort) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/statementProfilingModal.html',
+            controller: 'statementProfilingController',
+        });
+        modalInstance.hostName = hostName;
+        modalInstance.pgUser = pgUser;
+        modalInstance.pgPass = pgPass;
+        modalInstance.pgDB = pgDB;
+        modalInstance.pgPort = pgPort;
+    };
 
+    $scope.globalProfiling = function (hostName, pgUser, pgPass, pgDB, pgPort) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/globalProfilingModal.html',
+            controller: 'globalProfilingController',
+        });
+        modalInstance.hostName = hostName;
+        modalInstance.pgUser = pgUser;
+        modalInstance.pgPass = pgPass;
+        modalInstance.pgDB = pgDB;
+        modalInstance.pgPort = pgPort;
     };
 
     //need to destroy all the subscriptions on a template before exiting it
