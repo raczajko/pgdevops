@@ -134,7 +134,6 @@ api.add_resource(bamUserInfo, '/api/userinfo')
 
 class getRecentReports(Resource):
     def get(self, report_type):
-        print report_type
         recent_reports_path = os.path.join(reports_path, report_type)
         jsonDict = {}
         jsonList = []
