@@ -70,6 +70,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             if (result.error == 0) {
                 $scope.report_file = result.report_file;
                 $scope.report_url = "/reports/" + result.report_file;
+                $window.open($scope.report_url, "_blank");
                 $scope.$apply();
             } else {
                 $scope.badgerError = result.msg;
