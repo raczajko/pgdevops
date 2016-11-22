@@ -103,14 +103,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 subscriptions.push(sub);
             });
 
-        session.call('com.bigsql.getRelNotes', [$stateParams.component, $scope.component.version]);
-
-        session.subscribe('com.bigsql.onGetRelNotes', function (argument) {
-            $scope.relnotes = $sce.trustAsHtml(argument[0]);
-        }).then(function (sub) {
-            subscriptions.push(sub);
-        });
-
         $scope.action = function (event) {
             if (event.target.tagName === "A") {
                 if(event.target.attributes.action.value == 'start'){

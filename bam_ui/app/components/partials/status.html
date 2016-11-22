@@ -26,7 +26,7 @@
                             </tr>
                         </thead>
                         <tbody id="serversTableBody">
-                            <tr ng-repeat="comp in comps" ng-if="comp.component != 'bam2'">
+                            <tr ng-repeat="comp in comps" ng-if="comp.component != 'devops'">
                                 <td class="col-md-3 col-xs-3">
                                     <div ng-if="comp.category != 1">
                                          <a ui-sref="components.detailsView({component:comp.component}) ">
@@ -50,8 +50,8 @@
                                     <a class="btn btn-default" ng-show="comp.state =='Not Initialized' " ng-disabled=" comp.showingSpinner != undefined">Initialize</a>
                                     <a class="btn btn-default" id="install" ng-show="comp.state =='Stopped'" ng-disabled=" comp.showingSpinner != undefined">Start</a>
                                     <div class="btn-group" uib-dropdown ng-show="comp.state =='Running'" >
-                                        <button id="split-button" type="button" class="btn btn-default" ng-disabled="{{comp.component=='bam2'}}">Action</button>
-                                        <button type="button" class="btn btn-default" uib-dropdown-toggle ng-disabled="{{comp.component=='bam2'}}">
+                                        <button id="split-button" type="button" class="btn btn-default" ng-disabled="{{comp.component=='devops'}}">Action</button>
+                                        <button type="button" class="btn btn-default" uib-dropdown-toggle ng-disabled="{{comp.component=='devops'}}">
                                             <span class="caret"></span>
                                             <span class="sr-only">Split button!</span>
                                         </button>

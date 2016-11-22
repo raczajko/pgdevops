@@ -328,6 +328,16 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             subscriptions.push(sub);
         });
 
+        $scope.openWhatsNew = function () {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/whatsNew.html',
+            controller: 'whatsNewController',
+            size: 'lg',
+        });
+        modalInstance.component = $stateParams.component;
+        modalInstance.version = $scope.component.version;
+    }
+
         $scope.logdirSelect = function () {
             $interval.cancel(infoRefreshRate);
         }

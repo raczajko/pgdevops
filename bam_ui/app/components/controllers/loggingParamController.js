@@ -1,14 +1,14 @@
 angular.module('bigSQL.components').controller('loggingParamController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', '$sce', function ($scope, $rootScope, $uibModalInstance, PubSubService, $sce) {
 
-	var session;
+    var session;
 
     $scope.showResult = false;
     $scope.showStatus =  true;
-    $scope.changedVales = [];
+    $scope.changedVales = {};
     var subscriptions = [];
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
-    	session = val;
+        session = val;
 
         session.call('com.bigsql.get_logging_parameters', [
             $scope.comp
@@ -16,7 +16,6 @@ angular.module('bigSQL.components').controller('loggingParamController', ['$scop
 
         session.subscribe("com.bigsql.logging_settings", function (data) {
             var result = data[0];
-            console.log(result.settings);
             $scope.data = result.settings;
             $scope.$apply();
             if(result.error==0){
@@ -36,12 +35,27 @@ angular.module('bigSQL.components').controller('loggingParamController', ['$scop
 
 
     $scope.changeSetting = function (value, setting) {
-        $scope.changedVales[value] = setting;
-        console.log($scope.changedVales);
+
+        if(value != undefined){
+            if($scope.changedVales[value]){
+                delete $scope.changedVales[value];                
+            }else{
+                $scope.changedVales[value] = setting;
+            }
+        }
     }
 
-    $scope.save = function (args) {
-        //
+    $scope.save = function (changedVales, comp) {
+        
+        if(Object.keys(changedVales).length > 0){
+            session.call('com.bigsql.change_log_params', [comp, changedVales] )
+        }
+
+        session.subscribe("com.bigsql.on_change_log_params", function (data) {
+            $uibModalInstance.dismiss('cancel');
+        }).then(function (sub) {
+            subscriptions.push(sub);
+        });
     }
 
     $scope.cancel = function () {

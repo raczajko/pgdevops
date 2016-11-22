@@ -148,7 +148,7 @@ class BadgerReport(object):
         cursor = conn.cursor()
         try:
             for k in logDict.keys():
-                alterQuery = "alter system set '%s'='%s';"%(k,logDict[k])
+                alterQuery = "alter system set %s='%s';"%(k,logDict[k])
                 cursor.execute(alterQuery)
             pgReloadQuery = "select pg_reload_conf();"
             cursor.execute(pgReloadQuery)

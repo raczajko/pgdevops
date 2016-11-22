@@ -208,6 +208,22 @@ class Reporting(object):
         yield self.session.publish('com.bigsql.logging_settings', result)
 
     @inlineCallbacks
+    def change_log_params(self,comp, logdict):
+        try:
+            result={}
+            from BadgerReport import BadgerReport
+            badger=BadgerReport()
+            change_status=badger.changeLoggingParams(comp, logdict)
+            result['error']=0
+            result['settings']=change_status
+            result['msg']=""
+        except Exception as e:
+            result={}
+            result['error']=1
+            result['msg']=str(e)
+        yield self.session.publish('com.bigsql.on_change_log_params', result)
+
+    @inlineCallbacks
     def switch_log_file(self,comp, fileName):
         try:
             result={}
