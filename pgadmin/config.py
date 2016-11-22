@@ -76,7 +76,7 @@ NODE_BLACKLIST = []
 # Data directory for storage of config settings etc. This shouldn't normally
 # need to be changed - it's here as various other settings depend on it.
 if os.name == 'nt':
-    DATA_DIR = os.path.join(os.getenv("PGC_HOME"), "data", "bam4")
+    DATA_DIR = os.path.join(os.getenv("PGC_HOME"), "data", "devops")
     #DATA_DIR = os.path.realpath(os.getenv('APPDATA') + "/bigsql")
 else:
     DATA_DIR = os.path.realpath(os.path.expanduser('~/.bigsql/'))
@@ -174,7 +174,7 @@ MAX_SESSION_IDLE_TIME = 60
 # config file, but generates an absolute path for use througout the app.
 SQLITE_PATH = os.path.join(
     DATA_DIR,
-    'pgadmin4.db'
+    'devops.db'
 )
 # SQLITE_TIMEOUT will define how long to wait before throwing the error -
 # OperationError due to database lock. On slower system, you may need to change
