@@ -17,7 +17,7 @@ angular.module('bigSQL.components').controller('switchLogfileController', ['$sco
     $scope.comp = $uibModalInstance.comp;
     $scope.currentLogfile = $uibModalInstance.currentLogfile;
 
-    $scope.switchFile = function (fileName, flag) {
+    $scope.switchFile = function (fileName) {
         session.call('com.bigsql.switch_log_file', [
             $scope.comp, fileName
         ]);

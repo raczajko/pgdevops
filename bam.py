@@ -139,6 +139,8 @@ class AppSession(ApplicationSession):
 
         self.register(reporting.get_log_settings, 'com.bigsql.get_logging_parameters')
 
+        self.register(reporting.change_log_params, 'com.bigsql.change_log_params')
+
         self.register(reporting.switch_log_file, 'com.bigsql.switch_log_file')
 
         ## PUBLISH and CALL every second .. forever

@@ -99,16 +99,18 @@ class pgcApiHosts(Resource):
 api.add_resource(pgcApiHosts, '/api/hosts')
 
 class pgcApiRelnotes(Resource):
-    def get(self, comp, version):
-        print comp, version
+    def get(self, comp, version=None):
         v=version
         import mistune, util, sys
-        rel_notes=unicode(str(util.get_relnotes (comp, v)),sys.getdefaultencoding(),errors='ignore').strip()
+        if version == None:
+            rel_notes = unicode(str(util.get_relnotes (comp)),sys.getdefaultencoding(),errors='ignore').strip()
+        else:
+            rel_notes=unicode(str(util.get_relnotes (comp, version)),sys.getdefaultencoding(),errors='ignore').strip()
         markdown_text=mistune.markdown(rel_notes)
         return markdown_text
 
 
-api.add_resource(pgcApiRelnotes, '/api/relnotes/<string:comp>/<string:version>')
+api.add_resource(pgcApiRelnotes, '/api/relnotes/<string:comp>','/api/relnotes/<string:comp>/<string:version>')
 
 
 class pgcApiHostCmd(Resource):

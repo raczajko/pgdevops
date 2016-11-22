@@ -36,7 +36,7 @@
 
                         </div>
                         <div id="serversTableTbody " ng-repeat="c in value ">
-                            <div ng-if="c.component != 'bam2'" class= "row component_box">
+                            <div ng-if="c.component != 'devops'" class= "row component_box">
                                 <div class="col-md-6 col-sm-6 col-xs-6">
                                     <div class="comp-name" ng-if="c.category !=  1 ">
                                         <a class="serversTableTbody-component--link" tooltip-append-to-body="true" uib-tooltip="{{ c.short_desc }}" ui-sref="components.detailsView({component:c.component}) " ng-bind = "(c.component)+'-'+(c.version)">    
@@ -72,8 +72,8 @@
                                             <span class="sr-only ">Split button!</span>
                                         </button>
                                         <ul uib-dropdown-menu role="menu " aria-labelledby="split-button ">
-                                            <li ng-if="c.updates > 0" role="menuitem "><a  ng-click="compAction( 'update', c.component) " href="" ng-hide="{{c.component=='bam2'}}">Update</a></li>
-                                            <li role="menuitem "><a ng-click="compAction( 'remove', c.component) " href="" ng-hide="{{c.component=='bam2'}}">Remove</a></li>
+                                            <li ng-if="c.updates > 0" role="menuitem "><a  ng-click="compAction( 'update', c.component) " href="" ng-hide="{{c.component=='devops'}}">Update</a></li>
+                                            <li role="menuitem "><a ng-click="compAction( 'remove', c.component) " href="" ng-hide="{{c.component=='devops'}}">Remove</a></li>
                                         </ul>
                                     </div>
                                     <div class="btn-group" uib-dropdown ng-if="c.updates > 0 && c.status != 'NotInitialized'">

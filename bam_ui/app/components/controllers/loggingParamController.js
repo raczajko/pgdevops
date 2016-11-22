@@ -1,14 +1,15 @@
 angular.module('bigSQL.components').controller('loggingParamController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', '$sce', function ($scope, $rootScope, $uibModalInstance, PubSubService, $sce) {
 
-	var session;
+    var session;
 
     $scope.showResult = false;
     $scope.showStatus =  true;
-    $scope.changedVales = [];
+    $scope.changedVales = {};
+    $scope.initialValues = {};
     var subscriptions = [];
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
-    	session = val;
+        session = val;
 
         session.call('com.bigsql.get_logging_parameters', [
             $scope.comp
@@ -16,8 +17,10 @@ angular.module('bigSQL.components').controller('loggingParamController', ['$scop
 
         session.subscribe("com.bigsql.logging_settings", function (data) {
             var result = data[0];
-            console.log(result.settings);
             $scope.data = result.settings;
+            for (var i = $scope.data.length - 1; i >= 0; i--) {
+                $scope.initialValues[$scope.data[i].name] = $scope.data[i].setting;
+            }
             $scope.$apply();
             if(result.error==0){
                 $scope.logging_params=result.settings;
@@ -36,12 +39,23 @@ angular.module('bigSQL.components').controller('loggingParamController', ['$scop
 
 
     $scope.changeSetting = function (value, setting) {
-        $scope.changedVales[value] = setting;
-        console.log($scope.changedVales);
+
+        if(value != undefined){
+            $scope.changedVales[value] = setting;
+        }
+        
     }
 
-    $scope.save = function (args) {
-        //
+    $scope.save = function (changedVales, comp) {
+        if(Object.keys(changedVales).length > 0 && $scope.initialValues != $scope.changedVales){
+            session.call('com.bigsql.change_log_params', [comp, changedVales] )
+        }
+
+        session.subscribe("com.bigsql.on_change_log_params", function (data) {
+            $uibModalInstance.dismiss('cancel');
+        }).then(function (sub) {
+            subscriptions.push(sub);
+        });
     }
 
     $scope.cancel = function () {

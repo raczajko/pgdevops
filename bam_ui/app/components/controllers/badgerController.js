@@ -116,9 +116,10 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         $scope.report_file = "";
         $scope.report_url = "";
         var selectedFiles = [];
+        $scope.badgerError = '';
         
         var selectLog = document.getElementsByName("selectLog");
-        for (var i=0;i<selectLog.length-1; i++){
+        for (var i=0;i<selectLog.length; i++){
             if(selectLog[i].checked){
                 selectedFiles.push(selectLog[i].value);
             }

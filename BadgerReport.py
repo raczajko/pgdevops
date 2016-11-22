@@ -120,7 +120,10 @@ class BadgerReport(object):
         conn.set_isolation_level(0)
         cursor = conn.cursor()
         try:
-            alterQuery = "alter system set log_filename='%s';"%(logFile)
+            if logFile:
+                alterQuery = "alter system set log_filename='%s';"%(logFile)
+            else:
+                alterQuery = "alter system reset log_filename;"
             cursor.execute(alterQuery)
             pgReloadQuery = "select pg_reload_conf();"
             cursor.execute(pgReloadQuery)
@@ -148,7 +151,7 @@ class BadgerReport(object):
         cursor = conn.cursor()
         try:
             for k in logDict.keys():
-                alterQuery = "alter system set '%s'='%s';"%(k,logDict[k])
+                alterQuery = "alter system set %s='%s';"%(k,logDict[k])
                 cursor.execute(alterQuery)
             pgReloadQuery = "select pg_reload_conf();"
             cursor.execute(pgReloadQuery)
