@@ -224,7 +224,7 @@ class Reporting(object):
         yield self.session.publish('com.bigsql.on_change_log_params', result)
 
     @inlineCallbacks
-    def switch_log_file(self,comp, fileName):
+    def switch_log_file(self,comp, fileName=None):
         try:
             result={}
             from BadgerReport import BadgerReport

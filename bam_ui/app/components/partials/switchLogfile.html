@@ -15,7 +15,7 @@
           <input type="text" class="form-control" ng-model="logFile" required />
         </div>
         <div class="col-sm-3">
-            <button type="submit" class="btn btn-primary" ng-disabled="logAction" ng-model="switchBtn" ng-click="switchFile(logFile,true)">Switch</button>
+            <button type="submit" class="btn btn-primary" ng-disabled="logAction" ng-model="switchBtn" ng-click="switchFile(logFile)">Switch</button>
         </div>
       </div>
       <div ng-if="logAction" style="text-align: center;"> 
@@ -24,6 +24,6 @@
     </form>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-success pull-left" ng-disabled="logAction" type="button" ng-click="switchFile('postgresql-%a.log',false)">Reset to default</button>
+    <button class="btn btn-success pull-left" ng-disabled="logAction" type="button" ng-click="switchFile('')">Reset to default</button>
     <button class="btn btn-warning" type="button" ng-disabled="switchBtn" ng-click="cancel()">Close</button> 
 </div>

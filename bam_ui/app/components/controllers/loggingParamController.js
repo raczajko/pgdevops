@@ -5,6 +5,7 @@ angular.module('bigSQL.components').controller('loggingParamController', ['$scop
     $scope.showResult = false;
     $scope.showStatus =  true;
     $scope.changedVales = {};
+    $scope.initialValues = {};
     var subscriptions = [];
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
@@ -17,6 +18,9 @@ angular.module('bigSQL.components').controller('loggingParamController', ['$scop
         session.subscribe("com.bigsql.logging_settings", function (data) {
             var result = data[0];
             $scope.data = result.settings;
+            for (var i = $scope.data.length - 1; i >= 0; i--) {
+                $scope.initialValues[$scope.data[i].name] = $scope.data[i].setting;
+            }
             $scope.$apply();
             if(result.error==0){
                 $scope.logging_params=result.settings;
@@ -37,17 +41,13 @@ angular.module('bigSQL.components').controller('loggingParamController', ['$scop
     $scope.changeSetting = function (value, setting) {
 
         if(value != undefined){
-            if($scope.changedVales[value]){
-                delete $scope.changedVales[value];                
-            }else{
-                $scope.changedVales[value] = setting;
-            }
+            $scope.changedVales[value] = setting;
         }
+        
     }
 
     $scope.save = function (changedVales, comp) {
-        
-        if(Object.keys(changedVales).length > 0){
+        if(Object.keys(changedVales).length > 0 && $scope.initialValues != $scope.changedVales){
             session.call('com.bigsql.change_log_params', [comp, changedVales] )
         }
 
