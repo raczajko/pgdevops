@@ -6671,6 +6671,15 @@ table.settings-table-pgc-info > tbody > tr > td {
 .required-plprofiler-form {
   color: red;
     position: absolute;
+    right: -20px;
+    top: 0px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.required-pgbadger-form {
+  color: red;
+    position: absolute;
     right: 0px;
     top: 0px;
     font-size: 18px;
