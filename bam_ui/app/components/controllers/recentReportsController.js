@@ -6,6 +6,7 @@ angular.module('bigSQL.components').controller('recentReportsController', ['$sco
     $scope.showStatus =  true;
     $scope.autoSelect = false;
     $scope.logAction = false;
+    $scope.showError = false;
     $scope.logFile = 'pgbadger-%Y%m%d_%H.log';
     var subscriptions = [];
     var sessionPromise = PubSubService.getSession();
@@ -16,7 +17,11 @@ angular.module('bigSQL.components').controller('recentReportsController', ['$sco
         var infoData = bamAjaxCall.getCmdData('getrecentreports/' + reportsType);
         infoData.then(function (data) {
             var files_list = data.data;
-            $scope.files_list=files_list;
+            if(files_list.length == 0){
+                $scope.showError = true;
+            }else{
+                $scope.files_list=files_list;                
+            }
         });
 
 

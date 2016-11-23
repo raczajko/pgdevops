@@ -48,6 +48,10 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 
         session.subscribe("com.bigsql.onCheckLogdir", function (components) {
             $scope.components = JSON.parse(components[0]);
+            if($scope.components.length == 1){
+                $scope.selectComp = $scope.components[0].component;
+                $scope.onSelectChange($scope.selectComp);
+            }
             $scope.$apply();
         }).then(function (subscription) {
             subscriptions.push(subscription);

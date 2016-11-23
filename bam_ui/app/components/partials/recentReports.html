@@ -3,7 +3,7 @@
 </div>
 <div class="modal-body">
     <div class="form-group">
-        <div>
+        <div ng-if="!showError">
             <span><label>Report</label></span>
             <span class="pull-right"><label>Created on</label></span>
             <div ng-repeat="c in files_list">
@@ -13,6 +13,9 @@
                 </label>&nbsp;&nbsp;<a target="_blank" href="{{ c.file_link }}"><i class="fa fa-external-link"></i></a>
                 <span class="pull-right">{{ c.mtime }}</span>
             </div>
+        </div>
+        <div ng-if="showError">
+            You haven't generate any reports yet.
         </div>
     </div>
 </div>
