@@ -22,6 +22,7 @@ from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 import config
 from flask_restful import reqparse
 from datetime import datetime
+import hashlib
 
 parser = reqparse.RequestParser()
 #parser.add_argument('data')
@@ -128,6 +129,9 @@ class bamUserInfo(Resource):
         if current_user.is_authenticated:
             userInfo['email'] = current_user.email
             userInfo['isAdmin'] = current_user.has_role("Administrator")
+            email_md5=hashlib.md5( current_user.email.lower() ).hexdigest()
+            gravtar_url="https://www.gravatar.com/avatar/"+ email_md5 + "?d=retro"
+            userInfo['gravatarImage']=gravtar_url
         return userInfo
 
 
