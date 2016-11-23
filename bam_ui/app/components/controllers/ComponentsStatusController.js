@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsStatusController', ['$scope', 'PubSubService', 'MachineInfo', '$interval', '$rootScope', '$window', 'bamAjaxCall', function ($scope, PubSubService, MachineInfo, $interval, $rootScope, $window, bamAjaxCall) {
+angular.module('bigSQL.components').controller('ComponentsStatusController', ['$scope', 'PubSubService', 'MachineInfo', '$interval', '$rootScope', '$window', 'bamAjaxCall','$uibModal', function ($scope, PubSubService, MachineInfo, $interval, $rootScope, $window, bamAjaxCall, $uibModal) {
 
     var subscriptions = [];
     $scope.comps = {};
@@ -26,6 +26,12 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
         });
     }
 
+    function compAction(action, comp) {
+        var sessionKey = "com.bigsql." + action;
+        session.call(sessionKey, [comp]).then(function (argument) {
+            callInfo();
+        })
+    }
 
     callStatus();
     callInfo();
@@ -173,7 +179,10 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
 
         session.call("com.bigsql.initial_graphs");
 
-
+        $rootScope.$on('initComp', function (event, comp) {
+            currentComponent = getCurrentComponent(comp);
+            currentComponent.showingSpinner = true;
+        });
 
         session.subscribe('com.bigsql.onInit', function (data) {
             var res = JSON.parse(data[0])[0];
@@ -186,7 +195,9 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
                 $scope.alerts.push({
                     msg: res['msg']
                 });
-            currentComponent.showingSpinner = false;
+                currentComponent = getCurrentComponent(res['component']);
+                compAction('start', res['component']);
+            // currentComponent.showingSpinner = false;
             }
         }).then(function (sub) {
             subscriptions.push(sub);
@@ -198,14 +209,21 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
 
     });
 
+    $scope.openInitPopup = function (comp) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/pgInitialize.html',
+                controller: 'pgInitializeController',
+            });
+            modalInstance.component = comp;
+        };
 
     $scope.action = function (event) {
-        var showingSpinnerEvents = ['Initialize', 'Start', 'Stop'];
+        var showingSpinnerEvents = [ 'Start', 'Stop'];
         if(showingSpinnerEvents.indexOf(event.target.innerText) >= 0 ){
             currentComponent = getCurrentComponent(event.currentTarget.getAttribute('value'));
             currentComponent.showingSpinner = true;
         }
-        if (event.target.tagName == "A") {
+        if (event.target.tagName == "A" && event.target.attributes.action != undefined) {
             session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value')]);
         }
         ;
