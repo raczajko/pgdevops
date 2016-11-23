@@ -67,10 +67,10 @@ class BadgerReport(object):
             options = options + " -p " + log_prefix
         if title:
             options = options + " -T '" + title + "'"
-
-        if title:
             file_title=re.sub('[^A-Za-z0-9]+', '-', title)
             report_file = file_title + "-" +file_name + ".html"
+        if title is None:
+            options = options + " -T '" + time_stamp + "'"
 
         options = options + " -o " + os.path.join(badger_reports_path, report_file)
 
