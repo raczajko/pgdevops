@@ -1,6 +1,8 @@
-# bam4 : BigSQL Manager IV with PgAdmin Server #
+# DEVOPS : BigSQL DevOps #
 
-BAM4 is a multi-user & multi-server version of BAM nicely integrated with PgAdmin4
+DEVOPS is a multi-user & multi-server PostgreSQL dev-ops web console that features integration with pgAdmin4.  
+
+It's a WSGI Python27 Flask application that runs cross-platform (Windows, OSX & Linux) in Crossbar. 
 
 
 ### Setup python env
@@ -8,7 +10,7 @@ BAM4 is a multi-user & multi-server version of BAM nicely integrated with PgAdmi
 ```
 #!bash
 
-mkvirtualenv bam4-env
+mkvirtualenv devops-env
 pip install -r requirements.txt
 
 ```
