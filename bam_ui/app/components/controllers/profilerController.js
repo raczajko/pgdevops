@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location) {
+angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall) {
 
     $scope.alerts = [];
 
@@ -11,19 +11,30 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     $scope.retry = false;
     $scope.disableShowInstalled = false;
 
-
-
-
-
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
         sessPromise.then(function (sessParam) {
             session = sessParam;
         });
     });
+
+    var statusData = bamAjaxCall.getCmdData('status');
+    statusData.then(function(info) {
+        if(info.length > 0 && localStorage.length == 0){
+            var infoData = bamAjaxCall.getCmdData('read/env/' + info[0].component)
+            infoData.then(function(info) {
+                $scope.hostName = 'localhost';
+                $scope.pgUser = info.PGUSER;
+                $scope.pgDB = info.PGDATABASE;
+                $scope.pgPort = info.PGPORT; 
+            });
+        } 
+    });
+
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
+
         session.subscribe("com.bigsql.profilerReports", function (data) {
             $scope.generatingReportSpinner=false;
             var result=data[0];

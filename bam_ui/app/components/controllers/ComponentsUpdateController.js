@@ -124,8 +124,9 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                     var popListComp = selUpdatedComp.pop();
                     $scope.compAction('update', popListComp.component);
                 } else {
-                    session.call("com.bigsql.getBamConfig");
+                    // session.call("com.bigsql.getBamConfig");
                     $uibModalInstance.dismiss('cancel');
+                    $rootScope.$emit('updatesCheck');
                 }
             }
             $scope.$apply();

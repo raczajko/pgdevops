@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentBamUpdateController', ['$rootScope', '$scope', '$stateParams', 'PubSubService', '$state', '$uibModalInstance', 'MachineInfo', 'UpdateBamService','$window', function ($rootScope, $scope, $stateParams, PubSubService, $state, $uibModalInstance, MachineInfo, UpdateBamService,$window) {
+angular.module('bigSQL.components').controller('ComponentDevopsUpdateController', ['$rootScope', '$scope', '$stateParams', 'PubSubService', '$state', '$uibModalInstance', 'MachineInfo', 'UpdateBamService','$window', 'bamAjaxCall', function ($rootScope, $scope, $stateParams, PubSubService, $state, $uibModalInstance, MachineInfo, UpdateBamService,$window, bamAjaxCall) {
 
     var subscriptions = [];
     var session;
@@ -6,18 +6,18 @@ angular.module('bigSQL.components').controller('ComponentBamUpdateController', [
     sessionPromise.then(function (val) {
         session = val;
     });
+
+    var infoData = bamAjaxCall.getCmdData('info/devops');
+        infoData.then(function(info) {
+            var data = info[0];
+            $scope.updateVersion = data.current_version;
+            $scope.currentVersion = data.version;
+        });
+
     function updateComponents(val) {
 
         session = val;
         $scope.component = {};
-        var bamUpdatePromise = UpdateBamService.getBamUpdateInfo();
-        bamUpdatePromise.then(function (info) {
-            $scope.updateVersion = info.current_version;
-            $scope.currentVersion = info.version;
-        }, function () {
-            throw new Error('failed to subscribe to topic updateComponents', err);
-        });
-
 
         $scope.redirect = function () {
             $uibModalInstance.dismiss('cancel');
@@ -27,7 +27,7 @@ angular.module('bigSQL.components').controller('ComponentBamUpdateController', [
 
         $scope.action = function (event) {
 
-            session.call('com.bigsql.update', ['bam2']).then(
+            session.call('com.bigsql.update', ['devops']).then(
                 function (sub) {
                     $scope.bamUpdateIntiated = true;
                     $scope.updatingStatus = true;

@@ -1,10 +1,14 @@
 <section class="content-header">
     <server-info-details title="Components"></server-info-details>
     <div class="components-update-button-wrapper">
-        <input type="checkbox" ng-model="isList" ng-click="setTest()">&nbsp; Show test components</input>
+        <label>
+            <input type="checkbox" ng-model="isList" ng-click="setTest()">&nbsp; Show test components</input>
+        </label>
         &nbsp;
         &nbsp;
-        <input type="checkbox" ng-model="showInstalled" ng-disabled="disableShowInstalled" ng-click="installedComps()"></input> Show installed only
+        <label>
+            <input type="checkbox" ng-model="showInstalled" ng-disabled="disableShowInstalled" ng-click="installedComps()"></input> Show installed only
+        </label>
         &nbsp;
         &nbsp;
         <button ng-click="open('manual')" class="btn btn-default" type="button" ng-if="updateSettings == 'manual'"> Check for updates now</button>         

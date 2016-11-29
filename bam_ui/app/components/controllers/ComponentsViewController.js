@@ -298,7 +298,8 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.disableShowInstalled = false;
                 if (data.state == "update") {
                     currentComponent.updates -= 1;
-                    getList();
+                    // getList();
+                    $rootScope.$emit('updatesCheck');
                     // session.call('com.bigsql.list');
                 };
 

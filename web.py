@@ -187,6 +187,43 @@ class GenerateReports(Resource):
 
 api.add_resource(GenerateReports, '/api/generate_profiler_reports')
 
+class RemoveReports(Resource):
+    def post(self,report_type):
+        from ProfilerReport import ProfilerReport
+        try:
+            recent_reports_path = os.path.join(reports_path, report_type)
+            for fileName in request.json:
+                os.remove(os.path.join(recent_reports_path, fileName))
+            result = {}
+            result['msg'] = 'success'
+            result['error'] = 0
+        except Exception as e:
+            result = {}
+            result['error'] = 1
+            result['msg'] = str(e)
+            print e
+        return result
+
+
+api.add_resource(RemoveReports, '/api/remove_reports/<string:report_type>')
+
+class GetEnvFile(Resource):
+    def get(self, comp):
+        import util
+        try:
+            result = dict()
+            util.read_env_file(comp)
+            result['PGUSER'] = os.environ['PGUSER']
+            result['PGDATABASE'] = os.environ['PGDATABASE']
+            result['PGPORT'] = os.environ['PGPORT']
+        except:
+            result = {}
+            result['error'] = 1
+            result['msg'] = str(e)
+        return result
+
+api.add_resource(GetEnvFile, '/api/read/env/<string:comp>')
+
 
 @application.route('/list')
 def list():

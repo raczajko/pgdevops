@@ -8,7 +8,7 @@
             <span class="pull-right"><label>Created on</label></span>
             <div ng-repeat="c in files_list">
                 <label>
-                    <!--<input type="checkbox" name="report_file" value="{{ c.file_link }}">-->
+                    <input type="checkbox" name="report_file" ng-model="c.selected" value="{{ c.file_link }}">
                     <span>&nbsp;{{ c.file }}</span>
                 </label>&nbsp;&nbsp;<a target="_blank" href="{{ c.file_link }}"><i class="fa fa-external-link"></i></a>
                 <span class="pull-right">{{ c.mtime }}</span>
@@ -20,5 +20,7 @@
     </div>
 </div>
 <div class="modal-footer">
+    <button class="btn btn-default pull-left" ng-click="removeFiles(files_list, true)" ng-if="!showError">Delete all</button>&nbsp;
+    <button class="btn btn-default pull-left" ng-click="removeFiles(files_list, false)" ng-if="!showError">Delete</button>
     <button class="btn btn-warning" type="button" ng-disabled="switchBtn" ng-click="cancel()">Close</button>
 </div>

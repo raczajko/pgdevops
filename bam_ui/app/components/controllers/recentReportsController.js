@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('recentReportsController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', 'bamAjaxCall', '$sce', function ($scope, $rootScope, $uibModalInstance, PubSubService, bamAjaxCall, $sce) {
+angular.module('bigSQL.components').controller('recentReportsController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', 'bamAjaxCall', '$sce', '$http', '$window', function ($scope, $rootScope, $uibModalInstance, PubSubService, bamAjaxCall, $sce, $http, $window) {
 
 	var session;
 
@@ -30,6 +30,26 @@ angular.module('bigSQL.components').controller('recentReportsController', ['$sco
 
     $scope.reportsType = $uibModalInstance.reportsType;
 
+    $scope.removeFiles = function (files, selectAll) {
+        var deleteFiles = [];
+        if(selectAll){
+            for (var i = files.length - 1; i >= 0; i--) {
+                deleteFiles.push(files[i].file);
+            }
+        }else{
+            for (var i = files.length - 1; i >= 0; i--) {
+                if(files[i].selected){
+                    deleteFiles.push(files[i].file);
+                }
+            }            
+        }
+        var removeFiles = $http.post($window.location.origin + '/api/remove_reports/profiler', deleteFiles);
+        removeFiles.then(function (data) {
+            if(data.data.error == 0){
+                $uibModalInstance.dismiss('cancel');
+            }
+        });   
+    }
 
     $scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');

@@ -67,7 +67,7 @@
                 <form>
                     <div class="col-md-12">
                         <div class="form-group">
-                            <input type="text" ng-model="pgTitile"  class="form-control" placeholder="Badger Title">
+                            <input type="text" ng-model="pgTitle"  class="form-control" placeholder="Badger Title">
 
                         </div>
                     </div>
@@ -81,7 +81,7 @@
                             <div class="text-right">
                                 <button type="submit" class="btn btn-primary"
                                         ng-disabled="generatingReportSpinner"
-                                        ng-click="generateReport()">Generate
+                                        ng-click="openGenerateModal()">Generate
                                 </button>
                             </div>
                         </div>
@@ -91,18 +91,27 @@
         </div>
     </div>
     <div class="col-md-6 col-sm-6 col-xs-12">
-        <div ng-if="generatingReportSpinner" style="text-align: center;">
-            <div>
-                <i class="fa fa-cog fa-spin fa-5x"></i>
+        <div class="box" ng-if="showReports">
+            <div class="box-header">
+                <span><label>Report</label></span>
+                <span class="pull-right"><label>Created on</label></span>                
             </div>
-            <strong> Generating Reports....</strong>
+            <div class="box-body">
+                <div class="col-md-12 recent-report-list">
+                    <div ng-repeat="c in files_list">
+                        <label>
+                        <input type="checkbox" name="" ng-model="c.selected"/>
+                            <span>&nbsp;{{ c.file }}</span>
+                        </label>&nbsp;&nbsp;<a target="_blank" href="{{ c.file_link }}"><i class="fa fa-external-link"></i></a>
+                        <span class="pull-right">{{ c.mtime }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="box-footer">
+            <button class="btn btn-default pull-left" ng-click="deleteReports(files_list, true)">Delete all</button>
+            <button class="btn btn-default pull-right" ng-click="deleteReports(files_list, false)">Delete</button>
+            </div>
         </div>
-        <span ng-if="report_file"><a href="/reports/{{ report_file }}" target="_blank">Click Here to See the Report in New Tab</a>
-        </span>
-        <button class="btn btn-default pull-right" ng-click="openRecentReports()">Recent Reports</button>
-        <span ng-if="badgerError">
-            {{badgerError}}
-        </span>
     </div>
  </div>
 </section>

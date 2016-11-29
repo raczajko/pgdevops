@@ -6778,3 +6778,8 @@ table.settings-table-pgc-info > tbody > tr > td {
 .userinfo-btn > .dropdown-menu > li > a:hover {
     color: #333;
 }
+
+.recent-report-list{
+  height: 380px; 
+  overflow: auto;
+}

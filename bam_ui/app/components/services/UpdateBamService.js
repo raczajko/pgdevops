@@ -11,7 +11,7 @@ angular.module('bigSQL.components').factory('UpdateBamService', function (PubSub
             var subscription;
             var sessionPromise = PubSubService.getSession();
             sessionPromise.then(function (session) {
-                session.call('com.bigsql.infoComponent', ['bam2']);
+                session.call('com.bigsql.infoComponent', ['devops']);
 
                 session.subscribe("com.bigsql.onInfoComponent", function (components) {
                     var components = JSON.parse(components[0][0]);

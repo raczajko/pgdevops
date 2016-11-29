@@ -1,6 +1,6 @@
-angular.module('bigSQL.menus').component('bamUpdate', {
+angular.module('bigSQL.menus').component('devOpsUpdate', {
     bindings: {},
-    controller: function ($rootScope, $scope, PubSubService, MachineInfo, $uibModal, UpdateComponentsService, UpdateBamService) {
+    controller: function ($rootScope, $scope, PubSubService, MachineInfo, $uibModal, UpdateComponentsService, UpdateBamService, bamAjaxCall) {
 
         var subscriptions = [];
 
@@ -8,36 +8,22 @@ angular.module('bigSQL.menus').component('bamUpdate', {
 
         /**Below function is for displaying update badger on every page.
          **/
-        function updateComponents(sessParam) {
-            var bamUpdatePromise = UpdateBamService.getBamUpdateInfo();
-            bamUpdatePromise.then(function (info) {
-                if ( info.component == "bam2" && info.is_current == 0 && info.current_version ) {
-                    $scope.bamUpdate = true;
-                } else {
-                    $scope.bamUpdate = false;
-                }
-            }, function () {
-                throw new Error('failed to subscribe to topic updateComponents', err);
-            })
-
-
-        }
-
-
-        $rootScope.$on('topMenuEvent', function () {
-            var sessPromise = PubSubService.getSession();
-            sessPromise.then(function (sessionParam) {
-                updateComponents(sessionParam);
-            });
+        var infoData = bamAjaxCall.getCmdData('info/devops');
+        infoData.then(function(info) {
+            var data = info[0];
+            if ( data.component == "devops" && data.is_current == 0 && data.current_version ) {
+                $scope.bamUpdate = true;
+            } else {
+                $scope.bamUpdate = false;
+            }
         });
-
 
         $scope.open = function () {
 
             var modalInstance = $uibModal.open({
-                templateUrl: '../app/components/partials/bamUpdate.html',
+                templateUrl: '../app/components/partials/devOpsUpdate.html',
                 windowClass: 'bam-update-modal modal',
-                controller: 'ComponentBamUpdateController',
+                controller: 'ComponentDevopsUpdateController',
             });
         };
 

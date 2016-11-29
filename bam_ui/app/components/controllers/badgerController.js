@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('badgerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location) {
+angular.module('bigSQL.components').controller('badgerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall) {
 
     $scope.alerts = [];
     $scope.checkedFirst = false;
@@ -40,6 +40,23 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         
     };
 
+    function getReports(argument) {
+        
+        var infoData = bamAjaxCall.getCmdData('getrecentreports/badger');
+        infoData.then(function (data) {
+            var files_list = data.data;
+            if(files_list.length == 0){
+                $scope.showReports = false;
+            }else{
+                $scope.files_list=files_list; 
+                $scope.showReports = true;               
+            }
+        });
+
+    }
+
+    getReports();
+
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
@@ -68,23 +85,6 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             $scope.apply();
 
         });
-        session.subscribe("com.bigsql.badgerReports", function (data) {
-            var result = data[0];
-            $scope.generatingReportSpinner = false;
-            if (result.error == 0) {
-                $scope.report_file = result.report_file;
-                $scope.report_url = "/reports/" + result.report_file;
-                $window.open($scope.report_url, "_blank");
-                $scope.$apply();
-            } else {
-                $scope.badgerError = result.msg;
-                $scope.generatingReportSpinner = false;
-            }
-            $scope.$apply();
-
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
-        });
     });
 
     $scope.openLoggingParam = function (argument) {
@@ -107,43 +107,59 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     };
 
 
-    $scope.openRecentReports = function (argument) {
-        var modalInstance = $uibModal.open({
-            templateUrl: '../app/components/partials/recentReports.html',
-            controller: 'recentReportsController',
-            windowClass: 'switch-modal-window'
-        });
-        modalInstance.reportsType="badger";
-    };
-
-    $scope.generateReport = function () {
+    $scope.openGenerateModal = function (argument) {
         $scope.report_file = "";
         $scope.report_url = "";
         var selectedFiles = [];
-        $scope.badgerError = '';
-        
         var selectLog = document.getElementsByName("selectLog");
         for (var i=0;i<selectLog.length; i++){
             if(selectLog[i].checked){
                 selectedFiles.push(selectLog[i].value);
             }
         }
-        
-        if (selectedFiles.length > 0) {
-            $scope.generatingReportSpinner = true;
-            session.call('com.bigsql.pgbadger', [
-                selectedFiles, $scope.pgDB,
-                $scope.pgJobs, $scope.pgLogPrefix,
-                $scope.pgTitile
-            ]);
-        }
-        
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/generateBadgerReport.html',
+            controller: 'generateBadgerReportController',
+            windowClass: 'switch-modal-window',
+            backdrop  : 'static',
+            keyboard  : false
+        });
+        modalInstance.selectedFiles = selectedFiles;
+        modalInstance.pgTitle = $scope.pgTitle;
+        modalInstance.pgDB = $scope.pgDB;
+        modalInstance.pgJobs = $scope.pgJobs;
+        modalInstance.pgLogPrefix = $scope.pgLogPrefix;
     };
+
+    $scope.deleteReports = function (files, selectAll) {
+        var deleteFiles = [];
+        if(selectAll){
+            for (var i = files.length - 1; i >= 0; i--) {
+                deleteFiles.push(files[i].file);
+            }
+        }else{
+            for (var i = files.length - 1; i >= 0; i--) {
+                if(files[i].selected){
+                    deleteFiles.push(files[i].file);
+                }
+            }            
+        }
+        var removeFiles = $http.post($window.location.origin + '/api/remove_reports/badger', deleteFiles);
+        removeFiles.then(function (data) {
+            if(data.data.error == 0){
+                getReports();
+            }
+        });
+    }
 
     $rootScope.$on('switchLogfile', function (argument, fileName, comp) {
         $scope.autoSelectLogFile = fileName;
         session.call('com.bigsql.get_log_files_list', [comp]);
     });
+
+    $rootScope.$on('updateReports', function (argument) {
+        getReports();
+    })
 
     $rootScope.$on('switchLogfileError', function (argument, error) {
         $scope.badgerError = error.status;
