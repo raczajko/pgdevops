@@ -5,8 +5,17 @@
 from werkzeug.wsgi import DispatcherMiddleware
 from flask import Flask
 
-import os, sys
+
+import os, sys, platform
+
 sys.path.append(os.path.join(os.path.dirname(__file__), 'pgadmin'))
+
+this_uname = str(platform.system())
+
+if this_uname == "Darwin":
+    sys.path.append(os.path.join(os.path.dirname(__file__), 'lib', 'osx'))
+elif this_uname == "Linux":
+    sys.path.append(os.path.join(os.path.dirname(__file__), 'lib', 'linux'))
 
 from pgAdmin4 import app as backend
 from web import application as frontend
