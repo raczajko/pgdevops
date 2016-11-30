@@ -22,7 +22,7 @@ linecache2==1.0.0
 MarkupSafe==0.23
 passlib==1.6.2
 pbr==1.9.1
-psycopg2==2.6.2
+#psycopg2==2.6.2
 pycrypto==2.6.1
 pyrsistent==0.11.13
 python-dateutil==2.5.0
@@ -40,10 +40,10 @@ Werkzeug==0.9.6
 WTForms==2.0.2
 sqlparse==0.1.19
 ordereddict; python_version < '2.7'
-
 flask-triangle
 psutil
 crossbar
 flask_restful
 pygtail
 paramiko
+fabric
