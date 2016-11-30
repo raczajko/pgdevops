@@ -216,7 +216,7 @@ class GetEnvFile(Resource):
             result['PGUSER'] = os.environ['PGUSER']
             result['PGDATABASE'] = os.environ['PGDATABASE']
             result['PGPORT'] = os.environ['PGPORT']
-        except:
+        except Exception as e:
             result = {}
             result['error'] = 1
             result['msg'] = str(e)
