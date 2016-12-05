@@ -124,7 +124,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
 
     $scope.loadHostsInfo = function (idx) {
-        
+
             var remote_host = $scope.hostsList[idx].host;
             var info_url = 'hostcmd/info/' + remote_host;
 
@@ -172,18 +172,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $http.get($window.location.origin + '/api/hosts')
             .success(function (data) {
                 var localhost = [{"host": "localhost"}];
-                if (data[0] == undefined || data[0].status == "error") {
-                    var all_hosts = localhost;
 
-                } else {
-                    var all_hosts = localhost.concat(data);
-                }
 
                 //all_hosts.
-                $scope.hostsList = all_hosts;
+                $scope.hostsList = data;
                 $scope.nothingInstalled = false;
                 $scope.loading = false;
-                hostsInfo();
+                //hostsInfo();
             })
             .error(function (error) {
                 $timeout(wait, 5000);
