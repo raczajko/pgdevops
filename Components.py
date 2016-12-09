@@ -203,8 +203,9 @@ class ComponentAction(object):
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         for line in iter(pgcProcess.stdout.readline, ''):
             ln = (line).rstrip('\n')
-            self.session.publish('com.bigsql.onRegisterHost', ln)
-            yield sleep(0.001)   
+            if type(eval(ln)) is list:
+                self.session.publish('com.bigsql.onRegisterHost', ln)
+            yield sleep(0.001)  
 
     @inlineCallbacks
     def deleteHost(self, hostName):
