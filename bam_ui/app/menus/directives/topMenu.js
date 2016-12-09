@@ -1,16 +1,18 @@
 angular.module('bigSQL.menus').component('topMenu', {
     bindings: {},
-    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, bamAjaxCall) {
+    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, bamAjaxCall, $cookies) {
 
         /**Below function is for displaying update badger on every page.
          **/
 
-        $scope.currentHost = '';
+        $scope.hideUpdates = false;
+        $scope.currentHost = $cookies.get('remote_host');
         function callList(argument) {
             argument = typeof argument !== 'undefined' ? argument : "";
+
             $scope.currentHost = argument;
             // var listData = bamAjaxCall.getCmdData('list');
-            if (argument==""){
+            if (argument=="" || argument == 'localhost'){
                 var listData = bamAjaxCall.getCmdData('list');
             } else{
                 var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
@@ -23,11 +25,15 @@ angular.module('bigSQL.menus').component('topMenu', {
                         Checkupdates += $scope.components[i].updates;
                     }
                 }
-                $scope.updates = Checkupdates;
+                if(!$scope.hideUpdates){
+                    $scope.updates = Checkupdates;
+                }else{
+                    $scope.updates = '';
+                }
             });
         }
         
-        callList($rootScope.remote_host);
+        // callList($scope.currentHost);
 
         $rootScope.$on('refreshData', function (argument, host) {
             callList(host);
@@ -35,6 +41,16 @@ angular.module('bigSQL.menus').component('topMenu', {
 
         $rootScope.$on('updatesCheck', function (argument, host) {
             callList(host);
+        });
+
+        $rootScope.$on('hideUpdates', function (argument, host) {
+            $scope.hideUpdates = true;
+            callList($scope.currentHost);
+        });
+
+        $rootScope.$on('showUpdates', function (argument) {
+            $scope.hideUpdates = false; 
+            callList($scope.currentHost);   
         });
 
         var infoData = bamAjaxCall.getCmdData('info');

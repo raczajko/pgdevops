@@ -26,9 +26,9 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	    	$scope.tryToConnect = true;
 	    	
 	    	session.subscribe("com.bigsql.onRegisterHost", function (data) {
-	    		$scope.registerResponse = data[0][0];
+	    		$scope.registerResponse = data[0];
 	    		$scope.tryToConnect = false;
-	    		if(data[0][0] == 'PGC HOME exists \n'){
+	    		if(data[0] == 'PGC HOME exists '){
 	    			$rootScope.$emit('addedHost'); 
 	    			$uibModalInstance.dismiss('cancel');
 	    		}

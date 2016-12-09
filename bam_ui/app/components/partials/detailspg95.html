@@ -7,7 +7,11 @@
 <!-- Main content -->
 <section class="content">
     <div class="row">
-        <div class="col-md-3 col-sm-4 col-xs-12">
+        <div ng-if="loading" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+            <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+            <span><h3>Loading...</h3></span>
+        </div>
+        <div class="col-md-3 col-sm-4 col-xs-12" ng-if="!loading">
             <!-- Profile Image -->
             <div class="box box-primary">
                 <div class="box-body box-profile">
@@ -102,7 +106,7 @@
                 <!-- /.box-body -->
             </div>
             <!-- /.box -->
-            <div ng-show="component.category == 1" class="box box-primary">
+            <div ng-show="component.category == 1" class="box box-primary" ng-if="!loading">
                 <div class="box-header with-border">
                     <h3 class="box-title">Project Details</h3>
                     <div class="box-tools pull-right">
@@ -132,7 +136,7 @@
             </div>
         </div>
 
-        <div ng-show="component.category == 1" class="col-md-9 col-sm-8 col-xs-12">
+        <div ng-show="component.category == 1" class="col-md-9 col-sm-8 col-xs-12" ng-if="!loading">
 
        
             <div class="nav-tabs-custom" id="comp-details-tabs-wrapper" ng-controller="graphsTabController">

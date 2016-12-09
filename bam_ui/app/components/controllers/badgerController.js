@@ -9,6 +9,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $scope.generatingReportSpinner = false;
     $scope.autoSelectLogFile;
     $scope.selectedCurrentLogfile;
+    $scope.refreshMsg= false;
 
     var session;
     $scope.updateSettings;
@@ -77,9 +78,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         session.subscribe("com.bigsql.log_files_list", function (data) {
             $scope.logfiles = JSON.parse(data[0]);
             if($scope.autoSelectLogFile){
-
                 $scope.checkedFirst = true;
-
             }
             $scope.disableLog = false;
             $scope.apply();
@@ -150,6 +149,14 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                 getReports();
             }
         });
+    }
+
+    $scope.refreshLogfiles = function (comp) {
+        $scope.refreshMsg = true;
+        $timeout(function() {
+            session.call('com.bigsql.get_log_files_list', [comp]);
+            $scope.refreshMsg = false;
+        }, 1000);
     }
 
     $rootScope.$on('switchLogfile', function (argument, fileName, comp) {

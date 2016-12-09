@@ -28,15 +28,15 @@
             <uib-accordion close-others="true">
                 <uib-accordion-group ng-repeat="host in hostsList" is-open="host.open">
                     <uib-accordion-heading>
-                            <span ng-click="loadHost($index,false)"> {{ host.host }}
+                            <span ng-click="loadHost($index,false)"> &nbsp; {{ host.host }}
+                                &nbsp; &nbsp; &nbsp;
+                                {{host.hostInfo.os}} {{ host.hostInfo.mem }} GB, {{ host.hostInfo.cores }} x {{host.hostInfo.cpu}}
                                 <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !host.open, 'fa fa-minus': host.open}"></i>
                             </span>
                             <div class="pull-right" style="margin-top: -10px">
-                                <span ng-click="loadHost($index,false)" ng-if="!host.open && host.hostInfo">
-                                    {{host.hostInfo.os}} {{ host.hostInfo.mem }} GB, {{ host.hostInfo.cores }} x {{host.hostInfo.cpu}}
-                                </span>&nbsp;
+                                &nbsp;
                                 <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); loadHost($index,true)" class="btn btn-default" ng-if="host.open">Refresh</button>&nbsp;
-                                <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)" class="btn btn-default" ng-if="host.open" class="ng-binding" href="" >Update Manager</button>&nbsp;
+                                <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)" class="btn btn-default" ng-if="host.open" class="ng-binding" href="" >Components</button>&nbsp;
                                 <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); showTop($index)" class="btn btn-default" ng-if="host.open" class="ng-binding" href="">Top</button>&nbsp;
                                 <div class="btn-group" uib-dropdown >
                                     <button id="split-button " type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); open($index)" class="btn btn-default " ng-disabled="host.host=='localhost'" >Edit</button>
@@ -59,14 +59,32 @@
 
                         <p><strong>PGC : </strong>{{ host.hostInfo.version }} {{ host.hostInfo.home }}</p>
 
-                        <p><strong>User & Host : </strong> {{ host.hostInfo.user }} {{ host.hostInfo.host }}</p>
+                        <!-- <p><strong>User & Host : </strong> {{ host.hostInfo.user }} {{ host.hostInfo.host }}</p>
 
-                        <p><strong>Hardware : </strong>{{ host.hostInfo.cores }}GB, {{ host.hostInfo.cores }}
+                        <p><strong>Hardware : </strong>{{ host.hostInfo.mem }}GB, {{ host.hostInfo.cores }}
                             x {{ host.hostInfo.cpu }}</p>
 
-                        <p><strong>Platform & OS : </strong>{{ host.hostInfo.platform }} {{ host.hostInfo.os }}</p>
-
-                        <p><strong>Repo URL : </strong>{{ host.hostInfo.repo }}</p>
+                        <p><strong>Platform & OS : </strong>{{ host.hostInfo.platform }} {{ host.hostInfo.os }}</p> -->
+                        <p>
+                        <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('CPU Load')">
+                            <div class="host-perf-viz">
+                                    <h5>CPU Load</h5>
+                                <nvd3 options="cpuChart" data="cpuData" showLegend="false"></nvd3>
+                            </div>
+                        </div>
+                        <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('Disk IO')">
+                            <div class="host-perf-viz">
+                                    <h5>Disk IO</h5>
+                                <nvd3 options="ioChart" data="diskIO" showLegend="false"></nvd3>
+                            </div>
+                        </div>
+                        <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('Network IO')">
+                            <div class="host-perf-viz">
+                                    <h5>Network IO</h5>
+                                <nvd3 options="networkChart" data="NetworkIO" showLegend="false"></nvd3>
+                            </div>
+                        </div>
+                        </p>
                     </div>
 
                     <div ng-if="!host.comps">
@@ -99,12 +117,12 @@
                                     <tr ng-repeat="comp in host.comps" ng-if="comp.component != 'devops'">
                                         <td class="col-md-3 col-xs-3">
                                             <div ng-if="comp.category != 1">
-                                                <a ui-sref="components.detailsView({component:comp.component}) ">
+                                                <a ui-sref="components.detailsView({component:comp.component}) " ng-click="changeHost(host.host)">
                                                     {{ comp.component }}
                                                 </a>
                                             </div>
                                             <div ng-if="comp.category == 1">
-                                                <a ui-sref="components.detailspg95({component:comp.component}) ">
+                                                <a ui-sref="components.detailspg95({component:comp.component}) " ng-click="changeHost(host.host)">
                                                     {{ comp.component }}
                                                 </a>
                                             </div>
@@ -122,7 +140,7 @@
                                                     class='fa fa-spinner fa-2x  fa-pulse'></i></span>
                                         </td>
                                         <td class="col-md-3 col-xs-3" value="{{ comp.component }}" ng-click="action( $event, host.host)">
-                                            <a class="btn btn-default" ng-show="comp.state =='Not Initialized' "
+                                            <a class="btn btn-default" ng-show="comp.state =='Not Initialized' " ng-click="openInitPopup(comp.component)"
                                                ng-disabled=" comp.showingSpinner != undefined">Initialize</a>
                                             <a class="btn btn-default" id="install" ng-show="comp.state =='Stopped'"
                                                ng-disabled=" comp.showingSpinner != undefined">Start</a>

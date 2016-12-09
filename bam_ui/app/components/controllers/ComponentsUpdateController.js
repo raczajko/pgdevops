@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', '$rootScope', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall, $rootScope) {
+angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', '$rootScope', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall, $rootScope, $cookies) {
 
     var session;
     var subscriptions = [];
@@ -6,16 +6,20 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
 
     var updateSelectedList = [];
     var currentComponent = {};
-    var checkUpdates;   
+    var checkUpdates;
+    $scope.currentHost = $cookies.get('remote_host');
 
     function getList(argument) {
         argument = typeof argument !== 'undefined' ? argument : "";
-        if (argument==""){
+        $scope.currentHost = argument;
+        if (argument=="localhost" || argument == ''){
             var listData = bamAjaxCall.getCmdData('list');
         } else{
             var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
         }
         listData.then(function(data) {
+            $scope.loadingSpinner = false;
+            $scope.body = true;
             $scope.noUpdates = true;
             $scope.components = data;
             $scope.hideLatestInstalled = true;
@@ -54,6 +58,18 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         });
     };
 
+    var hostsList = bamAjaxCall.getCmdData('hosts');
+
+    hostsList.then(function (data) {
+        if (data.length > 0 && data[0].status == "error") {
+            $scope.hosts = [];
+        } else {
+            $scope.hosts = data;
+        }
+    });
+
+    $scope.selecthost = $cookies.get('remote_host');
+
     if (UpdateComponentsService.get()) {
         $scope.selectedComp = UpdateComponentsService.get();
     }
@@ -71,7 +87,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         session = val;
         if (!checkUpdates) {
             $scope.body = true;
-            getList($rootScope.remote_host);
+            getList($scope.currentHost);
         } else {
             $scope.loadingSpinner = true;
             $scope.body = false;
@@ -79,7 +95,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 function (sub) {
                     $scope.loadingSpinner = false;
                     $scope.body = true;
-                    getList($rootScope.remote_host);
+                    getList($scope.currentHost);
                 });
         }
 
@@ -120,9 +136,9 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 delete currentComponent.installationRunning;
                 delete currentComponent.installation;
                 angular.element(document.querySelector('#' + currentComponent.component)).remove();
+                selUpdatedComp.splice(0,1);
                 if (selUpdatedComp.length > 0) {
-                    var popListComp = selUpdatedComp.pop();
-                    $scope.compAction('update', popListComp.component);
+                    $scope.compAction('update', selUpdatedComp[0].component);
                 } else {
                     // session.call("com.bigsql.getBamConfig");
                     $uibModalInstance.dismiss('cancel');
@@ -136,7 +152,17 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
 
         $scope.compAction = function (action, compName) {
             var sessionKey = "com.bigsql." + action;
-            session.call(sessionKey, [compName]);
+            if($scope.currentHost == 'localhost'){
+                session.call(sessionKey, [compName]);
+            }else {
+                currentComponent = getCurrentComponent(compName);
+                currentComponent.init = true;
+                var event_url = action + '/' + compName + '/' + $scope.currentHost ;
+                var eventData = bamAjaxCall.getCmdData(event_url);
+                eventData.then(function(data) {
+                    getList($scope.currentHost);
+                });
+            }
         };
 
         var selUpdatedComp = [];
@@ -148,18 +174,26 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 }
             }
             if (selUpdatedComp.length > 1) {
-                var popComp = selUpdatedComp.pop().component;
+                var popComp = selUpdatedComp[0].component;
                 $scope.compAction('update', popComp);
             } else {
-                session.call('com.bigsql.update', [selUpdatedComp[0].component]).then(function (sub) {
-                    $uibModalInstance.dismiss('cancel');
-                }, function (err) {
-                    throw new Error('failed to update comp', err);
-                });
+                $scope.compAction('update', selUpdatedComp[0].component);
+                // session.call('com.bigsql.update', [selUpdatedComp[0].component]).then(function (sub) {
+                //     $uibModalInstance.dismiss('cancel');
+                // }, function (err) {
+                //     throw new Error('failed to update comp', err);
+                // });
             }
+            console.log(selUpdatedComp.length);
         };
 
     });
+
+    $scope.hostChange = function (host) {
+        $scope.loadingSpinner = true;
+        $scope.body = false;
+        getList(host);
+    };
 
     $scope.cancelInstallation = function (action) {
         session.call("com.bigsql.cancelInstall");

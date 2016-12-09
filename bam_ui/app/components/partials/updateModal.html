@@ -1,6 +1,15 @@
 <div class="updateModal">
 <div class="modal-header">
-    <h2 class="modal-title" id="updateModalLabel">Updates</h2>
+    <form class="form-inline">
+      <div class="form-group">
+        <h2 class="col-sm-6 modal-title control-label">Updates</h2>
+        <div class="col-sm-6">
+            <select class="form-control" ng-change="hostChange(selecthost)" ng-model="selecthost">
+                <option ng-repeat="host in hosts" value="{{ host.host }}">{{ host.host }}</option>
+            </select>
+        </div>
+      </div>
+      </form>
 </div>
 <div ng-click="cancel()" class="close-modal" data-dismiss="modal" aria-hidden="true">
     <div class="lr">

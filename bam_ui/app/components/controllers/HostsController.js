@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', '$interval', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, $interval) {
+angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', '$interval', '$cookies', '$cookieStore', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, $interval, $cookies, $cookieStore) {
 
     $scope.alerts = [];
 
@@ -17,6 +17,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.loading = true;
     $scope.retry = false;
     $scope.disableShowInstalled = false;
+    var previousTopData = "";
+    $scope.openedHostIndex = '';
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -33,6 +35,94 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
 
     var host_info ;
+
+    $scope.cpuChart = {
+        chart: {
+            type: 'lineChart',
+            height: 150,
+            margin: {
+                top: 20,
+                right: 40,
+                bottom: 40,
+                left: 55
+            },
+            x: function (d) {
+                return d.x;
+            },
+            y: function (d) {
+                return d.y;
+            },
+            noData: "Loading...",
+            interactiveLayer: {
+                tooltip: {
+                    headerFormatter: function (d) {
+                        var point = new Date(d);
+                        return d3.time.format('%Y/%m/%d %H:%M:%S')(point);
+                    },
+                    gravity : 'n',
+                },
+            },
+            xAxis: {
+                xScale: d3.time.scale(),
+                tickFormat: function (d) {
+                    var point = new Date(d);
+                    return d3.time.format('%H:%M:%S')(point)
+                },
+            },
+            yAxis: {
+                tickFormat: function (d) {
+                    return d3.format(',')(d);
+                }
+            },
+            showLegend: false,
+            forceY: [0, 100],
+            useInteractiveGuideline: true,
+            duration: 500
+        }
+    };
+    $scope.ioChart = angular.copy($scope.cpuChart);
+    $scope.networkChart = angular.copy($scope.cpuChart);
+    $scope.cpuChart.chart.type = "stackedAreaChart";
+    $scope.cpuChart.chart.showControls = false;
+
+    $scope.cpuData = [{
+        values: [],
+        key: 'CPU System %',
+        color: '#006994',
+        area: true
+    }, {
+        values: [],
+        key: 'CPU User %',
+        color: '#FF5733',
+        area: true
+    }
+    ];
+
+    $scope.diskIO = [{
+        values: [],
+        key: 'Read Bytes (kB)',
+        color: '#FF5733'
+    }, {
+        values: [],
+        key: 'Write Bytes (kB)',
+        color: '#006994'
+    }];
+
+    $scope.NetworkIO = [{
+        values: [],
+        key: 'Sent Bytes (kB)',
+        color: '#FF5733'
+    }, {
+        values: [],
+        key: 'Received Bytes (kB)',
+        color: '#006994'
+    }];
+
+    var sessionPromise = PubSubService.getSession();
+
+    sessionPromise.then(function (val) {
+        session = val;
+    });
 
     var getCurrentComponent = function (name, host) {
         for (var i = 0; i < $scope.hostsList.length; i++) {
@@ -83,7 +173,71 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             });
     }
 
+    $scope.getGraphValues = function (remote_host) {
+        if (remote_host == "localhost" || remote_host == "") {
+            var infoData = bamAjaxCall.getCmdData('top');
+        } else {
+            var infoData = bamAjaxCall.getCmdData('hostcmd/top/' + remote_host);
+        }
+
+        infoData.then(function (data) {
+
+            if (previousTopData != "") {
+                var diff = data[0].current_timestamp - previousTopData.current_timestamp;
+                var kb_read_diff = data[0].kb_read - previousTopData.kb_read;
+                var kb_write_diff = data[0].kb_write - previousTopData.kb_write;
+                var kb_sent_diff = data[0].kb_sent - previousTopData.kb_sent;
+                var kb_recv_diff = data[0].kb_recv - previousTopData.kb_recv;
+
+                var read_bytes = Math.round(kb_read_diff / diff);
+
+                var write_bytes = Math.round(kb_write_diff / diff);
+
+                var kb_sent = Math.round(kb_sent_diff / diff);
+                var kb_recv = Math.round(kb_recv_diff / diff);
+
+                if ($scope.cpuData[0].values.length > 20) {
+                    $scope.cpuData[0].values.shift();
+                    $scope.cpuData[1].values.shift();
+                    $scope.diskIO[0].values.shift();
+                    $scope.diskIO[1].values.shift();
+                    $scope.NetworkIO[0].values.shift();
+                    $scope.NetworkIO[1].values.shift();
+                }
+
+                var timeVal = new Date(data[0].current_timestamp*1000) ;
+                var offset = new Date().getTimezoneOffset();
+                timeVal.setMinutes(timeVal.getMinutes() - offset);
+                if (read_bytes > 0 ) {
+                    $scope.cpuData[0].values.push({x: timeVal, y: parseFloat(data[0].cpu_system)});
+                    $scope.cpuData[1].values.push({x: timeVal, y: parseFloat(data[0].cpu_user)});
+
+                    $scope.diskIO[0].values.push({x: timeVal, y: read_bytes});
+                    $scope.diskIO[1].values.push({x: timeVal, y: write_bytes});
+
+                    $scope.NetworkIO[0].values.push({x: timeVal, y: kb_sent});
+                    $scope.NetworkIO[1].values.push({x: timeVal, y: kb_recv});
+                }
+            }
+            previousTopData = data[0];
+        });
+
+    }
+
+    function clear() {
+        $scope.cpuData[0].values.splice(0, $scope.cpuData[0].values.length);
+        $scope.cpuData[1].values.splice(0, $scope.cpuData[1].values.length);
+        
+        $scope.NetworkIO[0].values.splice(0, $scope.NetworkIO[0].values.length);
+        $scope.NetworkIO[1].values.splice(0, $scope.NetworkIO[1].values.length);
+        
+        $scope.diskIO[0].values.splice(0, $scope.diskIO[0].values.length);
+        $scope.diskIO[1].values.splice(0, $scope.diskIO[1].values.length);
+    }
+
     $scope.loadHost = function (idx, refresh) {
+        $scope.openedHostIndex = idx;
+        previousTopData = '';
         $interval.cancel(stopStatusCall);
         $scope.hostsList[idx].comps = '';
         var isOpened = false;
@@ -99,10 +253,14 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         if (refresh) {
             isOpened = refresh;
         }
+        if($scope.cpuData[0].values.length > 0){
+            clear();
+        }
 
         if (isOpened) {
             var remote_host = $scope.hostsList[idx].host;
             var status_url = 'hostcmd/status/' + remote_host;
+
 
             if (remote_host == "localhost") {
                 status_url = 'status';
@@ -118,25 +276,11 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                         $scope.hostsList[idx].showMsg = false;
                     }
                 });
-
-            stopStatusCall = $interval(function (){$scope.updateComps(idx)}, 5000);
+            stopStatusCall = $interval(function (){
+                $scope.updateComps(idx)
+                $scope.getGraphValues(remote_host);
+            }, 5000);
         }
-    };
-
-    $scope.loadHostsInfo = function (idx) {
-
-            var remote_host = $scope.hostsList[idx].host;
-            var info_url = 'hostcmd/info/' + remote_host;
-
-            if (remote_host == "localhost") {
-                info_url = 'info';
-                remote_host = "";
-            }
-
-            var infoData = bamAjaxCall.getCmdData(info_url);
-            infoData.then(function(data) {
-                $scope.hostsList[idx].hostInfo = data[0];
-            });
     };
 
     $scope.UpdateManager = function (idx) {
@@ -144,16 +288,32 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         if (remote_host == "localhost") {
             remote_host = "";
         }
-
+        $cookies.put('remote_host', remote_host);
         $rootScope.remote_host = remote_host;
         $location.path('/components/view');
 
 
     };
 
+    $scope.openInitPopup = function (comp) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/pgInitialize.html',
+            controller: 'pgInitializeController',
+        });
+        modalInstance.component = comp;
+    };
+
+    $scope.changeHost = function (host) {
+        $cookies.put('remote_host', host);
+    }
+
     $scope.deleteHost = function (idx) {
+        $interval.cancel(stopStatusCall);
         var hostToDelete = $scope.hostsList[idx].host;
-        session.call('com.bigsql.deleteHost', [$scope.hostsList[idx].host]);
+        if($cookies.get('remote_host') == hostToDelete){
+            $cookies.put('remote_host', 'localhost');
+        }
+        session.call('com.bigsql.deleteHost', [hostToDelete]);
         session.subscribe("com.bigsql.onDeleteHost", function (data) {
             getList();
         }).then(function (subscription) {
@@ -171,14 +331,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     function getList(argument) {
         $http.get($window.location.origin + '/api/hosts')
             .success(function (data) {
-                var localhost = [{"host": "localhost"}];
-
-
+                $rootScope.$emit('hideUpdates');
                 //all_hosts.
                 $scope.hostsList = data;
                 $scope.nothingInstalled = false;
                 $scope.loading = false;
-                //hostsInfo();
+                // hostsInfo();
             })
             .error(function (error) {
                 $timeout(wait, 5000);
@@ -194,13 +352,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         getList();
     });
 
-    $rootScope.$on('sessionCreated', function () {
-        var sessPromise = PubSubService.getSession();
-        sessPromise.then(function (sessParam) {
-            session = sessParam;
-        });
-    });
-
     $scope.action = function ( event, host) {
         var showingSpinnerEvents = ['Initialize', 'Start', 'Stop'];
         if(showingSpinnerEvents.indexOf(event.target.innerText) >= 0 ){
@@ -209,7 +360,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
         if (event.target.tagName == "A") {
             if(host == 'localhost'){
-                session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value')]);
+                if(event.target.innerText.toLowerCase() != 'initialize'){
+                    session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value')]); 
+                }
             }else{
                 var cmd = event.target.innerText.toLowerCase();
                 if( cmd == 'initialize'){
@@ -276,8 +429,44 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         });
     };
 
+    $scope.openGraphModal = function (chartName) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/hostGraphModal.html',
+            windowClass: 'modal',
+            size: 'lg',
+            controller: 'hostGraphModalController',
+            scope : $scope
+        });
+        if(chartName == 'CPU Load'){
+            modalInstance.data = $scope.cpuData;
+            modalInstance.chart = angular.copy($scope.cpuChart);
+        } else if(chartName == 'Disk IO'){
+            modalInstance.data = $scope.diskIO;
+            modalInstance.chart = angular.copy($scope.ioChart);
+        } else {
+            modalInstance.data = $scope.NetworkIO;
+            modalInstance.chart = angular.copy($scope.networkChart);
+        }
+        modalInstance.chartName = chartName;
+        modalInstance.hostName = $scope.hostsList[$scope.openedHostIndex].host;
+    }
+
+    // Handle page visibility change events
+        function handleVisibilityChange() {
+            if (document.visibilityState == "hidden") {
+                $interval.cancel(stopStatusCall);
+                clear();
+            } else if (document.visibilityState == "visible") {
+                clear();
+                $scope.loadHost($scope.openedHostIndex, true);
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange, false);
+
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
+        $interval.cancel(stopStatusCall);
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i])
         }

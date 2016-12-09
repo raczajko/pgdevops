@@ -2,7 +2,7 @@
 "use strict";
 
 angular.module('bigSQL.common', []);
-angular.module('bigSQL.components', ['bigSQL.common', 'nvd3', 'ui.grid', 'ui.grid.expandable']);
+angular.module('bigSQL.components', ['bigSQL.common', 'nvd3', 'ui.grid', 'ui.grid.expandable', 'ngCookies']);
 angular.module('bigSQL.menus', ['bigSQL.common']);
 angular.module('bigSQL', ['templates', 'angular.filter', 'ui.router', 'ui.bootstrap', 'bigSQL.common', 'bigSQL.menus', 'bigSQL.components']);
 

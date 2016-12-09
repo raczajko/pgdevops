@@ -200,9 +200,11 @@ class ComponentAction(object):
         Method to Register remote host
         """
         pgcCmd = PGC_HOME + os.sep + "pgc register HOST " + hostName + ':' + pgcDir + ':' + userName + ':' +password
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
-        pgcData = pgcProcess.communicate()
-        yield self.session.publish('com.bigsql.onRegisterHost', pgcData)
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        for line in iter(pgcProcess.stdout.readline, ''):
+            ln = (line).rstrip('\n')
+            self.session.publish('com.bigsql.onRegisterHost', ln)
+            yield sleep(0.001)   
 
     @inlineCallbacks
     def deleteHost(self, hostName):

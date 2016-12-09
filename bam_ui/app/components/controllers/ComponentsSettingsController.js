@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall) {
+angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies) {
     $scope.alerts = [];
 
     var session;
@@ -81,9 +81,8 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
     function getInfo(argument) {
         argument = typeof argument !== 'undefined' ? argument : "";
-        debugger
         $scope.currentHost = argument;
-        if (argument==""){
+        if (argument=="" || argument == 'localhost'){
             var infoData = bamAjaxCall.getCmdData('info');
         } else{
             var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
@@ -104,7 +103,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     });
     };
 
-    getInfo();
+    getInfo($cookies.get('remote_host'));
 
     $scope.refreshData=function(hostArgument){
         $scope.currentHost = hostArgument;

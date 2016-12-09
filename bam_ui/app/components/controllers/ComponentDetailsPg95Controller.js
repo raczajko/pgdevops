@@ -1,8 +1,9 @@
-angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'bamAjaxCall', '$uibModal', '$sce', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal, $sce) {
+angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'bamAjaxCall', '$uibModal', '$sce', '$cookies', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal, $sce, $cookies) {
 
     $scope.alerts = [];
     var subscriptions = [];
     var session = PubSubService.getSession();
+    $scope.loading = true;
 
     var infoRefreshRate;
     var dependentCount = 0;
@@ -31,7 +32,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     }
 
     function callInfo(argument) {
-        var remote_host = $rootScope.remote_host;
+        var remote_host = $cookies.get('remote_host');
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
         $scope.currentHost = remote_host;
         if (remote_host == "" || remote_host == "localhost") {
@@ -40,9 +41,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component + "/" + remote_host);
         }
 
-
         //var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
         infoData.then(function (data) {
+            $scope.loading = false;
             if (data[0]['autostart'] == "on") {
                 data[0]['autostart'] = true;
             } else {
@@ -72,7 +73,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     };
 
     function callStatus(argument) {
-        var remote_host = $rootScope.remote_host;
+        var remote_host = $cookies.get('remote_host');
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
 
         if (remote_host == "" || remote_host == "localhost") {
@@ -401,6 +402,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     });
 
     $rootScope.$on('refreshData', function (argument, host) {
+        $scope.loading = true;
         callInfo(host);
     });
 
@@ -417,7 +419,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             } else if (event.target.attributes.action.value == 'restart') {
                 $scope.component.spinner = 'Restarting..';
             }
-            if($scope.currentHost == ''){
+            if($scope.currentHost == '' || $scope.currentHost == 'localhost'){
                 var sessionKey = "com.bigsql." + event.target.attributes.action.value;
                 session.call(sessionKey, [$scope.component.component]);
             }else {

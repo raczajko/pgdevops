@@ -41,9 +41,15 @@
                     </div>
                     <div class="col-md-12">
                         <div class="form-group">
-                            Select log files
+                            <div class="pull-left"> Select log files &nbsp;<span class="required-symbol">*</span> </div>
+                            <div class="pull-right" ng-click="refreshLogfiles(selectComp)"> <i class="fa fa-refresh fa-fw"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
                             <div class="pg-badger-select-log" ng-model="selectLog">
-                                <div ng-repeat="c in logfiles">
+                                <div ng-if="refreshMsg"><i class="fa fa-refresh fa-spin fa-fw"></i>Refreshing..</div>
+                                <div ng-repeat="c in logfiles" ng-if="!refreshMsg">
                                     <label>
                                         <input type="checkbox" name="selectLog" ng-if="$index == 0" ng-checked="true" value="{{c.log_file}}">
                                         <input type="checkbox" name="selectLog" ng-if="$index != 0" ng-checked="logFileChecked()" value="{{c.log_file}}">
@@ -52,7 +58,6 @@
                                     <span class="pull-right">{{c.file_size}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{c.mtime}}</span>
                                 </div>
                             </div>
-                            <span class="required-pgbadger-form">*</span>
                         </div>
                     </div>
                     <div class="text-left col-md-12">

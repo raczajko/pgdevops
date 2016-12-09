@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsViewController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', 'bamAjaxCall', '$http', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, bamAjaxCall, $http) {
+angular.module('bigSQL.components').controller('ComponentsViewController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', 'bamAjaxCall', '$http', '$cookies', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, bamAjaxCall, $http, $cookies) {
 
     $scope.alerts = [];
 
@@ -45,13 +45,14 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     function getList(argument) {
         argument = typeof argument !== 'undefined' ? argument : "";
         $scope.currentHost = argument;
-        if (argument==""){
+        if (argument=="" || argument == 'localhost'){
             var listData = bamAjaxCall.getCmdData('list');
         } else{
             var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
         }
 
         listData.then(function (data) {
+            $rootScope.$emit('showUpdates');
             if(data == "error"){
                 $timeout(wait, 5000);
                 $scope.loading = false;
@@ -105,8 +106,8 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         //     $scope.retry = true;
         // });
     };
-
-    getList($rootScope.remote_host);
+    
+    getList($cookies.get('remote_host'));
 
     $rootScope.$on('refreshData', function (argument, host) {
         $scope.loading = true;
@@ -374,7 +375,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             currentComponent = getCurrentComponent(compName);
             currentComponent.removing = true;
         }
-        if($scope.currentHost == ''){
+        if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
             session.call(sessionKey, [compName]);
         }else {
             currentComponent = getCurrentComponent(compName);

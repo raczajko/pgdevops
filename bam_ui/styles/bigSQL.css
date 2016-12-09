@@ -6783,3 +6783,18 @@ table.settings-table-pgc-info > tbody > tr > td {
   height: 380px; 
   overflow: auto;
 }
+
+.host-perf-viz {
+  border: 1px solid #ddd;
+  padding: 3px 8px;
+  margin-right: 2px;
+}
+
+.host-perf-viz h5 {
+  text-align: center;
+}
+
+.nvd3.nv-noData {
+font-size: 15px !important;
+color: #666;
+text-align: center;}

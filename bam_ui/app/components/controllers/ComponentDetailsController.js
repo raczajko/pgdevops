@@ -1,9 +1,10 @@
-angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'bamAjaxCall', '$sce', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, bamAjaxCall, $sce) {
+angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'bamAjaxCall', '$sce', '$cookies', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, bamAjaxCall, $sce, $cookies) {
 
     var subscriptions = [];
     var session;
-
+    $scope.loading = true;
     var dependentCount = 0;
+    $scope.currentHost;
 
     var componentStatus = 0;
 
@@ -40,9 +41,10 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     };
 
     function callInfo(argument) {
-        var remote_host = $rootScope.remote_host;
+        var remote_host = $cookies.get('remote_host');
+        $scope.currentHost = remote_host;
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
-
+        $scope.currentHost = remote_host;
         if (remote_host == "" || remote_host == "localhost") {
             var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
         } else {
@@ -51,6 +53,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
 
         //var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
         infoData.then(function(data) {
+            $scope.loading = false;
             if(window.location.href.split('/').pop(-1) == data[0].component){
                 $scope.component = data[0];
                 var relnotes = bamAjaxCall.getCmdData('relnotes/' + $stateParams.component + '/' +$scope.component.version)
@@ -104,7 +107,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
             });
 
         $scope.action = function (event) {
-            if (event.target.tagName === "A") {
+            if (event.target.tagName === "A" && event.target.attributes.action != undefined) {
                 if(event.target.attributes.action.value == 'start'){
                     $scope.component.spinner = 'Starting..';
                 }else if(event.target.attributes.action.value == 'stop'){
@@ -112,8 +115,21 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 }else if(event.target.attributes.action.value == 'remove'){
                     $scope.component.spinner = 'Removing..';
                 }
-                var sessionKey = "com.bigsql." + event.target.attributes.action.value;
-                session.call(sessionKey, [$scope.component.component]);
+                // var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+                // session.call(sessionKey, [$scope.component.component]);
+                if($scope.currentHost == 'localhost'){
+                    var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+                    session.call(sessionKey, [$scope.component.component]);
+                }else {
+                    if(event.target.attributes.action.value == 'install'){
+                        $scope.component.spinner = 'installing..';
+                    }
+                    var event_url = event.target.attributes.action.value + '/' + $scope.component.component + '/' + $scope.currentHost ;
+                    var eventData = bamAjaxCall.getCmdData(event_url);
+                    eventData.then(function(data) {
+                        callInfo($scope.currentHost);
+                    });
+                }
             }
         };
 
@@ -167,6 +183,11 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
             subscriptions.push(sub);
         });
 
+    });
+
+    $rootScope.$on('refreshData', function (argument, host) {
+        $scope.loading = true;
+        callInfo(host);
     });
 
     $scope.cancelInstallation = function (action) {
