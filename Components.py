@@ -199,7 +199,7 @@ class ComponentAction(object):
         """
         Method to Register remote host
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc register HOST " + hostName + ':' + pgcDir + ':' + userName + ':' +password
+        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + ':' + pgcDir + ':' + userName + ':' +password
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         for line in iter(pgcProcess.stdout.readline, ''):
             ln = (line).rstrip('\n')
@@ -211,7 +211,7 @@ class ComponentAction(object):
         """
         Method to unregister remote host
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc unregister HOST " + hostName
+        pgcCmd = PGC_HOME + os.sep + "pgc unregister --json HOST " + hostName
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
         pgcData = pgcProcess.communicate()
         yield self.session.publish('com.bigsql.onDeleteHost', pgcData)
