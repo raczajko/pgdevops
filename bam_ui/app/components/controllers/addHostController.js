@@ -17,6 +17,7 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 		$scope.hostName = $scope.editHost.host;
 		$scope.pgcDir = $scope.editHost.pgc_home;
 		$scope.userName = $scope.editHost.user;
+		$scope.connectionName = $scope.editHost.name;
 	}
 
     sessPromise.then(function (sessParam) {
@@ -24,7 +25,7 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
         $scope.addHost = function () {
         	$scope.connectionError = false;
         	$scope.registerResponse = '';
-	        session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.password]);
+	        session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.password, $scope.connectionName]);
 	    	$scope.tryToConnect = true;
 	    	
 	    	session.subscribe("com.bigsql.onRegisterHost", function (data) {

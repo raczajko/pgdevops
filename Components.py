@@ -195,11 +195,11 @@ class ComponentAction(object):
             yield sleep(0.001)
 
     @inlineCallbacks
-    def registerHost(self, hostName, pgcDir, userName, password):
+    def registerHost(self, hostName, pgcDir, userName, password, name):
         """
         Method to Register remote host
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + ':' + pgcDir + ':' + userName + ':' +password
+        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + " " + pgcDir + " " + userName + " " +password + " '" + name + "'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         for line in iter(pgcProcess.stdout.readline, ''):
             ln = (line).rstrip('\n')
@@ -212,11 +212,41 @@ class ComponentAction(object):
         """
         Method to unregister remote host
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc unregister --json HOST " + hostName
+        pgcCmd = PGC_HOME + os.sep + "pgc unregister --json HOST  '" + hostName + "'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
         pgcData = pgcProcess.communicate()
         yield self.session.publish('com.bigsql.onDeleteHost', pgcData)
 
+    @inlineCallbacks
+    def registerServerGroup(self, name, hosts):
+        """
+        Method to register server group
+        """
+        pgcCmd = PGC_HOME + os.sep + "pgc register GROUP --json '" + name +"'"
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
+        pgcData = pgcProcess.communicate()
+        yield self.session.publish('com.bigsql.onRegisterServerGroup', pgcData)
+        import util
+        util.map_group_hosts( name, hosts, p_group_id=0, isJson=False, printMsg=False)
+
+    def updateServerGroup(self, name, hosts, group_id):
+        """
+        Method to register server group
+        """
+        import util
+        print group_id
+        util.register_group( name, p_parent_group=0, p_group_id = group_id, isJson=False, printMsg=False)
+        util.map_group_hosts( name, hosts, p_group_id = group_id, isJson=False, printMsg=False)
+
+    @inlineCallbacks
+    def deleteGroup(self, group):
+        """
+        Method to unregister remote host
+        """
+        pgcCmd = PGC_HOME + os.sep + "pgc unregister --json GROUP '" + group + "'"
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
+        pgcData = pgcProcess.communicate()
+        yield self.session.publish('com.bigsql.onDeleteGroup', pgcData)     
 
 class Components(ComponentAction):
     """

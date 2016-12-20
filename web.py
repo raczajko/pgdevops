@@ -93,11 +93,19 @@ api.add_resource(pgcApiCom, '/api/<string:cmd>/<string:comp>', '/api/<string:cmd
 
 class pgcApiHosts(Resource):
     def get(self):
-        data = pgc.get_data('register --list')
+        data = pgc.get_data('register HOST --list --json')
         return data
 
 
 api.add_resource(pgcApiHosts, '/api/hosts')
+
+class pgcApiGroups(Resource):
+    def get(self):
+        data = pgc.get_data('register GROUP --list --json')
+        return data
+
+
+api.add_resource(pgcApiGroups, '/api/groups')
 
 class pgcApiRelnotes(Resource):
     def get(self, comp, version=None):

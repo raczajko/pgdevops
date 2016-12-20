@@ -153,8 +153,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         return pgComps.reverse().concat(nonPgComps);
     }
 
-    $scope.updateComps =  function (idx) {
-        var remote_host = $scope.hostsList[idx].host;
+    $scope.updateComps =  function (p_idx, idx) {
+        var remote_host = $scope.groupsList[p_idx].hosts[idx].host;
         var status_url = 'hostcmd/status/' + remote_host;
 
         if (remote_host == "localhost") {
@@ -164,11 +164,11 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
         var statusData = bamAjaxCall.getCmdData(status_url);
         statusData.then(function(data) {
-                $scope.hostsList[idx].comps = data;
-                if ($scope.hostsList[idx].comps.length == 0) {
-                    $scope.hostsList[idx].showMsg = true;
+                $scope.groupsList[p_idx].hosts[idx].comps = data;
+                if ($scope.groupsList[p_idx].hosts[idx].comps.length == 0) {
+                    $scope.groupsList[p_idx].hosts[idx].showMsg = true;
                 } else {
-                    $scope.hostsList[idx].showMsg = false;
+                    $scope.groupsList[p_idx].hosts[idx].showMsg = false;
                 }
             });
     }
@@ -225,6 +225,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
 
     function clear() {
+        previousTopData = '';
         $scope.cpuData[0].values.splice(0, $scope.cpuData[0].values.length);
         $scope.cpuData[1].values.splice(0, $scope.cpuData[1].values.length);
         
@@ -235,7 +236,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $scope.diskIO[1].values.splice(0, $scope.diskIO[1].values.length);
     }
 
-    $scope.loadHost = function (idx, refresh) {
+    $scope.loadHost = function (p_idx, idx, refresh) {
         $scope.openedHostIndex = idx;
         previousTopData = '';
         $interval.cancel(stopStatusCall);
@@ -269,15 +270,16 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
             var statusData = bamAjaxCall.getCmdData(status_url);
             statusData.then(function(data) {
-                    $scope.hostsList[idx].comps = data;
-                    if ($scope.hostsList[idx].comps.length == 0) {
-                        $scope.hostsList[idx].showMsg = true;
+                    $scope.groupsList[p_idx].hosts[idx].comps = data;
+                    if ($scope.groupsList[p_idx].hosts[idx].comps.length == 0) {
+                        $scope.groupsList[p_idx].hosts[idx].showMsg = true;
                     } else {
-                        $scope.hostsList[idx].showMsg = false;
+                        $scope.groupsList[p_idx].hosts[idx].showMsg = false;
                     }
                 });
+            $interval.cancel(stopStatusCall);
             stopStatusCall = $interval(function (){
-                $scope.updateComps(idx)
+                $scope.updateComps(p_idx, idx);
                 $scope.getGraphValues(remote_host);
             }, 5000);
         }
@@ -315,7 +317,18 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
         session.call('com.bigsql.deleteHost', [hostToDelete]);
         session.subscribe("com.bigsql.onDeleteHost", function (data) {
-            getList();
+            getGroupsList();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+    }
+
+    $scope.deleteGroup = function (idx){
+        $interval.cancel(stopStatusCall);
+        var groupToDelete = $scope.groupsList[idx].group;
+        session.call('com.bigsql.deleteGroup', [groupToDelete]);
+        session.subscribe("com.bigsql.onDeleteGroup", function (data) {
+            getGroupsList();
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -328,7 +341,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     }
 
-    function getList(argument) {
+    function getHostsList(argument) {
         $http.get($window.location.origin + '/api/hosts')
             .success(function (data) {
                 $rootScope.$emit('hideUpdates');
@@ -346,10 +359,25 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     };
 
-    getList();
+    getHostsList();
+
+    function getGroupsList(argument) {
+        $http.get($window.location.origin + '/api/groups')
+            .success(function (data) {
+                $scope.groupsList = data;
+            })
+            .error(function (error) {
+                $timeout(wait, 5000);
+                $scope.loading = false;
+                $scope.retry = true;
+            });
+
+    };
+
+    getGroupsList();
 
     $rootScope.$on('addedHost', function () {
-        getList();
+        getGroupsList();
     });
 
     $scope.action = function ( event, host) {
@@ -377,7 +405,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     $scope.installedComps = function (event) {
         session.call('com.bigsql.setBamConfig', ['showInstalled', $scope.showInstalled]);
-        getList();
+        getHostsList();
     };
 
 
@@ -396,10 +424,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $window.location.reload();
     };
 
-    $scope.open = function (idx) {
+    $scope.open = function (p_idx, idx) {
             $scope.editHost = '';
-            if(idx){
-                $scope.editHost = $scope.hostsList[idx];
+            if(idx >= 0){
+                $scope.editHost = $scope.groupsList[p_idx].hosts[idx];
             }
 
             var modalInstance = $uibModal.open({
@@ -408,6 +436,25 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 controller: 'addHostController',
                 scope: $scope,
             });
+        };
+
+    $scope.openGroupsModal = function (idx) {
+
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/addServerGroupsModal.html',
+                windowClass: 'modal',
+                controller: 'addServerGroupsController',
+                scope: $scope,
+            });
+            $scope.editGroup = '';
+            if(idx){
+                $scope.editGroup = $scope.groupsList[idx];
+                for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                    if($scope.groupsList[i].group == $scope.editGroup.group){
+                        modalInstance.groupServers = $scope.groupsList[i].hosts;
+                    }
+                }
+            }
         };
 
     $scope.showTop = function (idx) {
@@ -451,6 +498,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         modalInstance.hostName = $scope.hostsList[$scope.openedHostIndex].host;
     }
 
+    $rootScope.$on('updateGroups', function (argument) {
+        getGroupsList();
+    })
     // Handle page visibility change events
         function handleVisibilityChange() {
             if (document.visibilityState == "hidden") {

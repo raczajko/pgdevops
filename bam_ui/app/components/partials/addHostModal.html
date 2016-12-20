@@ -12,7 +12,6 @@
     <div ng-if="connectionError">
         <strong>{{message}}</strong>
     </div>
-    <!-- <div ng-if="registerResponse"><strong>{{registerResponse}}</strong></div> -->
     <div ng-hide="tryToConnect || connectionStatus">
         <form>
             <div class="form-group">
@@ -24,21 +23,24 @@
                 <input type="text" ng-model="pgcDir" class="form-control" placeholder="PGC_HOME Directory">
             </div>
             <div class="form-group">
+                <div class="requiredSymbol">*</div>
                 <input type="text" ng-model="userName" class="form-control" placeholder="Username">
             </div>
             <div class="form-group">
+                <div class="requiredSymbol">*</div>
                 <input type="password" ng-model="password" class="form-control" placeholder="password">
             </div>
-            <!-- <div class="form-group">
-                <input type="text" ng-model="connectionName" class="form-control" placeholder="Connection Name">
-            </div> -->
+            <div class="form-group">
+                <div class="requiredSymbol">*</div>
+                <input type="text" ng-model="connectionName" class="form-control" placeholder="Name">
+            </div>
             <div class="text-left">
                 <span style="color:red;">*</span> Required Field
             </div>
             <div class="form-actions">
                 <div class="text-right">
                     <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" ng-disabled="!(hostName && pgcDir && userName && password)" ng-click="addHost(hostName, pgcDir, userName, password)">Save</button>
+                    <button type="submit" class="btn btn-primary" ng-disabled="!(hostName && pgcDir && userName && password && connectionName)" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Save</button>
                 </div>
             </div>
         </form>

@@ -129,6 +129,12 @@ class AppSession(ApplicationSession):
 
         self.register(components.deleteHost, 'com.bigsql.deleteHost')
 
+        self.register(components.registerServerGroup, 'com.bigsql.registerServerGroup')
+
+        self.register(components.deleteGroup, 'com.bigsql.deleteGroup')
+
+        self.register(components.updateServerGroup, 'com.bigsql.updateServerGroup')
+
         self.register(monitoring.activity, 'com.bigsql.activity')
 
         self.register(reporting.generate_profiler_reports, 'com.bigsql.plprofiler')
