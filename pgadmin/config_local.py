@@ -6,7 +6,7 @@ with open(config_json_file) as f:
     config = json.load(f)
     CSRF_SESSION_KEY = config['CSRF_SESSION_KEY']
     SECURITY_PASSWORD_SALT = config['SECURITY_PASSWORD_SALT']
-    SECURITY_PASSWORD_HASH = config['SECURITY_PASSWORD_HASH']
+    SECRET_KEY = config['SECRET_KEY']
 
 # Secret key for signing CSRF data. Override this in config_local.py if
 # running on a web server
