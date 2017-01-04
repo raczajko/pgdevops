@@ -19,6 +19,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.disableShowInstalled = false;
     var previousTopData = "";
     $scope.openedHostIndex = '';
+    $scope.openedGroupIndex = '';
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -238,6 +239,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     $scope.loadHost = function (p_idx, idx, refresh) {
         $scope.openedHostIndex = idx;
+        $scope.openedGroupIndex = p_idx;
+        $scope.hostsList = $scope.groupsList[p_idx].hosts;
         previousTopData = '';
         $interval.cancel(stopStatusCall);
         $scope.hostsList[idx].comps = '';
@@ -341,30 +344,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     }
 
-    function getHostsList(argument) {
-        $http.get($window.location.origin + '/api/hosts')
-            .success(function (data) {
-                $rootScope.$emit('hideUpdates');
-                //all_hosts.
-                $scope.hostsList = data;
-                $scope.nothingInstalled = false;
-                $scope.loading = false;
-                // hostsInfo();
-            })
-            .error(function (error) {
-                $timeout(wait, 5000);
-                $scope.loading = false;
-                $scope.retry = true;
-            });
-
-    };
-
-    getHostsList();
-
     function getGroupsList(argument) {
         $http.get($window.location.origin + '/api/groups')
             .success(function (data) {
                 $scope.groupsList = data;
+                $rootScope.$emit('hideUpdates');
+                $scope.nothingInstalled = false;
+                $scope.loading = false;
             })
             .error(function (error) {
                 $timeout(wait, 5000);
@@ -405,7 +391,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     $scope.installedComps = function (event) {
         session.call('com.bigsql.setBamConfig', ['showInstalled', $scope.showInstalled]);
-        getHostsList();
     };
 
 
@@ -501,18 +486,19 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $rootScope.$on('updateGroups', function (argument) {
         getGroupsList();
     })
+    
     // Handle page visibility change events
-        function handleVisibilityChange() {
-            if (document.visibilityState == "hidden") {
-                $interval.cancel(stopStatusCall);
-                clear();
-            } else if (document.visibilityState == "visible") {
-                clear();
-                $scope.loadHost($scope.openedHostIndex, true);
-            }
+    function handleVisibilityChange() {
+        if (document.visibilityState == "hidden") {
+            $interval.cancel(stopStatusCall);
+            clear();
+        } else if (document.visibilityState == "visible") {
+            clear();
+            $scope.loadHost($scope.openedGroupIndex, $scope.openedHostIndex, true);
         }
+    }
 
-        document.addEventListener('visibilitychange', handleVisibilityChange, false);
+    document.addEventListener('visibilitychange', handleVisibilityChange, false);
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
