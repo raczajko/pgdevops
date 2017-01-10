@@ -1642,7 +1642,8 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
     pgAdmin.Browser.editor_shortcut_keys.Tab = "insertSoftTab";
   }
 
-  window.onbeforeunload = function(ev) {
+  window.onbeforeunload = null;
+  /*window.onbeforeunload = function(ev) {
     var e = ev || window.event,
         msg = '{{ _('Do you really want to leave the page?') }}';
 
@@ -1653,7 +1654,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
 
     // For Safari
     return msg;
-  };
+  };*/
 
   return pgAdmin.Browser;
 });
