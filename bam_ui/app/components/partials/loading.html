@@ -3,4 +3,22 @@
         <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
         <span><h3>Loading...</h3></span>
     </div>
+    <div ng-if="!bamLoading">
+    	<h3>Dev Manager</h3>
+    	<div class="first-half">
+    		<a href="/admin">
+                <h4>pgAdmin</h4>
+            </a>
+    	</div>
+    	<hr style="background-color: #fff; border-top: 1px solid #8c8b8b; margin-top: 90px;">
+    	<h3>Ops Manager</h3>
+    	<div class="second-half">
+    		<a ui-sref="components.profiler">
+                <h4>plProfiler</h4>
+            </a>
+            <a ui-sref="components.badger">
+                <h4>pgBadger</h4>
+            </a>
+    	</div>
+    </div>
 </section>

@@ -332,6 +332,7 @@ a:focus {
     position: relative;
     max-height: 100px;
     z-index: 1030;
+    background-color: #1e2129;
 }
 
 .main-header > .navbar {
@@ -6779,6 +6780,24 @@ table.settings-table-pgc-info > tbody > tr > td {
     color: #333;
 }
 
+.hamburger-menu > .btn {
+    color: #fff;
+  }
+
+.hamburger-menu > .dropdown-menu {
+    background-color: #1e2129;
+    color: #fff;
+    border: none;
+  }
+
+.hamburger-menu > .dropdown-menu > li > a {
+    color: #fff;
+}
+
+.hamburger-menu > .dropdown-menu > li > a:hover {
+    color: #333;
+}
+
 .recent-report-list{
   height: 380px; 
   overflow: auto;
@@ -6798,3 +6817,15 @@ table.settings-table-pgc-info > tbody > tr > td {
 font-size: 15px !important;
 color: #666;
 text-align: center;}
+
+.first-half{
+  height: 50%; top: 0;
+  margin-top: 80px;
+  text-align: center;
+}
+
+.second-half {
+  height: 50%; bottom: 0;
+  margin-top: 80px;
+  text-align: center;
+}
