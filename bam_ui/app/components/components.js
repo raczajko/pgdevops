@@ -88,7 +88,7 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
         views: {
             "sub": {
                 controller: 'bamLoading',
-                templateUrl: '../app/components/partials/loading.html',
+                templateUrl: '../app/components/partials/landingPage.html',
             }
         }
     }).state('components.badger', {

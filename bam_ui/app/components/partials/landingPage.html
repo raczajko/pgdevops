@@ -5,11 +5,11 @@
     </div>
     <div ng-if="!bamLoading">
         <div class="row">
-            <div class="col-md-2 col-sm-3 col-xs-6">
-                <a ui-sref="components.hosts" class="thumbnail">
+            <div class="col-md-2 col-sm-3 col-xs-6" ng-if="pgComp">
+                <a href="#/details-pg/{{pgComp}}" class="thumbnail">
                     <img src="assets/img/sloni.png" alt="">
                     <div class="caption">
-                        <h4 style="text-align:center;">pg96</h4>
+                        <h4 style="text-align:center;">{{pgComp}}</h4>
                     </div>
                 </a>
             </div>
