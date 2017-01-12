@@ -1,24 +1,24 @@
 import json,os
 
-#config_json_file=os.path.join(os.path.dirname(__file__),"configuration.json")
+config_json_file=os.path.join(os.path.dirname(__file__),"configuration.json")
 
-#with open(config_json_file) as f:
-#    config = json.load(f)
-#    CSRF_SESSION_KEY = config['CSRF_SESSION_KEY']
-#    SECURITY_PASSWORD_SALT = config['SECURITY_PASSWORD_SALT']
-#    SECRET_KEY = config['SECRET_KEY']
+with open(config_json_file) as f:
+    config = json.load(f)
+    CSRF_SESSION_KEY = config['CSRF_SESSION_KEY']
+    SECURITY_PASSWORD_SALT = config['SECURITY_PASSWORD_SALT']
+    SECRET_KEY = config['SECRET_KEY']
 
 # Secret key for signing CSRF data. Override this in config_local.py if
 # running on a web server
-CSRF_SESSION_KEY = '3b862b92-5eda-11e6-8b77-86f30ca893d3'
+# CSRF_SESSION_KEY = '3b862b92-5eda-11e6-8b77-86f30ca893d3'
 
 # Secret key for signing cookies. Override this in config_local.py if
 # running on a web server
-SECRET_KEY = '3b86232c-5eda-11e6-8b77-86f30ca893d3'
+# SECRET_KEY = '3b86232c-5eda-11e6-8b77-86f30ca893d3'
 
 # Salt used when hashing passwords. Override this in config_local.py if
 # running on a web server
-SECURITY_PASSWORD_SALT = '3b862958-5eda-11e6-8b77-86f30ca893d3'
+# SECURITY_PASSWORD_SALT = '3b862958-5eda-11e6-8b77-86f30ca893d3'
 
 # Hashing algorithm used for password storage
 SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
