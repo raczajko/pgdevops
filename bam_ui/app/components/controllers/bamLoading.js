@@ -10,6 +10,7 @@ angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubS
         	session.call('com.bigsql.serverStatus');
             session.subscribe("com.bigsql.onServerStatus", function (args) {
             	$scope.bamLoading = false;
+              $scope.$apply();
          			// var components = $(JSON.parse(args[0])).filter(function(i,n){ return n.category === 1;});
           		// if(components.length != 0){
           		// 	$window.location.href = "#/details-pg/" + components[0].component;

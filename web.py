@@ -28,7 +28,7 @@ parser = reqparse.RequestParser()
 #parser.add_argument('data')
 
 config.APP_NAME = "BigSQL Manager"
-config.LOGIN_NAME = "BigSQL DevOps"
+config.LOGIN_NAME = "DevOps"
 application = Flask(__name__)
 
 babel = Babel(application)
