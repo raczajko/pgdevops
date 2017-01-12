@@ -20,6 +20,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var previousTopData = "";
     $scope.openedHostIndex = '';
     $scope.openedGroupIndex = '';
+    $scope.groupOpen = true;
+    $scope.hostOpen = true;
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -351,13 +353,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 $rootScope.$emit('hideUpdates');
                 $scope.nothingInstalled = false;
                 $scope.loading = false;
+                $scope.loadHost(0, 0, false);
             })
             .error(function (error) {
                 $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
             });
-
     };
 
     getGroupsList();
