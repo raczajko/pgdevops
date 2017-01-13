@@ -122,7 +122,7 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
         views: {
             "sub": {
                 controller: 'bamLoading',
-                templateUrl: '../app/components/partials/loading.html',
+                templateUrl: '../app/components/partials/landingPage.html',
             }
         }
     }).state('components.badger', {
@@ -340,6 +340,187 @@ angular.module('bigSQL.common').directive('validPasswordC', function () {
             })
         }
     }
+});
+angular.module('bigSQL.common').factory('MachineInfo', function (PubSubService, $q, $filter) {
+    var machineInfo;
+    var logdir;
+
+    //manual or auto 
+    var updationMode = "";
+
+    //Need to revise this
+    var fetchDataFromService = function () {
+        var subscription;
+        var session = PubSubService.getSession();
+        session.subscribe('com.bigsql.onInfo', function (data) {
+            machineInfo = JSON.parse(data[0][0])[0];
+            session.unsubscribe(subscription);
+        }).then(function (sub) {
+            subscription = sub;
+        });
+        session.call('com.bigsql.info');
+    };
+
+    var setUpdationMode = function (machineInfo) {
+
+        try {
+            var currentDate = new Date();
+            var today = new Date(currentDate);
+            var sevenDaysBackDate = new Date();
+            sevenDaysBackDate = sevenDaysBackDate.setDate(today.getDate() - 7);
+            sevenDaysBackDate = $filter('date')(sevenDaysBackDate, 'yyyy-MM-dd');
+            if (machineInfo.interval == null || !machineInfo.interval) {
+                updationMode = 'manual'; 
+            } else {
+                updationMode = 'auto';
+            }
+        } catch (err) {
+            throw new Error(err);
+        }
+    };
+
+    var getUpdationMode = function () {
+        return updationMode;
+    };
+
+
+    var get = function (session) {
+        return $q(function (resolve, reject) {
+            var subscription;
+            session.subscribe('com.bigsql.onInfo', function (data) {
+                if (data == null || data == undefined) {
+                    reject("No Data Available");
+                }
+                machineInfo = JSON.parse(data[0][0])[0];
+                session.unsubscribe(subscription);
+                setUpdationMode(machineInfo);
+                resolve(machineInfo);
+            }).then(function (sub) {
+                subscription = sub;
+            });
+            session.call('com.bigsql.info');        
+        });
+    };
+
+
+    var set = function (info) {
+        machineInfo = info;
+    };
+
+    return {
+        get: get,
+        set: set,
+        getUpdationMode: getUpdationMode,
+        setUpdationMode: setUpdationMode
+    }
+
+});
+'use strict';
+
+angular.module('bigSQL.common').factory('PubSubService', function ($window, $rootScope, $q, $interval) {
+    var connection;
+    var session;
+    var wsuri;
+    var httpUri;
+
+    if ($window.location.origin == "file://") {
+        wsuri = "ws://127.0.0.1:8080";
+
+    } else {
+        wsuri = (document.location.protocol === "http:" ? "ws:" : "wss:") + "//" +
+            document.location.host + "/ws";
+    }
+
+    //wsuri = "ws://192.168.10.56:8050/ws";
+
+    function getConnection() {
+        return connection;
+    };
+
+    function initConnection() {
+        if (connection == undefined) {
+            connection = new autobahn.Connection({
+                transports: [
+                    {
+                        'type': 'websocket',
+                        'url': wsuri
+                    }
+                ],
+                realm: "realm1"
+            });
+        }
+    };
+    /**
+     Opens a connection
+     **/
+    function openConnection(sessionCreated) {
+        connection.open();
+        connection.onopen = function (sessionObj) {
+            session = sessionObj;
+            sessionCreated(session);
+        }
+    }
+
+    function closeConnection() {
+        connection.close('closed', "Connection Closed");
+        connection.onclose = function () {
+            connection = undefined;
+            session = undefined;
+        }
+    }
+
+    function getSession() {
+        return $q(function (resolve, reject) {
+            if (session === undefined) {
+                if (connection == undefined) {
+                    connection = initConnection();
+                    resolve(openConnection());
+                } else if (connection.session != undefined && connection.session != null) {
+                    if (connection.session.isOpen) {
+                        session = connection.session;
+                        resolve(session);
+                    } else {
+
+                        try {
+                            var count = 0;
+                            var interval = $interval(function () {
+                                count++;
+
+                                if (connection.session.isOpen) {
+                                    $interval.cancel(interval);
+                                    resolve(connection.session);
+
+                                } else if (!connection.session.isOpen && count > 20) {
+                                    $interval.cancel(interval);
+                                    reject("connection has failed");
+                                }
+
+                            }, 100);
+                        } catch (err) {
+                            throw new Error(err);
+                        }
+                    }
+                }
+
+            } else {
+                resolve(session);
+                // return session;
+            }
+
+        });
+
+
+    }
+
+    return {
+        getConnection: getConnection,
+        initConnection: initConnection,
+        openConnection: openConnection,
+        getSession: getSession,
+        closeConnection: closeConnection
+
+    }
+
 });
 angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'bamAjaxCall', '$sce', '$cookies', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, bamAjaxCall, $sce, $cookies) {
 
@@ -2277,6 +2458,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var previousTopData = "";
     $scope.openedHostIndex = '';
     $scope.openedGroupIndex = '';
+    $scope.groupOpen = true;
+    $scope.hostOpen = true;
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -2608,13 +2791,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 $rootScope.$emit('hideUpdates');
                 $scope.nothingInstalled = false;
                 $scope.loading = false;
+                $scope.loadHost(0, 0, false);
             })
             .error(function (error) {
                 $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
             });
-
     };
 
     getGroupsList();
@@ -3117,44 +3300,6 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 }]);
 
 
-angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubService', '$rootScope', '$window', '$timeout',function ($scope, PubSubService, $rootScope, $window, $timeout) {
-
-	$scope.bamLoading = true;
-	var subscriptions = [];
-	var session;
-
-        var sessPromise = PubSubService.getSession();
-        sessPromise.then(function (sessPram) {
-        	session = sessPram;
-        	session.call('com.bigsql.serverStatus');
-            session.subscribe("com.bigsql.onServerStatus", function (args) {
-            	$scope.bamLoading = false;
-              $scope.$apply();
-         			// var components = $(JSON.parse(args[0])).filter(function(i,n){ return n.category === 1;});
-          		// if(components.length != 0){
-          		// 	$window.location.href = "#/details-pg/" + components[0].component;
-          		// 	$rootScope.$emit('topMenuEvent');
-          		// } else {
-          		// 	$window.location.href = "#/components/view";	
-          		// }
-	        }).then(function (subscription) {
-	            subscriptions.push(subscription);
-	        });
-        });
-
-	$timeout(function() {
-        if ($scope.bamLoading) {
-            $window.location.reload();
-        };
-    }, 10000);
-
-	$scope.$on('$destroy', function () {
-        for (var i = 0; i < subscriptions.length; i++) {
-            session.unsubscribe(subscriptions[i]);
-        }
-    });
-
-}]);
 angular.module('bigSQL.components').controller('generateBadgerReportController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', 'bamAjaxCall', '$sce', function ($scope, $rootScope, $uibModalInstance, PubSubService, bamAjaxCall, $sce) {
 
 	var session;
@@ -3677,6 +3822,45 @@ angular.module('bigSQL.components').controller('hostGraphModalController', ['$sc
     
 }]);
 
+angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubService', '$rootScope', '$window', '$timeout',function ($scope, PubSubService, $rootScope, $window, $timeout) {
+
+	$scope.bamLoading = true;
+	var subscriptions = [];
+	var session;
+
+        var sessPromise = PubSubService.getSession();
+        sessPromise.then(function (sessPram) {
+        	session = sessPram;
+        	session.call('com.bigsql.serverStatus');
+            session.subscribe("com.bigsql.onServerStatus", function (args) {
+            	$scope.bamLoading = false;
+              $scope.$apply();
+         			var components = $(JSON.parse(args[0])).filter(function(i,n){ return n.category === 1;});
+          		if(components.length != 0){
+          			$scope.pgComp = components[0].component;
+                // $window.location.href = "#/details-pg/" + components[0].component;
+          			// $rootScope.$emit('topMenuEvent');
+          		} else {
+          			// $window.location.href = "#/components/view";	
+          		}
+	        }).then(function (subscription) {
+	            subscriptions.push(subscription);
+	        });
+        });
+
+	$timeout(function() {
+        if ($scope.bamLoading) {
+            $window.location.reload();
+        };
+    }, 10000);
+
+	$scope.$on('$destroy', function () {
+        for (var i = 0; i < subscriptions.length; i++) {
+            session.unsubscribe(subscriptions[i]);
+        }
+    });
+
+}]);
 angular.module('bigSQL.components').controller('loggingParamController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', '$sce', function ($scope, $rootScope, $uibModalInstance, PubSubService, $sce) {
 
     var session;
@@ -4414,187 +4598,6 @@ angular.module('bigSQL.components').controller('whatsNewController', ['$scope','
     });
 
 }]);
-angular.module('bigSQL.common').factory('MachineInfo', function (PubSubService, $q, $filter) {
-    var machineInfo;
-    var logdir;
-
-    //manual or auto 
-    var updationMode = "";
-
-    //Need to revise this
-    var fetchDataFromService = function () {
-        var subscription;
-        var session = PubSubService.getSession();
-        session.subscribe('com.bigsql.onInfo', function (data) {
-            machineInfo = JSON.parse(data[0][0])[0];
-            session.unsubscribe(subscription);
-        }).then(function (sub) {
-            subscription = sub;
-        });
-        session.call('com.bigsql.info');
-    };
-
-    var setUpdationMode = function (machineInfo) {
-
-        try {
-            var currentDate = new Date();
-            var today = new Date(currentDate);
-            var sevenDaysBackDate = new Date();
-            sevenDaysBackDate = sevenDaysBackDate.setDate(today.getDate() - 7);
-            sevenDaysBackDate = $filter('date')(sevenDaysBackDate, 'yyyy-MM-dd');
-            if (machineInfo.interval == null || !machineInfo.interval) {
-                updationMode = 'manual'; 
-            } else {
-                updationMode = 'auto';
-            }
-        } catch (err) {
-            throw new Error(err);
-        }
-    };
-
-    var getUpdationMode = function () {
-        return updationMode;
-    };
-
-
-    var get = function (session) {
-        return $q(function (resolve, reject) {
-            var subscription;
-            session.subscribe('com.bigsql.onInfo', function (data) {
-                if (data == null || data == undefined) {
-                    reject("No Data Available");
-                }
-                machineInfo = JSON.parse(data[0][0])[0];
-                session.unsubscribe(subscription);
-                setUpdationMode(machineInfo);
-                resolve(machineInfo);
-            }).then(function (sub) {
-                subscription = sub;
-            });
-            session.call('com.bigsql.info');        
-        });
-    };
-
-
-    var set = function (info) {
-        machineInfo = info;
-    };
-
-    return {
-        get: get,
-        set: set,
-        getUpdationMode: getUpdationMode,
-        setUpdationMode: setUpdationMode
-    }
-
-});
-'use strict';
-
-angular.module('bigSQL.common').factory('PubSubService', function ($window, $rootScope, $q, $interval) {
-    var connection;
-    var session;
-    var wsuri;
-    var httpUri;
-
-    if ($window.location.origin == "file://") {
-        wsuri = "ws://127.0.0.1:8080";
-
-    } else {
-        wsuri = (document.location.protocol === "http:" ? "ws:" : "wss:") + "//" +
-            document.location.host + "/ws";
-    }
-
-    //wsuri = "ws://192.168.10.56:8050/ws";
-
-    function getConnection() {
-        return connection;
-    };
-
-    function initConnection() {
-        if (connection == undefined) {
-            connection = new autobahn.Connection({
-                transports: [
-                    {
-                        'type': 'websocket',
-                        'url': wsuri
-                    }
-                ],
-                realm: "realm1"
-            });
-        }
-    };
-    /**
-     Opens a connection
-     **/
-    function openConnection(sessionCreated) {
-        connection.open();
-        connection.onopen = function (sessionObj) {
-            session = sessionObj;
-            sessionCreated(session);
-        }
-    }
-
-    function closeConnection() {
-        connection.close('closed', "Connection Closed");
-        connection.onclose = function () {
-            connection = undefined;
-            session = undefined;
-        }
-    }
-
-    function getSession() {
-        return $q(function (resolve, reject) {
-            if (session === undefined) {
-                if (connection == undefined) {
-                    connection = initConnection();
-                    resolve(openConnection());
-                } else if (connection.session != undefined && connection.session != null) {
-                    if (connection.session.isOpen) {
-                        session = connection.session;
-                        resolve(session);
-                    } else {
-
-                        try {
-                            var count = 0;
-                            var interval = $interval(function () {
-                                count++;
-
-                                if (connection.session.isOpen) {
-                                    $interval.cancel(interval);
-                                    resolve(connection.session);
-
-                                } else if (!connection.session.isOpen && count > 20) {
-                                    $interval.cancel(interval);
-                                    reject("connection has failed");
-                                }
-
-                            }, 100);
-                        } catch (err) {
-                            throw new Error(err);
-                        }
-                    }
-                }
-
-            } else {
-                resolve(session);
-                // return session;
-            }
-
-        });
-
-
-    }
-
-    return {
-        getConnection: getConnection,
-        initConnection: initConnection,
-        openConnection: openConnection,
-        getSession: getSession,
-        closeConnection: closeConnection
-
-    }
-
-});
 angular.module('bigSQL.components').directive('bigsqlInstallComponent', function () {
     var directive = {};
 

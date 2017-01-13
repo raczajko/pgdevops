@@ -872,13 +872,13 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "    <div class=\"hostmanager-accordian-wrapper\" ng-if=\"!loading\">\n" +
     "        <div class=\"box\">\n" +
     "            <uib-accordion close-others=\"true\">\n" +
-    "                <uib-accordion-group ng-repeat=\"group in groupsList\" is-open=\"group.open\"  ng-init=\"parentIndex = $index\">\n" +
+    "                <uib-accordion-group ng-repeat=\"group in groupsList\" is-open=\"groupOpen\"  ng-init=\"parentIndex = $index\" >\n" +
     "                    <uib-accordion-heading>\n" +
     "                        <span ng-if=\"group.group == 'default'\">\n" +
-    "                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !group.open, 'fa fa-minus': group.open}\"></i> &nbsp;All Hosts\n" +
+    "                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !groupOpen, 'fa fa-minus': groupOpen}\"></i> &nbsp;All Hosts\n" +
     "                        </span>\n" +
     "                        <span ng-if=\"group.group != 'default'\">\n" +
-    "                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !group.open, 'fa fa-minus': group.open}\"></i>&nbsp; {{group.group}}\n" +
+    "                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !groupOpen, 'fa fa-minus': groupOpen}\"></i>&nbsp; {{group.group}}\n" +
     "                        </span>\n" +
     "                            <div class=\"pull-right\" style=\"margin-top: -10px\">\n" +
     "                                &nbsp;\n" +
@@ -897,23 +897,23 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "                    <div class=\"col-md-12\">\n" +
     "                        <div ng-if=\"group.hosts.length == 0\">There are no servers added in this group.</div>\n" +
     "                        <uib-accordion close-others=\"true\" >\n" +
-    "                            <uib-accordion-group ng-repeat=\"host in group.hosts\" is-open=\"host.open\">\n" +
+    "                            <uib-accordion-group ng-repeat=\"host in group.hosts\" is-open=\"hostOpen\">\n" +
     "                                <uib-accordion-heading>\n" +
     "                                        <span ng-click=\"loadHost(parentIndex, $index, false)\" ng-if=\"host.host != 'localhost' && host.name != host.host\"> &nbsp; {{host.name}} &nbsp; ({{ host.host }})\n" +
     "                                            &nbsp; &nbsp; &nbsp;\n" +
     "                                            {{host.hostInfo.os}} {{ host.hostInfo.mem }} GB, {{ host.hostInfo.cores }} x {{host.hostInfo.cpu}}\n" +
-    "                                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !host.open, 'fa fa-minus': host.open}\"></i>\n" +
+    "                                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !hostOpen, 'fa fa-minus': hostOpen}\"></i>\n" +
     "                                        </span>\n" +
     "                                        <span ng-click=\"loadHost(parentIndex, $index, false)\" ng-if=\"host.host == 'localhost' || host.name == host.host\"> &nbsp; {{host.host}}  \n" +
     "                                            &nbsp; &nbsp; &nbsp;\n" +
     "                                            {{host.hostInfo.os}} {{ host.hostInfo.mem }} GB, {{ host.hostInfo.cores }} x {{host.hostInfo.cpu}}\n" +
-    "                                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !host.open, 'fa fa-minus': host.open}\"></i>\n" +
+    "                                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !hostOpen, 'fa fa-minus': hostOpen}\"></i>\n" +
     "                                        </span>\n" +
     "                                        <div class=\"pull-right\" style=\"margin-top: -10px\">\n" +
     "                                            &nbsp;\n" +
-    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); loadHost(parentIndex,$index,true)\" class=\"btn btn-default\" ng-if=\"host.open\">Refresh</button>&nbsp;\n" +
-    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)\" class=\"btn btn-default\" ng-if=\"host.open\" class=\"ng-binding\" href=\"\" >Components</button>&nbsp;\n" +
-    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); showTop($index)\" class=\"btn btn-default\" ng-if=\"host.open\" class=\"ng-binding\" href=\"\">Top</button>&nbsp;\n" +
+    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); loadHost(parentIndex,$index,true)\" class=\"btn btn-default\" ng-if=\"hostOpen\">Refresh</button>&nbsp;\n" +
+    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)\" class=\"btn btn-default\" ng-if=\"hostOpen\" class=\"ng-binding\" href=\"\" >Components</button>&nbsp;\n" +
+    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); showTop($index)\" class=\"btn btn-default\" ng-if=\"hostOpen\" class=\"ng-binding\" href=\"\">Top</button>&nbsp;\n" +
     "                                            <div class=\"btn-group\" uib-dropdown >\n" +
     "                                                <button id=\"split-button \" type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); open(parentIndex, $index)\" class=\"btn btn-default \" ng-disabled=\"host.host=='localhost'\" >Edit Host</button>\n" +
     "                                                <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation()\" class=\"btn btn-default \" ng-disabled=\"host.host=='localhost'\"  uib-dropdown-toggle>\n" +
@@ -1046,24 +1046,24 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "\n" +
     "</section>")
 
-$templateCache.put("../app/components/partials/loading.html","<section class=\"content\">\n" +
+$templateCache.put("../app/components/partials/landingPage.html","<section class=\"content\">\n" +
     "    <div ng-if=\"bamLoading\" style=\"position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;\">\n" +
     "        <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
     "        <span><h3>Loading...</h3></span>\n" +
     "    </div>\n" +
     "    <div ng-if=\"!bamLoading\">\n" +
     "        <div class=\"row\">\n" +
-    "            <div class=\"col-md-2 col-sm-3 col-xs-6\">\n" +
-    "                <a ui-sref=\"components.hosts\" class=\"thumbnail\">\n" +
-    "                    <img src=\"assets/img/sloni.png\" alt=\"\">\n" +
+    "            <div class=\"col-md-2 col-sm-3 col-xs-6\" ng-if=\"pgComp\">\n" +
+    "                <a href=\"#/details-pg/{{pgComp}}\" class=\"thumbnail\">\n" +
+    "                    <img src=\"assets/img/pg-sloni.png\" alt=\"\">\n" +
     "                    <div class=\"caption\">\n" +
-    "                        <h4 style=\"text-align:center;\">pg96</h4>\n" +
+    "                        <h4 style=\"text-align:center;\">{{pgComp}}</h4>\n" +
     "                    </div>\n" +
     "                </a>\n" +
     "            </div>\n" +
     "            <div class=\"col-md-2 col-sm-3 col-xs-6\">\n" +
     "                <a href=\"/admin\" class=\"thumbnail\">\n" +
-    "                    <img src=\"assets/img/logoBIG.png\" alt=\"\">\n" +
+    "                    <img src=\"assets/img/pgadmin4-web.png\" alt=\"\">\n" +
     "                    <div class=\"caption\">\n" +
     "                        <h4 style=\"text-align:center;\">pgAdmin4 Web</h4>\n" +
     "                    </div>\n" +
@@ -1079,7 +1079,7 @@ $templateCache.put("../app/components/partials/loading.html","<section class=\"c
     "            </div>\n" +
     "            <div class=\"col-md-2 col-sm-3 col-xs-6\">\n" +
     "                <a ui-sref=\"components.badger\" class=\"thumbnail\">\n" +
-    "                    <img src=\"assets/img/pgbadger-lg.png\" alt=\"\">\n" +
+    "                    <img src=\"assets/img/pg-badger-logo.png\" alt=\"\">\n" +
     "                    <div class=\"caption\">\n" +
     "                        <h4 style=\"text-align:center;\">pgBadger</h4>\n" +
     "                    </div>\n" +
@@ -1087,7 +1087,7 @@ $templateCache.put("../app/components/partials/loading.html","<section class=\"c
     "            </div>\n" +
     "            <div class=\"col-md-2 col-sm-3 col-xs-6\">\n" +
     "                <a ui-sref=\"components.hosts\" class=\"thumbnail\">\n" +
-    "                    <img src=\"assets/img/cloud-mgr-lg.png\" alt=\"\">\n" +
+    "                    <img src=\"assets/img/cloud-mgr-2.png\" alt=\"\">\n" +
     "                    <div class=\"caption\">\n" +
     "                        <h4 style=\"text-align:center;\">Cloud Manager</h4>\n" +
     "                    </div>\n" +
