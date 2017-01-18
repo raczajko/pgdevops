@@ -1,5 +1,6 @@
 <div class="modal-header">
-    <h4 class="modal-title"> {{type}} PGC SSH Server </h4>
+    <h4 ng-if="!thirdPhase" class="modal-title"> {{type}} PGC SSH Server </h4>
+    <h4 ng-if="thirdPhase" class="modal-title"> {{type}} PGC Server </h4>
 </div>
 <div class="modal-body">
 
@@ -14,53 +15,53 @@
     </div>
     <div ng-hide="tryToConnect || connectionStatus">
         <form>
-            <div class="form-group" ng-if="firstPhase">
+            <div class="form-group" ng-show="firstPhase">
                 <div class="requiredSymbol">*</div>
                 <input type="text" ng-model="hostName" class="form-control" placeholder="Host">
             </div>
-            <div class="form-group" ng-if="firstPhase">
+            <div class="form-group" ng-show="firstPhase">
                 <div class="requiredSymbol">*</div>
                 <input type="text" ng-model="connectionName" class="form-control" placeholder="Connection name">
             </div>
-            <div class="form-group" ng-if="firstPhase">
+            <div class="form-group" ng-show="firstPhase">
                 <div class="requiredSymbol">*</div>
                 <input type="text" ng-model="userName" class="form-control" placeholder="Username">
             </div>
-            <div class="form-group" ng-if="firstPhase">
+            <div class="form-group" ng-show="firstPhase">
                 <div class="requiredSymbol">*</div>
                 <input type="password" ng-model="password" class="form-control" placeholder="password">
             </div>
-            <div class="form-group" ng-if="secondPhase">
+            <div class="form-group" ng-show="secondPhase">
                 <div class="requiredSymbol">*</div>
                 <input type="text" ng-model="serviceUser" class="form-control" placeholder="Service User">
             </div>
-            <div class="form-group" ng-if="secondPhase">
+            <div class="form-group" ng-show="secondPhase">
                 <div class="requiredSymbol">*</div>
                 <input type="text" ng-model="pgcDir" class="form-control" placeholder="PGC_HOME Directory">
             </div>
-            <div class="form-group" ng-if="thirdPhase">
+            <div class="form-group" ng-show="thirdPhase">
                 Install PG
                 <input type="checkbox" ng-model="pgInstall">
             </div>
-            <div class="form-group" ng-if="thirdPhase">
+            <div class="form-group" ng-show="thirdPhase">
                 <select class="form-control">
                     <option value="">Select PG Version</option>    
                 </select>
             </div>
-            <div class="form-group" ng-if="thirdPhase">
+            <div class="form-group" ng-show="thirdPhase">
                 Auto Start
                     <input type="checkbox" ng-model="autostart" ng-disabled="autostartDisable" ng-change="autostartChange(autostart)" />
             </div>
-            <div class="text-left" ng-if="!thirdPhase">
+            <div class="text-left" ng-show="!thirdPhase">
                 <span style="color:red;">*</span> Required Field
             </div>
             <div class="form-actions">
                 <div class="text-right">
                     <button class="btn btn-danger" type="button" ng-click="cancel()">Cancel</button>
-                    <button class="btn btn-warning" type="button" ng-if="secondPhase" ng-click="back()">Back</button>
-                    <button ng-if="!secondPhase" class="btn btn-success" type="button" ng-click="next()">Next</button>
-                    <button ng-if="secondPhase" class="btn btn-success" type="button" ng-click="next()">Create</button>
-                    <!-- <button type="submit" ng-if="secondPhase" class="btn btn-primary" ng-disabled="!(hostName && pgcDir && userName && password && connectionName)" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Save</button> -->
+                    <button class="btn btn-warning" type="button" ng-show="secondPhase" ng-click="back()">Back</button>
+                    <button ng-show="!secondPhase" class="btn btn-success" type="button" ng-click="next()">Next</button>
+                    <button ng-show="secondPhase" class="btn btn-success" type="button" ng-click="next()">Create</button>
+                    <!-- <button type="submit" ng-show="secondPhase" class="btn btn-primary" ng-disabled="!(hostName && pgcDir && userName && password && connectionName)" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Save</button> -->
                 </div>
             </div>
         </form>
