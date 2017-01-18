@@ -14,33 +14,53 @@
     </div>
     <div ng-hide="tryToConnect || connectionStatus">
         <form>
-            <div class="form-group">
+            <div class="form-group" ng-if="firstPhase">
                 <div class="requiredSymbol">*</div>
                 <input type="text" ng-model="hostName" class="form-control" placeholder="Host">
             </div>
-            <div class="form-group">
+            <div class="form-group" ng-if="firstPhase">
                 <div class="requiredSymbol">*</div>
-                <input type="text" ng-model="pgcDir" class="form-control" placeholder="PGC_HOME Directory">
+                <input type="text" ng-model="connectionName" class="form-control" placeholder="Connection name">
             </div>
-            <div class="form-group">
+            <div class="form-group" ng-if="firstPhase">
                 <div class="requiredSymbol">*</div>
                 <input type="text" ng-model="userName" class="form-control" placeholder="Username">
             </div>
-            <div class="form-group">
+            <div class="form-group" ng-if="firstPhase">
                 <div class="requiredSymbol">*</div>
                 <input type="password" ng-model="password" class="form-control" placeholder="password">
             </div>
-            <div class="form-group">
+            <div class="form-group" ng-if="secondPhase">
                 <div class="requiredSymbol">*</div>
-                <input type="text" ng-model="connectionName" class="form-control" placeholder="Name">
+                <input type="text" ng-model="serviceUser" class="form-control" placeholder="Service User">
             </div>
-            <div class="text-left">
+            <div class="form-group" ng-if="secondPhase">
+                <div class="requiredSymbol">*</div>
+                <input type="text" ng-model="pgcDir" class="form-control" placeholder="PGC_HOME Directory">
+            </div>
+            <div class="form-group" ng-if="thirdPhase">
+                Install PG
+                <input type="checkbox" ng-model="pgInstall">
+            </div>
+            <div class="form-group" ng-if="thirdPhase">
+                <select class="form-control">
+                    <option value="">Select PG Version</option>    
+                </select>
+            </div>
+            <div class="form-group" ng-if="thirdPhase">
+                Auto Start
+                    <input type="checkbox" ng-model="autostart" ng-disabled="autostartDisable" ng-change="autostartChange(autostart)" />
+            </div>
+            <div class="text-left" ng-if="!thirdPhase">
                 <span style="color:red;">*</span> Required Field
             </div>
             <div class="form-actions">
                 <div class="text-right">
-                    <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" ng-disabled="!(hostName && pgcDir && userName && password && connectionName)" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Save</button>
+                    <button class="btn btn-danger" type="button" ng-click="cancel()">Cancel</button>
+                    <button class="btn btn-warning" type="button" ng-if="secondPhase" ng-click="back()">Back</button>
+                    <button ng-if="!secondPhase" class="btn btn-success" type="button" ng-click="next()">Next</button>
+                    <button ng-if="secondPhase" class="btn btn-success" type="button" ng-click="next()">Create</button>
+                    <!-- <button type="submit" ng-if="secondPhase" class="btn btn-primary" ng-disabled="!(hostName && pgcDir && userName && password && connectionName)" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Save</button> -->
                 </div>
             </div>
         </form>

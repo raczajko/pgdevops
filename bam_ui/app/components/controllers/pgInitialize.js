@@ -8,6 +8,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
     };
 
     $scope.comp = $uibModalInstance.component;
+    $scope.autoStartButton = $uibModalInstance.autoStartButton;
 
     function getInfoComp(argument) {
         var infoData = bamAjaxCall.getCmdData('info/' + $scope.comp)

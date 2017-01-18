@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('addHostController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', function ($scope, $uibModalInstance, PubSubService, $rootScope) {
+angular.module('bigSQL.components').controller('addHostController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal) {
 
     var session;
 	var sessPromise = PubSubService.getSession();
@@ -19,6 +19,9 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 		$scope.userName = $scope.editHost.user;
 		$scope.connectionName = $scope.editHost.name;
 	}
+
+	$scope.firstPhase = true;
+	$scope.secondPhase = false;
 
     sessPromise.then(function (sessParam) {
         session = sessParam;
@@ -51,6 +54,34 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	        });
 	    }
     });
+
+    $scope.next = function (argument) {
+    	if($scope.firstPhase){
+    		$scope.firstPhase = false;
+    		$scope.secondPhase = true;
+    	}else if($scope.secondPhase){
+    		$scope.secondPhase = false;
+    		$scope.thirdPhase = true;
+    	}else if($scope.thirdPhase){
+    			$uibModalInstance.dismiss('cancel');
+		        var modalInstance = $uibModal.open({
+		            templateUrl: '../app/components/partials/pgInitialize.html',
+		            controller: 'pgInitializeController',
+		        });
+		        modalInstance.component = '';
+		        modalInstance.autoStartButton = false;
+    	}
+    }
+
+    $scope.back = function (argument) {
+    	if($scope.secondPhase){
+    		$scope.secondPhase = false;
+    		$scope.firstPhase = true;
+    	}else if($scope.thirdPhase){
+    		$scope.thirdPhase = false;
+    		$scope.secondPhase = true;
+    	}
+    }
 
 	$scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');

@@ -156,6 +156,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 controller: 'pgInitializeController',
             });
             modalInstance.component = comp;
+            modalInstance.autoStartButton = true;
         };
 
         session.call('com.bigsql.getBamConfig', ['showInstalled']);

@@ -32,7 +32,7 @@
 	  			<span ng-show="!!initForm.portNumber.$error.invalidLen">Port must be between 1000 and 9999.</span>
 	  		</div>
 	  </div>
-	  <div class="form-group">
+	  <div class="form-group" ng-if="autoStartButton">
 	  		<label for="autoStart" class="col-sm-4 control-label">Auto Start</label>
 	  		<div class="col-sm-6 autostart-input">
 	  			<input type="checkbox" ng-model="autostart" ng-disabled="autostartDisable" ng-change="autostartChange(autostart)" />

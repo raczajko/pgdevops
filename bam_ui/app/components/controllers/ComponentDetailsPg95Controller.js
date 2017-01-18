@@ -173,6 +173,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 controller: 'pgInitializeController',
             });
             modalInstance.component = comp;
+            modalInstance.autoStartButton = true;
         };
 
         session.subscribe('com.bigsql.ondblist', function (data) {
