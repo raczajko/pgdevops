@@ -199,7 +199,7 @@ class ComponentAction(object):
         """
         Method to Register remote host
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + " " + pgcDir + " " + userName + " " +password + " '" + name + "'"
+        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + " '" + pgcDir + "' " + userName + " " +password + " '" + name + "'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         for line in iter(pgcProcess.stdout.readline, ''):
             ln = (line).rstrip('\n')
@@ -448,7 +448,7 @@ class Components(ComponentAction):
         yield self.session.publish('com.bigsql.onCheckOS', platform.system())
 
     @staticmethod
-    def get_data(command, component=None, pgc_host=None):
+    def get_data(command, component=None, pgc_host=None, password=None):
         """
         Method to get the host settings.
         :param p_host: Name of the host to retrieve the settings.
@@ -456,10 +456,12 @@ class Components(ComponentAction):
         """
         pgcCmd = PGC_HOME + os.sep + "pgc --json " + command
         if component:
-            pgcCmd = pgcCmd + " " + component
+            pgcCmd = pgcCmd + " " + component 
         if pgc_host:
-            pgcCmd = pgcCmd + " --host " + pgc_host
-
+            if password:
+                pgcCmd = pgcCmd + " --password " + password + " --host " + pgc_host
+            else:
+                pgcCmd = pgcCmd + " --host " + pgc_host
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         pgcInfo = pgcProcess.communicate()       
         return json.loads(pgcInfo[0])

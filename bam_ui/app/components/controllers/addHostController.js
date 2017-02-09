@@ -1,10 +1,11 @@
-angular.module('bigSQL.components').controller('addHostController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal) {
+angular.module('bigSQL.components').controller('addHostController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', 'bamAjaxCall', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal, bamAjaxCall) {
 
     var session;
 	var sessPromise = PubSubService.getSession();
 	var subscriptions = [];
 	$scope.tryToConnect = false;
 	$scope.connectionStatus = false;
+	$scope.installingStatus = false;
 	$scope.registerResponse;
 	$scope.type = 'Add';
 
@@ -36,8 +37,22 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	    		
 	    		var jsonData =  JSON.parse(data[0]);
 	    		if(jsonData[0].state == 'completed'){
-	    			$rootScope.$emit('addedHost'); 
-	    			$uibModalInstance.dismiss('cancel');
+	    			// $rootScope.$emit('addedHost'); 
+	    			// $uibModalInstance.dismiss('cancel');
+	    			var listData = bamAjaxCall.getCmdData('hostcmd/list/'+$scope.hostName);
+	    			listData.then(function(data) {
+	    				$scope.tryToConnect = false;
+	    				$scope.connectionStatus = false;
+	    				var comps = $(data).filter(function(i,n){ return n.category == 1 });
+	    				$scope.availablePgComps = [];
+	    				for (var i = comps.length - 1; i >= 0; i--) {
+	    					$scope.availablePgComps.push(comps[i]);
+	    				}
+	    				// $scope.availablePgComps = pgComps;
+	    				$scope.selectedPgComp = $scope.availablePgComps[0];
+	    				$scope.secondPhase = false;
+    					$scope.thirdPhase = true;
+	    			})
 	    		}else if (jsonData[0].state == 'progress') {
 	    			$scope.tryToConnect = false;
 	    			$scope.connectionStatus = true;
@@ -57,19 +72,49 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 
     $scope.next = function (argument) {
     	if($scope.firstPhase){
-    		$scope.firstPhase = false;
-    		$scope.secondPhase = true;
+    		$scope.tryToConnect = true;
+    		$scope.connectionError = false;
+    		var checkUser = bamAjaxCall.getCmdData('checkUser/'+ $scope.hostName + '/' + $scope.userName + '/' + $scope.password);
+    		checkUser.then(function (argument) {
+    			var jsonData = JSON.parse(argument)[0];
+    			if (jsonData.state == 'success') {
+    				$scope.isSudo =  jsonData.isSudo;
+    				if($scope.isSudo){
+    					$scope.serviceUser = 'Postgres';
+    					$scope.pgcDir = '/opt'
+    				}else{
+    					$scope.serviceUser = $scope.userName;
+    					$scope.pgcDir = '~/bigsql'
+    				}
+    				$scope.tryToConnect = false;
+    				$scope.firstPhase = false;
+    				$scope.secondPhase = true;
+    			} else{
+	    			$scope.connectionError = true;
+	    			$scope.tryToConnect = false;
+    				$scope.message = jsonData.msg;
+    			}
+    		})
     	}else if($scope.secondPhase){
     		$scope.secondPhase = false;
     		$scope.thirdPhase = true;
     	}else if($scope.thirdPhase){
-    			$uibModalInstance.dismiss('cancel');
-		        var modalInstance = $uibModal.open({
-		            templateUrl: '../app/components/partials/pgInitialize.html',
-		            controller: 'pgInitializeController',
-		        });
-		        modalInstance.component = '';
-		        modalInstance.autoStartButton = false;
+    			$scope.installingStatus = true;
+    			$scope.thirdPhase = false;
+    			var event_url =  'install/' + $scope.selectedPgComp.component + '/' + $scope.hostName ;
+	            var eventData = bamAjaxCall.getCmdData(event_url);
+	            eventData.then(function(data) {
+	            	$scope.installingStatus = false;
+	                $uibModalInstance.dismiss('cancel');
+			        var modalInstance = $uibModal.open({
+			            templateUrl: '../app/components/partials/pgInitialize.html',
+			            controller: 'pgInitializeController',
+			        });
+			        modalInstance.component = $scope.selectedPgComp.component;
+			        modalInstance.dataDir = $scope.pgcDir + '/data/' + $scope.selectedPgComp.component;
+			        modalInstance.autoStartButton = false;
+			        modalInstance.host = $scope.hostName;
+	            });
     	}
     }
 

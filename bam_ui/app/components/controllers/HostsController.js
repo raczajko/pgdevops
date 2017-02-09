@@ -12,6 +12,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var session;
     var pid;
     var stopStatusCall;
+    var stopPGCall;
     var getListCmd = false;
     $scope.updateSettings;
     $scope.loading = true;
@@ -20,6 +21,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var previousTopData = "";
     $scope.openedHostIndex = '';
     $scope.openedGroupIndex = '';
+    $scope.addedNewHost = false;
     // $scope.groupOpen = true;
     // $scope.hostOpen = true;
 
@@ -211,7 +213,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 var timeVal = new Date(data[0].current_timestamp*1000) ;
                 var offset = new Date().getTimezoneOffset();
                 timeVal.setMinutes(timeVal.getMinutes() - offset);
-                if (read_bytes > 0 ) {
+                if (read_bytes >= 0 ) {
                     $scope.cpuData[0].values.push({x: timeVal, y: parseFloat(data[0].cpu_system)});
                     $scope.cpuData[1].values.push({x: timeVal, y: parseFloat(data[0].cpu_user)});
 
@@ -254,12 +256,15 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         // } else{
         //     $scope.groupsList[p_idx].hosts[idx]['state'] = false;   
         // }
+        $interval.cancel(stopPGCall);
+        $interval.cancel(stopStatusCall);
         $scope.openedHostIndex = idx;
         $scope.openedGroupIndex = p_idx;
         $scope.hostsList = $scope.groupsList[p_idx].hosts;
         previousTopData = '';
-        $interval.cancel(stopStatusCall);
         $scope.hostsList[idx].comps = '';
+        $scope.hostStatus = true;
+        $scope.retry = false;
         var isOpened = false;
         if (typeof $scope.hostsList[idx].open == "undefined") {
             isOpened = true;
@@ -289,17 +294,28 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
             var statusData = bamAjaxCall.getCmdData(status_url);
             statusData.then(function(data) {
-                    $scope.groupsList[p_idx].hosts[idx].comps = data;
-                    if ($scope.groupsList[p_idx].hosts[idx].comps.length == 0) {
+                $scope.hostStatus = false;
+                    if(data.length <= 0){
+                        $scope.groupsList[p_idx].hosts[idx].comps = data;
                         $scope.groupsList[p_idx].hosts[idx].showMsg = true;
-                    } else {
+                    }else if(data == "error" || data[0].state == 'error' && $scope.hostsList[idx].state == true){
+                        $interval.cancel(stopPGCall);
+                        stopPGCall = $interval(function (argument) {
+                            console.log("in stopPGCall");
+                            $scope.loadHost(p_idx, idx, true);
+                        } , 3000);
+                        $scope.retry = true;
+                    }else{
+                        $scope.groupsList[p_idx].hosts[idx].comps = data;
                         $scope.groupsList[p_idx].hosts[idx].showMsg = false;
                     }
                 });
             $interval.cancel(stopStatusCall);
             stopStatusCall = $interval(function (){
-                $scope.updateComps(p_idx, idx);
-                $scope.getGraphValues(remote_host);
+                if ($scope.groupsList[p_idx].hosts[idx].comps) {
+                    $scope.updateComps(p_idx, idx);
+                    $scope.getGraphValues(remote_host);
+                }
             }, 5000);
         }
     };
@@ -322,7 +338,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             controller: 'pgInitializeController',
         });
         modalInstance.component = comp;
+        modalInstance.dataDir = '';
         modalInstance.autoStartButton = true;
+        modalInstance.host = $scope.hostsList[$scope.openedHostIndex].host;
     };
 
     $scope.changeHost = function (host) {
@@ -337,7 +355,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
         session.call('com.bigsql.deleteHost', [hostToDelete]);
         session.subscribe("com.bigsql.onDeleteHost", function (data) {
-            getGroupsList(true);
+            getGroupsList(false);
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -361,47 +379,55 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     }
 
+    $rootScope.$on('showAddedHost', function (argument) {
+        $scope.loadHost(0, $scope.groupsList[0].hosts.length - 1 , true);
+    });
+
     function getGroupsList(checkStorage) {
-        if(localStorage.getItem('groupsListCookie') && checkStorage){
-            $scope.groupsList = JSON.parse(localStorage.getItem('groupsListCookie'));
-            for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
-                if ($scope.groupsList[i].state == true) {
-                    for (var j = $scope.groupsList[i].hosts.length - 1; j >= 0; j--) {
-                        if($scope.groupsList[i].hosts[j].state == true){
-                            $scope.loadHost(i, j, false);
-                        }
-                    }
-                };
-            }
-            $rootScope.$emit('hideUpdates');
-            $scope.nothingInstalled = false;
-            $scope.loading = false;
-        } else{
-            $http.get($window.location.origin + '/api/groups')
+        $http.get($window.location.origin + '/api/groups')
             .success(function (data) {
-                $scope.groupsList = data;
+                var storageData = JSON.parse(localStorage.getItem('groupsListCookie'));
+                if(localStorage.getItem('groupsListCookie') && checkStorage && data.length == storageData.length && data[0].hosts.length == storageData[0].hosts.length){
+                    $scope.groupsList = storageData;
+                    for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                        if ($scope.groupsList[i].state == true) {
+                            for (var j = $scope.groupsList[i].hosts.length - 1; j >= 0; j--) {
+                                if($scope.groupsList[i].hosts[j].state == true){
+                                    $scope.loadHost(i, j, false);
+                                }
+                            }
+                        };
+                    }   
+                } else{
+                    localStorage.clear();
+                    $scope.groupsList = data;
+                    for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                        $scope.groupsList[i].state = true;
+                    } 
+                    if($scope.addedNewHost){
+                        var hostNumber = $scope.groupsList[0].hosts.length - 1;
+                        $scope.loadHost(0, hostNumber, false);
+                        $scope.groupsList[0].hosts[hostNumber]['state'] = true;
+                    }else{
+                        $scope.loadHost(0, 0, false);  
+                        $scope.groupsList[0].hosts[0]['state'] = true;                      
+                    }
+                }
                 $rootScope.$emit('hideUpdates');
                 $scope.nothingInstalled = false;
                 $scope.loading = false;
-                for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
-                    $scope.groupsList[i].state = true;
-                }
-                $scope.groupsList[0].hosts[0]['state'] = true;
-                $scope.loadHost(0, 0, false);
-                // $scope.loadGroup(0);
-            })
-            .error(function (error) {
+            }).error(function (error) {
                 $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
             });
-        }
     };
 
     getGroupsList(true);
 
     $rootScope.$on('addedHost', function () {
         getGroupsList(false);
+        $scope.addedNewHost = true;
     });
 
     $scope.action = function ( event, host) {

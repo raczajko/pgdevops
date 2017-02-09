@@ -9,6 +9,8 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
 
     $scope.comp = $uibModalInstance.component;
     $scope.autoStartButton = $uibModalInstance.autoStartButton;
+    $scope.dataDir = $uibModalInstance.dataDir;
+    $scope.host = $uibModalInstance.host;
 
     function getInfoComp(argument) {
         var infoData = bamAjaxCall.getCmdData('info/' + $scope.comp)
@@ -43,7 +45,13 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
 
         var promise = MachineInfo.get(val);
         promise.then(function (data) {
-            $scope.dataDir = data.home + '/data/' + $scope.comp;
+            if(!$scope.dataDir){
+                $scope.dataDir = data.home + '/data/' + $scope.comp;      
+            }
+            if($scope.dataDir.length > 40){
+                $scope.dataDir = "..." + $scope.dataDir.substring(17, $scope.dataDir.length)
+            }
+            $scope.dataDirVal = data.home + '/data/' + $scope.comp;
         });
 
         $scope.portNumber = '';
@@ -69,12 +77,22 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
     });
 
     $scope.init = function() {
-    	if(!$scope.portNumber){
-            $scope.portNumber = document.getElementById('portNumber').value;
+        if($scope.host == 'localhost'){
+        	if(!$scope.portNumber){
+                $scope.portNumber = document.getElementById('portNumber').value;
+            }
+            session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDirVal, $scope.portNumber ] );
+    	    $rootScope.$emit('initComp', [$scope.comp]);    		
+    		$uibModalInstance.dismiss('cancel');
+        } else {
+            var event_url =  'init/' + $scope.comp + '/' + $scope.host + '/' + $scope.formData.password ;
+            var eventData = bamAjaxCall.getCmdData(event_url);
+            $rootScope.$emit('addedHost');
+            $uibModalInstance.dismiss('cancel');
+            eventData.then(function(data) {
+                $uibModalInstance.dismiss('cancel');
+            });
         }
-        session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDir, $scope.portNumber ] );
-	    $rootScope.$emit('initComp', [$scope.comp]);    		
-		$uibModalInstance.dismiss('cancel');
     }
 
     $scope.$on('$destroy', function () {
