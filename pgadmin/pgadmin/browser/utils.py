@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -346,9 +346,7 @@ class PGChildNodeView(NodeView):
         """
 
         # Set the sql_path
-        sql_path = ''
-        if conn.manager.version >= 90100:
-            sql_path = 'depends/sql/9.1_plus'
+        sql_path = 'depends/sql/#{0}#'.format(conn.manager.version)
 
         if where is None:
             where_clause = "WHERE dep.objid={0}::oid".format(object_id)
@@ -396,9 +394,7 @@ class PGChildNodeView(NodeView):
         Returns: Dictionary of dependents for the selected node.
         """
         # Set the sql_path
-        sql_path = ''
-        if conn.manager.version >= 90100:
-            sql_path = 'depends/sql/9.1_plus'
+        sql_path = 'depends/sql/#{0}#'.format(conn.manager.version)
 
         if where is None:
             where_clause = "WHERE dep.refobjid={0}::oid".format(object_id)
@@ -474,7 +470,7 @@ class PGChildNodeView(NodeView):
             # Fetch the type name from the dictionary
             # if type is not present in the types dictionary then
             # we will continue and not going to add it.
-            if type_str[0] in types:
+            if len(type_str) and type_str[0] in types:
 
                 # if type is present in the types dictionary, but it's
                 # value is None then it requires special handling.
@@ -497,9 +493,9 @@ class PGChildNodeView(NodeView):
                         elif type_str[1] == 'p':
                             type_name = 'primary_key'
                         elif type_str[1] == 'u':
-                            type_name = 'unique'
+                            type_name = 'unique_constraint'
                         elif type_str[1] == 'x':
-                            type_name = 'exclude'
+                            type_name = 'exclusion_constraint'
                     elif type_str[0] == 'A':
                         # Include only functions
                         if row['adbin'].startswith('{FUNCEXPR'):

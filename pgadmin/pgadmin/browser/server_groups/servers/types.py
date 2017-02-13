@@ -2,17 +2,18 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
 
-import os
+import os, sys
 
 from flask import render_template
 from flask_babel import gettext as _
 from pgadmin.utils.preferences import Preferences
 
+import config
 
 class ServerType(object):
     """
@@ -48,11 +49,12 @@ class ServerType(object):
 
         for key in cls.registry:
             st = cls.registry[key]
+            default_path = config.DEFAULT_BINARY_PATHS[st.stype] or ""
 
             st.utility_path = paths.register(
                 'bin_paths', st.stype + '_bin_dir',
                 _("{0} Binary Path").format(st.desc),
-                'text', "", category_label=_('Binary paths'),
+                'text', default_path, category_label=_('Binary paths'),
                 help_str=_(
                     "Path to the directory containing the {0} utility programs (pg_dump, pg_restore etc).".format(
                         st.desc
@@ -92,7 +94,7 @@ class ServerType(object):
             reverse=True
         )
 
-    def utility(self, operation, sverion):
+    def utility(self, operation, sversion):
         res = None
 
         if operation == 'backup':
@@ -110,10 +112,12 @@ class ServerType(object):
                 ))
             )
 
-        return os.path.join(
-            self.utility_path.get(),
+        bin_path = self.utility_path.get().replace("$DIR", os.path.dirname(sys.modules['__main__'].__file__))
+
+        return os.path.abspath(os.path.join(
+            bin_path,
             (res if os.name != 'nt' else (res + '.exe'))
-        )
+        ))
 
 
 # Default Server Type

@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -40,6 +40,7 @@ class BrowserModule(PgAdminModule):
         # Add browser stylesheets
         for (endpoint, filename) in [
             ('static', 'css/codemirror/codemirror.css'),
+            ('static', 'js/codemirror/addon/dialog/dialog.css'),
             ('static', 'css/jQuery-contextMenu/jquery.contextMenu.css' if current_app.debug
             else 'css/jQuery-contextMenu/jquery.contextMenu.min.css'),
             ('static', 'css/wcDocker/wcDocker.css' if current_app.debug
@@ -455,10 +456,10 @@ def index():
             )
 
             if response.getcode() == 200:
-                data = json.load(response)
+                data = json.loads(response.read().decode('utf-8'))
                 current_app.logger.debug('Response data: %s' % data)
         except:
-            pass
+            current_app.logger.exception('Exception when checking for update')
 
         if data is not None:
             if data['pgadmin4']['version_int'] > config.APP_VERSION_INT:
@@ -503,6 +504,9 @@ def browser_js():
     editor_use_spaces_pref = prefs.preference('use_spaces')
     editor_use_spaces = editor_use_spaces_pref.get()
 
+    editor_wrap_code_pref = prefs.preference('wrap_code')
+    editor_wrap_code = editor_wrap_code_pref.get()
+
     for submodule in current_blueprint.submodules:
         snippets.extend(submodule.jssnippets)
     return make_response(
@@ -514,6 +518,7 @@ def browser_js():
             edbas_help_path=edbas_help_path,
             editor_tab_size=editor_tab_size,
             editor_use_spaces=editor_use_spaces,
+            editor_wrap_code=editor_wrap_code,
             _=gettext
         ),
         200, {'Content-Type': 'application/x-javascript'})

@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -44,6 +44,19 @@ def has_any(data, keys):
     return False
 
 
+def recovery_state(connection, postgres_version):
+    recovery_check_sql = render_template("connect/sql/#{0}#/check_recovery.sql".format(postgres_version))
+
+    status, result = connection.execute_dict(recovery_check_sql)
+    if status:
+        in_recovery = result['rows'][0]['inrecovery']
+        wal_paused = result['rows'][0]['isreplaypaused']
+    else:
+        in_recovery = None
+        wal_paused = None
+    return in_recovery, wal_paused
+
+
 class ServerModule(sg.ServerGroupPluginModule):
     NODE_TYPE = "server"
     LABEL = gettext("Servers")
@@ -74,21 +87,7 @@ class ServerModule(sg.ServerGroupPluginModule):
             in_recovery = None
             wal_paused = None
             if connected:
-                status, result = conn.execute_dict("""
-                    SELECT CASE WHEN usesuper
-                           THEN pg_is_in_recovery()
-                           ELSE FALSE
-                           END as inrecovery,
-                           CASE WHEN usesuper AND pg_is_in_recovery()
-                           THEN pg_is_xlog_replay_paused()
-                           ELSE FALSE
-                           END as isreplaypaused
-                    FROM pg_user WHERE usename=current_user""")
-
-                if len(result['rows']):
-                    in_recovery = result['rows'][0]['inrecovery']
-                    wal_paused = result['rows'][0]['isreplaypaused']
-
+                in_recovery, wal_paused = recovery_state(conn, manager.version)
             yield self.generate_browser_node(
                 "%d" % (server.id),
                 gid,
@@ -231,19 +230,7 @@ class ServerNode(PGChildNodeView):
             connected = conn.connected()
 
             if connected:
-                status, result = conn.execute_dict("""
-                    SELECT CASE WHEN usesuper
-                           THEN pg_is_in_recovery()
-                           ELSE FALSE
-                           END as inrecovery,
-                           CASE WHEN usesuper AND pg_is_in_recovery()
-                           THEN pg_is_xlog_replay_paused()
-                           ELSE FALSE
-                           END as isreplaypaused
-                    FROM pg_user WHERE usename=current_user""")
-
-                in_recovery = result['rows'][0]['inrecovery'];
-                wal_paused = result['rows'][0]['isreplaypaused']
+                in_recovery, wal_paused = recovery_state(conn, manager.version)
             else:
                 in_recovery = None
                 wal_paused = None
@@ -274,6 +261,7 @@ class ServerNode(PGChildNodeView):
 
         return make_json_response(result=res)
 
+
     def node(self, gid, sid):
         """Return a JSON document listing the server groups for the user"""
         server = Server.query.filter_by(user_id=current_user.id,
@@ -296,19 +284,7 @@ class ServerNode(PGChildNodeView):
         connected = conn.connected()
 
         if connected:
-            status, result = conn.execute_dict("""
-                SELECT CASE WHEN usesuper
-                    THEN pg_is_in_recovery()
-                    ELSE FALSE
-                    END as inrecovery,
-                    CASE WHEN usesuper AND pg_is_in_recovery()
-                    THEN pg_is_xlog_replay_paused()
-                    ELSE FALSE
-                    END as isreplaypaused
-                FROM pg_user WHERE usename=current_user""")
-
-            in_recovery = result['rows'][0]['inrecovery'];
-            wal_paused = result['rows'][0]['isreplaypaused']
+            in_recovery, wal_paused = recovery_state(conn, manager.version)
         else:
             in_recovery = None
             wal_paused = None
@@ -656,16 +632,6 @@ class ServerNode(PGChildNodeView):
     def modified_sql(self, gid, sid):
         return make_json_response(data='')
 
-    def get_template_directory(self, version):
-        """ This function will check and return template directory
-        based on postgres verion"""
-        if version >= 90600:
-            return '9.6_plus'
-        elif version >= 90200:
-            return '9.2_plus'
-        else:
-            return '9.1_plus'
-
     def statistics(self, gid, sid):
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(sid)
         conn = manager.connection()
@@ -673,11 +639,7 @@ class ServerNode(PGChildNodeView):
         if conn.connected():
             status, res = conn.execute_dict(
                 render_template(
-                    "/".join([
-                        'servers/sql',
-                        self.get_template_directory(manager.version),
-                        'stats.sql'
-                    ]),
+                    "/servers/sql/#{0}#/stats.sql".format(manager.version),
                     conn=conn, _=gettext
                 )
             )
@@ -863,22 +825,7 @@ class ServerNode(PGChildNodeView):
             current_app.logger.info('Connection Established for server: \
                 %s - %s' % (server.id, server.name))
             # Update the recovery and wal pause option for the server if connected successfully
-            status, result = conn.execute_dict("""
-                    SELECT CASE WHEN usesuper
-                           THEN pg_is_in_recovery()
-                           ELSE FALSE
-                           END as inrecovery,
-                           CASE WHEN usesuper AND pg_is_in_recovery()
-                           THEN pg_is_xlog_replay_paused()
-                           ELSE FALSE
-                           END as isreplaypaused
-                    FROM pg_user WHERE usename=current_user""")
-            if status:
-                in_recovery = result['rows'][0]['inrecovery'];
-                wal_paused = result['rows'][0]['isreplaypaused']
-            else:
-                in_recovery = None
-                wal_paused = None
+            in_recovery, wal_paused = recovery_state(conn, manager.version)
 
             return make_json_response(
                 success=1,
@@ -1051,11 +998,8 @@ class ServerNode(PGChildNodeView):
             # Hash new password before saving it.
             password = pqencryptpassword(data['newPassword'], manager.user)
 
-            SQL = render_template("/".join([
-                'servers/sql',
-                self.get_template_directory(manager.version),
-                'change_password.sql'
-            ]),
+            SQL = render_template(
+                "/servers/sql/#{0}#/change_password.sql".format(manager.version),
                 conn=conn, _=gettext,
                 user=manager.user, encrypted_password=password)
 

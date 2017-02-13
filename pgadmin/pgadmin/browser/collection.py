@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -66,7 +66,7 @@ class CollectionNodeModule(PgAdminModule, PGChildModule):
             "id": "%s/%s" % (self.node_type, node_id),
             "label": label,
             "icon": self.node_icon if not icon else icon,
-            "inode": self.node_inode,
+            "inode": self.node_inode if 'inode' not in kwargs else kwargs['inode'],
             "_type": self.node_type,
             "_id": node_id,
             "_pid": parent_id,
@@ -126,11 +126,11 @@ class CollectionNodeModule(PgAdminModule, PGChildModule):
         Label to be shown for the collection node, do not forget to set the
         class level variable COLLECTION_LABEL.
         """
-        return self.COLLECTION_LABEL
+        return gettext(self.COLLECTION_LABEL)
 
     @property
     def label(self):
-        return self.COLLECTION_LABEL
+        return gettext(self.COLLECTION_LABEL)
 
     @property
     def collection_icon(self):
