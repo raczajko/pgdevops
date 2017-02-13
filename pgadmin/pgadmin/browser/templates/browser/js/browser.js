@@ -300,27 +300,23 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
         $obj_mnu.append(create_submenu.$el);
       }
     },
+    save_current_layout: function(obj) {
+      if(obj.docker) {
+        state = obj.docker.save();
+        settings = { setting: "Browser/Layout", value: state };
+        $.ajax({
+          type: 'POST',
+          url: "{{ url_for('settings.store') }}",
+          data: settings
+        });
+      }
+    },
     init: function() {
       var obj=this;
       if (obj.initialized) {
         return;
       }
       obj.initialized = true;
-
-      // Store the main browser layout
-      $(window).bind('unload', function() {
-          if(obj.docker) {
-            state = obj.docker.save();
-            settings = { setting: "Browser/Layout", value: state };
-            $.ajax({
-              type: 'POST',
-              url: "{{ url_for('settings.store') }}",
-              data: settings,
-              async:false
-            });
-          }
-        return true;
-      });
 
       // Initialize the Docker
       obj.docker = new wcDocker(
@@ -355,17 +351,30 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
         } else {
           obj.buildDefaultLayout()
         }
+
+        // Listen to panel attach/detach event so that last layout will be remembered
+        _.each(obj.panels, function(panel, name) {
+          panel.panel.on(wcDocker.EVENT.ATTACHED, function() {
+            obj.save_current_layout(obj);
+          });
+          panel.panel.on(wcDocker.EVENT.DETACHED, function() {
+            obj.save_current_layout(obj);
+          });
+          panel.panel.on(wcDocker.EVENT.MOVE_ENDED, function() {
+            obj.save_current_layout(obj);
+          });
+        });
       }
 
       // Syntax highlight the SQL Pane
       obj.editor = CodeMirror.fromTextArea(
           document.getElementById("sql-textarea"), {
             lineNumbers: true,
-            lineWrapping: true,
             mode: "text/x-pgsql",
             readOnly: true,
             extraKeys: pgAdmin.Browser.editor_shortcut_keys,
-            tabSize: pgAdmin.Browser.editor_options.tabSize
+            tabSize: pgAdmin.Browser.editor_options.tabSize,
+            lineWrapping: pgAdmin.Browser.editor_options.wrapCode
           });
 
       setTimeout(function() {
@@ -509,8 +518,8 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
         // First - register the menus from the other
         // modules/extensions.
         if (counter.total == counter.loaded) {
-{% for key in ('File', 'Edit', 'Object' 'Tools', 'Management', 'Help') %}{% set menu_items = current_app.menu_items['%s_items' % key.lower()] %}{% if menu_items|length > 0 %}{% set hasMenus = False %}
-          obj.add_menus([{% for item in menu_items %}{% if hasMenus %},{% endif %}{
+{% for key in ('File', 'Edit', 'Object' 'Tools', 'Management', 'Help') %}
+          obj.add_menus([{% for item in current_app.menu_items['%s_items' % key.lower()] %}{% if loop.index != 1 %}, {% endif %}{
             name: "{{ item.name }}",
             {% if item.module %}module: {{ item.module }},
             {% endif %}{% if item.url %}url: "{{ item.url }}",
@@ -523,7 +532,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
             priority: {{ item.priority }},
             enable: '{{ item.enable }}'
           }{% set hasMenus = True %}{% endfor %}]);
-{% endif %}{% endfor %}
+{% endfor %}
           obj.create_menus();
         } else {
           // recall after some time
@@ -1625,7 +1634,8 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
       "Cmd-Alt-Right": "goGroupRight"
     },
     editor_options: {
-      tabSize: '{{ editor_tab_size }}'
+      tabSize: '{{ editor_tab_size }}',
+      wrapCode: '{{ editor_wrap_code }}' == 'True'
     }
 
   });

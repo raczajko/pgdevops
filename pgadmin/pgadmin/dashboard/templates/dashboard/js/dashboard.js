@@ -217,9 +217,13 @@ function(r, $, pgAdmin, _, Backbone) {
                         pgAdmin.Dashboard.render_chart(container, data, dataset, sid, did, url, options, counter, refresh);
                     },
                     error: function (xhr, status, msg) {
+                        var err = $.parseJSON(xhr.responseText),
+                            msg = err.errormsg
                         // If we get a 428, it means the server isn't connected
                         if (xhr.status == 428) {
-                            msg = '{{ gettext('Please connect to the selected server to view the graph.') }}';
+                            if (_.isUndefined(msg) || _.isNull(msg)) {
+                              msg = '{{ gettext('Please connect to the selected server to view the graph.') }}';
+                            }
                             cls = 'info';
                         } else {
                             msg = '{{ gettext('An error occurred whilst rendering the graph.') }}';
@@ -277,7 +281,7 @@ function(r, $, pgAdmin, _, Backbone) {
             var grid = new Backgrid.Grid({
               columns: columns,
               collection: data,
-              className: "backgrid table-bordered table-striped"
+              className: "backgrid table-bordered presentation table backgrid-striped"
             });
 
             // Render the grid
@@ -325,9 +329,13 @@ function(r, $, pgAdmin, _, Backbone) {
                     filter.search();
                 },
                 error: function(model, xhr, options) {
+                     var err = $.parseJSON(xhr.responseText),
+                         msg = err.errormsg
                     // If we get a 428, it means the server isn't connected
                     if (xhr.status == 428) {
-                        msg = '{{ gettext('Please connect to the selected server to view the table.') }}';
+                        if (_.isUndefined(msg) || _.isNull(msg)) {
+                            msg = '{{ gettext('Please connect to the selected server to view the table.') }}';
+                        }
                         cls = 'info';
                     } else {
                         msg = '{{ gettext('An error occurred whilst rendering the table.') }}';
@@ -354,15 +362,15 @@ function(r, $, pgAdmin, _, Backbone) {
 
         // Rock n' roll on the server dashboard
         init_server_dashboard: function(sid, version, session_stats_refresh, tps_stats_refresh, ti_stats_refresh, to_stats_refresh, bio_stats_refresh) {
-            var div_sessions = document.getElementById('graph-sessions');
-            var div_tps = document.getElementById('graph-tps');
-            var div_ti = document.getElementById('graph-ti');
-            var div_to = document.getElementById('graph-to');
-            var div_bio = document.getElementById('graph-bio');
-            var div_server_activity = document.getElementById('server_activity');
-            var div_server_locks = document.getElementById('server_locks');
-            var div_server_prepared = document.getElementById('server_prepared');
-            var div_server_config = document.getElementById('server_config');
+            var div_sessions = $('.dashboard-container').find('#graph-sessions')[0];
+            var div_tps = $('.dashboard-container').find('#graph-tps')[0];
+            var div_ti = $('.dashboard-container').find('#graph-ti')[0];
+            var div_to = $('.dashboard-container').find('#graph-to')[0];
+            var div_bio = $('.dashboard-container').find('#graph-bio')[0];
+            var div_server_activity = $('.dashboard-container').find('#server_activity');
+            var div_server_locks = $('.dashboard-container').find('#server_locks');
+            var div_server_prepared = $('.dashboard-container').find('#server_prepared');
+            var div_server_config = $('.dashboard-container').find('#server_config');
             var dataset_sessions = [];
             var data_sessions = [];
             var dataset_tps = [];
