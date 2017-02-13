@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 # ##################################################################
@@ -26,6 +26,9 @@ def create_fts_parser(server, db_name, schema_name, fts_parser_name):
                                        server['host'],
                                        server['port'])
         pg_cursor = connection.cursor()
+
+        query = "DROP TEXT SEARCH PARSER IF EXISTS " + schema_name + "." + fts_parser_name
+        pg_cursor.execute(query)
 
         query = "CREATE TEXT SEARCH PARSER " + schema_name + "." + fts_parser_name + \
                 "(START=int4_accum, GETTOKEN=gist_box_penalty, " \
