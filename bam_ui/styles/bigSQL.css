@@ -6609,7 +6609,7 @@ table.settings-table-pgc-info > tbody > tr > td {
 span.update-component-arrow-wrapper {
   float: left;
     margin-left: 7px;
-    margin-top: 5px;
+    /*margin-top: 5px;*/
 }
 
 .test-comp-icon {
@@ -6848,7 +6848,7 @@ text-align: center;}
 
 .extensions-area{
   background-color: #dfdfdf;
-  margin: 0px 0px 10px 0px;
+  /*margin: 0px 0px 10px 0px;*/
   padding: 5px 0 0 0;
   max-height: 225px;
   display: inline-block;
@@ -6857,8 +6857,8 @@ text-align: center;}
 .extension-area-comp{
   background: #fff;
   width: 100%;
-  padding: 2px 0px 0px 0px;
-  height: 135px;
+  padding-top: 5px;
+  height: 126px;
 }
 
 .installedSymbol {
@@ -6874,7 +6874,7 @@ text-align: center;}
 }
 
 .expandExt{
-  margin-bottom: 35px;
+  margin-bottom: 25px;
   padding-top: 10px;
 }
 
@@ -6901,5 +6901,6 @@ text-align: center;}
   margin-left: 0px; 
   background-color: #dfdfdf; 
   width: 100%; 
-  margin-top: -70px
+  margin-top: -70px;
+  height: 310px;
 }

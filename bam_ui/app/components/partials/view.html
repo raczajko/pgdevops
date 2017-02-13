@@ -28,7 +28,7 @@
     <div ng-if="!loading && !retry">
         <div ng-repeat="(key, value) in components | groupBy: 'category_desc'">
             <div class="box-header with-border" ng-if="key != 'Extensions'">
-                <h3 class="box-title" ng-bind="key"></h3>
+                <h3 class="box-title" ng-bind="key" ng-if="value.length"></h3>
             </div>
             <div class="row">
                 <div class="col-md-2 col-sm-3 col-xs-6" ng-repeat="c in value" ng-if="c.category_desc == 'PostgreSQL'">
@@ -38,7 +38,7 @@
                         <i class="fa fa-arrow-circle-down fa-2x" id="updateIcon" style="color: #FF8A21"></i>
                     </span>
                     <span class="test-comp-icon" ng-if="c.stage != 'prod'" tooltip-append-to-body="true" uib-tooltip="Test Component"></span>
-                    <div class="" ng-class="c.extensionOpened ? 'select-comp-area' : 'comp-area'" ng-click="getExtensions(c.component, $index)">
+                    <div ng-class="c.extensionOpened ? 'select-comp-area' : 'comp-area'" ng-click="getExtensions(c.component, $index)">
                         <img class="comp-img img-responsive" ng-src="assets/img/component-logos/{{ c.component }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
                         <div class="caption">
                             <div style="text-align:center;">
@@ -47,17 +47,17 @@
                                 </h4>
                             </div>
                             <div ng-class="c.extensionOpened ? 'expandExt' : ''" ng-if="extensionsList.length" style="text-align: center;">
-                                <strong ng-if="c.extensionOpened">
+                                <h4 ng-if="c.extensionOpened">
                                     Extensions
-                                </strong>
+                                </h4>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="row extensions-row" ng-if="$index == 1 && extensionsList.length">
-                <div class="col-md-1 col-sm-3 col-xs-6 extensions-area" ng-repeat="ext in extensionsList">
-                    <div style="padding: 2px 2px 2px 2px">
+                <div class="col-md-2 col-sm-3 col-xs-6 extensions-area" style="width: 11.499999995%" ng-repeat="ext in extensionsList">
+                    <div style="padding: 10px 5px 5px 5px">
                     <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="ext.status == 'Installed'|| ext.status == 'NotInitialized'"></i>
                     <span class="update-component-arrow-wrapper" tooltip-append-to-body="true" uib-tooltip="New version available: {{ext.current_version}}" ng-if="ext.updates>0">
                         <i class="fa fa-arrow-circle-down" id="updateIcon" style="color: #FF8A21"></i>
@@ -67,7 +67,7 @@
                         <img class="comp-img img-responsive ext-img" ng-src="assets/img/component-logos/{{ ext.modifiedName }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
                         <div class="description-style">
                             <h5>
-                                <a>{{ext.friendlyName}}</a>
+                                <a>{{ext.disp_name}}</a>
                             </h5>
                             {{ext.short_desc}}
                         </div>
@@ -76,7 +76,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-2 col-sm-3 col-xs-6" ng-repeat="c in value" ng-if="c.category_desc != 'PostgreSQL' && c.category_desc != 'Extensions' && c.component != 'devops'">
+                <div class="col-md-2 col-sm-3 col-xs-6" ng-repeat="c in value" ng-if="c.category_desc != 'PostgreSQL' && c.category_desc != 'Extensions' && c.component != 'devops' && c.component != 'bam2'">
                     <span class="badge new-comp-wrapper" ng-if="c.is_new == 1 && c.status == 'NotInstalled'" tooltip-append-to-body="true" uib-tooltip="Release date: {{ c.release_date }}">New</span>
                     <i class="fa fa-check-circle-o fa-2x pull-right installedSymbol" ng-if="c.status == 'Installed'|| c.status == 'NotInitialized'"></i>
                     <span class="update-component-arrow-wrapper" tooltip-append-to-body="true" uib-tooltip="New version available: {{c.current_version}}" ng-if="c.updates>0">
