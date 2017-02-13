@@ -1,21 +1,26 @@
 <!-- Content Header (Page header) -->
-<section class="content-header">
+<!-- <div class="modal-header">
     <server-info-details title="Component Details"></server-info-details>
+    <h3> Component Details </h3>
     <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
-</section>
+</div> -->
 
 <!-- Main content -->
-<section class="content">
+<div class="modal-body">
+    <div class="details-modal">
+        <server-info-details title="Component Details"></server-info-details>
+    </div>
     <div class="row">
         <div ng-if="loading" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
             <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
-            <span><h3>Loading...</h3></span>
+            <!-- <span><h3>Loading...</h3></span> -->
         </div>
         <div class="col-md-3 col-xs-4 col-sm-12" ng-if="!loading">
             <!-- Profile Image -->
             <div class="box box-primary">
                 <div class="box-body box-profile">
-                    <img class="profile-user-img img-responsive" id="component-logo" ng-src="assets/img/component-logos/{{ component.component }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
+                    <img class="profile-user-img img-responsive" ng-if="component.category != '2'" id="component-logo" ng-src="assets/img/component-logos/{{ component.component }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
+                    <img class="profile-user-img img-responsive" ng-if="component.category == '2'" id="component-logo" ng-src="assets/img/component-logos/{{ component.componentImage }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
                     <h3 class="profile-username text-center" ng-bind="component.component" id="comp_name"></h3>
                     <ul class="list-group list-group-unbordered" id="comp_details">
                         <li class="list-group-item" ng-show="component.version != '' && component.version != undefined">
@@ -100,15 +105,25 @@
             </div>
         </div>
         <div class="col-md-9 col-xs-8 col-sm-12" ng-if="!loading">
-            <div class="box" ng-if="relnotes">
+            <uib-tabset>
+                <uib-tab heading="Release Notes" select="tabClick($event)">
+                    <div class="box-body" style="max-height: 350px; overflow: scroll;">
+                        <span ng-bind-html="relnotes"></span>
+                    </div>
+                </uib-tab>
+            </uib-tabset>
+            <!-- <div class="box" ng-if="relnotes">
                 <div class="box-header with-border">
                     <h3 class="box-title">
                         Release Notes 
                     </h3>         
                 </div>
-                <div class="box-body">
+                <div class="box-body" style="max-height: 450px; overflow: scroll;">
                    <span ng-bind-html="relnotes"></span>
                 </div>
-            </div>
+            </div> -->
         </div>
-</section>
+        <div class="col-sm-offset-11 col-sm-11" style="padding: 10px">
+            <button class="btn btn-warning" type="button" ng-click="cancel()">OK</button>
+        </div>
+</div>

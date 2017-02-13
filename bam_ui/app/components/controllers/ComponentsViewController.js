@@ -53,14 +53,15 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
 
         listData.then(function (data) {
             $rootScope.$emit('showUpdates');
-            if(data == "error"){
+            if(data == "error" || data[0].state == 'error'){
                 $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
             } else {
                 $scope.nothingInstalled = false;
+                data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'devops'  ;})
                 if ($scope.showInstalled) {
-                    $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" && n.component != 'bam2' ;}));
+                    $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
                     if($scope.components.length == 0){
                         $scope.components = [];
                         $scope.nothingInstalled = true;
@@ -70,13 +71,21 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 }
                 $scope.loading = false;
                 for (var i = 0; i < $scope.components.length; i++) {
+                    if(i==0){
+                        $scope.components[i].extensionOpened = true;
+                    }else{
+                        $scope.components[i].extensionOpened = false;
+                    }
                     $scope.components[i].progress = 0;
+                    
                 }
                 var Checkupdates = 0;
                 for (var i = 0; i < $scope.components.length; i++) {
                     Checkupdates += $scope.components[i].updates;
                 } 
             }
+                $scope.getExtensions( 'pg96', 0);
+
         });
         
         // $http.get($window.location.origin + '/api/list')
@@ -107,7 +116,35 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         // });
     };
     
+    $scope.getExtensions = function( comp, idx) {
+        for (var i = 0; i < $scope.components.length; i++) {
+            $scope.components[i].extensionOpened = false;           
+        }
+        $scope.components[idx].extensionOpened = true;
+        if ($scope.currentHost=="" || $scope.currentHost == 'localhost'){
+            var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
+        } else{
+            var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp + '/' + $scope.currentHost);
+        }
+        // var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
+        extensionsList.then(function (argument) {
+            if (argument[0].state != 'error') {
+                $scope.extensionsList = argument;
+                if ($scope.showInstalled) {
+                    $scope.extensionsList = $($scope.extensionsList).filter(function(i,n){ return n.status != "NotInstalled" ;})   
+                }
+                for (var i = $scope.extensionsList.length - 1; i >= 0; i--) {
+                    $scope.extensionsList[i].modifiedName = $scope.extensionsList[i].component.split('-')[0].replace(/[0-9]/g,'');
+                }
+            }
+        })   
+    }
+
     getList($cookies.get('remote_host'));
+
+    $rootScope.$on('updatePackageManager', function (argument) {
+        getList($cookies.get('remote_host'));
+    });
 
     $rootScope.$on('refreshData', function (argument, host) {
         $scope.loading = true;
@@ -154,6 +191,21 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/pgInitialize.html',
                 controller: 'pgInitializeController',
+            });
+            modalInstance.component = comp;
+            modalInstance.autoStartButton = true;
+            modalInstance.dataDir = '';
+            modalInstance.host = $scope.currentHost;
+
+        };
+
+        $scope.openDetailsModal = function (comp) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/details.html',
+                windowClass: 'comp-details-modal',
+                controller: 'ComponentDetailsController',
+                keyboard  : false,
+                backdrop  : 'static',
             });
             modalInstance.component = comp;
         };
@@ -234,7 +286,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             }else{
                 param = 'prod'
             }
-            session.call('com.bigsql.',[param]);
+            session.call('com.bigsql.setTestSetting',[param]);
             getList();
             // session.call('com.bigsql.list');
         };

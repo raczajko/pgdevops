@@ -12,6 +12,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var session;
     var pid;
     var stopStatusCall;
+    var stopPGCall;
     var getListCmd = false;
     $scope.updateSettings;
     $scope.loading = true;
@@ -20,8 +21,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var previousTopData = "";
     $scope.openedHostIndex = '';
     $scope.openedGroupIndex = '';
-    $scope.groupOpen = true;
-    $scope.hostOpen = true;
+    $scope.addedNewHost = false;
+    // $scope.groupOpen = true;
+    // $scope.hostOpen = true;
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -211,7 +213,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 var timeVal = new Date(data[0].current_timestamp*1000) ;
                 var offset = new Date().getTimezoneOffset();
                 timeVal.setMinutes(timeVal.getMinutes() - offset);
-                if (read_bytes > 0 ) {
+                if (read_bytes >= 0 ) {
                     $scope.cpuData[0].values.push({x: timeVal, y: parseFloat(data[0].cpu_system)});
                     $scope.cpuData[1].values.push({x: timeVal, y: parseFloat(data[0].cpu_user)});
 
@@ -239,13 +241,30 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $scope.diskIO[1].values.splice(0, $scope.diskIO[1].values.length);
     }
 
+    // $scope.loadGroup = function (index) {
+
+        // if ($scope.groupsList[index]['state'] == undefined || $scope.groupsList[index]['state'] == false) {
+        //     $scope.groupsList[index]['state'] = true;
+        // } else{
+        //     $scope.groupsList[index]['state'] = false;
+        // }
+    // }
+
     $scope.loadHost = function (p_idx, idx, refresh) {
+        // if ($scope.groupsList[p_idx].hosts[idx]['state'] == undefined || $scope.groupsList[p_idx].hosts[idx]['state'] == false) {
+        //     $scope.groupsList[p_idx].hosts[idx]['state'] = true;
+        // } else{
+        //     $scope.groupsList[p_idx].hosts[idx]['state'] = false;   
+        // }
+        $interval.cancel(stopPGCall);
+        $interval.cancel(stopStatusCall);
         $scope.openedHostIndex = idx;
         $scope.openedGroupIndex = p_idx;
         $scope.hostsList = $scope.groupsList[p_idx].hosts;
         previousTopData = '';
-        $interval.cancel(stopStatusCall);
         $scope.hostsList[idx].comps = '';
+        $scope.hostStatus = true;
+        $scope.retry = false;
         var isOpened = false;
         if (typeof $scope.hostsList[idx].open == "undefined") {
             isOpened = true;
@@ -275,17 +294,28 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
             var statusData = bamAjaxCall.getCmdData(status_url);
             statusData.then(function(data) {
-                    $scope.groupsList[p_idx].hosts[idx].comps = data;
-                    if ($scope.groupsList[p_idx].hosts[idx].comps.length == 0) {
+                $scope.hostStatus = false;
+                    if(data.length <= 0){
+                        $scope.groupsList[p_idx].hosts[idx].comps = data;
                         $scope.groupsList[p_idx].hosts[idx].showMsg = true;
-                    } else {
+                    }else if(data == "error" || data[0].state == 'error' && $scope.hostsList[idx].state == true){
+                        $interval.cancel(stopPGCall);
+                        stopPGCall = $interval(function (argument) {
+                            console.log("in stopPGCall");
+                            $scope.loadHost(p_idx, idx, true);
+                        } , 3000);
+                        $scope.retry = true;
+                    }else{
+                        $scope.groupsList[p_idx].hosts[idx].comps = data;
                         $scope.groupsList[p_idx].hosts[idx].showMsg = false;
                     }
                 });
             $interval.cancel(stopStatusCall);
             stopStatusCall = $interval(function (){
-                $scope.updateComps(p_idx, idx);
-                $scope.getGraphValues(remote_host);
+                if ($scope.groupsList[p_idx].hosts[idx].comps) {
+                    $scope.updateComps(p_idx, idx);
+                    $scope.getGraphValues(remote_host);
+                }
             }, 5000);
         }
     };
@@ -308,6 +338,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             controller: 'pgInitializeController',
         });
         modalInstance.component = comp;
+        modalInstance.dataDir = '';
+        modalInstance.autoStartButton = true;
+        modalInstance.host = $scope.hostsList[$scope.openedHostIndex].host;
     };
 
     $scope.changeHost = function (host) {
@@ -322,7 +355,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
         session.call('com.bigsql.deleteHost', [hostToDelete]);
         session.subscribe("com.bigsql.onDeleteHost", function (data) {
-            getGroupsList();
+            getGroupsList(false);
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -333,7 +366,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         var groupToDelete = $scope.groupsList[idx].group;
         session.call('com.bigsql.deleteGroup', [groupToDelete]);
         session.subscribe("com.bigsql.onDeleteGroup", function (data) {
-            getGroupsList();
+            getGroupsList(false);
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -346,26 +379,55 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     }
 
-    function getGroupsList(argument) {
+    $rootScope.$on('showAddedHost', function (argument) {
+        $scope.loadHost(0, $scope.groupsList[0].hosts.length - 1 , true);
+    });
+
+    function getGroupsList(checkStorage) {
         $http.get($window.location.origin + '/api/groups')
             .success(function (data) {
-                $scope.groupsList = data;
+                var storageData = JSON.parse(localStorage.getItem('groupsListCookie'));
+                if(localStorage.getItem('groupsListCookie') && checkStorage && data.length == storageData.length && data[0].hosts.length == storageData[0].hosts.length){
+                    $scope.groupsList = storageData;
+                    for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                        if ($scope.groupsList[i].state == true) {
+                            for (var j = $scope.groupsList[i].hosts.length - 1; j >= 0; j--) {
+                                if($scope.groupsList[i].hosts[j].state == true){
+                                    $scope.loadHost(i, j, false);
+                                }
+                            }
+                        };
+                    }   
+                } else{
+                    localStorage.clear();
+                    $scope.groupsList = data;
+                    for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                        $scope.groupsList[i].state = true;
+                    } 
+                    if($scope.addedNewHost){
+                        var hostNumber = $scope.groupsList[0].hosts.length - 1;
+                        $scope.loadHost(0, hostNumber, false);
+                        $scope.groupsList[0].hosts[hostNumber]['state'] = true;
+                    }else{
+                        $scope.loadHost(0, 0, false);  
+                        $scope.groupsList[0].hosts[0]['state'] = true;                      
+                    }
+                }
                 $rootScope.$emit('hideUpdates');
                 $scope.nothingInstalled = false;
                 $scope.loading = false;
-                $scope.loadHost(0, 0, false);
-            })
-            .error(function (error) {
+            }).error(function (error) {
                 $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
             });
     };
 
-    getGroupsList();
+    getGroupsList(true);
 
     $rootScope.$on('addedHost', function () {
-        getGroupsList();
+        getGroupsList(false);
+        $scope.addedNewHost = true;
     });
 
     $scope.action = function ( event, host) {
@@ -504,6 +566,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
+        localStorage.clear();
+        localStorage.setItem('groupsListCookie', JSON.stringify($scope.groupsList));
         $interval.cancel(stopStatusCall);
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i])

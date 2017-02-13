@@ -83,12 +83,12 @@ api.add_resource(pgcApi, '/api/<string:pgc_command>')
 
 
 class pgcApiCom(Resource):
-    def get(self, cmd, comp, pgc_host=None):
-        data = pgc.get_data(cmd, comp,pgc_host=pgc_host)
+    def get(self, cmd, comp, pgc_host=None, password=None):
+        data = pgc.get_data(cmd, comp,pgc_host=pgc_host, password=password)
         return data
 
 
-api.add_resource(pgcApiCom, '/api/<string:cmd>/<string:comp>', '/api/<string:cmd>/<string:comp>/<string:pgc_host>')
+api.add_resource(pgcApiCom, '/api/<string:cmd>/<string:comp>', '/api/<string:cmd>/<string:comp>/<string:pgc_host>', '/api/<string:cmd>/<string:comp>/<string:pgc_host>/<string:password>')
 
 
 class pgcApiHosts(Resource):
@@ -106,6 +106,17 @@ class pgcApiGroups(Resource):
 
 
 api.add_resource(pgcApiGroups, '/api/groups')
+
+class pgcApiExtensions(Resource):
+    def get(self, comp, pgc_host=None):
+        if pgc_host:
+            data = pgc.get_data('list --extensions', comp, pgc_host=pgc_host)
+        else:    
+            data = pgc.get_data('list --extensions', comp)
+        return data
+
+
+api.add_resource(pgcApiExtensions, '/api/extensions/<string:comp>', '/api/extensions/<string:comp>/<string:pgc_host>')
 
 class pgcApiRelnotes(Resource):
     def get(self, comp, version=None):
@@ -129,6 +140,26 @@ class pgcApiHostCmd(Resource):
 
 
 api.add_resource(pgcApiHostCmd, '/api/hostcmd/<string:pgc_cmd>/<string:host_name>')
+
+class checkUser(Resource):
+    def get(self, host, username, password):
+        from PgcRemote import PgcRemote
+        json_dict = {}
+        try:
+            remote = PgcRemote(host, username, password)
+            remote.connect()
+            is_sudo = remote.has_sudo()
+            json_dict['state'] = "success"
+            json_dict['isSudo'] = is_sudo
+            data = json.dumps([json_dict])
+        except Exception as e:
+            errmsg = "ERROR: Cannot connect to " + host + "@" + username + " - " + str(e.args[0])
+            json_dict['state'] = "error"
+            json_dict['msg'] = errmsg
+            data = json.dumps([json_dict])
+        return data
+
+api.add_resource(checkUser, '/api/checkUser/<string:host>/<string:username>/<string:password>')
 
 
 class bamUserInfo(Resource):
