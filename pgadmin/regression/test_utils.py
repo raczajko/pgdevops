@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 # ##################################################################
@@ -69,7 +69,7 @@ def get_config_data():
     """This function reads the server data from config_data"""
     server_data = []
     for srv in test_setup.config_data['server_credentials']:
-        if (not srv.has_key('enabled')) or srv['enabled'] == True:
+        if (not 'enabled' in srv) or srv['enabled']:
             data = {"name": srv['name'],
                     "comment": srv['comment'],
                     "host": srv['host'],
@@ -130,6 +130,25 @@ def create_database(server, db_name):
             db_id = oid[0]
         connection.close()
         return db_id
+    except Exception:
+        traceback.print_exc(file=sys.stderr)
+
+
+def create_table(server, db_name, table_name):
+    try:
+        connection = get_db_connection(db_name,
+                                       server['username'],
+                                       server['db_password'],
+                                       server['host'],
+                                       server['port'])
+        old_isolation_level = connection.isolation_level
+        connection.set_isolation_level(0)
+        pg_cursor = connection.cursor()
+        pg_cursor.execute('''CREATE TABLE "%s" (name VARCHAR, value NUMERIC)''' % table_name)
+        pg_cursor.execute('''INSERT INTO "%s" VALUES ('Some-Name', 6)''' % table_name)
+        connection.set_isolation_level(old_isolation_level)
+        connection.commit()
+
     except Exception:
         traceback.print_exc(file=sys.stderr)
 
@@ -389,3 +408,40 @@ def _drop_objects(tester):
 def get_cleanup_handler(tester):
     """This function use to bind variable to drop_objects function"""
     return partial(_drop_objects, tester)
+
+
+class Database:
+    """
+    Temporarily create and connect to a database, tear it down at exit
+
+    example:
+
+    with Database(server, 'some_test_db') as (connection, database_name):
+        connection.cursor().execute(...)
+
+    """
+
+    def __init__(self, server):
+        self.name = None
+        self.server = server
+        self.maintenance_connection = None
+        self.connection = None
+
+    def __enter__(self):
+        self.name = "test_db_{0}".format(str(uuid.uuid4())[0:7])
+        self.maintenance_connection = get_db_connection(self.server['db'],
+                                                        self.server['username'],
+                                                        self.server['db_password'],
+                                                        self.server['host'],
+                                                        self.server['port'])
+        create_database(self.server, self.name)
+        self.connection = get_db_connection(self.name,
+                                            self.server['username'],
+                                            self.server['db_password'],
+                                            self.server['host'],
+                                            self.server['port'])
+        return self.connection, self.name
+
+    def __exit__(self, type, value, traceback):
+        self.connection.close()
+        drop_database(self.maintenance_connection, self.name)

@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##############################################################
@@ -46,6 +46,11 @@ if os.path.isfile(config.TEST_SQLITE_PATH):
     os.remove(config.TEST_SQLITE_PATH)
 
 config.TESTING_MODE = True
+
+# Disable upgrade checks - no need during testing, and it'll cause an error if there's
+# no network connection when it runs.
+config.UPGRADE_CHECK_ENABLED = False
+
 pgadmin_credentials = test_setup.config_data
 
 # Set environment variables for email and password
@@ -222,14 +227,20 @@ class StreamToLogger(object):
 
 
 if __name__ == '__main__':
+    # Failure detected?
+    failure = False
+
     test_result = dict()
     # Register cleanup function to cleanup on exit
     atexit.register(drop_objects)
     # Set signal handler for cleanup
-    signal.signal(signal.SIGTERM, sig_handler)
-    signal.signal(signal.SIGABRT, sig_handler)
-    signal.signal(signal.SIGINT, sig_handler)
-    signal.signal(signal.SIGQUIT, sig_handler)
+    signal_list = dir(signal)
+    required_signal_list = ['SIGTERM', 'SIGABRT', 'SIGQUIT', 'SIGINT']
+    # Get the OS wise supported signals
+    supported_signal_list = [sig for sig in required_signal_list if
+                             sig in signal_list]
+    for sig in supported_signal_list:
+        signal.signal(getattr(signal, sig), sig_handler)
 
     # Set basic logging configuration for log file
     logging.basicConfig(level=logging.DEBUG,
@@ -268,6 +279,10 @@ if __name__ == '__main__':
                 get_tests_result(tests)
             test_result[server['name']] = [ran_tests, failed_cases,
                                            skipped_cases]
+
+            if len(failed_cases) > 0:
+                failure = True
+
             # Delete test server
             # test_utils.delete_test_server(test_client)
     except SystemExit:
@@ -303,3 +318,8 @@ if __name__ == '__main__':
         "===\n", file=sys.stderr)
 
     print("Please check output in file: %s/regression.log\n" % CURRENT_PATH)
+
+    if failure == True:
+        sys.exit(1)
+    else:
+        sys.exit(0)
