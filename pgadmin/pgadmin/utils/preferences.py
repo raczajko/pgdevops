@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -129,6 +129,9 @@ class _Preference(object):
             if res.value in self.options:
                 return res.value
             return self.default
+        if self._type == 'text':
+            if res.value == '':
+                return self.default
 
         return res.value
 
@@ -194,7 +197,7 @@ class _Preference(object):
             )
             db.session.add(pref)
         else:
-            pref.value = str(value)
+            pref.value = u"{}".format(value)
         db.session.commit()
 
         return True, None

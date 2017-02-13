@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -624,7 +624,7 @@ WHERE
             csv_writer.writeheader()
             csv_writer.writerows(results)
 
-            yield res_io.getvalue().strip(str('\r\n'))
+            yield res_io.getvalue()
 
             while True:
                 results = cur.fetchmany(records)
@@ -639,7 +639,7 @@ WHERE
                     res_io, fieldnames=header, delimiter=str(','), quoting=csv.QUOTE_NONNUMERIC
                 )
                 csv_writer.writerows(results)
-                yield res_io.getvalue().strip(str('\r\n'))
+                yield res_io.getvalue()
 
         return True, gen
 
@@ -1525,6 +1525,8 @@ WHERE db.oid = {0}""".format(did))
             if my_id in self.connections:
                 self.connections[my_id]._release()
                 del self.connections[my_id]
+                if did is not None:
+                    del self.db_info[did]
 
                 if len(self.connections) == 0:
                     self.ver = None

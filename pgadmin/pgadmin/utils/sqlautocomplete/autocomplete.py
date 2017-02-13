@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -88,10 +88,8 @@ class SQLAutoComplete(object):
 
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(self.sid)
 
-        ver = manager.version
         # we will set template path for sql scripts
-        if ver >= 90100:
-            self.sql_path = 'sqlautocomplete/sql/9.1_plus'
+        self.sql_path = 'sqlautocomplete/sql/#{0}#'.format(manager.version)
 
         self.search_path = []
         # Fetch the search path
@@ -252,7 +250,14 @@ class SQLAutoComplete(object):
 
         result = dict()
         for m in matches:
-            result[m.completion.display] = {'object_type': m.completion.display_meta}
+            # Escape name only if meta type is not a keyword and datatype.
+            if m.completion.display_meta != 'keyword' and \
+                            m.completion.display_meta != 'datatype':
+                name = self.escape_name(m.completion.display)
+            else:
+                name = m.completion.display
+
+            result[name] = {'object_type': m.completion.display_meta}
 
         return result
 

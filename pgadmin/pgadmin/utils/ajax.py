@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -55,7 +55,7 @@ def make_json_response(
     doc['data'] = data
 
     return Response(
-        response=json.dumps(doc, cls=DataTypeJSONEncoder),
+        response=json.dumps(doc, cls=DataTypeJSONEncoder, separators=(',',':')),
         status=status,
         mimetype="application/json",
         headers=get_no_cache_header()
@@ -65,7 +65,7 @@ def make_json_response(
 def make_response(response=None, status=200):
     """Create a JSON response handled by the backbone models."""
     return Response(
-        response=json.dumps(response, cls=DataTypeJSONEncoder),
+        response=json.dumps(response, cls=DataTypeJSONEncoder, separators=(',',':')),
         status=status,
         mimetype="application/json",
         headers=get_no_cache_header()
