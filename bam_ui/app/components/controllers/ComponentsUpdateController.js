@@ -68,7 +68,13 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         }
     });
 
-    $scope.selecthost = $cookies.get('remote_host');
+    var remote_host = $cookies.get('remote_host');
+    remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
+    if (remote_host == "" || remote_host == undefined) {
+        $scope.selecthost = 'localhost';    
+    } else {
+        $scope.selecthost = remote_host;
+    }
 
     if (UpdateComponentsService.get()) {
         $scope.selectedComp = UpdateComponentsService.get();

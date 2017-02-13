@@ -59,6 +59,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.retry = true;
             } else {
                 $scope.nothingInstalled = false;
+                data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'devops'  ;})
                 if ($scope.showInstalled) {
                     $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
                     if($scope.components.length == 0){
@@ -134,7 +135,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 }
                 for (var i = $scope.extensionsList.length - 1; i >= 0; i--) {
                     $scope.extensionsList[i].modifiedName = $scope.extensionsList[i].component.split('-')[0].replace(/[0-9]/g,'');
-                    $scope.extensionsList[i].friendlyName = $scope.extensionsList[i].component.split('-')[0].replace(/[0-9]/g,'');
                 }
             }
         })   
