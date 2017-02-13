@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -88,7 +88,7 @@ class SchemaModule(CollectionNodeModule):
     @property
     def script_load(self):
         """
-        Load the module script for server, when any of the server-group node is
+        Load the module script for schema, when any of the server node is
         initialized.
         """
         return servers.ServerModule.NODE_TYPE
@@ -238,18 +238,14 @@ class SchemaView(PGChildNodeView):
         """
         Returns the template path for PPAS servers.
         """
-        if ver >= 90200:
-            return 'ppas/9.2_plus'
-        return 'ppas/9.1_plus'
+        return 'ppas/#{0}#'.format(ver)
 
     @staticmethod
     def pg_template_path(ver):
         """
         Returns the template path for PostgreSQL servers.
         """
-        if ver >= 90200:
-            return 'pg/9.2_plus'
-        return 'pg/9.1_plus'
+        return 'pg/#{0}#'.format(ver)
 
     def format_request_acls(self, data, modified=False, specific=None):
         acls = {}
@@ -716,7 +712,7 @@ It may have been removed by another user.
                 data[k] = v
 
         try:
-            SQL = self.get_sql(gid, sid, data, scid)
+            SQL, name = self.get_sql(gid, sid, data, scid)
             if SQL and SQL.strip('\n') and SQL.strip(' '):
                 return make_json_response(
                     data=SQL.strip('\n'),

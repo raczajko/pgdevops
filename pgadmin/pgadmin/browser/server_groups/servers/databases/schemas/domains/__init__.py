@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -263,10 +263,7 @@ class DomainView(PGChildNodeView, DataTypeReader):
             self.qtIdent = driver.qtIdent
 
             # we will set template path for sql scripts
-            if self.manager.version >= 90200:
-                self.template_path = 'domains/sql/9.2_plus'
-            else:
-                self.template_path = 'domains/sql/9.1_plus'
+            self.template_path = 'domains/sql/#{0}#'.format(self.manager.version)
 
             return f(*args, **kwargs)
 

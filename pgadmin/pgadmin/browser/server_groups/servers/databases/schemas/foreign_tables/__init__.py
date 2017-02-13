@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -339,16 +339,9 @@ class ForeignTableView(PGChildNodeView, DataTypeReader):
             self.conn = self.manager.connection(did=kwargs['did'])
             self.qtIdent = driver.qtIdent
 
-            ver = self.manager.version
             # Set template path for sql scripts depending
             # on the server version.
-
-            if ver >= 90500:
-                self.template_path = 'foreign_tables/sql/9.5_plus'
-            elif ver >= 90200:
-                self.template_path = 'foreign_tables/sql/9.2_plus'
-            else:
-                self.template_path = 'foreign_tables/sql/9.1_plus'
+            self.template_path = 'foreign_tables/sql/#{0}#'.format(self.manager.version)
 
             return f(*args, **kwargs)
         return wrap
