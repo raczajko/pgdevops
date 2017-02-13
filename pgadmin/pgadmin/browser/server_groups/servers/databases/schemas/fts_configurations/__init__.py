@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -230,7 +230,7 @@ class FtsConfigurationView(PGChildNodeView):
                 kwargs['sid'])
             self.conn = self.manager.connection(did=kwargs['did'])
             # Set the template path for the SQL scripts
-            self.template_path = 'fts_configuration/sql/9.1_plus'
+            self.template_path = 'fts_configuration/sql/#{0}#'.format(self.manager.version)
 
             return f(*args, **kwargs)
         return wrap

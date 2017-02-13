@@ -6,4 +6,5 @@ FROM
     pg_collation c, pg_namespace n
 WHERE
     c.collnamespace=n.oid
-ORDER BY nspname, collname;
+ORDER BY
+    nspname, collname;
