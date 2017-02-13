@@ -2,14 +2,12 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
 
 """A blueprint module implementing the sqleditor frame."""
-MODULE_NAME = 'sqleditor'
-
 import simplejson as json
 import os
 import pickle
@@ -25,8 +23,12 @@ from pgadmin.utils.ajax import make_json_response, bad_request, \
     success_return, internal_server_error
 from pgadmin.utils.driver import get_driver
 from pgadmin.utils.sqlautocomplete.autocomplete import SQLAutoComplete
+from pgadmin.misc.file_manager import Filemanager
 
-from config import PG_DEFAULT_DRIVER
+
+from config import PG_DEFAULT_DRIVER, SERVER_MODE
+
+MODULE_NAME = 'sqleditor'
 
 # import unquote from urlib for python2.x and python3.x
 try:
@@ -71,16 +73,6 @@ class SqlEditorModule(PgAdminModule):
         return []
 
     def register_preferences(self):
-        self.items_per_page = self.preference.register(
-            'display', 'items_per_page',
-            gettext("Items per page in grid"), 'integer', 50,
-            category_label=gettext('Display'),
-            min_val=50,
-            max_val=2000,
-            help_str=gettext('The number of rows to display per page in the results grid. '
-                             'Value should be between 50 and 2000.')
-        )
-
         self.info_notifier_timeout = self.preference.register(
             'display', 'info_notifier_timeout',
             gettext("Query info notifier timeout"), 'integer', 5,
@@ -156,6 +148,12 @@ class SqlEditorModule(PgAdminModule):
             help_str=gettext('Specifies whether or not to insert spaces instead of tabs when the tab key is used.')
         )
 
+        self.wrap_code = self.preference.register(
+            'Options', 'wrap_code',
+            gettext("Line wrapping?"), 'boolean', False,
+            category_label=gettext('Options'),
+            help_str=gettext('Specifies whether or not to wrap SQL code in editor.')
+        )
 
 blueprint = SqlEditorModule(MODULE_NAME, __name__, static_url_path='/static')
 
@@ -261,7 +259,6 @@ def start_view_data(trans_id):
             'filter_applied': filter_applied,
             'limit': limit, 'can_edit': can_edit,
             'can_filter': can_filter, 'sql': sql,
-            'items_per_page': blueprint.items_per_page.get(),
             'info_notifier_timeout': blueprint.info_notifier_timeout.get()
         }
     )
@@ -364,7 +361,6 @@ def start_query_tool(trans_id):
         data={
             'status': status, 'result': result,
             'can_edit': can_edit, 'can_filter': can_filter,
-            'items_per_page': blueprint.items_per_page.get(),
             'info_notifier_timeout': blueprint.info_notifier_timeout.get()
         }
     )
@@ -474,11 +470,10 @@ def poll(trans_id):
         rows_affected = conn.rows_affected()
 
         for col in col_info:
-            items = list(col.items())
             col_type = dict()
-            col_type['type_code'] = items[1][1]
+            col_type['type_code'] = col['type_code']
             col_type['type_name'] = None
-            columns[items[0][1]] = col_type
+            columns[col['name']] = col_type
 
         # As we changed the transaction object we need to
         # restore it and update the session variable.
@@ -504,11 +499,20 @@ def poll(trans_id):
 
         rows_affected = conn.rows_affected()
 
+    # There may be additional messages even if result is present
+    # eg: Function can provide result as well as RAISE messages
+    additional_messages = None
+    if status == 'Success' and result is not None:
+        messages = conn.messages()
+        if messages:
+            additional_messages = ''.join(messages)
+
     return make_json_response(
         data={
             'status': status, 'result': result,
             'colinfo': col_info, 'primary_keys': primary_keys,
-            'rows_affected': rows_affected
+            'rows_affected': rows_affected,
+            'additional_messages': additional_messages
         }
     )
 
@@ -1192,11 +1196,16 @@ def load_file():
         file_data = json.loads(request.data, encoding='utf-8')
 
     file_path = unquote(file_data['file_name'])
+    if hasattr(str, 'decode'):
+        file_path = unquote(file_data['file_name']).encode('utf-8').decode('utf-8')
     # retrieve storage directory path
     storage_manager_path = get_storage_directory()
     if storage_manager_path:
         # generate full path of file
-        file_path = os.path.join(storage_manager_path, file_path.lstrip('/'))
+        file_path = os.path.join(
+            storage_manager_path,
+            file_path.lstrip('/').lstrip('\\')
+        )
 
     file_data = None
 
@@ -1215,7 +1224,10 @@ def load_file():
             is_binary = is_binary_string(fileObj.read(1024))
             if not is_binary:
                 fileObj.seek(0)
-                file_data = fileObj.read()
+                if hasattr(str, 'decode'):
+                    file_data = fileObj.read().decode('utf-8')
+                else:
+                    file_data = fileObj.read()
             else:
                 return internal_server_error(
                     errormsg=gettext("File type not supported")
@@ -1253,17 +1265,34 @@ def save_file():
 
     # generate full path of file
     file_path = unquote(file_data['file_name'])
+    if hasattr(str, 'decode'):
+        file_path = unquote(
+            file_data['file_name']
+        ).encode('utf-8').decode('utf-8')
+
+    try:
+        Filemanager.check_access_permission(storage_manager_path, file_path)
+    except Exception as e:
+        return internal_server_error(errormsg=str(e))
+
     if storage_manager_path is not None:
         file_path = os.path.join(
             storage_manager_path,
-            unquote(file_data['file_name'].lstrip('/'))
+            file_path.lstrip('/').lstrip('\\')
         )
-    file_content = file_data['file_content']
+
+    if hasattr(str, 'decode'):
+        file_content = file_data['file_content']
+    else:
+        file_content = file_data['file_content'].encode()
 
     # write to file
     try:
-        with open(file_path, 'w') as output_file:
-            output_file.write(file_content)
+        with open(file_path, 'wb+') as output_file:
+            if hasattr(str, 'decode'):
+                output_file.write(file_content.encode('utf-8'))
+            else:
+                output_file.write(file_content)
     except IOError as e:
         if e.strerror == 'Permission denied':
             err_msg = "Error: {0}".format(e.strerror)

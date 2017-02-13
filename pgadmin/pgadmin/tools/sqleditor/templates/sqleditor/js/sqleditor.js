@@ -9,6 +9,10 @@ define(
     'codemirror/addon/hint/sql-hint', 'pgadmin.file_manager',
     'codemirror/addon/fold/pgadmin-sqlfoldcode',
     'codemirror/addon/scroll/simplescrollbars',
+    'codemirror/addon/dialog/dialog',
+    'codemirror/addon/search/search',
+    'codemirror/addon/search/searchcursor',
+    'codemirror/addon/search/jump-to-line',
     'backgrid.sizeable.columns', 'slickgrid/slick.formatters',
     'slickgrid/slick.pgadmin.formatters', 'slickgrid/slick.editors',
     'slickgrid/slick.pgadmin.editors', 'slickgrid/plugins/slick.autotooltips',
@@ -126,6 +130,14 @@ define(
         "click #btn-save": "on_save",
         "click #btn-file-menu-save": "on_save",
         "click #btn-file-menu-save-as": "on_save_as",
+        "click #btn-find": "on_find",
+        "click #btn-find-menu-find": "on_find",
+        "click #btn-find-menu-find-next": "on_find_next",
+        "click #btn-find-menu-find-previous": "on_find_previous",
+        "click #btn-find-menu-replace": "on_replace",
+        "click #btn-find-menu-replace-all": "on_replace_all",
+        "click #btn-find-menu-find-persistent": "on_find_persistent",
+        "click #btn-find-menu-jump": "on_jump",
         "click #btn-delete-row": "on_delete",
         "click #btn-filter": "on_show_filter",
         "click #btn-filter-menu": "on_show_filter",
@@ -178,7 +190,8 @@ define(
             },
             gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
             extraKeys: pgBrowser.editor_shortcut_keys,
-            tabSize: pgAdmin.Browser.editor_options.tabSize
+            tabSize: pgAdmin.Browser.editor_options.tabSize,
+            lineWrapping: pgAdmin.Browser.editor_options.wrapCode
         });
 
         // Create main wcDocker instance
@@ -222,6 +235,7 @@ define(
             gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
             extraKeys: pgBrowser.editor_shortcut_keys,
             tabSize: pgAdmin.Browser.editor_options.tabSize,
+            lineWrapping: pgAdmin.Browser.editor_options.wrapCode,
             scrollbarStyle: 'simple'
         });
 
@@ -293,15 +307,9 @@ define(
                   msg = '{{ _('The data has been modified, but not saved. Are you sure you wish to discard the changes?') }}';
                   notify = true;
                 }
-              } else if(self.handler.is_query_tool) {
-                // We will check for modified sql content
-                var sql = self.handler.gridView.query_tool_obj.getValue();
-                sql = sql.replace(/\s+/g, '');
-                // If it is an empty query, do nothing.
-                if (sql.length > 0) {
-                  msg = '{{ _('The query has been modified, but not saved. Are you sure you wish to discard the changes?') }}';
-                  notify = true;
-                }
+              } else if(self.handler.is_query_tool && self.handler.is_query_changed) {
+                msg = '{{ _('The query has been modified, but not saved. Are you sure you wish to discard the changes?') }}';
+                notify = true;
               }
               if(notify) {return self.user_confirmation(p, msg);}
               return true;
@@ -465,6 +473,53 @@ define(
         return false;
       },
 
+      get_column_width: function (column_type, grid_width) {
+
+        switch(column_type) {
+          case "bigint":
+          case "bigint[]":
+          case "bigserial":
+          case "bit":
+          case "bit[]":
+          case "bit varying":
+          case "bit varying[]":
+          case "\"char\"":
+          case "decimal":
+          case "decimal[]":
+          case "double precision":
+          case "double precision[]":
+          case "int4range":
+          case "int4range[]":
+          case "int8range":
+          case "int8range[]":
+          case "integer":
+          case "integer[]":
+          case "money":
+          case "money[]":
+          case "numeric":
+          case "numeric[]":
+          case "numrange":
+          case "numrange[]":
+          case "oid":
+          case "oid[]":
+          case "real":
+          case "real[]":
+          case "serial":
+          case "smallint":
+          case "smallint[]":
+          case "smallserial":
+            return 80;
+          case "boolean":
+          case "boolean[]":
+            return 60;
+        }
+
+        /* In case of other data types we will calculate
+         * 20% of the total container width and return it.
+         */
+        return Math.round((grid_width * 20)/ 100)
+      },
+
       /* Regarding SlickGrid usage in render_grid function.
 
        SlickGrid Plugins:
@@ -553,11 +608,12 @@ define(
           checkboxSelector;
 
           checkboxSelector = new Slick.CheckboxSelectColumn({
-            cssClass: "slick-cell-checkboxsel"
+            cssClass: "sc-cb"
           });
 
           grid_columns.push(checkboxSelector.getColumnDefinition());
 
+        var grid_width = $($('#editor-panel').find('.wcFrame')[1]).width()
         _.each(columns, function(c) {
             var options = {
               id: c.name,
@@ -565,13 +621,16 @@ define(
               name: c.label
             };
 
+            // Get the columns width based on data type
+            options['width'] = self.get_column_width(c.type, grid_width);
+
             // If grid is editable then add editor else make it readonly
             if(c.cell == 'Json') {
               options['editor'] = is_editable ? Slick.Editors.JsonText
                                               : Slick.Editors.ReadOnlyJsonText;
               options['formatter'] = Slick.Formatters.JsonString;
             } else if(c.cell == 'number') {
-              options['editor'] = is_editable ? Slick.Editors.Text
+              options['editor'] = is_editable ? Slick.Editors.CustomNumber
                                               : Slick.Editors.ReadOnlyText;
               options['formatter'] = Slick.Formatters.Numbers;
             } else if(c.cell == 'boolean') {
@@ -581,6 +640,7 @@ define(
             } else {
               options['editor'] = is_editable ? Slick.Editors.pgText
                                               : Slick.Editors.ReadOnlypgText;
+              options['formatter'] = Slick.Formatters.Text;
             }
 
            grid_columns.push(options)
@@ -608,7 +668,7 @@ define(
         // Add-on function which allow us to identify the faulty row after insert/update
         // and apply css accordingly
         collection.getItemMetadata = function(i) {
-          var res = {}, cssClass = 'normal_row';
+          var res = {}, cssClass = '';
           if (_.has(self.handler, 'data_store')) {
             if (i in self.handler.data_store.added_index) {
               cssClass = 'new_row';
@@ -761,11 +821,11 @@ define(
             // Check if it is updated data from existing rows?
             } else if(_pk in self.handler.data_store.updated) {
               _.extend(
-                self.handler.data_store.updated[_pk], {
-                  'data': column_data,
-                  'err': false
-                }
+                self.handler.data_store.updated[_pk]['data'],
+                column_data
               );
+              self.handler.data_store.updated[_pk]['err'] = false
+
              //Find type for current column
              self.handler.data_store.updated[_pk]['data_type'][changed_column] = _.where(this.columns, {name: changed_column})[0]['type'];
             } else {
@@ -934,7 +994,7 @@ define(
         var grid = self.history_grid = new Backgrid.Grid({
             columns: columnsColl,
             collection: history_collection,
-            className: "backgrid table-bordered"
+            className: "backgrid table-bordered presentation table backgrid-striped"
         });
 
         // Render the grid
@@ -1047,6 +1107,69 @@ define(
             self.handler,
             true
         );
+      },
+
+      // Callback function for the find button click.
+      on_find: function(ev) {
+        var self = this, sql;
+        this._stopEventPropogation(ev);
+        this._closeDropDown(ev);
+
+        self.query_tool_obj.execCommand("find");
+      },
+
+      // Callback function for the find next button click.
+      on_find_next: function(ev) {
+        var self = this, sql;
+        this._stopEventPropogation(ev);
+        this._closeDropDown(ev);
+
+        self.query_tool_obj.execCommand("findNext");
+      },
+
+      // Callback function for the find previous button click.
+      on_find_previous: function(ev) {
+        var self = this, sql;
+        this._stopEventPropogation(ev);
+        this._closeDropDown(ev);
+
+        self.query_tool_obj.execCommand("findPrev");
+      },
+
+      // Callback function for the replace button click.
+      on_replace: function(ev) {
+        var self = this, sql;
+        this._stopEventPropogation(ev);
+        this._closeDropDown(ev);
+
+        self.query_tool_obj.execCommand("replace");
+      },
+
+      // Callback function for the replace all button click.
+      on_replace_all: function(ev) {
+        var self = this, sql;
+        this._stopEventPropogation(ev);
+        this._closeDropDown(ev);
+
+        self.query_tool_obj.execCommand("replaceAll");
+      },
+
+      // Callback function for the find persistent button click.
+      on_find_persistent: function(ev) {
+        var self = this, sql;
+        this._stopEventPropogation(ev);
+        this._closeDropDown(ev);
+
+        self.query_tool_obj.execCommand("findPersistent");
+      },
+
+      // Callback function for the jump button click.
+      on_jump: function(ev) {
+        var self = this, sql;
+        this._stopEventPropogation(ev);
+        this._closeDropDown(ev);
+
+        self.query_tool_obj.execCommand("jumpToLine");
       },
 
       // Callback function for filter button click.
@@ -1202,23 +1325,24 @@ define(
         this._stopEventPropogation(ev);
         this._closeDropDown(ev);
 
-        // We will check for modified sql content
-        sql = self.query_tool_obj.getValue();
-        sql = sql.replace(/\s+/g, '');
-        // If there is nothing to save, clear it.
-        if (!sql.length) { self.query_tool_obj.setValue('');  return; }
-
-        alertify.confirm(
-          '{{ _('Unsaved changes') }}',
-          '{{ _('Are you sure you wish to discard the current changes?') }}',
-          function() {
-            // Do nothing as user do not want to save, just continue
-            self.query_tool_obj.setValue('');
-          },
-          function() {
-            return true;
-          }
-        ).set('labels', {ok:'Yes', cancel:'No'});
+        /* If is_query_changed flag is set to false then no need to
+         * confirm with the user for unsaved changes.
+         */
+        if (self.handler.is_query_changed) {
+          alertify.confirm(
+            '{{ _('Unsaved changes') }}',
+            '{{ _('Are you sure you wish to discard the current changes?') }}',
+            function() {
+              // Do nothing as user do not want to save, just continue
+              self.query_tool_obj.setValue('');
+            },
+            function() {
+              return true;
+            }
+          ).set('labels', {ok:'Yes', cancel:'No'});
+        } else {
+          self.query_tool_obj.setValue('');
+        }
       },
 
       // Callback function for the clear history button click.
@@ -1434,7 +1558,6 @@ define(
           var self = this;
 
           self.is_query_tool = is_query_tool;
-          self.items_per_page = 25;
           self.rows_affected = 0;
           self.marked_line_no = 0;
           self.explain_verbose = false;
@@ -1454,7 +1577,6 @@ define(
 
           self.gridView.editor_title = _.unescape(editor_title);
           self.gridView.current_file = undefined;
-          self.gridView.items_per_page = self.items_per_page
 
           // Render the header
           self.gridView.render();
@@ -1565,8 +1687,6 @@ define(
 
                 self.can_edit = res.data.can_edit;
                 self.can_filter = res.data.can_filter;
-                self.items_per_page = res.data.items_per_page;
-                self.gridView.items_per_page = self.items_per_page;
                 self.info_notifier_timeout = res.data.info_notifier_timeout;
 
                 // Set the sql query to the SQL panel
@@ -1787,12 +1907,20 @@ define(
                 alertify.success(msg1 + '<br />' + msg2, self.info_notifier_timeout);
               }
 
-              $('.sql-editor-message').text(msg1 + '\n' + msg2);
+              var _msg = msg1 + '\n' + msg2;
 
-                /* Add the data to the collection and render the grid.
-                 * In case of Explain draw the graph on explain panel
-                 * and add json formatted data to collection and render.
-                 */
+              // If there is additional messages from server then add it to message
+              if(!_.isNull(data.additional_messages) &&
+                    !_.isUndefined(data.additional_messages)) {
+                    _msg = data.additional_messages + '\n' + _msg;
+              }
+
+              $('.sql-editor-message').text(_msg);
+
+              /* Add the data to the collection and render the grid.
+               * In case of Explain draw the graph on explain panel
+               * and add json formatted data to collection and render.
+               */
               var explain_data_array = [];
               if(
                 data.result && data.result.length >= 1 &&
@@ -1901,8 +2029,6 @@ define(
                                 ')';
                   }
 
-                  column_label = c.display_name + '<br>' + col_type;
-
                   // Identify cell type of column.
                   switch(type) {
                     case "json":
@@ -1923,9 +2049,21 @@ define(
                     case "boolean":
                       col_cell = 'boolean';
                       break;
+                    case "character":
+                    case "character[]":
+                    case "character varying":
+                    case "character varying[]":
+                      if (c.internal_size && c.internal_size != 65535) {
+                        // Update column type to display length on column header
+                        col_type += ' (' + c.internal_size + ')';
+                      }
+                      col_cell = 'string';
+                      break;
                     default:
                       col_cell = 'string';
                   }
+
+                  column_label = c.display_name + '<br>' + col_type;
 
                   var col = {
                     'name': c.name,
@@ -2104,7 +2242,6 @@ define(
 
           // Open save file dialog if query tool
           if (self.is_query_tool) {
-
             var current_file = self.gridView.current_file;
             if (!_.isUndefined(current_file) && !save_as) {
               self._save_file_handler(current_file);
@@ -2278,7 +2415,7 @@ define(
         setTitle: function(title) {
           _.each(window.top.pgAdmin.Browser.docker.findPanels('frm_datagrid'), function(p) {
             if(p.isVisible()) {
-              p.title(title);
+              p.title(decodeURIComponent(title));
             }
           });
         },
@@ -2286,22 +2423,25 @@ define(
         // load select file dialog
         _load_file: function() {
           var self = this;
-          // We will check for modified sql content
-          sql = self.gridView.query_tool_obj.getValue()
-          sql = sql.replace(/\s+/g, '');
-          // If there is nothing to save, open file manager.
-          if (!sql.length) { self._open_select_file_manager(); return; }
 
-          alertify.confirm('{{ _('Unsaved changes') }}',
-            '{{ _('Are you sure you wish to discard the current changes?') }}',
-            function() {
-              // User do not want to save, just continue
-              self._open_select_file_manager();
-           },
-            function() {
-              return true;
-            }
-          ).set('labels', {ok:'Yes', cancel:'No'});
+          /* If is_query_changed flag is set to false then no need to
+           * confirm with the user for unsaved changes.
+           */
+          if (self.is_query_changed) {
+            alertify.confirm('{{ _('Unsaved changes') }}',
+              '{{ _('Are you sure you wish to discard the current changes?') }}',
+              function() {
+                // User do not want to save, just continue
+                self._open_select_file_manager();
+              },
+              function() {
+                return true;
+              }
+            ).set('labels', {ok:'Yes', cancel:'No'});
+          } else {
+            self._open_select_file_manager();
+          }
+
         },
 
         // Open FileManager
@@ -2318,7 +2458,7 @@ define(
         _select_file_handler: function(e) {
           var self = this,
               data = {
-                'file_name': e
+                'file_name': decodeURI(e)
               };
 
           self.trigger(
@@ -2339,11 +2479,18 @@ define(
               if (res.data.status) {
                 self.gridView.query_tool_obj.setValue(res.data.result);
                 self.gridView.current_file = e;
-                self.setTitle(self.gridView.current_file.replace(/^\/|\/$/g, ''));
+                self.setTitle(self.gridView.current_file.split('\\').pop().split('/').pop());
               }
               self.trigger('pgadmin-sqleditor:loading-icon:hide');
               // hide cursor
               $busy_icon_div.removeClass('show_progress');
+
+              // disable save button on file save
+              $("#btn-save").prop('disabled', true);
+              $("#btn-file-menu-save").css('display', 'none');
+
+              // Update the flag as new content is just loaded.
+              self.is_query_changed = false;
             },
             error: function(e) {
               var errmsg = $.parseJSON(e.responseText).errormsg;
@@ -2359,7 +2506,7 @@ define(
         _save_file_handler: function(e) {
           var self = this;
           data = {
-            'file_name': e,
+            'file_name': decodeURI(e),
             'file_content': self.gridView.query_tool_obj.getValue()
           }
           self.trigger(
@@ -2377,10 +2524,13 @@ define(
               if (res.data.status) {
                 alertify.success('{{ _('File saved successfully.') }}');
                 self.gridView.current_file = e;
-                self.setTitle(self.gridView.current_file.replace(/^\/|\/$/g, ''));
+                self.setTitle(self.gridView.current_file.replace(/^.*[\\\/]/g, ''));
                 // disable save button on file save
                 $("#btn-save").prop('disabled', true);
                 $("#btn-file-menu-save").css('display', 'none');
+
+                // Update the flag as query is already saved.
+                self.is_query_changed = false;
               }
               self.trigger('pgadmin-sqleditor:loading-icon:hide');
             },
@@ -2400,15 +2550,28 @@ define(
         // codemirror text change event
         _on_query_change: function(query_tool_obj) {
           var self = this;
-          if(query_tool_obj.getValue().length == 0) {
-            $("#btn-save").prop('disabled', true);
-            $("#btn-file-menu-save").css('display', 'none');
-            $("#btn-file-menu-dropdown").prop('disabled', true);
-          } else {
+
+          if (!self.is_query_changed) {
+            // Update the flag as query is going to changed.
+            self.is_query_changed = true;
+
             if(self.gridView.current_file) {
-              var title = self.gridView.current_file.replace(/^\/|\/$/g, '') + ' *'
+              var title = self.gridView.current_file.replace(/^.*[\\\/]/g, '') + ' *'
+              self.setTitle(title);
+            } else {
+              var title = '';
+
+              // Find the title of the visible panel
+              _.each(window.top.pgAdmin.Browser.docker.findPanels('frm_datagrid'), function(p) {
+                if(p.isVisible()) {
+                  self.gridView.panel_title = p._title;
+                }
+              });
+
+              title = self.gridView.panel_title + ' *';
               self.setTitle(title);
             }
+
             $("#btn-save").prop('disabled', false);
             $("#btn-file-menu-save").css('display', 'block');
             $("#btn-file-menu-dropdown").prop('disabled', false);
@@ -2997,8 +3160,6 @@ define(
 
                 self.can_edit = res.data.can_edit;
                 self.can_filter = res.data.can_filter;
-                self.items_per_page = res.data.items_per_page;
-                self.gridView.items_per_page = self.items_per_page;
                 self.info_notifier_timeout = res.data.info_notifier_timeout;
 
                 // If status is True then poll the result.

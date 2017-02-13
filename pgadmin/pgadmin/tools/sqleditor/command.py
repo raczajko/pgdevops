@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -159,10 +159,8 @@ class SQLFilter(object):
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(self.sid)
         conn = manager.connection(did=self.did)
 
-        ver = manager.version
         # we will set template path for sql scripts
-        if ver >= 90100:
-            self.sql_path = 'sqleditor/sql/9.1_plus'
+        self.sql_path = 'sqleditor/sql/#{0}#'.format(manager.version)
 
         if conn.connected():
             # Fetch the Namespace Name and object Name
@@ -353,11 +351,11 @@ class TableCommand(GridCommand):
         if sql_filter is None:
             sql = render_template("/".join([self.sql_path, 'objectquery.sql']), object_name=self.object_name,
                                   nsp_name=self.nsp_name, pk_names=pk_names, cmd_type=self.cmd_type,
-                                  limit=self.limit)
+                                  limit=self.limit, primary_keys=primary_keys)
         else:
             sql = render_template("/".join([self.sql_path, 'objectquery.sql']), object_name=self.object_name,
                                   nsp_name=self.nsp_name, pk_names=pk_names, cmd_type=self.cmd_type,
-                                  sql_filter=sql_filter, limit=self.limit)
+                                  sql_filter=sql_filter, limit=self.limit, primary_keys=primary_keys)
 
         return sql
 

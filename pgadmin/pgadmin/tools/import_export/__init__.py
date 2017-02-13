@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -103,7 +103,7 @@ class Message(IProcessDesc):
         res += html.safe_str(
             _("Running command:")
         )
-        res += '</b><br><span class="pg-bg-cmd">'
+        res += '</b><br><span class="pg-bg-cmd enable-selection">'
         res += html.safe_str(cmd)
 
         replace_next = False

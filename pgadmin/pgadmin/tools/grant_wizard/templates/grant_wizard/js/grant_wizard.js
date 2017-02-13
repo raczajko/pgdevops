@@ -155,8 +155,19 @@ define([
               var t = pgBrowser.tree, i = item, d = itemData;
               var parent_item = t.hasParent(i) ? t.parent(i): null,
                   parent_data = parent_item ? t.itemData(parent_item) : null;
-              if(!_.isUndefined(d) && !_.isNull(d) && !_.isNull(parent_data))
-                return ((_.indexOf(supported_nodes, d._type) !== -1 && parent_data._type != 'catalog') ? true: false);
+              if(!_.isUndefined(d) && !_.isNull(d) && !_.isNull(parent_data)) {
+                if (_.indexOf(supported_nodes, d._type) !== -1 &&
+                  parent_data._type != 'catalog') {
+                    if (d._type == 'database' && d.allowConn)
+                      return true;
+                    else if(d._type != 'database')
+                      return true;
+                    else
+                      return false;
+                }
+                else
+                  return false;
+              }
               else
                 return false;
             };
@@ -418,7 +429,7 @@ define([
 
               },
               prepare:function() {
-
+                var that = this;
                 $container.empty().append("<div class='grant_wizard_container'></div>");
 
                 // Define el for wizard view
@@ -1051,7 +1062,9 @@ define([
                     curr_page: 0,
                     show_left_panel: false,
                     show_header_cancel_btn: true,
+                    show_header_maximize_btn: true,
                     disable_finish: true,
+                    dialog_api: that,
                     wizard_help: "{{ url_for('help.static', filename='grant_wizard.html') }}"
                   },
 
