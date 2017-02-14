@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -327,8 +327,6 @@ class FunctionView(PGChildNodeView, DataTypeReader):
             self.qtIdent = driver.qtIdent
             self.qtLiteral = driver.qtLiteral
 
-            ver = self.manager.version
-
             # Set the template path for the SQL scripts
             self.template_path = "/".join([
                 self.node_type
@@ -337,10 +335,8 @@ class FunctionView(PGChildNodeView, DataTypeReader):
                 self.template_path,
                 self.manager.server_type,
                 'sql',
-                '9.5_plus' if ver >= 90500 else
-                '9.2_plus' if ver >= 90200 else
-                '9.1_plus'
-            ])
+                '#{0}#'
+            ]).format(self.manager.version)
 
             return f(*args, **kwargs)
 
@@ -1441,7 +1437,7 @@ It may have been removed by another user or moved to another schema.
             # Get schema name
             status, schema_name = self.conn.execute_scalar(
                 render_template(
-                    'schema/pg/9.1_plus/sql/get_name.sql',
+                    'schema/pg/#{0}#/sql/get_name.sql'.format(self.manager.version),
                     scid=scid
                 )
             )
