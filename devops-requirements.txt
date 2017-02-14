@@ -82,3 +82,4 @@ Werkzeug==0.9.6
 WTForms==2.0.2
 zope.interface==4.3.2
 psutil
+flask_htmlmin

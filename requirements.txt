@@ -47,3 +47,4 @@ flask_restful
 pygtail
 paramiko
 fabric
+flask_htmlmin
