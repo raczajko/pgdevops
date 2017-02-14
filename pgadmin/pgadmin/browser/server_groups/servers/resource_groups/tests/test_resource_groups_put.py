@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 # ##################################################################
@@ -28,8 +28,8 @@ class ResourceGroupsPutTestCase(BaseTestGenerator):
         if not server_response["info"] == "Server connected.":
             raise Exception("Could not connect to server to add resource "
                             "groups.")
-        if "server_type" in server_response["data"]:
-            if server_response["data"]["server_type"] == "pg":
+        if "type" in server_response["data"]:
+            if server_response["data"]["type"] == "pg":
                 message = "Resource groups are not supported by PG."
                 self.skipTest(message)
         self.resource_group_name = "test_resource_group_put%s" % \

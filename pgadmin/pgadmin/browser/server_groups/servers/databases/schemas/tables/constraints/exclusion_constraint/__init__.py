@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -225,13 +225,7 @@ class ExclusionConstraintView(PGChildNodeView):
             )
             self.conn = self.manager.connection(did=kwargs['did'])
 
-            ver = self.manager.version
-            if ver >= 90600:
-                self.template_path = 'exclusion_constraint/sql/9.6_plus'
-            elif ver >= 90200:
-                self.template_path = 'exclusion_constraint/sql/9.2_plus'
-            elif ver >= 90100:
-                self.template_path = 'exclusion_constraint/sql/9.1_plus'
+            self.template_path = 'exclusion_constraint/sql/#{0}#'.format(self.manager.version)
 
             # We need parent's name eg table name and schema name
             SQL = render_template("/".join([self.template_path,
@@ -272,7 +266,7 @@ class ExclusionConstraintView(PGChildNodeView):
 
         """
         sql = render_template("/".join([self.template_path, 'properties.sql']),
-                              tid=tid, cid=exid)
+                              did=did, tid=tid, cid=exid)
 
         status, res = self.conn.execute_dict(sql)
 
@@ -364,11 +358,7 @@ class ExclusionConstraintView(PGChildNodeView):
             )
         self.conn = self.manager.connection(did=did)
 
-        ver = self.manager.version
-        if ver >= 90200:
-            self.template_path = 'exclusion_constraint/sql/9.2_plus'
-        elif ver >= 90100:
-            self.template_path = 'exclusion_constraint/sql/9.1_plus'
+        self.template_path = 'exclusion_constraint/sql/#{0}#'.format(self.manager.version)
 
         # We need parent's name eg table name and schema name
         SQL = render_template("/".join([self.template_path,
@@ -384,6 +374,7 @@ class ExclusionConstraintView(PGChildNodeView):
 
         SQL = render_template("/".join([self.template_path,
                                         'properties.sql']),
+                              did=did,
                               tid=tid)
         status, res = self.conn.execute_dict(SQL)
 
@@ -483,11 +474,7 @@ class ExclusionConstraintView(PGChildNodeView):
             )
         self.conn = self.manager.connection(did=did)
 
-        ver = self.manager.version
-        if ver >= 90200:
-            self.template_path = 'exclusion_constraint/sql/9.2_plus'
-        elif ver >= 90100:
-            self.template_path = 'exclusion_constraint/sql/9.1_plus'
+        self.template_path = 'exclusion_constraint/sql/#{0}#'.format(self.manager.version)
 
         # We need parent's name eg table name and schema name
         SQL = render_template("/".join([self.template_path,
@@ -622,7 +609,7 @@ class ExclusionConstraintView(PGChildNodeView):
             return make_json_response(
                 status=400,
                 success=0,
-                errormsg=e
+                errormsg=str(e)
             )
 
     @check_precondition
@@ -649,7 +636,7 @@ class ExclusionConstraintView(PGChildNodeView):
         try:
             data['schema'] = self.schema
             data['table'] = self.table
-            sql, name = self.get_sql(data, tid, exid)
+            sql, name = self.get_sql(data, did, tid, exid)
             sql = sql.strip('\n').strip(' ')
             status, res = self.conn.execute_scalar(sql)
             if not status:
@@ -764,7 +751,7 @@ class ExclusionConstraintView(PGChildNodeView):
         data['schema'] = self.schema
         data['table'] = self.table
         try:
-            sql, name = self.get_sql(data, tid, exid)
+            sql, name = self.get_sql(data, did, tid, exid)
             sql = sql.strip('\n').strip(' ')
             if sql == '':
                 sql = "--modified SQL"
@@ -776,7 +763,7 @@ class ExclusionConstraintView(PGChildNodeView):
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
-    def get_sql(self, data, tid, exid=None):
+    def get_sql(self, data, did, tid, exid=None):
         """
         This function will generate sql from model data.
 
@@ -790,6 +777,7 @@ class ExclusionConstraintView(PGChildNodeView):
         """
         if exid is not None:
             sql = render_template("/".join([self.template_path, 'properties.sql']),
+                                  did=did,
                                   tid=tid,
                                   cid=exid)
             status, res = self.conn.execute_dict(sql)
@@ -816,7 +804,7 @@ class ExclusionConstraintView(PGChildNodeView):
             sql = render_template("/".join([self.template_path, 'create.sql']),
                                   data=data, conn=self.conn)
 
-        return sql, data['name'] if 'name' in data else old_data['name']
+        return sql, data['name']
 
     @check_precondition
     def sql(self, gid, sid, did, scid, tid, exid=None):
@@ -838,7 +826,7 @@ class ExclusionConstraintView(PGChildNodeView):
         try:
             SQL = render_template(
                 "/".join([self.template_path, 'properties.sql']),
-                tid=tid, conn=self.conn, cid=exid)
+                did=did, tid=tid, conn=self.conn, cid=exid)
             status, result = self.conn.execute_dict(SQL)
             if not status:
                 return internal_server_error(errormsg=result)
@@ -926,7 +914,7 @@ class ExclusionConstraintView(PGChildNodeView):
             # Fetch index details only if extended stats available
             SQL = render_template(
                 "/".join([self.template_path, 'properties.sql']),
-                tid=tid, conn=self.conn, cid=exid)
+                did=did, tid=tid, conn=self.conn, cid=exid)
             status, result = self.conn.execute_dict(SQL)
             if not status:
                 return internal_server_error(errormsg=result)

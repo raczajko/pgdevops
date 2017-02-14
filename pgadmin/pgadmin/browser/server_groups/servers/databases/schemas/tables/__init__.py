@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -134,7 +134,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
       - This function is used to return modified SQL for the selected
         Table node
 
-    * get_sql(data, scid, tid)
+    * get_sql(did, scid, tid, data)
       - This function will generate sql from model data
 
     * sql(gid, sid, did, scid, tid):
@@ -182,7 +182,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
       - It will return formatted output of query result
         as per client model format for column node
 
-    * _index_constraints_formatter(self, tid, data):
+    * _index_constraints_formatter(self, did, tid, data):
       - It will return formatted output of query result
         as per client model format for index constraint node
 
@@ -195,7 +195,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
        - This function will parse and return formatted list of columns
          added by user
 
-    * get_index_constraint_sql(self, tid, data):
+    * get_index_constraint_sql(self, did, tid, data):
       - This function will generate modified sql for index constraints
         (Primary Key & Unique)
 
@@ -284,24 +284,12 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
             ver = self.manager.version
             # Set the template path for the SQL scripts
-            if ver >= 90500:
-                self.template_path = 'table/sql/9.5_plus'
-            else:
-                self.template_path = 'table/sql/9.1_plus'
+            self.template_path = 'table/sql/#{0}#'.format(ver)
 
             # Template for Column ,check constraint and exclusion constraint node
-            if ver >= 90600:
-                self.column_template_path = 'column/sql/9.2_plus'
-                self.check_constraint_template_path = 'check_constraint/sql/9.2_plus'
-                self.exclusion_constraint_template_path = 'exclusion_constraint/sql/9.6_plus'
-            elif ver >= 90200:
-                self.column_template_path = 'column/sql/9.2_plus'
-                self.check_constraint_template_path = 'check_constraint/sql/9.2_plus'
-                self.exclusion_constraint_template_path = 'exclusion_constraint/sql/9.2_plus'
-            else:
-                self.column_template_path = 'column/sql/9.1_plus'
-                self.check_constraint_template_path = 'check_constraint/sql/9.1_plus'
-                self.exclusion_constraint_template_path = 'exclusion_constraint/sql/9.1_plus'
+            self.column_template_path = 'column/sql/#{0}#'.format(ver)
+            self.check_constraint_template_path = 'check_constraint/sql/#{0}#'.format(ver)
+            self.exclusion_constraint_template_path = 'exclusion_constraint/sql/#{0}#'.format(ver)
 
             # Template for PK & Unique constraint node
             self.index_constraint_template_path = 'index_constraint/sql'
@@ -310,10 +298,10 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             self.foreign_key_template_path = 'foreign_key/sql'
 
             # Template for index node
-            self.index_template_path = 'index/sql/9.1_plus'
+            self.index_template_path = 'index/sql/#{0}#'.format(ver)
 
             # Template for trigger node
-            self.trigger_template_path = 'trigger/sql/9.1_plus'
+            self.trigger_template_path = 'trigger/sql/#{0}#'.format(ver)
 
             # Template for rules node
             self.rules_template_path = 'rules/sql'
@@ -344,7 +332,8 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         """
         SQL = render_template("/".join([self.template_path,
                                         'properties.sql']),
-                              scid=scid, datlastsysoid=self.datlastsysoid)
+                              did=did, scid=scid,
+                              datlastsysoid=self.datlastsysoid)
         status, res = self.conn.execute_dict(SQL)
 
         if not status:
@@ -666,13 +655,13 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                 # If we have length & precision both
                 matchObj = re.search(r'(\d+),(\d+)', fulltype)
                 if matchObj:
-                    column['attlen'] = int(matchObj.group(1))
-                    column['attprecision'] = int(matchObj.group(2))
+                    column['attlen'] = matchObj.group(1)
+                    column['attprecision'] = matchObj.group(2)
                 else:
                     # If we have length only
                     matchObj = re.search(r'(\d+)', fulltype)
                     if matchObj:
-                        column['attlen'] = int(matchObj.group(1))
+                        column['attlen'] = matchObj.group(1)
                         column['attprecision'] = None
                     else:
                         column['attlen'] = None
@@ -706,21 +695,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                     edit_types_list.append(present_type)
 
                 column['edit_types'] = edit_types_list
-
-                # Manual Data type formatting
-                # If data type has () with them then we need to remove them
-                # eg bit(1) because we need to match the name with combobox
-                isArray = False
-                if column['cltype'].endswith('[]'):
-                    isArray = True
-                    column['cltype'] = column['cltype'].rstrip('[]')
-
-                idx = column['cltype'].find('(')
-                if idx and column['cltype'].endswith(')'):
-                    column['cltype'] = column['cltype'][:idx]
-
-                if isArray:
-                    column['cltype'] += "[]"
+                column['cltype'] = DataTypeReader.parse_type_name(column['cltype'])
 
                 if 'indkey' in column:
                     # Current column
@@ -737,7 +712,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
         return data
 
-    def _index_constraints_formatter(self, tid, data):
+    def _index_constraints_formatter(self, did, tid, data):
         """
         Args:
             tid: Table OID
@@ -758,7 +733,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
             sql = render_template("/".join([self.index_constraint_template_path,
                                             'properties.sql']),
-                                  tid=tid,
+                                  did=did, tid=tid,
                                   constraint_type=ctype)
             status, res = self.conn.execute_dict(sql)
 
@@ -886,7 +861,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
         return data
 
-    def _exclusion_constraint_formatter(self, tid, data):
+    def _exclusion_constraint_formatter(self, did, tid, data):
         """
         Args:
             tid: Table OID
@@ -900,7 +875,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         # We will fetch all the index constraints for the table
         sql = render_template("/".join([self.exclusion_constraint_template_path,
                                         'properties.sql']),
-                              tid=tid)
+                              did=did, tid=tid)
 
         status, result = self.conn.execute_dict(sql)
 
@@ -983,7 +958,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
         return None
 
-    def _formatter(self, scid, tid, data):
+    def _formatter(self, did, scid, tid, data):
         """
         Args:
             data: dict of query result
@@ -1102,10 +1077,10 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             data = self._columns_formatter(tid, data)
 
         # Here we will add constraint in our output
-        data = self._index_constraints_formatter(tid, data)
+        data = self._index_constraints_formatter(did, tid, data)
         data = self._foreign_key_formatter(tid, data)
         data = self._check_constraint_formatter(tid, data)
-        data = self._exclusion_constraint_formatter(tid, data)
+        data = self._exclusion_constraint_formatter(did, tid, data)
 
         return data
 
@@ -1128,7 +1103,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
         SQL = render_template("/".join([self.template_path,
                                         'properties.sql']),
-                              scid=scid, tid=tid,
+                              did=did, scid=scid, tid=tid,
                               datlastsysoid=self.datlastsysoid)
         status, res = self.conn.execute_dict(SQL)
         if not status:
@@ -1151,7 +1126,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             'vacuum_settings_str'
         ].replace("=", " = ")
 
-        data = self._formatter(scid, tid, data)
+        data = self._formatter(did, scid, tid, data)
 
         return ajax_response(
             response=data,
@@ -1328,6 +1303,24 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         else:
             return data_type, False
 
+    @staticmethod
+    def convert_length_precision_to_string(data):
+        """
+        This function is used to convert length & precision to string
+        to handle case like when user gives 0 as length
+
+        Args:
+            data: Data from client
+
+        Returns:
+            Converted data
+        """
+        if 'attlen' in data and data['attlen'] is not None:
+            data['attlen'] = str(data['attlen'])
+        if 'attprecision' in data and data['attprecision'] is not None:
+            data['attprecision'] = str(data['attprecision'])
+        return data
+
     def _parse_format_columns(self, data, mode=None):
         """
         data:
@@ -1355,6 +1348,8 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                             # check type for '[]' in it
                             c['cltype'], c['hasSqrBracket'] = self._cltype_formatter(c['cltype'])
 
+                        c = self.convert_length_precision_to_string(c)
+
                     data['columns'][action] = final_columns
         else:
             # We need to exclude all the columns which are inherited from other tables
@@ -1374,6 +1369,8 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                 if 'cltype' in c:
                     # check type for '[]' in it
                     c['cltype'], c['hasSqrBracket'] = self._cltype_formatter(c['cltype'])
+
+                c = self.convert_length_precision_to_string(c)
 
             data['columns'] = final_columns
 
@@ -1498,7 +1495,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                 data[k] = v
 
         try:
-            SQL, name = self.get_sql(scid, tid, data)
+            SQL, name = self.get_sql(did, scid, tid, data)
 
             SQL = SQL.strip('\n').strip(' ')
             status, res = self.conn.execute_scalar(SQL)
@@ -1547,7 +1544,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         try:
             SQL = render_template("/".join([self.template_path,
                                             'properties.sql']),
-                                  scid=scid, tid=tid,
+                                  did=did, scid=scid, tid=tid,
                                   datlastsysoid=self.datlastsysoid)
             status, res = self.conn.execute_dict(SQL)
             if not status:
@@ -1608,7 +1605,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         try:
             SQL = render_template("/".join([self.template_path,
                                             'properties.sql']),
-                                  scid=scid, tid=tid,
+                                  did=did, scid=scid, tid=tid,
                                   datlastsysoid=self.datlastsysoid)
             status, res = self.conn.execute_dict(SQL)
             if not status:
@@ -1656,7 +1653,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         try:
             SQL = render_template("/".join([self.template_path,
                                             'properties.sql']),
-                                  scid=scid, tid=tid,
+                                  did=did, scid=scid, tid=tid,
                                   datlastsysoid=self.datlastsysoid)
             status, res = self.conn.execute_dict(SQL)
             if not status:
@@ -1673,8 +1670,8 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
             return make_json_response(
                 success=1,
-                info=gettext("Trigger(s) has been enabled") if is_enable
-                else gettext("Trigger(s) has been disabled"),
+                info=gettext("Trigger(s) have been enabled") if is_enable
+                else gettext("Trigger(s) have been disabled"),
                 data={
                     'id': tid,
                     'scid': scid
@@ -1706,7 +1703,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
             return make_json_response(
                 success=1,
-                info=gettext("Table statistics has been reset"),
+                info=gettext("Table statistics have been reset"),
                 data={
                     'id': tid,
                     'scid': scid
@@ -1736,7 +1733,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                 data[k] = v
 
         try:
-            SQL, name = self.get_sql(scid, tid, data)
+            SQL, name = self.get_sql(did, scid, tid, data)
             SQL = re.sub('\n{2,}', '\n\n', SQL)
             SQL = SQL.strip('\n')
             if SQL == '':
@@ -1748,7 +1745,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
-    def get_index_constraint_sql(self, tid, data):
+    def get_index_constraint_sql(self, did, tid, data):
         """
          Args:
            tid: Table ID
@@ -1790,7 +1787,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
                         properties_sql = render_template("/".join(
                             [self.index_constraint_template_path, 'properties.sql']),
-                            tid=tid, cid=c['oid'], constraint_type=ctype)
+                            did=did, tid=tid, cid=c['oid'], constraint_type=ctype)
                         status, res = self.conn.execute_dict(properties_sql)
                         if not status:
                             return internal_server_error(errormsg=res)
@@ -2104,7 +2101,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         else:
             return None
 
-    def get_sql(self, scid, tid, data):
+    def get_sql(self, did, scid, tid, data):
         """
         This function will generate create/update sql from model data
         coming from client
@@ -2112,14 +2109,14 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         if tid is not None:
             SQL = render_template("/".join([self.template_path,
                                             'properties.sql']),
-                                  scid=scid, tid=tid,
+                                  did=did, scid=scid, tid=tid,
                                   datlastsysoid=self.datlastsysoid)
             status, res = self.conn.execute_dict(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
 
             old_data = res['rows'][0]
-            old_data = self._formatter(scid, tid, old_data)
+            old_data = self._formatter(did, scid, tid, old_data)
 
             # We will convert privileges coming from client required
             if 'relacl' in data:
@@ -2211,6 +2208,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                         old_data = res['rows'][0]
 
                         old_data['cltype'], old_data['hasSqrBracket'] = self._cltype_formatter(old_data['cltype'])
+                        old_data = self.convert_length_precision_to_string(old_data)
 
                         fulltype = self.get_full_type(
                             old_data['typnspname'], old_data['typname'],
@@ -2232,24 +2230,8 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                                 old_data['attlen'] = None
                                 old_data['attprecision'] = None
 
-                        # Manual Data type formatting
-                        # If data type has () with them then we need to remove them
-                        # eg bit(1) because we need to match the name with combobox
-                        isArray = False
-                        if old_data['cltype'].endswith('[]'):
-                            isArray = True
-                            old_data['cltype'] = old_data['cltype'].rstrip('[]')
+                        old_data['cltype'] = DataTypeReader.parse_type_name(old_data['cltype'])
 
-                        idx = old_data['cltype'].find('(')
-                        if idx and old_data['cltype'].endswith(')'):
-                            old_data['cltype'] = old_data['cltype'][:idx]
-
-                        if isArray:
-                            old_data['cltype'] += "[]"
-
-                        if old_data['typnspname'] != 'pg_catalog':
-                            old_data['cltype'] = self.qtIdent(self.conn, old_data['typnspname']) \
-                                               + '.' + old_data['cltype']
                         # Sql for alter column
                         if 'inheritedfrom' not in c:
                             column_sql += render_template("/".join(
@@ -2265,6 +2247,9 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                         if 'attacl' in c:
                             c['attacl'] = parse_priv_to_db(c['attacl'],
                                                            self.column_acl)
+
+                        c = self.convert_length_precision_to_string(c)
+
                         if 'inheritedfrom' not in c:
                             column_sql += render_template("/".join(
                                 [self.column_template_path, 'create.sql']),
@@ -2274,7 +2259,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                 SQL += column_sql.strip('\n')
 
             # Check if index constraints are added/changed/deleted
-            index_constraint_sql = self.get_index_constraint_sql(tid, data)
+            index_constraint_sql = self.get_index_constraint_sql(did, tid, data)
             # If we have index constraint sql then ad it in main sql
             if index_constraint_sql is not None:
                 SQL += '\n' + index_constraint_sql
@@ -2471,7 +2456,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         """
         SQL = render_template("/".join([self.template_path,
                                         'properties.sql']),
-                              scid=scid, tid=tid,
+                              did=did, scid=scid, tid=tid,
                               datlastsysoid=self.datlastsysoid)
         status, res = self.conn.execute_dict(SQL)
         if not status:
@@ -2483,7 +2468,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         schema = data['schema']
         table = data['name']
 
-        data = self._formatter(scid, tid, data)
+        data = self._formatter(did, scid, tid, data)
 
         # Now we have all lis of columns which we need
         # to include in our create definition, Let's format them
@@ -2539,7 +2524,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
             SQL = render_template("/".join([self.index_template_path,
                                             'properties.sql']),
-                                  tid=tid, idx=row['oid'],
+                                  did=did, tid=tid, idx=row['oid'],
                                   datlastsysoid=self.datlastsysoid)
 
             status, res = self.conn.execute_dict(SQL)
@@ -2741,14 +2726,14 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         """
         SQL = render_template("/".join([self.template_path,
                                         'properties.sql']),
-                              scid=scid, tid=tid,
+                              did=did, scid=scid, tid=tid,
                               datlastsysoid=self.datlastsysoid)
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
 
         data = res['rows'][0]
-        data = self._formatter(scid, tid, data)
+        data = self._formatter(did, scid, tid, data)
 
         columns = []
 
@@ -2785,14 +2770,14 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         """
         SQL = render_template("/".join([self.template_path,
                                         'properties.sql']),
-                              scid=scid, tid=tid,
+                              did=did, scid=scid, tid=tid,
                               datlastsysoid=self.datlastsysoid)
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
 
         data = res['rows'][0]
-        data = self._formatter(scid, tid, data)
+        data = self._formatter(did, scid, tid, data)
 
         columns = []
         values = []
@@ -2832,14 +2817,14 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         """
         SQL = render_template("/".join([self.template_path,
                                         'properties.sql']),
-                              scid=scid, tid=tid,
+                              did=did, scid=scid, tid=tid,
                               datlastsysoid=self.datlastsysoid)
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
 
         data = res['rows'][0]
-        data = self._formatter(scid, tid, data)
+        data = self._formatter(did, scid, tid, data)
 
         columns = []
 
@@ -2881,7 +2866,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
         """
         SQL = render_template("/".join([self.template_path,
                                         'properties.sql']),
-                              scid=scid, tid=tid,
+                              did=did, scid=scid, tid=tid,
                               datlastsysoid=self.datlastsysoid)
         status, res = self.conn.execute_dict(SQL)
         if not status:

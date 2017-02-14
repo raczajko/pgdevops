@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -118,11 +118,7 @@ class TablespaceView(PGChildNodeView):
                     )
                 )
 
-            ver = self.manager.version
-            if ver >= 90200:
-                self.template_path = 'tablespaces/sql/9.2_plus'
-            else:
-                self.template_path = 'tablespaces/sql/9.1_plus'
+            self.template_path = 'tablespaces/sql/#{0}#'.format(self.manager.version)
             current_app.logger.debug(
                 "Using the template path: %s", self.template_path
             )
@@ -563,9 +559,15 @@ class TablespaceView(PGChildNodeView):
             This function will return list of variables available for
             table spaces.
         """
-        SQL = render_template(
-            "/".join([self.template_path, 'variables.sql'])
-        )
+        ver = self.manager.version
+        if ver >= 90600:
+            SQL = render_template(
+                "/".join(['tablespaces/sql/9.6_plus', 'variables.sql'])
+            )
+        else:
+            SQL = render_template(
+                "/".join([self.template_path, 'variables.sql'])
+            )
         status, rset = self.conn.execute_dict(SQL)
 
         if not status:

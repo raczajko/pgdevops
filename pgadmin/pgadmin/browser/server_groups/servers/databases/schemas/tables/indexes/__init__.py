@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -73,7 +73,7 @@ class IndexesModule(CollectionNodeModule):
             if 'vid' not in kwargs:
                 return True
 
-            template_path = 'index/sql/9.1_plus'
+            template_path = 'index/sql/#{0}#'.format(manager.version)
             SQL = render_template("/".join(
                 [template_path, 'backend_support.sql']), vid=kwargs['vid'])
             status, res = conn.execute_scalar(SQL)
@@ -138,6 +138,10 @@ class IndexesView(PGChildNodeView):
     * nodes()
       - This function will used to create all the child node within that
         collection, Here it will create all the Index node.
+
+    * node()
+      - This function will used to create the child node within that
+        collection, Here it will create specific the Index node.
 
     * properties(gid, sid, did, scid, tid, idx)
       - This function will show the properties of the selected Index node
@@ -228,7 +232,7 @@ class IndexesView(PGChildNodeView):
                 kwargs['did'] in self.manager.db_info else 0
 
             # we will set template path for sql scripts
-            self.template_path = 'index/sql/9.1_plus'
+            self.template_path = 'index/sql/#{0}#'.format(self.manager.version)
 
             # We need parent's name eg table name and schema name
             # when we create new index in update we can fetch it using
@@ -382,12 +386,15 @@ class IndexesView(PGChildNodeView):
             did: Database ID
             scid: Schema ID
             tid: Table ID
+            idx: Index ID
 
         Returns:
             JSON of available schema child nodes
         """
         SQL = render_template("/".join([self.template_path,
-                                        'nodes.sql']), idx=idx)
+                                        'nodes.sql']),
+                              tid=tid,
+                              idx=idx)
         status, rset = self.conn.execute_2darray(SQL)
         if not status:
             return internal_server_error(errormsg=rset)
@@ -514,7 +521,7 @@ class IndexesView(PGChildNodeView):
 
         SQL = render_template("/".join([self.template_path,
                                         'properties.sql']),
-                              tid=tid, idx=idx,
+                              did=did, tid=tid, idx=idx,
                               datlastsysoid=self.datlastsysoid)
 
         status, res = self.conn.execute_dict(SQL)
@@ -658,7 +665,7 @@ class IndexesView(PGChildNodeView):
             # so that we create template for dropping index
             SQL = render_template("/".join([self.template_path,
                                             'properties.sql']),
-                                  tid=tid, idx=idx,
+                                  did=did, tid=tid, idx=idx,
                                   datlastsysoid=self.datlastsysoid)
 
             status, res = self.conn.execute_dict(SQL)
@@ -716,7 +723,7 @@ class IndexesView(PGChildNodeView):
         data['schema'] = self.schema
         data['table'] = self.table
         try:
-            SQL, name = self.get_sql(scid, tid, idx, data)
+            SQL, name = self.get_sql(did, scid, tid, idx, data)
             SQL = SQL.strip('\n').strip(' ')
             status, res = self.conn.execute_scalar(SQL)
             if not status:
@@ -758,7 +765,7 @@ class IndexesView(PGChildNodeView):
         data['table'] = self.table
 
         try:
-            sql, name = self.get_sql(scid, tid, idx, data, mode='create')
+            sql, name = self.get_sql(did, scid, tid, idx, data, mode='create')
             sql = sql.strip('\n').strip(' ')
             if sql == '':
                 sql = "--modified SQL"
@@ -769,14 +776,14 @@ class IndexesView(PGChildNodeView):
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
-    def get_sql(self, scid, tid, idx, data, mode=None):
+    def get_sql(self, did, scid, tid, idx, data, mode=None):
         """
         This function will genrate sql from model data
         """
         if idx is not None:
             SQL = render_template("/".join([self.template_path,
                                             'properties.sql']),
-                                  tid=tid, idx=idx,
+                                  did=did, tid=tid, idx=idx,
                                   datlastsysoid=self.datlastsysoid)
 
             status, res = self.conn.execute_dict(SQL)
@@ -835,7 +842,7 @@ class IndexesView(PGChildNodeView):
         try:
             SQL = render_template("/".join([self.template_path,
                                             'properties.sql']),
-                                  tid=tid, idx=idx,
+                                  did=did, tid=tid, idx=idx,
                                   datlastsysoid=self.datlastsysoid)
 
             status, res = self.conn.execute_dict(SQL)
@@ -850,7 +857,7 @@ class IndexesView(PGChildNodeView):
             # Add column details for current index
             data = self._column_details(idx, data)
 
-            SQL, name = self.get_sql(scid, tid, None, data)
+            SQL, name = self.get_sql(did, scid, tid, None, data)
 
             sql_header = "-- Index: {0}\n\n-- ".format(data['name'])
             if hasattr(str, 'decode'):
@@ -948,7 +955,7 @@ class IndexesView(PGChildNodeView):
                 # Fetch index details only if extended stats available
                 SQL = render_template("/".join([self.template_path,
                                                 'properties.sql']),
-                                      tid=tid, idx=idx,
+                                      did=did, tid=tid, idx=idx,
                                       datlastsysoid=self.datlastsysoid)
                 status, res = self.conn.execute_dict(SQL)
                 if not status:

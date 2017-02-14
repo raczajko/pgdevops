@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -73,7 +73,7 @@ class TriggerModule(CollectionNodeModule):
             if 'vid' not in kwargs:
                 return True
 
-            template_path = 'trigger/sql/9.1_plus'
+            template_path = 'trigger/sql/#{0}#'.format(manager.version)
             SQL = render_template("/".join(
                 [template_path, 'backend_support.sql']), vid=kwargs['vid']
             )
@@ -158,6 +158,10 @@ class TriggerView(PGChildNodeView):
     * nodes()
       - This function will used to create all the child node within that
         collection, Here it will create all the Trigger node.
+
+    * node()
+      - This function will used to create child node within that
+        collection, Here it will create specific the Trigger node.
 
     * properties(gid, sid, did, scid, tid, trid)
       - This function will show the properties of the selected Trigger node
@@ -259,7 +263,7 @@ class TriggerView(PGChildNodeView):
                 kwargs['did'] in self.manager.db_info else 0
 
             # we will set template path for sql scripts
-            self.template_path = 'trigger/sql/9.1_plus'
+            self.template_path = 'trigger/sql/#{0}#'.format(self.manager.version)
             # Store server type
             self.server_type = self.manager.server_type
             # We need parent's name eg table name and schema name
@@ -355,6 +359,48 @@ class TriggerView(PGChildNodeView):
             return internal_server_error(errormsg=res)
         return ajax_response(
             response=res['rows'],
+            status=200
+        )
+
+    @check_precondition
+    def node(self, gid, sid, did, scid, tid, trid):
+        """
+        This function will used to create the child node within that collection.
+        Here it will create specific the trigger node.
+
+        Args:
+            gid: Server Group ID
+            sid: Server ID
+            did: Database ID
+            scid: Schema ID
+            tid: Table ID
+            trid: Trigger ID
+
+        Returns:
+            JSON of available trigger child nodes
+        """
+        res = []
+        SQL = render_template("/".join([self.template_path,
+                                        'nodes.sql']),
+                              tid=tid,
+                              trid=trid)
+        status, rset = self.conn.execute_2darray(SQL)
+        if not status:
+            return internal_server_error(errormsg=rset)
+
+        if len(rset['rows']) == 0:
+            return gone(gettext("""Could not find the trigger in the table."""))
+
+        res = self.blueprint.generate_browser_node(
+                rset['rows'][0]['oid'],
+                tid,
+                rset['rows'][0]['name'],
+                icon="icon-trigger" if rset['rows'][0]['is_enable_trigger']
+                else "icon-trigger-bad"
+            )
+
+        return make_json_response(
+            data=res,
             status=200
         )
 
@@ -470,6 +516,20 @@ class TriggerView(PGChildNodeView):
 
         return data
 
+    def _format_args(self, args):
+        """
+        This function will format arguments.
+
+        Args:
+            args: Arguments
+
+        Returns:
+            Formated arguments for function
+        """
+        formatted_args = ["'{0}'".format(arg) for arg in args]
+        return ', '.join(formatted_args)
+
+
     @check_precondition
     def properties(self, gid, sid, did, scid, tid, trid):
         """
@@ -503,30 +563,12 @@ class TriggerView(PGChildNodeView):
 
         # Making copy of output for future use
         data = dict(res['rows'][0])
+        data = self.get_trigger_function_schema(data)
 
-        # If language is 'edbspl' then trigger function should be 'Inline EDB-SPL'
-        # else we will find the trigger function with schema name.
-        if data['lanname'] == 'edbspl':
-            data['tfunction'] = 'Inline EDB-SPL'
-        else:
-            SQL = render_template("/".join([self.template_path,
-                                            'get_triggerfunctions.sql']),
-                                  tgfoid=data['tgfoid'],
-                                  show_system_objects=self.blueprint.show_system_objects)
-
-            status, result = self.conn.execute_dict(SQL)
-            if not status:
-                return internal_server_error(errormsg=res)
-
-            # Update the trigger function which we have fetched with schema name
-            if 'rows' in result and len(result['rows']) > 0 and \
-                            'tfunctions' in result['rows'][0]:
-                data['tfunction'] = result['rows'][0]['tfunctions']
-
-        if data['tgnargs'] > 1:
-            # We know that trigger has more than 1 arguments, let's join them
-            # and convert it as string
-            data['tgargs'] = ', '.join(data['tgargs'])
+        if len(data['custom_tgargs']) > 1:
+            # We know that trigger has more than 1 argument, let's join them
+            # and convert it to string
+            data['tgargs'] = self._format_args(data['custom_tgargs'])
 
         if len(data['tgattr']) > 1:
             columns = ', '.join(data['tgattr'].split(' '))
@@ -598,7 +640,7 @@ class TriggerView(PGChildNodeView):
             return jsonify(
                 node=self.blueprint.generate_browser_node(
                     trid,
-                    scid,
+                    tid,
                     data['name'],
                     icon="icon-trigger"
                 )
@@ -697,10 +739,19 @@ class TriggerView(PGChildNodeView):
             if not status:
                 return internal_server_error(errormsg=res)
 
+            # We need oid to add object in browser tree and if user
+            # update the trigger then new OID is getting generated
+            # so we need to return new OID of trigger.
+            SQL = render_template("/".join([self.template_path, 'get_oid.sql']),
+                                  tid=tid, data=data)
+            status, new_trid = self.conn.execute_scalar(SQL)
+            if not status:
+                return internal_server_error(errormsg=new_trid)
+
             return jsonify(
                 node=self.blueprint.generate_browser_node(
-                    trid,
-                    scid,
+                    new_trid,
+                    tid,
                     name,
                     icon="icon-%s" % self.node_type
                 )
@@ -746,6 +797,30 @@ class TriggerView(PGChildNodeView):
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
+    def get_trigger_function_schema(self, data):
+        """
+        This function will return trigger function with schema name
+        """
+        # If language is 'edbspl' then trigger function should be 'Inline EDB-SPL'
+        # else we will find the trigger function with schema name.
+        if data['lanname'] == 'edbspl':
+            data['tfunction'] = 'Inline EDB-SPL'
+        else:
+            SQL = render_template("/".join([self.template_path,
+                                            'get_triggerfunctions.sql']),
+                                  tgfoid=data['tgfoid'],
+                                  show_system_objects=self.blueprint.show_system_objects)
+
+            status, result = self.conn.execute_dict(SQL)
+            if not status:
+                return internal_server_error(errormsg=res)
+
+            # Update the trigger function which we have fetched with schema name
+            if 'rows' in result and len(result['rows']) > 0 and \
+                            'tfunctions' in result['rows'][0]:
+                data['tfunction'] = result['rows'][0]['tfunctions']
+        return data
+
     def get_sql(self, scid, tid, trid, data):
         """
         This function will genrate sql from model data
@@ -770,9 +845,11 @@ class TriggerView(PGChildNodeView):
             self.trigger_name = data['name']
             self.lanname = old_data['lanname']
 
-            if old_data['tgnargs'] > 1:
-                # We know that trigger has more than 1 arguments, let's join them
-                old_data['tgargs'] = ', '.join(old_data['tgargs'])
+            old_data = self.get_trigger_function_schema(old_data)
+
+            if len(old_data['custom_tgargs']) > 1:
+                # We know that trigger has more than 1 argument, let's join them
+                old_data['tgargs'] = self._format_args(old_data['custom_tgargs'])
 
             if len(old_data['tgattr']) > 1:
                 columns = ', '.join(old_data['tgattr'].split(' '))
@@ -827,9 +904,11 @@ class TriggerView(PGChildNodeView):
             data['schema'] = self.schema
             data['table'] = self.table
 
-            if data['tgnargs'] > 1:
-                # We know that trigger has more than 1 arguments, let's join them
-                data['tgargs'] = ', '.join(data['tgargs'])
+            data = self.get_trigger_function_schema(data)
+
+            if len(data['custom_tgargs']) > 1:
+                # We know that trigger has more than 1 argument, let's join them
+                data['tgargs'] = self._format_args(data['custom_tgargs'])
 
             if len(data['tgattr']) > 1:
                 columns = ', '.join(data['tgattr'].split(' '))

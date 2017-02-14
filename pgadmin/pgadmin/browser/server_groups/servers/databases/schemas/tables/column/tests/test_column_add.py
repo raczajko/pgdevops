@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 # ##################################################################
@@ -55,7 +55,7 @@ class ColumnAddTestCase(BaseTestGenerator):
                 "attacl": [],
                 "is_primary_key": False,
                 "attnotnull": False,
-                "attlen": False,
+                "attlen": None,
                 "attprecision": None,
                 "attoptions": [],
                 "seclabels": []

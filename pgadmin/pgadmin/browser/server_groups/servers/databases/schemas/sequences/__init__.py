@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -145,7 +145,7 @@ class SequenceView(PGChildNodeView):
                     self.conn = self.manager.connection(did=kwargs['did'])
                 else:
                     self.conn = self.manager.connection()
-                self.template_path = 'sequence/sql/9.1_plus'
+                self.template_path = 'sequence/sql/#{0}#'.format(self.manager.version)
                 self.acl = ['r', 'w', 'U']
 
                 return f(self, *args, **kwargs)
@@ -735,7 +735,7 @@ class SequenceView(PGChildNodeView):
             # Get schema name
             status, schema_name = self.conn.execute_scalar(
                 render_template(
-                    'schema/pg/9.1_plus/sql/get_name.sql',
+                    'schema/pg/#{0}#/sql/get_name.sql'.format(self.manager.version),
                     scid=scid
                 )
             )

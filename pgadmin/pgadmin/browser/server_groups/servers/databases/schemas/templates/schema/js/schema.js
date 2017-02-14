@@ -6,7 +6,7 @@ define(
 function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
 
 
-  // VaccumSettings Collection to display all settings parameters as Grid
+  // VacuumSettings Collection to display all settings parameters as Grid
   var VacuumCollectionControl = Backform.VacuumCollectionControl =
     Backform.Control.extend({
 
@@ -198,7 +198,7 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
     }),
     deps: ['autovacuum_enabled']
   },{
-    id: 'toast_autovacuum', label: '{{ _("Custom auto-vaccum?") }}',
+    id: 'toast_autovacuum', label: '{{ _("Custom auto-vacuum?") }}',
     group: '{{ _("Toast Table") }}', mode: ['edit', 'create'],
     type: 'switch',
     disabled: function(m) {
@@ -310,9 +310,13 @@ function($, _, S, pgAdmin, pgBrowser, Backform, alertify) {
           name: 'create_schema', node: 'database', module: this,
           applies: ['object', 'context'], callback: 'show_obj_properties',
           category: 'create', priority: 4, label: '{{ _('Schema...') }}',
-          icon: 'wcTabIcon icon-schema', data: {action: 'create'}
+          icon: 'wcTabIcon icon-schema', data: {action: 'create'},
+          enable: 'can_create_schema'
         }
         ]);
+      },
+      can_create_schema: function(node, item) {
+        return pgBrowser.Nodes['database'].is_conn_allow.call(this, node);
       },
       model: pgBrowser.Node.Model.extend({
         defaults: {
