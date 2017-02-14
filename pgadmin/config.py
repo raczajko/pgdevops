@@ -4,7 +4,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 # config.py - Core application configuration settings
@@ -29,10 +29,14 @@ APP_ICON = 'icon-postgres-alt'
 # NOTE!!!
 # If you change any of APP_RELEASE, APP_REVISION or APP_SUFFIX, then you
 # must also change APP_VERSION_INT to match.
+#
+# Any changes made here must also be made in runtime/pgAdmin4.pro and
+# runtime/Info.plist
+#
 
 # Application version number components
 APP_RELEASE = 1
-APP_REVISION = 1
+APP_REVISION = 2
 
 # Application version suffix, e.g. 'beta1', 'dev'. Usually an empty string
 # for GA releases.
@@ -41,7 +45,9 @@ APP_SUFFIX = ''
 # Numeric application version for upgrade checks. Should be in the format:
 # [X]XYYZZ, where X is the release version, Y is the revision, with a leading
 # zero if needed, and Z represents the suffix, with a leading zero if needed
-APP_VERSION_INT = 11001
+# Note that we messed this up in v1.x, where the format is [X]XYZZZ. This
+# should be fixed for v2.x!!
+APP_VERSION_INT = 12001
 
 # DO NOT CHANGE!
 # The application version string, constructed from the components
@@ -51,7 +57,8 @@ else:
     APP_VERSION = '%s.%s-%s' % (APP_RELEASE, APP_REVISION, APP_SUFFIX)
 
 # Copyright string for display in the app
-APP_COPYRIGHT = 'Copyright 2013 - 2016, The pgAdmin Development Team'
+# Any changes made here must also be made in runtime/pgAdmin4.pro
+APP_COPYRIGHT = 'Copyright 2013 - 2017, The pgAdmin Development Team'
 
 ##########################################################################
 # Misc stuff
@@ -62,7 +69,8 @@ HELP_PATH = '../../../docs/en_US/_build/html/'
 
 # Languages we support in the UI
 LANGUAGES = {
-    'en': 'English'
+    'en': 'English',
+    'zh': 'Chinese (Simplified)'
 }
 
 # DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING!
@@ -97,7 +105,7 @@ DEBUG = False
 #   DEBUG    10
 #   NOTSET    0
 CONSOLE_LOG_LEVEL = WARNING
-FILE_LOG_LEVEL = INFO
+FILE_LOG_LEVEL = WARNING
 
 # Log format.
 CONSOLE_LOG_FORMAT = '%(asctime)s: %(levelname)s\t%(name)s:\t%(message)s'
@@ -149,10 +157,7 @@ SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
 #       configuration databases 'keys' table and are auto-generated.
 
 # Should HTML be minified on the fly when not in debug mode?
-# Note: This is disabled by default as it will error when processing the
-#       docs. If the serving of docs is handled by an Apache HTTPD
-#       instance (rather than via the app), then it can be safely enabled.
-MINIFY_HTML = False
+MINIFY_PAGE = True
 
 ##########################################################################
 # Server Connection Driver Settings
@@ -261,6 +266,26 @@ STORAGE_DIR = os.path.join(
     DATA_DIR,
     'storage'
 )
+
+##########################################################################
+# Default locations for binary utilities (pg_dump, pg_restore etc)
+#
+# These are intentionally left empty in the main config file, but are
+# expected to be overridden by packagers in config_distro.py.
+#
+# A default location can be specified for each database driver ID, in
+# a dictionary. Either an absolute or relative path can be specified.
+# In cases where it may be difficult to know what the working directory
+# is, "$DIR" can be specified. This will be replaced with the path to the
+# top-level pgAdmin4.py file. For example, on macOS we might use:
+#
+# $DIR/../../SharedSupport
+#
+##########################################################################
+DEFAULT_BINARY_PATHS = {
+    "pg":   "",
+    "ppas": ""
+}
 
 ##########################################################################
 # Test settings - used primarily by the regression suite, not for users

@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2016, The pgAdmin Development Team
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -10,18 +10,21 @@
 """The main pgAdmin module. This handles the application initialisation tasks,
 such as setup of logging, dynamic loading of modules etc."""
 import logging
-import os, sys
+import os, sys, time
 from collections import defaultdict
 from importlib import import_module
 
 from flask import Flask, abort, request, current_app
 from flask_babel import Babel, gettext
+from flask_htmlmin import HTMLMIN
 from flask_login import user_logged_in
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_mail import Mail
 from flask_security.utils import login_user
-from htmlmin.minify import html_minify
+from werkzeug.datastructures import ImmutableDict
+
 from pgadmin.utils import PgAdminModule, driver
+from pgadmin.utils.versioned_template_loader import VersionedTemplateLoader
 from pgadmin.utils.session import create_session_interface
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 from werkzeug.local import LocalProxy
@@ -41,7 +44,16 @@ if sys.version_info[0] >= 3:
 elif os.name == 'nt':
     import _winreg as winreg
 
+
 class PgAdmin(Flask):
+    def __init__(self, *args, **kwargs):
+        # Set the template loader to a postgres-version-aware loader
+        self.jinja_options = ImmutableDict(
+            extensions=['jinja2.ext.autoescape', 'jinja2.ext.with_'],
+            loader=VersionedTemplateLoader(self)
+        )
+        super(PgAdmin, self).__init__(*args, **kwargs)
+
     def find_submodules(self, basemodule):
         for module_name in find_modules(basemodule, True):
             if module_name in self.config['MODULE_BLACKLIST']:
@@ -206,7 +218,20 @@ def create_app(app_name=config.APP_NAME):
 
     # Upgrade the schema (if required)
     with app.app_context():
-        version = Version.query.filter_by(name='ConfigDB').first()
+        try:
+            version = Version.query.filter_by(name='ConfigDB').first()
+        except:
+            backup_file = config.SQLITE_PATH + '.' + time.strftime("%Y%m%d%H%M%S")
+            app.logger.error(
+                """The configuration database ({0}) appears to be corrupt.\n\n"""
+                """The database will be moved to {1}.\n"""
+                """Please restart {2} to create a new configuration database.\n""".format(
+                    config.SQLITE_PATH, backup_file, config.APP_NAME
+                )
+            )
+
+            os.rename(config.SQLITE_PATH, backup_file)
+            exit(1)
 
         # Pre-flight checks
         if int(version.value) < int(config.SETTINGS_SCHEMA_VERSION):
@@ -412,16 +437,8 @@ def create_app(app_name=config.APP_NAME):
     ##########################################################################
     # Minify output
     ##########################################################################
-    @app.after_request
-    def response_minify(response):
-        """Minify html response to decrease traffic"""
-        if config.MINIFY_HTML and not config.DEBUG:
-            if response.content_type == u'text/html; charset=utf-8':
-                response.set_data(
-                    html_minify(response.get_data(as_text=True))
-                )
-
-        return response
+    if not config.DEBUG:
+        HTMLMIN(app)
 
     @app.context_processor
     def inject_blueprint():
