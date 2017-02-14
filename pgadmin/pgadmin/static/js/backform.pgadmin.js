@@ -1206,6 +1206,9 @@
       if (this.grid) {
         this.grid.remove();
       }
+      if (this.collection) {
+        this.collection.off( "enteringEditMode");
+      }
     },
     clearInvalid: function() {
       this.$el.removeClass('subnode-error');
@@ -1400,7 +1403,8 @@
         mode: "text/x-pgsql",
         readOnly: true,
         extraKeys: pgAdmin.Browser.editor_shortcut_keys,
-        tabSize: pgAdmin.Browser.editor_options.tabSize
+        tabSize: pgAdmin.Browser.editor_options.tabSize,
+        lineWrapping: pgAdmin.Browser.editor_options.wrapCode
       });
 
       /*
@@ -1456,13 +1460,6 @@
           this.sqlCtrl.setValue('-- ' + window.pgAdmin.Browser.messages.SQL_NO_CHANGE);
         }
         this.sqlCtrl.refresh.apply(this.sqlCtrl);
-
-        this.$el.find('.CodeMirror').css(
-            'cssText',
-            'height: ' + (
-              this.$el.closest('.tab-content').height() + 8
-              ) + 'px !important;'
-            );
       }
     },
     onPanelResized: function(o) {
@@ -1955,6 +1952,11 @@
                 options: (this.field.get('options') || this.defaults.options)
             });
 
+      // If disabled then no need to show placeholder
+      if(data.disabled || data.mode === 'properties') {
+        select2Opts['placeholder'] = '';
+      }
+
       /*
        * Add empty option as Select2 requires any empty '<option><option>' for
        * some of its functionality to work and initialize select2 control.
@@ -2178,7 +2180,8 @@
             lineNumbers: true,
             mode: "text/x-sql",
             extraKeys: pgAdmin.Browser.editor_shortcut_keys,
-            tabSize: pgAdmin.Browser.editor_options.tabSize
+            tabSize: pgAdmin.Browser.editor_options.tabSize,
+            lineWrapping: pgAdmin.Browser.editor_options.wrapCode
           });
 
       // Disable editor

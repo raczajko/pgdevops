@@ -26,6 +26,10 @@ body {
   }
 }
 
+.pg-navbar {
+  z-index: 10;
+}
+
 .pg-docker {
   position:absolute;
   left:0px;
@@ -52,8 +56,9 @@ iframe {
 }
 
 /* Ensure the codemirror editor displays full height gutters when resized */
-.CodeMirror, .CodeMirror-gutters {
+.CodeMirror, .CodeMirror-gutter {
     height: 100% !important;
+    min-height: 100% !important;
 }
 
 /* Padding for the treeview */
@@ -268,6 +273,7 @@ iframe {
 .pgadmin-controls.SQL {
   padding-right: 3px;
   padding-left: 1px;
+  height: 100%;
 }
 .pgadmin-controls > textarea.form-control,
 .pgadmin-controls > textarea.form-control[disabled] {
@@ -504,6 +510,7 @@ fieldset[disabled] .form-control {
 
 .table-bordered > thead > tr > td, .table-bordered > thead > tr > th {
     border-bottom-width: 1px;
+    padding: 3px;
 }
 
 .subnode > table.backgrid{
@@ -519,7 +526,6 @@ fieldset[disabled] .form-control {
 
 .backgrid > thead > th, .backgrid > tbody > td {
   line-height: 18px;
-  font-size: 12px;
 }
 
 .backgrid > thead > th {
@@ -535,6 +541,7 @@ fieldset[disabled] .form-control {
 
 .backgrid > thead th a {
     color: white;
+    font-size: 12px;
 }
 
 .backgrid > th.object {
@@ -552,6 +559,7 @@ fieldset[disabled] .form-control {
 
 .backgrid.presentation td.renderable {
     padding: 3px;
+    font-size: 12px;
 }
 
 .backgrid:not(.presentation) td.renderable:not(.editable):not(.delete-cell) {
@@ -748,7 +756,6 @@ td.switch-cell > div.bootstrap-switch {
 }
 
 div.rolmembership {
-    border: 1.5px solid #faebd7;
     margin-top: 15px;
 }
 
@@ -916,11 +923,13 @@ td.edit-cell.editable.sortable.renderable.editor {
 
 .tab-pane.SQL {
   padding: 0px 7px 0px 0px;
+  height: 100%;
 }
 
 .pgadmin-control-group.sql {
   margin: 0px;
   padding: 0px;
+  height: 100%;
 }
 
 .nav-tabs{
@@ -994,10 +1003,6 @@ ul.nav.nav-tabs {
 .select2-results span.wcTabIcon {
   padding-left: 20px;
   background-position: 0px 2px;
-}
-
-.pgadmin-controls.SQL>.CodeMirror {
-  height: 500px !important;
 }
 
 /* This rule will stop Chrome apply highlighting to elements such as DIV's used as modals */ 
@@ -1158,7 +1163,6 @@ button.pg-alertify-button {
   margin: 0 0 10px;
   overflow: auto;
   padding: 5px 10px;
-  word-break: break-all;
   word-wrap: break-word;
 }
 
@@ -1400,6 +1404,15 @@ table.backgrid {
   background: #EEEEEE;
 }
 
+/* make syntax-highlighting bold */
+.cm-s-default .cm-keyword {
+  font-weight: 600;
+}
+
+.cm-s-default .cm-number {
+  font-weight: 600;
+}
+
 .pgadmin-controls.sql_field_layout {
   margin: 0;
   padding: 0;
@@ -1426,4 +1439,65 @@ table.backgrid {
 
 .help-block {
   white-space: normal;
+}
+
+.backgrid td.editor input[type=password] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0 5px;
+  margin: 0;
+  background-color: transparent;
+  border: 0;
+  outline: 0;
+  -webkit-box-shadow: none;
+     -moz-box-shadow: none;
+          box-shadow: none;
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+}
+
+.backgrid td.editor input[type=password]::-ms-clear {
+  display: none;
+}
+
+/* Disable text selection where not wanted */
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.enable-selection, .form-control, .backgrid td, .ajs-content {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Codemirror buttons */
+.CodeMirror-dialog button {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: white;
+    font-size: 70%;
+    background-image: -webkit-linear-gradient(top, #337ab7 0%, #265a88 100%);
+    background-image: -o-linear-gradient(top, #337ab7 0%, #265a88 100%);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#337ab7), to(#265a88));
+    background-image: linear-gradient(to bottom, #337ab7 0%, #265a88 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff337ab7', endColorstr='#ff265a88', GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+    background-repeat: repeat-x;
+    border-color: #245580;
+    border-radius: 4px;
+}
+
+.dashboard-tab-container table,
+.pg-panel-statistics-container table,
+.pg-panel-depends-container table,
+.pg-panel-depends-container table {
+    font-size: 12px !important;
 }
