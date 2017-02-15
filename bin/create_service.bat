@@ -1,8 +1,8 @@
 @echo off
 
-@REM ###################################################
-@REM #########   Copyright (c) 2016 BigSQL    ##########
-@REM ###################################################
+@REM ##########################################################
+@REM #########   Copyright (c) 2016 - 2017 BigSQL    ##########
+@REM ##########################################################
 
 set BAM_SERVICE_NAME="bigsql.devops"
 set BAM_SERVICE_DESCRIPTION="BigSQL DevOps Console for Developers &/or Operations"
