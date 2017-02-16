@@ -4,11 +4,11 @@
 @REM #########   Copyright (c) 2016 - 2017 BigSQL    ##########
 @REM ##########################################################
 
-set BAM_SERVICE_NAME="bigsql.devops"
+set BAM_SERVICE_NAME="bigsql.pgdevops"
 set BAM_SERVICE_DESCRIPTION="BigSQL DevOps Console for Developers &/or Operations"
-set BAM_SERVICE_DISPLAY_NAME="BigSQL DevOps"
+set BAM_SERVICE_DISPLAY_NAME="pgDevOps By BigSQL"
 set CWD=%~sdp0
-set PR_BAM_PID_FILE="devops.pid"
+set PR_BAM_PID_FILE="pgdevops.pid"
 
 REM Startup configuration
 set PR_STARTUP=auto
