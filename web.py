@@ -84,11 +84,11 @@ api.add_resource(pgcApi, '/api/<string:pgc_command>')
 
 class pgcApiCom(Resource):
     def get(self, cmd, comp, pgc_host=None, password=None):
-        data = pgc.get_data(cmd, comp,pgc_host=pgc_host, password=password)
+        data = pgc.get_data(cmd, comp,pgc_host=pgc_host)
         return data
 
 
-api.add_resource(pgcApiCom, '/api/<string:cmd>/<string:comp>', '/api/<string:cmd>/<string:comp>/<string:pgc_host>', '/api/<string:cmd>/<string:comp>/<string:pgc_host>/<string:password>')
+api.add_resource(pgcApiCom, '/api/<string:cmd>/<string:comp>', '/api/<string:cmd>/<string:comp>/<string:pgc_host>')
 
 
 class pgcApiHosts(Resource):
@@ -120,6 +120,7 @@ api.add_resource(pgcApiExtensions, '/api/extensions/<string:comp>', '/api/extens
 
 class pgcApiRelnotes(Resource):
     def get(self, comp, version=None):
+        json_dict = {}
         v=version
         import mistune, util, sys
         if version == None:
@@ -127,7 +128,11 @@ class pgcApiRelnotes(Resource):
         else:
             rel_notes=unicode(str(util.get_relnotes (comp, version)),sys.getdefaultencoding(),errors='ignore').strip()
         markdown_text=mistune.markdown(rel_notes)
-        return markdown_text
+        json_dict['component'] = comp
+        json_dict['text'] = markdown_text
+        # json_dict['plainText'] = rel_notes
+        data = json.dumps([json_dict])
+        return data
 
 
 api.add_resource(pgcApiRelnotes, '/api/relnotes/<string:comp>','/api/relnotes/<string:comp>/<string:version>')
@@ -149,6 +154,7 @@ class checkUser(Resource):
             remote = PgcRemote(host, username, password)
             remote.connect()
             is_sudo = remote.has_sudo()
+            remote.disconnect()
             json_dict['state'] = "success"
             json_dict['isSudo'] = is_sudo
             data = json.dumps([json_dict])
@@ -160,6 +166,26 @@ class checkUser(Resource):
         return data
 
 api.add_resource(checkUser, '/api/checkUser/<string:host>/<string:username>/<string:password>')
+
+
+class initPGComp(Resource):
+    def get(self, host, username, comp, password, pgpasswd):
+        from PgcRemote import PgcRemote
+        json_dict = {}
+        try:
+            remote = PgcRemote(host, username, password)
+            remote.connect()
+            is_file_added = remote.add_file('/tmp/.pgpass', pgpasswd)
+            remote.disconnect()
+            data = pgc.get_data("init", comp, host, '/tmp/.pgpass')
+        except Exception as e:
+            errmsg = "ERROR: Cannot connect to " + host + "@" + username + " - " + str(e.args[0])
+            json_dict['state'] = "error"
+            json_dict['msg'] = errmsg
+            data = json.dumps([json_dict])
+        return data
+
+api.add_resource(initPGComp, '/api/initpg/<string:host>/<string:username>/<string:password>/<string:comp>/<string:pgpasswd>')
 
 
 class bamUserInfo(Resource):

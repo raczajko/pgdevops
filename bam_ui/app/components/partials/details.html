@@ -1,17 +1,15 @@
-<!-- Content Header (Page header) -->
-<!-- <div class="modal-header">
-    <server-info-details title="Component Details"></server-info-details>
-    <h3> Component Details </h3>
-    <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
-</div> -->
-
 <!-- Main content -->
 <div class="modal-body">
-    <div class="details-modal">
-        <server-info-details title="Component Details"></server-info-details>
+    <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <i class="fa fa-lg fa-close"></i>
     </div>
+    <div class="details-modal">
+        <h4><strong>Component Details</strong></h4>
+        <!-- <server-info-details title="Component Details"></server-info-details> -->
+    </div>
+    <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
     <div class="row">
-        <div ng-if="loading" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+        <div ng-if="loading" style="position: absolute;width: 100px; height: 45px; top: 45%;left: 45%; margin-left: -50px; margin-top: -25px;">
             <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
             <!-- <span><h3>Loading...</h3></span> -->
         </div>
@@ -28,6 +26,12 @@
                         </li>
                         <li class="list-group-item" ng-show="component.home_url != '' && component.home_url != undefined || component.doc_url != '' && component.doc_url != undefined">
                             <span class="pull-left"><a ng-show="component.home_url != ''" href="{{component.home_url}}" target='_blank'> Homepage <i class="fa fa-external-link"></i> </a></span> <span class="pull-right"> <a ng-show="component.doc_url != ''" href="{{component.doc_url}}" target='_blank'> Documentation <i class="fa fa-external-link"></i> </a> </span>
+                        </li>
+                        <li class="list-group-item" id="li-pointer" ng-show="component.release_date">
+                            <span class="pull-left"><b>Release</b></span> <span class="pull-right" ng-bind="component.release_date" id="dt_added"></span>
+                        </li>
+                        <li class="list-group-item" id="li-pointer" ng-show="component.install_date">
+                            <span class="pull-left"><b>Installed Date</b></span> <span class="pull-right" ng-bind="component.install_date"></span>
                         </li>
                         <li class="list-group-item" ng-show="component.port != '' && component.port != undefined && component.port != 0 && component.port != 1">
                             <span class="pull-left"><b>Port</b></span> <span class="pull-right" ng-bind="component.port"></span>
@@ -61,6 +65,7 @@
                     <div id="button-act" ng-click="action($event)">
                         <a ng-show="component.status == undefined && component.is_installed == 0" action="install" class="btn btn-default" ng-disabled=" component.installation != undefined">Install</a>
                         <a ng-show="component.status == 'Stopped' && component.port != 1" action="start" class="btn btn-default" ng-disabled=" component.spinner != undefined">Start</a>
+                        <a ng-if="component.current_version" action="Update" class="btn btn-default" ng-disabled=" component.spinner != undefined">Update</a>
                         <a ng-show="(component.status == 'Stopped' && component.is_installed) || (component.is_installed == 1 && component.status == undefined)" action="remove" class="btn btn-default" ng-disabled=" component.spinner != undefined">Remove</a>
                         <div ng-show="component.status == 'NotInitialized'">
                             <a class="btn btn-danger" action="init" ng-disabled=" component.spinner != undefined">Initialize</a>
@@ -73,7 +78,7 @@
                     </div>
                     <br />
                     <div id="dep_stats">
-                        <div ng-show="component.installation != undefined || component.spinner " style="width:100%;height:auto">
+                        <div ng-show="component.installation != undefined || component.spinner " style="width:100%;height:auto;">
                             <div>
                                 <span ng-show="component.spinner"><i class='fa fa-spinner fa-2x  fa-pulse'></i> <b>{{component.spinner}}</b></span>
                                 <div style="margin-left:10px;margin-top:20px" ng-show="component.installationDependents != undefined"><i class="fa fa-refresh fa-spin" style='margin-right:2px'></i><b> Installing dependencies...</b></div>
@@ -107,23 +112,13 @@
         <div class="col-md-9 col-xs-8 col-sm-12" ng-if="!loading">
             <uib-tabset>
                 <uib-tab heading="Release Notes" select="tabClick($event)">
-                    <div class="box-body" style="max-height: 350px; overflow: scroll;">
-                        <span ng-bind-html="relnotes"></span>
+                    <div style="height: 350px; overflow: scroll; border: 1px solid #ddd;">
+                        <span class="details-page-relnotes" ng-bind-html="relnotes"></span>
                     </div>
                 </uib-tab>
             </uib-tabset>
-            <!-- <div class="box" ng-if="relnotes">
-                <div class="box-header with-border">
-                    <h3 class="box-title">
-                        Release Notes 
-                    </h3>         
-                </div>
-                <div class="box-body" style="max-height: 450px; overflow: scroll;">
-                   <span ng-bind-html="relnotes"></span>
-                </div>
-            </div> -->
         </div>
-        <div class="col-sm-offset-11 col-sm-11" style="padding: 10px">
-            <button class="btn btn-warning" type="button" ng-click="cancel()">OK</button>
-        </div>
+        <!-- <div class="col-sm-offset-11 col-sm-11" style="padding: 10px">
+            <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+        </div> -->
 </div>

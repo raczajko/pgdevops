@@ -114,6 +114,8 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 			        modalInstance.dataDir = $scope.pgcDir + '/data/' + $scope.selectedPgComp.component;
 			        modalInstance.autoStartButton = false;
 			        modalInstance.host = $scope.hostName;
+			        modalInstance.userName = $scope.userName;
+			        modalInstance.password = $scope.password;
 	            });
     	}
     }

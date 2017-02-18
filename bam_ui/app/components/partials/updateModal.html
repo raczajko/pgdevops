@@ -1,67 +1,65 @@
 <div class="updateModal">
-<div class="modal-header">
-    <form class="form-inline">
-      <div class="form-group">
-        <h2 class="col-sm-6 modal-title control-label">Updates</h2>
-        <div class="col-sm-6">
-            <select class="form-control" ng-change="hostChange(selecthost)" ng-model="selecthost">
-                <option ng-repeat="host in hosts" value="{{ host.host }}">{{ host.host }}</option>
-            </select>
-        </div>
-      </div>
-      </form>
+<div ng-click="cancel()" class="close-modal pull-right" style="margin-right: -41px;
+    margin-top: 6px;" data-dismiss="modal" aria-hidden="true">
+    <i class="fa fa-close fa-lg"></i>
 </div>
-<div ng-click="cancel()" class="close-modal" data-dismiss="modal" aria-hidden="true">
-    <div class="lr">
-        <div class="rl">
-        </div>
-    </div>
-</div>
-<div class="container-fluid" ng-show="loadingSpinner">
-    <div class="row">
-        <div class="col-md-12 col-xs-12">
-            <div class="well">
-                <i class="fa fa-spinner fa-2x  fa-pulse"></i>&#160;&#160;&#160;Checking for updates..
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal-body" ng-show="body">
-    <p ng-hide="noUpdates">Select the components you want to update. (Or All)</p>
+<div class="modal-body">
+    <!-- <p ng-hide="noUpdates">Select the components you want to update. (Or All)</p> -->
     <div class="container-fluid">
         <!-- /.box-header -->
         <div class="row" id="updatesTable" ng-hide="noUpdates">
-            <div style="border-bottom: 2px solid #f4f4f4;width: 100%;height: 30px;vertical-align: middle;">
-                <div class="col-md-2 col-xs-2"></div>
-                <div class="col-md-4 col-xs-4"><strong>Component</strong></div>
-                <div class="col-md-5 col-xs-5"><strong>Description</strong></div>
+            <div ng-show="loadingSpinner">
+                <h4 class="control-label" ng-hide="noUpdates"><i class="fa fa-spinner fa-2x  fa-pulse"></i>&#160;&#160;&#160; Checking for updates..</h4>
             </div>
-            <div class="col-md-12 col-xs-12" id="updatesTableTbody " ng-repeat="(key, value) in components" ng-if="value.updates>0 && value.component != 'bam2'">
+            <h4 class="control-label" ng-hide="noUpdates || loadingSpinner">{{components.length}} Updates Available</h4>
+            <div class="pull-right" style="margin-top: -35px; margin-right: 8px;">
+                <button class="btn btn-sm" type="button" ng-click="selectedUpdate()" ng-hide="noUpdates || loadingSpinner">Update All</button>
+            </div>
+            <div style="border-bottom: 2px solid #ddd;width: 100%;vertical-align: middle;">
+                <!-- <div class="col-md-2 col-xs-2"></div>
+                <div class="col-md-4 col-xs-4"><strong>Component</strong></div>
+                <div class="col-md-5 col-xs-5"><strong>Description</strong></div> -->        
+            </div>
+            <div class="col-md-12 col-xs-12" id="updatesTableTbody " ng-repeat="(key, value) in components" ng-if="value.updates>0 && value.component != 'bam2'" style="border-bottom: 1px solid #ddd;">
                 <div class="component_box" id="{{value.component}}">
-                    <div class="col-md-2 col-xs-2">
-                        <input type="checkbox" ng-model="value.selected" ng-checked="selectedComp.component == value.component">
+                    <div class="col-md-1 col-xs-2">
+                        <!-- <input type="checkbox" ng-model="value.selected" ng-checked="selectedComp.component == value.component"> -->
+                        <img class="img-responsive" style="width: 100%" ng-src="assets/img/component-logos/{{value.component}}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
                     </div>
-                    <div class="col-md-4 col-xs-4">
-                        <a ng-if="value.category != 1" ui-sref="components.detailsView({component:value.component}) " ng-click="cancel()">
-                                    {{value.component}}
+                    <div class="col-md-2 col-xs-4">
+                        <a ng-if="value.category != 1"  ng-click="cancel(); openDetailsModal(value.component)">
+                                    <strong>{{value.component}}</strong>
                                 </a>
                         <a ng-if="value.category == 1" ui-sref="components.detailspg95({component:value.component}) " ng-click="cancel()">
-                                    {{value.component}}
-                                </a>
-
+                                    <strong>{{value.component}}</strong>
+                        </a>
+                        <br />
+                        <div>
+                        Version {{value.current_version}}
+                        <br />
+                        <span style="white-space: nowrap;">Released {{value.curr_release_date}}</span>
+                        </div>
                     </div>
-                    <div class="col-md-5 col-xs-5">update {{value.version}} to {{value.current_version}}</div>
+                    <div class="col-md-8 col-xs-5">
+                        <div style="overflow: auto; height: 78px; margin-bottom: 5px;">
+                            <div class="update-comp-relnotes" style="margin-top: -20px;" ng-bind-html="value.relnotes"></div>
+                        </div>
+                        <!-- <hm-read hmtext="{{value.relnotes}}" class="update-comp-relnotes" hmlimit="200" hm-more-text="read more" hm-less-text="read less"></hm-read> -->
+                    </div>
+                    <div class="col-md-1 col-xs-5">
+                        <button class="btn btn-sm" type="button" ng-click="selectedUpdate(value.component)" ng-hide="noUpdates">Update</button>
+                    </div>
                 </div>
-                <div class="row" ng-show="value.installation != undefined" style="width:100%;height:50px">
+                <div class="row" ng-show="value.installation != undefined" style="width:100%;height:50px; margin-top: 5px;">
                     <div>
                         <div ng-show="value.installationRunning != undefined" class="col-md-4 col-xs-4">
                             {{value.installationStart.msg}}
                         </div>
-                        <div class="col-md-4 col-xs-4" ng-show="value.installationRunning != undefined">
+                        <div class="col-md-3 col-xs-3" ng-show="value.installationRunning != undefined">
                             <progressbar value="value.progress"></progressbar>
                             <button class="btn btn-default btn-xs center-block" ng-click="cancelInstallation('cancelInstall') ">Cancel</button>
                         </div>
-                        <div class="col-md-1 col-xs-1" ng-show="value.installationRunning != undefined">
+                        <div class="col-md-2 col-xs-1" ng-show="value.installationRunning != undefined">
                             {{value.installationRunning.pct}}%
                         </div>
                         <div class="col-md-3 col-xs-3" ng-show="value.installationRunning != undefined">
@@ -71,13 +69,11 @@
                 </div>
             </div>
         </div>
+        <br />
         <div class="row components-update-msg" ng-show="noUpdates">
         <div class="well">
-            <p class="lead">All installed components are up-to-date. </p>
+            <h4 style="padding: 8px;">All installed components are up-to-date. </h4>
         </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-primary" type="button" ng-click="selectedUpdate()" ng-hide="noUpdates">Update</button>
         </div>
         <div class="row" ng-hide="hideLatestInstalled">
             <uib-accordion>
@@ -93,7 +89,7 @@
                     <div class="col-md-4 col-xs-4"><strong>Component Type</strong></div>
                     <div class="col-md-4 col-xs-4"><strong>Component</strong></div>
                 </div>
-                <div class="col-md-12 col-xs-12 update-modal-table" id="updatesTableTbody " ng-repeat=" value in components | toArray:false | orderBy : 'install_date' : true" ng-if="value.is_updated == 1  && value.component != 'bam2' ">
+                <div class="col-md-12 col-xs-12 update-modal-table" id="updatesTableTbody " ng-repeat=" value in allComponents | toArray:false | orderBy : 'install_date' : true" ng-if="value.is_updated == 1  && value.component != 'bam2' ">
                     <div class="component_box" id="{{value.component}}">
                         <div class="col-md-4 col-xs-4">
                             <span>{{value.install_date}}</span>
@@ -102,10 +98,10 @@
                             <span>{{value.category_desc}}</span>
                         </div>
                         <div class="col-md-4 col-xs-4">
-                            <a ng-if="value.category != 1" ui-sref="components.detailsView({component:value.component}) " ng-click="cancel()">
+                            <a ng-if="value.category != 1" ng-click="cancel(); openDetailsModal(value.component)">
                                 {{value.component}}-{{value.version}}
                             </a>
-                            <a ng-if="value.category == 1" ui-sref="components.detailspg95({component:value.component}) " ng-click="cancel()">
+                            <a ng-if="value.category == 1" nui-sref="components.detailspg95({component:value.component}) " ng-click="cancel()">
                                 {{value.component}}-{{value.version}}
                             </a>
                         </div>
@@ -117,7 +113,7 @@
         </div>
         <div class="row components-update-msg" ng-hide="!hideLatestInstalled">
         <div class="well">
-            <p class="lead">No components installed/updated in the last 30 days </p>
+            <h4 style="padding: 8px;">No components installed/updated in the last 30 days </h4>
         </div>
         </div>
 
@@ -134,7 +130,7 @@
                         <div class="col-md-4 col-xs-4"><strong>Component Type</strong></div>
                         <div class="col-md-4 col-xs-4"><strong>Component</strong></div>
                     </div>
-                    <div class="col-md-12 col-xs-12 update-modal-table" id="updatesTableTbody " ng-repeat="(key, value) in components | toArray:false | orderBy : 'release_date' : true" ng-if="value.is_new == 1 && value.component != 'bam2' ">
+                    <div class="col-md-12 col-xs-12 update-modal-table" id="updatesTableTbody " ng-repeat="(key, value) in allComponents | toArray:false | orderBy : 'release_date' : true" ng-if="value.is_new == 1 && value.component != 'bam2' ">
                         <div class="component_box" id="{{value.component}}">
                             <div class="col-md-4 col-xs-4">
                                 <span>{{value.release_date}}</span>
@@ -143,7 +139,7 @@
                                 <span>{{value.category_desc}}</span>
                             </div>
                             <div class="col-md-4 col-xs-4">
-                                <a ng-if="value.category != 1" ui-sref="components.detailsView({component:value.component}) " ng-click="cancel()">
+                                <a ng-if="value.category != 1" ng-click="cancel(); openDetailsModal(value.component)">
                                     {{value.component}}-{{value.version}}
                                 </a> 
                                 <a ng-if="value.category == 1" ui-sref="components.detailspg95({component:value.component}) " ng-click="cancel()">
@@ -160,10 +156,9 @@
     </div>
     <div class="row components-update-msg" ng-if="!hideNewComponents">
         <div class="well">
-            <p class="lead">No new components released in the last 30 days </p>
+            <h4 style="padding: 8px;">No new components released in the last 30 days </h4>
         </div>
     </div>
-<div class="modal-footer">
-    <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
-</div>
+        <div class="modal-footer">
+        </div>
 </div>

@@ -68,7 +68,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 console.log($scope.component.componentImage);
                 var relnotes = bamAjaxCall.getCmdData('relnotes/' + $scope.currentComponent + '/' +$scope.component.version)
                 relnotes.then(function (data) {
-                    $scope.relnotes = $sce.trustAsHtml(data);
+                    var data = JSON.parse(data)[0];
+                    $scope.relnotes = $sce.trustAsHtml(data.text);
                 });
             }
         });
@@ -107,6 +108,11 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
             }
             if (data.status == "complete") {
                 // session.call('com.bigsql.infoComponent', [$scope.currentComponent]);
+                var alertObj = {
+                    msg: data.msg,
+                    type: "success"
+                }
+                $scope.alerts.push(alertObj);
                 callInfo();
             }
         };
@@ -166,6 +172,10 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 
                 if (data.state == 'unpack') {
                     // session.call('com.bigsql.infoComponent', [$scope.currentComponent])
+                    $scope.alerts.push({
+                            msg:  'Sucessfully Installed' + data.component,
+                            type: 'success'
+                        });
                     callInfo();
                 } 
                 if (data.status == "cancelled") {

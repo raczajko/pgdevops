@@ -11,6 +11,8 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
     $scope.autoStartButton = $uibModalInstance.autoStartButton;
     $scope.dataDir = $uibModalInstance.dataDir;
     $scope.host = $uibModalInstance.host;
+    $scope.userName = $uibModalInstance.userName;
+    $scope.userPassword = $uibModalInstance.password;
 
     function getInfoComp(argument) {
         var infoData = bamAjaxCall.getCmdData('info/' + $scope.comp)
@@ -85,7 +87,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
     	    $rootScope.$emit('initComp', [$scope.comp]);    		
     		$uibModalInstance.dismiss('cancel');
         } else {
-            var event_url =  'init/' + $scope.comp + '/' + $scope.host + '/' + $scope.formData.password ;
+            var event_url =  'initpg/'  + $scope.host + '/' + $scope.userName +'/' + $scope.userPassword + '/' + $scope.comp + '/' +$scope.formData.password ;
             var eventData = bamAjaxCall.getCmdData(event_url);
             $rootScope.$emit('addedHost');
             $uibModalInstance.dismiss('cancel');

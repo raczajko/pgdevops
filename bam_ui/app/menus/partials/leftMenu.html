@@ -15,9 +15,15 @@
         <!-- sidebar menu: : style can be found in sidebar.less -->
         <ul class="sidebar-menu">
             <li class="header">MAIN NAVIGATION</li>
-            <li>
+            <!-- <li>
                 <a href="/">
                     <i class="fa fa-home"></i> <span>Home</span>
+                    <i class="fa fa-angle-left pull-right"></i>
+                </a>
+            </li> -->
+            <li>
+                <a ui-sref="components.hosts">
+                    <i class="fa fa-cloud"></i> <span>Host Manager</span>
                     <!-- <i class="fa fa-angle-left pull-right"></i> -->
                 </a>
             </li>
@@ -31,11 +37,11 @@
                     <i class="fa fa-dashboard"></i> <span>Server Status</span>
                 </a>
             </li> -->
-            <!--<li>
+            <li>
                 <a ui-sref="components.componentLog({component:'pgcli'})">
                     <i class="fa fa-file-text-o"></i> <span>Log Tailer</span>
                 </a>
-            </li>-->
+            </li>
             <li>
                 <a ui-sref="components.badger">
                     <i class="bgs bgs-sm bgs-pgbadger-menu">&nbsp;&nbsp;&nbsp;&nbsp;</i> <span>pgBadger</span>
@@ -54,12 +60,6 @@
             <li>
                 <a ui-sref="components.settingsView">
                     <i class="fa fa-cog"></i> <span>Settings</span>
-                </a>
-            </li>
-            <li>
-                <a ui-sref="components.hosts">
-                    <i class="fa fa-cloud"></i> <span>Hosts</span>
-                    <!-- <i class="fa fa-angle-left pull-right"></i> -->
                 </a>
             </li>
         </ul>

@@ -18,7 +18,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/updateModal.html',
-            windowClass: 'bam-update-modal modal',
+            windowClass: 'comp-details-modal',
             controller: 'ComponentsUpdateController',
         });
     };

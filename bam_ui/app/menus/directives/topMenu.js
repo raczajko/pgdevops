@@ -69,7 +69,8 @@ angular.module('bigSQL.menus').component('topMenu', {
 
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/updateModal.html',
-                windowClass: 'bam-update-modal modal',
+                // windowClass: 'bam-update-modal modal',
+                windowClass: 'comp-details-modal',
                 controller: 'ComponentsUpdateController',
             });
         };

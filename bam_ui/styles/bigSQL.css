@@ -1946,9 +1946,8 @@ a:focus {
  */
 
 .component_box {
-    border-bottom: 1px solid #f4f4f4;
     line-height: 1.42857143;
-    min-height: 40px;
+    height: 40px;
     padding-left: 2px;
     padding-right: 8px;
     padding-top: 10px;
@@ -6624,8 +6623,10 @@ span.update-component-arrow-wrapper {
 
 span.new-comp-wrapper {
     float: left;
-    margin-left: 7px;
-    margin-top: 5px;
+    margin-left: 2px;
+    margin-top: 1px;
+    font-size: 9px;
+    padding: 1px;
     background-color: #FF0000;
 }
 
@@ -6644,7 +6645,7 @@ span.new-comp-wrapper {
 .updateModal {
   margin-left: auto;
   margin-right: auto;
-  width: 800px;
+  width: 1000px;
 }
 
 .components-update-msg > .well {
@@ -6717,7 +6718,7 @@ span.new-comp-wrapper {
   }
 
   .bgs-plprofiler-menu {
-    background-image: url('../assets/img/plProfiler-15.png');
+    background-image: url('../assets/img/plProfiler-icon.png');
     background-repeat: no-repeat;
     background-position: 0 0;
   }
@@ -6832,16 +6833,17 @@ text-align: center;}
 
 .comp-area {
     display: block;
-    padding: 33px;
+    padding: 15px 40px 1px 40px;
     margin-bottom: 20px;
     background-color: #fff;
     border-radius: 4px;
+    height: 160px;
 }
 
 .select-comp-area{
   display: block;
-    padding: 33px;
-    margin-bottom: 20px;
+    padding: 15px 40px 1px 40px;
+    margin-bottom: 11px;
     background-color: #dfdfdf;
     border-radius: 4px;
 }
@@ -6858,15 +6860,17 @@ text-align: center;}
   background: #fff;
   width: 100%;
   padding-top: 5px;
-  height: 126px;
+  height: 128px;
 }
 
 .installedSymbol {
-  color:green; padding: 5px 5px 5px 0;
+  color:green; 
+  padding: 1.5px;
 }
 
 .ext-img{
   width: 60px;
+  padding: 1px !important; 
 }
 
 .comp-details-modal .modal-dialog {
@@ -6874,8 +6878,9 @@ text-align: center;}
 }
 
 .expandExt{
-  margin-bottom: 25px;
-  padding-top: 10px;
+  margin-bottom: 58px;
+  padding-top: 1px;
+  align-items: center;
 }
 
 .details-modal  h3 {
@@ -6893,8 +6898,8 @@ text-align: center;}
 }
 
 .comp-img{
-  margin: 0 auto;
-  /*padding: 5px;*/
+  margin: 5px auto 0px auto;
+  padding: 8px;
 }
 
 .extensions-row {
@@ -6902,5 +6907,40 @@ text-align: center;}
   background-color: #dfdfdf; 
   width: 100%; 
   margin-top: -70px;
-  height: 310px;
+  /*height: 310px;*/
+}
+
+.non-pg-comp-row{
+  margin-left: 0px; 
+  width: 100%;
+}
+
+.update-comp-relnotes > h1 {
+  font-size: 15px !important;
+  font-weight: bold;
+}
+
+.update-comp-relnotes > * {
+  font-size: 14px;
+}
+
+.details-page-relnotes > h1{
+  font-size: 18px !important;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+.details-page-relnotes > * {
+  font-size: 14px;
+}
+
+a.read-more, a.read-less {
+  cursor: pointer;
+  color: blue;
+}
+span.more-text {
+  display: none;
+} 
+span.more-text.show {
+    display: inline !important
 }

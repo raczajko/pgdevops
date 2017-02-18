@@ -1,6 +1,6 @@
 <section class="content-header">
     <h1 class="components-update-title-wrapper">
-        CLOUD HOST MANAGER
+        HOST MANAGER
     </h1>
     <div class="btn-group pull-right " uib-dropdown >
         <button type="button" class="btn btn-default" uib-dropdown-toggle>
@@ -62,7 +62,7 @@
                                         <div class="pull-right" style="margin-top: -10px">
                                             &nbsp;
                                             <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); loadHost(parentIndex,$index,true)" class="btn btn-default" ng-if="host.state">Refresh</button>&nbsp;
-                                            <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)" class="btn btn-default" ng-if="host.state" class="ng-binding" href="" >Components</button>&nbsp;
+                                            <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)" class="btn btn-default" ng-if="host.state" class="ng-binding" href="" >Package Manager</button>&nbsp;
                                             <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); showTop($index)" class="btn btn-default" ng-if="host.state" class="ng-binding" href="">Top</button>&nbsp;
                                             <div class="btn-group" uib-dropdown >
                                                 <button id="split-button " type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); open(parentIndex, $index)" class="btn btn-default " ng-if="host.host!='localhost'" >Edit Host</button>

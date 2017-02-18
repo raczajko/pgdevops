@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', '$rootScope', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall, $rootScope, $cookies) {
+angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', '$rootScope', '$cookies', '$uibModal', '$sce', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall, $rootScope, $cookies, $uibModal, $sce) {
 
     var session;
     var subscriptions = [];
@@ -21,19 +21,25 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
             $scope.loadingSpinner = false;
             $scope.body = true;
             $scope.noUpdates = true;
-            $scope.components = data;
             $scope.hideLatestInstalled = true;
-
-
-            for (var i = 0; i < $scope.components.length; i++) {
-                if($scope.components[i].is_current == 0 && $scope.components[i].current_version){
-                    $scope.noUpdates = false;
-                }
-                if($scope.components[i].is_new == 1){
+            $scope.allComponents = data;
+            for (var i = 0; i < $scope.allComponents.length; i++) {
+                if($scope.allComponents[i].is_new == 1){
                     $scope.hideNewComponents = true;
                 }
-                if($scope.components[i].is_updated == 1){
+                console.log($scope.allComponents[i].component);
+                if($scope.allComponents[i].is_updated == 1){
                     $scope.hideLatestInstalled = false;
+                }
+            }
+
+            $scope.components = $(data).filter(function(i,n){ return n.updates>0 ;});
+
+            for (var i = 0; i < $scope.components.length; i++) {
+                // $scope.components[i].componentImage = $scope.components[i].component.split('-')[0].replace(/[0-9]/g,'')
+                // console.log($scope.components[i].componentImage);
+                if($scope.components[i].is_current == 0 && $scope.components[i].current_version){
+                    $scope.noUpdates = false;
                 }
                 try{
                     if (UpdateComponentsService.get().component == $scope.components[i].component) {
@@ -54,6 +60,15 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                         installedComponents : false
                     }
                 }
+                var relnotes = bamAjaxCall.getCmdData('relnotes/' + $scope.components[i].component + '/' +$scope.components[i].current_version)
+                relnotes.then(function (data) {
+                    var data = JSON.parse(data)[0];
+                    for (var i = $scope.components.length - 1; i >= 0; i--) {
+                        if($scope.components[i].component == data.component){
+                            $scope.components[i].relnotes = $sce.trustAsHtml(data.text);
+                        }
+                    }
+                });
             }
         });
     };
@@ -145,7 +160,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 selUpdatedComp.splice(0,1);
                 if (selUpdatedComp.length > 0) {
                     $scope.compAction('update', selUpdatedComp[0].component);
-                } else {
+                }else{
                     // session.call("com.bigsql.getBamConfig");
                     $uibModalInstance.dismiss('cancel');
                     $rootScope.$emit('updatesCheck');
@@ -158,7 +173,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
 
         $scope.compAction = function (action, compName) {
             var sessionKey = "com.bigsql." + action;
-            if($scope.currentHost == 'localhost'){
+            if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
                 session.call(sessionKey, [compName]);
             }else {
                 currentComponent = getCurrentComponent(compName);
@@ -173,27 +188,37 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
 
         var selUpdatedComp = [];
 
-        $scope.selectedUpdate = function (val) {
-            for (var i = 0; i < $scope.components.length; i++) {
-                if ($scope.components[i].selected && $scope.components[i].current_version) {
-                    selUpdatedComp.push($scope.components[i]);
+        $scope.selectedUpdate = function (comp) {
+            if (comp) {
+                selUpdatedComp.push(comp);
+            }else{
+                for (var i = 0; i < $scope.components.length; i++) {
+                    if ($scope.components[i].current_version) {
+                        selUpdatedComp.push($scope.components[i]);
+                    }
                 }
             }
             if (selUpdatedComp.length > 1) {
                 var popComp = selUpdatedComp[0].component;
                 $scope.compAction('update', popComp);
-            } else {
+            } else{
                 $scope.compAction('update', selUpdatedComp[0].component);
-                // session.call('com.bigsql.update', [selUpdatedComp[0].component]).then(function (sub) {
-                //     $uibModalInstance.dismiss('cancel');
-                // }, function (err) {
-                //     throw new Error('failed to update comp', err);
-                // });
             }
-            console.log(selUpdatedComp.length);
         };
 
     });
+    
+    $scope.openDetailsModal = function (comp) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/details.html',
+            windowClass: 'comp-details-modal',
+            controller: 'ComponentDetailsController',
+            keyboard  : false,
+            backdrop  : 'static',
+        });
+        modalInstance.component = comp;
+        modalInstance.isExtension = true;
+    };
 
     $scope.hostChange = function (host) {
         $scope.loadingSpinner = true;
@@ -203,6 +228,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
 
     $scope.cancelInstallation = function (action) {
         session.call("com.bigsql.cancelInstall");
+        getList($scope.currentHost);
     }
 
     /**

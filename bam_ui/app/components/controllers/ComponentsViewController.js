@@ -84,8 +84,12 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                     Checkupdates += $scope.components[i].updates;
                 } 
             }
-                $scope.getExtensions( 'pg96', 0);
-
+            if($cookies.get('openedExtensions')){
+                var extensionCookie = JSON.parse($cookies.get('openedExtensions'));
+                $scope.getExtensions( extensionCookie.component, extensionCookie.index);
+            }else{
+                $scope.getExtensions( $scope.components[0].component, 0);                
+            }
         });
         
         // $http.get($window.location.origin + '/api/list')
@@ -117,6 +121,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     };
     
     $scope.getExtensions = function( comp, idx) {
+        $cookies.putObject('openedExtensions', {'component': comp, 'index': idx});
         for (var i = 0; i < $scope.components.length; i++) {
             $scope.components[i].extensionOpened = false;           
         }
@@ -182,7 +187,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             }
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/updateModal.html',
-                windowClass: 'bam-update-modal modal',
+                windowClass: 'comp-details-modal',
                 controller: 'ComponentsUpdateController',
             });
         };
@@ -208,6 +213,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 backdrop  : 'static',
             });
             modalInstance.component = comp;
+            modalInstance.isExtension = true;
         };
 
         session.call('com.bigsql.getBamConfig', ['showInstalled']);
