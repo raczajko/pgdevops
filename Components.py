@@ -381,6 +381,7 @@ class Components(ComponentAction):
                   " where logdir != ''"
             c.execute(sql)
             t_comp = c.fetchall()
+            connL.close()
             jsonDict = {}
             jsonList = []
             
