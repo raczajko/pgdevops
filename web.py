@@ -134,25 +134,23 @@ class pgcApiExtensions(Resource):
 
 api.add_resource(pgcApiExtensions, '/api/extensions/<string:comp>', '/api/extensions/<string:comp>/<string:pgc_host>')
 
-# class pgcApiRelnotes(Resource):
-#     def get(self, comp, version=None):
-#         json_dict = {}
-#         v=version
-#         import mistune, util, sys
-#         if version == None:
-#             rel_notes = util.get_relnotes (comp)
-#         else:
-#             rel_notes=util.get_relnotes (comp, version)
-#         relnotes =""
-#         markdown_text = ""
-#         json_dict['component'] = comp
-#         json_dict['text'] = ''
-#         # # json_dict['plainText'] = rel_notes
-#         data = json.dumps([json_dict])
-#         return data
+class pgcUtilRelnotes(Resource):
+    def get(self, comp, version=None):
+        json_dict = {}
+        v=version
+        import mistune, util, sys
+        if version == None:
+            rel_notes = unicode(str(util.get_relnotes (comp)),sys.getdefaultencoding(),errors='ignore').strip()
+        else:
+            rel_notes=unicode(str(util.get_relnotes (comp, version)),sys.getdefaultencoding(),errors='ignore').strip()
+        json_dict['component'] = comp
+        json_dict['relnotes'] = mistune.markdown(rel_notes)
+        # # json_dict['plainText'] = rel_notes
+        data = json.dumps([json_dict])
+        return data
 
 
-# api.add_resource(pgcApiRelnotes, '/api/relnotes/<string:comp>','/api/relnotes/<string:comp>/<string:version>')
+api.add_resource(pgcUtilRelnotes, '/api/utilRelnotes/<string:comp>','/api/utilRelnotes/<string:comp>/<string:version>')
 
 
 class pgcApiHostCmd(Resource):
