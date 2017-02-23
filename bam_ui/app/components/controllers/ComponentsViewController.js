@@ -59,7 +59,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.retry = true;
             } else {
                 $scope.nothingInstalled = false;
-                data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'devops'  ;})
+                data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops'  ;})
                 if ($scope.showInstalled) {
                     $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
                     if($scope.components.length == 0){
@@ -260,30 +260,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.updateSettings = 'auto';
             }
         });
-
-        session.subscribe('com.bigsql.onInit', function (data) {
-            var res = JSON.parse(data[0])[0];
-            if(res['status'] == 'error'){
-                $scope.alerts.push({
-                    msg: res['msg'],
-                    type: "danger"
-                });
-                delete currentComponent.init;
-                $scope.disableShowInstalled = false;
-            } else {
-                $scope.alerts.push({
-                    msg: res['msg']
-                });
-                currentComponent = getCurrentComponent(res['component']);
-                currentComponent.status = "Installed";
-                currentComponent.init = false;
-                $scope.disableShowInstalled = false;
-                $scope.compAction('start', res['component']);
-            }
-            $scope.$apply();
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
-        });
     
         $scope.setTest = function (event) {
             var param;
@@ -296,124 +272,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             getList();
             // session.call('com.bigsql.list');
         };
-
-        session.subscribe("com.bigsql.onInstall", function (installStream) {
-
-            var data = JSON.parse(installStream[0])[0];
-            if (data.state == "deplist") {
-                if (data.deps.length > 1) {
-                    parentComponent = getCurrentComponent(data.component[0]);
-                    parentComponent.installationDependents = data;
-                    dependentCount = data.deps.length;
-                    depList = data.deps;
-                    currentComponent.installation = true;
-                    parentComponent.installation = true;
-                }
-            } else if (data.status == "start") {
-                currentComponent = getCurrentComponent(data.component);
-                currentComponent.installationStart = data;
-                currentComponent.installation = true;
-                if (depList[depList.length-1] == currentComponent.component) {
-                    delete parentComponent.installationDependents;
-                }
-            } else if (data.status == "wip") {
-                currentComponent.installationRunning = data;
-                currentComponent.progress = data.pct;
-            } else if (data.status == "complete" || data.status == "cancelled") {
-                if (data.state == 'unpack' && data.status == "complete") {
-                    if(["pg96","pg95","pg94","pg93","pg92"].indexOf(data.component) >= 0){
-                        currentComponent.status = 'NotInitialized';
-                        // getList();
-                        $scope.openInitPopup(data.component);
-                        // $scope.compAction('init', data.component);
-                        // session.call('com.bigsql.list');
-                    }else{
-                        currentComponent.status = 'Installed';
-                    }
-                } 
-                if(data.state == "install"){
-                    currentComponent = getCurrentComponent(data.component);
-                } 
-                if (data.status == "cancelled") {
-
-                    if (dependentCount == 0) {
-                         $scope.alerts.push({
-                            msg: data.component +" "+data.msg,
-                            type: "danger"
-                        });
-                    } else {
-                        delete parentComponent.installation;
-                        $scope.alerts.push({
-                            msg: parentComponent.component +" >>  "+data.msg,
-                            type: "danger"
-                        });
-                    }
-                    dependentCount = 0;
-                }
-                
-                delete currentComponent.installationStart;
-                delete currentComponent.installationRunning;
-                delete currentComponent.installation;
-                $scope.disableShowInstalled = false;
-                if (data.state == "update") {
-                    currentComponent.updates -= 1;
-                    // getList();
-                    $rootScope.$emit('updatesCheck');
-                    // session.call('com.bigsql.list');
-                };
-
-
-            } 
-            // Need to be status here
-            if (data.state == "error") {
-                $scope.alerts.push({
-                    msg: data.msg,
-                    type: 'danger'
-                });
-                delete parentComponent.installationDependents;
-                delete currentComponent.installationStart;
-                delete currentComponent.installationRunning;
-                delete currentComponent.installation;
-                delete parentComponent.installation;
-                $scope.disableShowInstalled = false;
-            }
-            else if (data.state == "locked") {
-                $scope.alerts.push({
-                    msg: data.msg,
-                    type: 'danger'
-                });
-            }
-            $scope.$apply();
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
-        });
-
-        var onRemove = function (response) {
-            var data = JSON.parse(response[0])[0];
-
-            if (data.status == "error" || data.state == "locked") {
-                delete currentComponent.removing;
-                $scope.disableShowInstalled = false;
-                $scope.alerts.push({
-                    msg: data.msg,
-                    type: "danger"
-                });
-            }
-            if (data.status == "complete") {
-                delete currentComponent.removing;
-                currentComponent.status = "NotInstalled";
-                $scope.disableShowInstalled = false;
-                getList();
-                // session.call('com.bigsql.list');
-            }
-            $scope.$apply();
-        };
-
-
-        session.subscribe('com.bigsql.onRemove', onRemove).then(
-            function (subscription){
-                subscriptions.push(subscription);
-            });
 
     });
 
@@ -452,10 +310,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             });
         } 
     };
-
-    $scope.cancelInstallation = function (action) {
-        session.call("com.bigsql.cancelInstall");
-    }
 
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);

@@ -77,7 +77,7 @@
                                         </div>
                                 </uib-accordion-heading>
 
-                                <div class="col-md-6 col-sm-12 col-xs-12" ng-if="host.hostInfo.home">
+                                <div class="col-md-7 col-sm-12 col-xs-12" ng-if="host.hostInfo.home">
 
                                     <!-- <span style="float: right;" ng-click="loadHost(parentIndex, $index,true)">
 
@@ -114,7 +114,7 @@
                                 </div> 
                                 <span ng-if="retry" style="text-align: center;"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>
 
-                                <div class="col-md-6 col-sm-12 col-xs-12" ng-if="host.comps">
+                                <div class="col-md-5 col-sm-12 col-xs-12" ng-if="host.comps">
                                     <div ng-if="host.showMsg" class="jumbotron"
                                          style="background-color: #fff; margin-top: 15px; text-align: center;">
                                         <h4> No PostgreSQL or server components installed.<br \> Visit the <a ng-click="UpdateManager($index)" href="">Update
@@ -128,15 +128,15 @@
                                             <table class="table" id="serversTable">
                                                 <thead>
                                                 <tr>
-                                                    <th class="col-md-3 col-xs-3">Component</th>
-                                                    <th class="col-md-5 col-xs-5">Status</th>
-                                                    <th class="col-md-1 col-xs-1"></th>
+                                                    <th class="col-md-2 col-xs-2">Component</th>
+                                                    <th class="col-md-6 col-xs-6">Status</th>
+                                                    <!-- <th class="col-md-1 col-xs-1"></th> -->
                                                     <th class="col-md-3 col-xs-3">Actions</th>
                                                 </tr>
                                                 </thead>
                                                 <tbody id="serversTableBody">
                                                 <tr ng-repeat="comp in host.comps" ng-if="comp.component != 'devops'">
-                                                    <td class="col-md-3 col-xs-3">
+                                                    <td class="col-md-1 col-xs-2">
                                                         <div ng-if="comp.category != 1">
                                                             <a ui-sref="components.detailsView({component:comp.component}) " ng-click="changeHost(host.host)">
                                                                 {{ comp.component }}
@@ -148,19 +148,21 @@
                                                             </a>
                                                         </div>
                                                     </td>
-                                                    <td class="col-md-5 col-xs-5"><i ng-class="statusColors[comp.state]"
-                                                                                     style="margin-top:2px;margin-right:10px"
-                                                                                     class="fa fa-stop fa-2x pull-left"></i>
-
-                                                        <div style="margin-top: 5px" ng-show="comp.port">{{ comp.state }} on
-                                                            port {{ comp.port }}</div>
-                                                        <div style="margin-top: 5px" ng-show="!comp.port">{{ comp.state }}</div>
+                                                    <td class="col-md-6 col-xs-6" style="white-space: nowrap;">
+                        <i ng-class="statusColors[comp.state]"
+                        style="margin-top:2px;margin-right:10px" class="fa fa-stop fa-2x pull-left" ng-hide="comp.showingSpinner"></i>
+                    <div style="margin-top: 5px" ng-show="comp.port && !comp.showingSpinner">{{ comp.state }} on
+    port {{ comp.port }}</div>
+                    <div style="margin-top: 5px" ng-show="!comp.port">{{ comp.state }}</div>
+                    <span ng-show="comp.showingSpinner">
+                        <i class='fa fa-spinner fa-2x  fa-pulse'></i>
+                    </span>
                                                     </td>
-                                                    <td class="col-md-1 col-xs-1">
+                                                    <!-- <td class="col-md-1 col-xs-1">
                                                         <span ng-show="comp.showingSpinner"><i
                                                                 class='fa fa-spinner fa-2x  fa-pulse'></i></span>
-                                                    </td>
-                                                    <td class="col-md-3 col-xs-3" value="{{ comp.component }}" ng-click="action( $event, host.host)">
+                                                    </td> -->
+                                                    <td class="col-md-5 col-xs-3" value="{{ comp.component }}" ng-click="action( $event, host.host)">
                                                         <a class="btn btn-default" ng-show="comp.state =='Not Initialized' " ng-click="openInitPopup(comp.component)"
                                                            ng-disabled=" comp.showingSpinner != undefined">Initialize</a>
                                                         <a class="btn btn-default" id="install" ng-show="comp.state =='Stopped'"

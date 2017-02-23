@@ -16,6 +16,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $scope.loading = true;
     $scope.retry = false;
     $scope.disableShowInstalled = false;
+    $scope.badgerInstalled = false;
 
 
     $rootScope.$on('sessionCreated', function () {
@@ -25,6 +26,40 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         });
     });
 
+    $rootScope.$emit('refreshPgbadger',function (argument) {
+        $window.location.reload();
+    } );
+
+    var compStatus = bamAjaxCall.getCmdData('status/pgbadger');
+        compStatus.then(function (data) {
+            if (data.state == "Installed") {
+                $scope.badgerInstalled = true;
+                var noPostgresRunning = false;
+                var serverStatus = bamAjaxCall.getCmdData('status');
+                serverStatus.then(function (data) {
+                    for (var i = data.length - 1; i >= 0; i--) {
+                        if (data[i].state == "Running") {
+                            noPostgresRunning = true;
+                        }
+                    }
+                    if(!noPostgresRunning){
+                        $scope.alerts.push({
+                            msg:  "No Postgres component Installed/ Initialized.",
+                            type: 'danger',
+                            pgComp: true
+                        });
+                    }
+                });
+            } else{
+                $scope.alerts.push({
+                    msg:  'pgBadger is not Installed yet. ',
+                    type: 'danger',
+                    pgComp: false
+                });
+            }
+        });
+
+    
 
     $scope.onSelectChange = function (comp) {
         if(comp){
@@ -171,6 +206,23 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $rootScope.$on('switchLogfileError', function (argument, error) {
         $scope.badgerError = error.status;
     });
+
+    $scope.openDetailsModal = function (comp) {
+        $scope.alerts.splice(0, 1);
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/details.html',
+            windowClass: 'comp-details-modal',
+            controller: 'ComponentDetailsController',
+            keyboard  : false,
+            backdrop  : 'static',
+        });
+        modalInstance.component = 'pgbadger';
+        modalInstance.isExtension = true;
+    };
+
+    $scope.closeAlert = function (index) {
+        $scope.alerts.splice(index, 1);
+    };
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {

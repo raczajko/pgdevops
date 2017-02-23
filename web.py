@@ -90,6 +90,22 @@ class pgcApiCom(Resource):
 
 api.add_resource(pgcApiCom, '/api/<string:cmd>/<string:comp>', '/api/<string:cmd>/<string:comp>/<string:pgc_host>')
 
+class pgcApiRelnotes(Resource):
+    def get(self, cmd, comp=None, pgc_host=None):
+        data = pgc.get_data(cmd, comp, relnotes='relnotes', pgc_host=pgc_host)
+        return data
+
+
+api.add_resource(pgcApiRelnotes, '/api/relnotes/<string:cmd>/<string:comp>', '/api/relnotes/<string:cmd>', '/api/relnotes/<string:cmd>/<string:comp>/<string:pgc_host>')
+
+class pgcApiListRelnotes(Resource):
+    def get(self, cmd, pgc_host=None):
+        data = pgc.get_data(cmd, relnotes='relnotes', pgc_host=pgc_host)
+        return data
+
+
+api.add_resource(pgcApiListRelnotes, '/api/relnotes/<string:cmd>/<string:pgc_host>')
+
 
 class pgcApiHosts(Resource):
     def get(self):
@@ -118,24 +134,25 @@ class pgcApiExtensions(Resource):
 
 api.add_resource(pgcApiExtensions, '/api/extensions/<string:comp>', '/api/extensions/<string:comp>/<string:pgc_host>')
 
-class pgcApiRelnotes(Resource):
-    def get(self, comp, version=None):
-        json_dict = {}
-        v=version
-        import mistune, util, sys
-        if version == None:
-            rel_notes = unicode(str(util.get_relnotes (comp)),sys.getdefaultencoding(),errors='ignore').strip()
-        else:
-            rel_notes=unicode(str(util.get_relnotes (comp, version)),sys.getdefaultencoding(),errors='ignore').strip()
-        markdown_text=mistune.markdown(rel_notes)
-        json_dict['component'] = comp
-        json_dict['text'] = markdown_text
-        # json_dict['plainText'] = rel_notes
-        data = json.dumps([json_dict])
-        return data
+# class pgcApiRelnotes(Resource):
+#     def get(self, comp, version=None):
+#         json_dict = {}
+#         v=version
+#         import mistune, util, sys
+#         if version == None:
+#             rel_notes = util.get_relnotes (comp)
+#         else:
+#             rel_notes=util.get_relnotes (comp, version)
+#         relnotes =""
+#         markdown_text = ""
+#         json_dict['component'] = comp
+#         json_dict['text'] = ''
+#         # # json_dict['plainText'] = rel_notes
+#         data = json.dumps([json_dict])
+#         return data
 
 
-api.add_resource(pgcApiRelnotes, '/api/relnotes/<string:comp>','/api/relnotes/<string:comp>/<string:version>')
+# api.add_resource(pgcApiRelnotes, '/api/relnotes/<string:comp>','/api/relnotes/<string:comp>/<string:version>')
 
 
 class pgcApiHostCmd(Resource):

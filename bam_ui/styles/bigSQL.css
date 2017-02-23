@@ -6944,3 +6944,18 @@ span.more-text {
 span.more-text.show {
     display: inline !important
 }
+
+.details-relnotes{
+  height: 350px; 
+  overflow: scroll; 
+  border: 1px solid #ddd;
+}
+
+.details-page-tab{
+  border-top: 3px solid #d2d6de; 
+  border-color: #3c8dbc;
+}
+
+.details-page-tab > a{
+  font-weight: bold;
+}

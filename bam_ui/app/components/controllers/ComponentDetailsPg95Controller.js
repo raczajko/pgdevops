@@ -310,9 +310,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         };
 
         $scope.releaseTabEvent = function (argument) {
-            var relnotes = bamAjaxCall.getCmdData('relnotes/' + $stateParams.component + '/' +$scope.component.version)
+            var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );
             relnotes.then(function (data) {
-                $scope.relnotes = $sce.trustAsHtml(data);
+                $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
             });
         }
 
