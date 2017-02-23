@@ -4,9 +4,10 @@ angular.module('bigSQL.components').controller('whatsNewController', ['$scope','
         $uibModalInstance.dismiss('cancel');
     };
 
-    var whatNew = bamAjaxCall.getCmdData('relnotes/' + $uibModalInstance.component )
+    var whatNew = bamAjaxCall.getCmdData('utilRelnotes/' + $uibModalInstance.component )
     whatNew.then(function (data) {
-        $scope.whatsNewText = $sce.trustAsHtml(data);
+    	var data = JSON.parse(data)
+        $scope.whatsNewText = $sce.trustAsHtml(data[0].relnotes);
     });
 
 }]);

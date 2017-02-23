@@ -67,10 +67,10 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 $scope.component = data[0];
                 $scope.component.componentImage = $scope.component.component.split('-')[0].replace(/[0-9]/g,'');
                 $scope.component.release_date = new Date($scope.component.release_date).toString().split(' ',[4]).splice(1).join(' ');
-                $scope.component.release_date = $scope.component.release_date.split(' ')[0] + ' ' + $scope.component.release_date.split(' ')[1] + ', ' + $scope.component.release_date.split(' ')[2];
+                $scope.component.release_date = $scope.component.release_date.split(' ')[0] + ' ' + $scope.component.release_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.component.release_date.split(' ')[2];
                 if($scope.component.install_date){
                     $scope.component.install_date = new Date($scope.component.install_date + " UTC").toString().split(' ',[4]).splice(1).join(' ');
-                    $scope.component.install_date = $scope.component.install_date.split(' ')[0] + ' ' + $scope.component.install_date.split(' ')[1] + ', ' + $scope.component.install_date.split(' ')[2];
+                    $scope.component.install_date = $scope.component.install_date.split(' ')[0] + ' ' + $scope.component.install_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.component.install_date.split(' ')[2];
                 }
                 $scope.rel_notes = $sce.trustAsHtml($scope.component.rel_notes);
                 // var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $scope.currentComponent )

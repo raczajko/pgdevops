@@ -36,13 +36,14 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
         $scope.currentHost = remote_host;
         if (remote_host == "" || remote_host == "localhost") {
-            var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+            var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component);
         } else {
-            var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component + "/" + remote_host);
+            var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component + "/" + remote_host);
         }
 
         //var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
         infoData.then(function (data) {
+            $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
             $scope.loading = false;
             if (data[0]['autostart'] == "on") {
                 data[0]['autostart'] = true;
@@ -309,12 +310,12 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             $scope.alerts.splice(index, 1);
         };
 
-        $scope.releaseTabEvent = function (argument) {
-            var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );
-            relnotes.then(function (data) {
-                $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
-            });
-        }
+        // $scope.releaseTabEvent = function (argument) {
+        //     var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );
+        //     relnotes.then(function (data) {
+        //         $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
+        //     });
+        // }
 
         session.subscribe('com.bigsql.onActivity', function (data) {
             if (data[0].component == $stateParams.component) {

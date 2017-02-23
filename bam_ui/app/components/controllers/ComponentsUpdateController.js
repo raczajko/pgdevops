@@ -20,27 +20,17 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         } else{
             var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
         }
+        $scope.loadingSpinner = true;
+        $scope.body = false;
         listData.then(function(data) {
+            $scope.loadingSpinner = false;
+            $scope.body = true;
             $scope.loadingSpinner = false;
             $scope.body = true;
             $scope.noUpdates = true;
 
             $scope.allComponents = data;
             $scope.hideLatestInstalled = true;
-            for (var i = 0; i < $scope.allComponents.length; i++) {
-                $scope.allComponents[i].rel_notes = $sce.trustAsHtml($scope.allComponents[i].rel_notes);
-                $scope.allComponents[i].curr_release_date = new Date($scope.allComponents[i].curr_release_date).toString().split(' ',[4]).splice(1).join(' ');
-                $scope.allComponents[i].curr_release_date = $scope.allComponents[i].curr_release_date.split(' ')[0] + ' ' + $scope.allComponents[i].curr_release_date.split(' ')[1] + ', ' + $scope.allComponents[i].curr_release_date.split(' ')[2];
-                $scope.allComponents[i].install_date = new Date($scope.allComponents[i].install_date).toString().split(' ',[4]).splice(1).join(' ');
-                $scope.allComponents[i].install_date = $scope.allComponents[i].install_date.split(' ')[0] + ' ' + $scope.allComponents[i].install_date.split(' ')[1] + ', ' + $scope.allComponents[i].install_date.split(' ')[2];
-
-                if($scope.allComponents[i].is_new == 1){
-                    $scope.hideNewComponents = true;
-                }
-                if($scope.allComponents[i].is_updated == 1){
-                    $scope.hideLatestInstalled = false;
-                }
-            }
 
             $scope.components = $(data).filter(function(i,n){ return n.updates>0 ;});
 
@@ -61,15 +51,22 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                         installedComponents : false
                     }
                 }
-                // var relnotes = bamAjaxCall.getCmdData('relnotes/' + $scope.components[i].component + '/' +$scope.components[i].current_version)
-                // relnotes.then(function (data) {
-                //     var data = JSON.parse(data)[0];
-                //     for (var i = $scope.components.length - 1; i >= 0; i--) {
-                //         if($scope.components[i].component == data.component){
-                //             $scope.components[i].relnotes = $sce.trustAsHtml(data.text);
-                //         }
-                //     }
-                // });
+            }
+
+            for (var i = 0; i < $scope.allComponents.length; i++) {
+                $scope.allComponents[i].rel_notes = $sce.trustAsHtml($scope.allComponents[i].rel_notes);
+                $scope.allComponents[i].curr_release_date = new Date($scope.allComponents[i].curr_release_date).toString().split(' ',[4]).splice(1).join(' ');
+                $scope.allComponents[i].curr_release_date = $scope.allComponents[i].curr_release_date.split(' ')[0] + ' ' + $scope.allComponents[i].curr_release_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.allComponents[i].curr_release_date.split(' ')[2];
+                if ($scope.allComponents[i].install_date) {
+                    $scope.allComponents[i].install_date = new Date($scope.allComponents[i].install_date).toString().split(' ',[4]).splice(1).join(' ');
+                    $scope.allComponents[i].install_date = $scope.allComponents[i].install_date.split(' ')[0] + ' ' + $scope.allComponents[i].install_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.allComponents[i].install_date.split(' ')[2];
+                }
+                if($scope.allComponents[i].is_new == 1){
+                    $scope.hideNewComponents = true;
+                }
+                if($scope.allComponents[i].is_updated == 1){
+                    $scope.hideLatestInstalled = false;
+                }
             }
         });
     };
