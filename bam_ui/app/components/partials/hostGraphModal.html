@@ -1,4 +1,7 @@
 <div class="modal-header">
+	<div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <i class="fa fa-lg fa-close"></i>
+    </div>
     <h2 class="modal-title" id="updateModalLabel"> {{chartName}} ({{hostName}})</h2>
 </div>
 <div ng-click="cancel()" class="close-modal" data-dismiss="modal" aria-hidden="true">
@@ -13,5 +16,5 @@
 </div>
 
 <div class="modal-footer">
-    <button class="btn btn-danger" type="button" ng-click="cancel()">Close</button>
+    <!-- <button class="btn btn-danger" type="button" ng-click="cancel()">Close</button> -->
 </div>

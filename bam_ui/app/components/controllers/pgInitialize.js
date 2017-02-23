@@ -79,7 +79,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
     });
 
     $scope.init = function() {
-        if($scope.host == 'localhost'){
+        if($scope.host == 'localhost' || $scope.host == ''){
         	if(!$scope.portNumber){
                 $scope.portNumber = document.getElementById('portNumber').value;
             }

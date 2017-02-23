@@ -4,11 +4,6 @@ angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubS
 	var subscriptions = [];
 	var session;
 
-  var listData = bamAjaxCall.getCmdData('list');
-  listData.then(function(data) {
-      $scope.components = data;
-  });
-
   var sessPromise = PubSubService.getSession();
   sessPromise.then(function (sessPram) {
   	session = sessPram;

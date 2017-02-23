@@ -171,7 +171,9 @@ class ComponentAction(object):
         :param name: Name of the component to be upgraded.
         :return: It yields json string for the upgrade process.
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc --json upgrade " + name
+        pgcCmd = PGC_HOME + os.sep + "pgc --json upgrade "
+        if name:
+            pgcCmd = pgcCmd + name
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
@@ -448,7 +450,7 @@ class Components(ComponentAction):
         yield self.session.publish('com.bigsql.onCheckOS', platform.system())
 
     @staticmethod
-    def get_data(command, component=None, pgc_host=None, pwfile=None):
+    def get_data(command, component=None, pgc_host=None, pwfile=None, relnotes=None):
         """
         Method to get the host settings.
         :param p_host: Name of the host to retrieve the settings.
@@ -456,6 +458,8 @@ class Components(ComponentAction):
         """
 
         pgcCmd = PGC_HOME + os.sep + "pgc --json " + command
+        if relnotes:
+            pgcCmd = pgcCmd + " --relnotes"
         if component:
             pgcCmd = pgcCmd + " " + component 
         if pgc_host:

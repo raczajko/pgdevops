@@ -54,9 +54,10 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
         $scope.currentHost = remote_host;
         if (remote_host == "" || remote_host == "localhost") {
             $scope.currentHost = "localhost";
-            var infoData = bamAjaxCall.getCmdData('info/' + $scope.currentComponent);
+            // var infoData = bamAjaxCall.getCmdData('info/' + $scope.currentComponent);
+            var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $scope.currentComponent);
         } else {
-            var infoData = bamAjaxCall.getCmdData('info/' + $scope.currentComponent + "/" + remote_host);
+            var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $scope.currentComponent + "/" + remote_host);
         }
 
         //var infoData = bamAjaxCall.getCmdData('info/' + $scope.currentComponent);
@@ -64,13 +65,19 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
             $scope.loading = false;
             if($scope.currentComponent == data[0].component){
                 $scope.component = data[0];
-                $scope.component.componentImage = $scope.component.component.split('-')[0].replace(/[0-9]/g,'')
-                console.log($scope.component.componentImage);
-                var relnotes = bamAjaxCall.getCmdData('relnotes/' + $scope.currentComponent + '/' +$scope.component.version)
-                relnotes.then(function (data) {
-                    var data = JSON.parse(data)[0];
-                    $scope.relnotes = $sce.trustAsHtml(data.text);
-                });
+                $scope.component.componentImage = $scope.component.component.split('-')[0].replace(/[0-9]/g,'');
+                $scope.component.release_date = new Date($scope.component.release_date).toString().split(' ',[4]).splice(1).join(' ');
+                $scope.component.release_date = $scope.component.release_date.split(' ')[0] + ' ' + $scope.component.release_date.split(' ')[1] + ', ' + $scope.component.release_date.split(' ')[2];
+                if($scope.component.install_date){
+                    $scope.component.install_date = new Date($scope.component.install_date + " UTC").toString().split(' ',[4]).splice(1).join(' ');
+                    $scope.component.install_date = $scope.component.install_date.split(' ')[0] + ' ' + $scope.component.install_date.split(' ')[1] + ', ' + $scope.component.install_date.split(' ')[2];
+                }
+                $scope.rel_notes = $sce.trustAsHtml($scope.component.rel_notes);
+                // var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $scope.currentComponent )
+                // relnotes.then(function (data) {
+                //     var data = JSON.parse(data)[0];
+                //     $scope.relnotes = $sce.trustAsHtml(data.text);
+                // });
             }
         });
     };
@@ -110,7 +117,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 // session.call('com.bigsql.infoComponent', [$scope.currentComponent]);
                 var alertObj = {
                     msg: data.msg,
-                    type: "success"
+                    type: "danger"
                 }
                 $scope.alerts.push(alertObj);
                 callInfo();
@@ -169,11 +176,10 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 $scope.component.installationRunning = data;
                 $scope.component.progress = data.pct;
             } else if (data.status == "complete" || data.status == "cancelled") {
-                
-                if (data.state == 'unpack') {
+                if (data.state == 'unpack' || data.state == 'update' || data.state == 'install') {
                     // session.call('com.bigsql.infoComponent', [$scope.currentComponent])
                     $scope.alerts.push({
-                            msg:  'Sucessfully Installed' + data.component,
+                            msg:  data.msg,
                             type: 'success'
                         });
                     callInfo();
@@ -187,7 +193,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
 
                 delete $scope.component.installationStart;
                 delete $scope.component.installationRunning;
-                // delete $scope.component.installation;
+                delete $scope.component.installation;
 
             }
 
@@ -220,6 +226,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
+        if($scope.component == 'pgbadger'){
+            $rootScope.$on('refreshPgbadger');
+        }
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);
         }
