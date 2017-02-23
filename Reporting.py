@@ -157,6 +157,7 @@ class Reporting(object):
             c.execute(sql)
             t_comp = c.fetchall()
             files_list = []
+            connL.close()
 
             for comp in t_comp:
                 log_dir = comp[1]
