@@ -135,7 +135,7 @@
                                                 </tr>
                                                 </thead>
                                                 <tbody id="serversTableBody">
-                                                <tr ng-repeat="comp in host.comps" ng-if="comp.component != 'devops'">
+                                                <tr ng-repeat="comp in host.comps" ng-if="comp.component != 'pgdevops'">
                                                     <td class="col-md-1 col-xs-2">
                                                         <div ng-if="comp.category != 1">
                                                             <a ui-sref="components.detailsView({component:comp.component}) " ng-click="changeHost(host.host)">
