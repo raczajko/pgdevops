@@ -56,9 +56,9 @@
             </div>
             <div class="row extensions-row" ng-if="$index == 1 && extensionsList.length">
                 <div class="col-md-2 col-sm-3 col-xs-6 extensions-area" ng-click="openDetailsModal(ext.component)" style="width: 11.499999995% ; padding: 13px;" ng-repeat="ext in extensionsList">
-                    <span class="badge new-comp-wrapper" ng-if="ext.is_new == 1 && ext.status == 'NotInstalled'" tooltip-append-to-body="true" uib-tooltip="Release date: {{ ext.release_date }}">New</span>
-                    <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="ext.status == 'Installed'|| ext.status == 'NotInitialized'"></i>
-                    <span class="update-component-arrow-wrapper" tooltip-append-to-body="true" uib-tooltip="New version available: {{ext.current_version}}" ng-if="ext.updates>0">
+                    <span class="badge new-comp-wrapper" ng-if="ext.is_new == 1 && ext.status == 'NotInstalled'" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="Release date: {{ ext.release_date }}">New</span>
+                    <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="ext.status == 'Installed'|| ext.status == 'NotInitialized'" style="position: absolute; margin-left: 95px"></i>
+                    <span class="update-component-arrow-wrapper" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="New version available: {{ext.current_version}}" ng-if="ext.updates>0">
                         <i class="fa fa-arrow-circle-down" id="updateIcon" style="color: #FF8A21"></i>
                     </span>
                     <span class="test-comp-icon" ng-if="ext.stage != 'prod'" tooltip-append-to-body="true" uib-tooltip="Test Component"></span>
@@ -75,9 +75,9 @@
             </div>
             <div class="row non-pg-comp-row">
                 <div class="col-md-2 col-sm-3 col-xs-6" ng-click="openDetailsModal(c.component)" style="width: 11.499999995% ; padding: 0px 13px 13px 13px;" ng-repeat="c in value" ng-if="c.category_desc != 'PostgreSQL' && c.category_desc != 'Extensions' && c.component != 'devops' && c.component != 'bam2'">
-                    <span class="badge new-comp-wrapper" ng-if="c.is_new == 1 && c.status == 'NotInstalled'" tooltip-append-to-body="true" uib-tooltip="Release date: {{ c.release_date }}">New</span>
-                    <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="c.status == 'Installed'|| c.status == 'NotInitialized'"></i>
-                    <span class="update-component-arrow-wrapper" tooltip-append-to-body="true" uib-tooltip="New version available: {{c.current_version}}" ng-if="c.updates>0">
+                    <span class="badge new-comp-wrapper" ng-if="c.is_new == 1 && c.status == 'NotInstalled'" tooltip-append-to-body="true" uib-tooltip="Release date: {{ c.release_date }}" style="position: absolute;">New</span>
+                    <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="c.status == 'Installed'|| c.status == 'NotInitialized'" style="position: absolute; margin-left: 95px"></i>
+                    <span class="update-component-arrow-wrapper" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="New version available: {{c.current_version}}" ng-if="c.updates>0">
                         <i class="fa fa-arrow-circle-down" id="updateIcon" style="color: #FF8A21"></i>
                     </span>
                     <span class="test-comp-icon" ng-if="c.stage != 'prod'" tooltip-append-to-body="true" uib-tooltip="Test Component"></span>

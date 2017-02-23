@@ -6608,6 +6608,7 @@ table.settings-table-pgc-info > tbody > tr > td {
 span.update-component-arrow-wrapper {
   float: left;
     margin-left: 7px;
+    position: absolute;
     /*margin-top: 5px;*/
 }
 
@@ -6628,6 +6629,7 @@ span.new-comp-wrapper {
     font-size: 9px;
     padding: 1px;
     background-color: #FF0000;
+    position: absolute;
 }
 
 .update-modal-table span{
