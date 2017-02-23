@@ -13,7 +13,7 @@ set PR_BAM_PID_FILE="pgdevops.pid"
 REM Startup configuration
 set PR_STARTUP=auto
 set PR_STARTMODE=EXE
-set BAM_STARTPARAM="%CWD%start_crossbar.py;start;--cbdir;%CWD%.;--loglevel;info;--logtofile;--logdir;%CWD%..\..\data\logs\devops"
+set BAM_STARTPARAM="%CWD%start_crossbar.py;start;--cbdir;%CWD%.;--loglevel;info;--logtofile;--logdir;%CWD%..\..\data\logs\pgdevops"
 set PR_ENV="USERNAME=%USERNAME%#PYTHONPATH=%CWD%..\lib#PATH=%CWD%..\..\python2#PYTHONHOME=%CWD%..\..\python2#PGC_HOME=%CWD%..\..#PGC_LOGS=%CWD%..\..\logs\pgcli_log.out"
 
 set BAM_STARTIMAGE=%CWD%..\..\python2\python.exe
