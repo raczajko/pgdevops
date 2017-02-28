@@ -9,6 +9,7 @@ import StringIO
 from datetime import datetime
 import re
 import subprocess
+import time
 from operator import itemgetter
 
 import util
@@ -122,19 +123,35 @@ class BadgerReport(object):
         try:
             if logFile:
                 alterQuery = "alter system set log_filename='%s';"%(logFile)
+                notice_msg="pgDevOps by BigSQL: Switched logfile to {0}"
             else:
                 alterQuery = "alter system reset log_filename;"
+                notice_msg="pgDevOps by BigSQL: Reset logfile to {0}"
             cursor.execute(alterQuery)
             pgReloadQuery = "select pg_reload_conf();"
             cursor.execute(pgReloadQuery)
             rotateQuery = "select pg_rotate_logfile();"
             cursor.execute(rotateQuery)
-            testQuery = "DO language plpgsql $$ \
-                            BEGIN\
-                        RAISE EXCEPTION 'Log Switch completed by BigSQL DevOps';\
-                            END\
-                        $$;"
-            cursor.execute(testQuery)
+            time.sleep(2)
+            log_file_name_query="show log_filename;"
+            cursor.execute(log_file_name_query)
+            curResult=cursor.fetchone()
+            log_file_name=curResult[0]
+            log_file_name=log_file_name.replace("%","%%")
+            notice_msg=notice_msg.format(log_file_name)
+            query = """BEGIN;
+                        SET log_min_messages = notice;
+                        DO language plpgsql $$
+                        BEGIN
+                            RAISE NOTICE '{0}';
+                        END
+                        $$;
+                        RESET log_min_messages;
+                        END;"""
+
+            raise_query = query.format(notice_msg)
+            cursor.execute(raise_query)
+
             conn.set_isolation_level(old_isolation_level)
             conn.close()
             return True
