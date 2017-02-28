@@ -10,6 +10,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $scope.autoSelectLogFile;
     $scope.selectedCurrentLogfile;
     $scope.refreshMsg= false;
+    $scope.checked = false;
 
     var session;
     $scope.updateSettings;
@@ -17,7 +18,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $scope.retry = false;
     $scope.disableShowInstalled = false;
     $scope.badgerInstalled = false;
-
+    $scope.disableGenrate = false;
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -26,7 +27,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         });
     });
 
-    $rootScope.$emit('refreshPgbadger',function (argument) {
+    $rootScope.$on('refreshPgbadger',function (argument) {
         $window.location.reload();
     } );
 
@@ -43,6 +44,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                         }
                     }
                     if(!noPostgresRunning){
+                        $scope.disableGenrate = true;
                         $scope.alerts.push({
                             msg:  "No Postgres component Installed/ Initialized.",
                             type: 'danger',
@@ -51,6 +53,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                     }
                 });
             } else{
+                $scope.disableGenrate = true;
                 $scope.alerts.push({
                     msg:  'pgBadger is not Installed yet. ',
                     type: 'danger',
@@ -165,6 +168,28 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         modalInstance.pgLogPrefix = $scope.pgLogPrefix;
     };
 
+    $scope.enableDeletebtns = function (argument) {
+        $scope.checked = true;
+    }
+
+    $scope.allSelect = function (files,argument) {
+        for (var i = $scope.files_list.length - 1; i >= 0; i--) {
+                $scope.files_list[i].selected = true;
+                console.log($scope.files_list[i].selected)
+        }
+    }
+
+    $scope.toggleAll = function() {
+        var toggleStatus = !$scope.isAllSelected;
+        angular.forEach($scope.files_list, function(itm){ itm.selected = toggleStatus; });
+       
+    }
+      
+    $scope.optionToggled = function(){
+        $scope.checked = true;
+        $scope.isAllSelected = $scope.files_list.every(function(itm){ return itm.selected; })
+    }
+
     $scope.deleteReports = function (files, selectAll) {
         var deleteFiles = [];
         if(selectAll){
@@ -178,13 +203,16 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                 }
             }            
         }
-        var removeFiles = $http.post($window.location.origin + '/api/remove_reports/badger', deleteFiles);
-        removeFiles.then(function (data) {
-            if(data.data.error == 0){
-                getReports();
-            }
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/confirmDeletionModal.html',
+            controller: 'confirmDeletionModalController',
         });
+        modalInstance.deleteFiles = deleteFiles;
     }
+
+    $rootScope.$on('updateReports', function (argument) {
+        getReports();
+    })
 
     $scope.refreshLogfiles = function (comp) {
         $scope.refreshMsg = true;

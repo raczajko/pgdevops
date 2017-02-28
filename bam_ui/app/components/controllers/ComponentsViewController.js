@@ -17,6 +17,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     $scope.loading = true;
     $scope.retry = false;
     $scope.disableShowInstalled = false;
+    $scope.extensionsList = [];
 
     var getCurrentComponent = function (name) {
         for (var i = 0; i < $scope.components.length; i++) {
@@ -42,6 +43,32 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         return  pgComps.reverse().concat(nonPgComps);
     }
 
+    $scope.getExtensions = function( comp, idx) {
+        $cookies.putObject('openedExtensions', {'component': comp, 'index': idx});
+        for (var i = 0; i < $scope.components.length; i++) {
+            $scope.components[i].extensionOpened = false;           
+        }
+        $scope.components[idx].extensionOpened = true;
+        if ($scope.currentHost=="" || $scope.currentHost == 'localhost'){
+            var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
+        } else{
+            var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp + '/' + $scope.currentHost);
+        }
+        // var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
+        extensionsList.then(function (argument) {
+            if (argument[0].state != 'error') {
+                $scope.extensionsList = argument;
+                if ($scope.showInstalled) {
+                    $scope.extensionsList = $($scope.extensionsList).filter(function(i,n){ return n.status != "NotInstalled" ;})   
+                }
+                for (var i = $scope.extensionsList.length - 1; i >= 0; i--) {
+                    $scope.extensionsList[i].modifiedName = $scope.extensionsList[i].component.split('-')[0].replace(/[0-9]/g,'');
+                }
+                $scope.allComponents = $scope.extensionsList.concat($scope.components);
+            }
+        })   
+    }
+
     function getList(argument) {
         argument = typeof argument !== 'undefined' ? argument : "";
         $scope.currentHost = argument;
@@ -59,7 +86,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.retry = true;
             } else {
                 $scope.nothingInstalled = false;
-                data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops'  ;})
+                data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops' && n.category_desc != 'Extensions';})
                 if ($scope.showInstalled) {
                     $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
                     if($scope.components.length == 0){
@@ -119,31 +146,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         //     $scope.retry = true;
         // });
     };
-    
-    $scope.getExtensions = function( comp, idx) {
-        $cookies.putObject('openedExtensions', {'component': comp, 'index': idx});
-        for (var i = 0; i < $scope.components.length; i++) {
-            $scope.components[i].extensionOpened = false;           
-        }
-        $scope.components[idx].extensionOpened = true;
-        if ($scope.currentHost=="" || $scope.currentHost == 'localhost'){
-            var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
-        } else{
-            var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp + '/' + $scope.currentHost);
-        }
-        // var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
-        extensionsList.then(function (argument) {
-            if (argument[0].state != 'error') {
-                $scope.extensionsList = argument;
-                if ($scope.showInstalled) {
-                    $scope.extensionsList = $($scope.extensionsList).filter(function(i,n){ return n.status != "NotInstalled" ;})   
-                }
-                for (var i = $scope.extensionsList.length - 1; i >= 0; i--) {
-                    $scope.extensionsList[i].modifiedName = $scope.extensionsList[i].component.split('-')[0].replace(/[0-9]/g,'');
-                }
-            }
-        })   
-    }
 
     getList($cookies.get('remote_host'));
 

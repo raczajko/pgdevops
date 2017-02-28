@@ -11,6 +11,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
     $scope.showText = "More";   
     $scope.alerts = [];
     $scope.updateAll = false;
+    $scope.hideNewComponents = true;
 
     function getList(argument) {
         argument = typeof argument !== 'undefined' ? argument : "";
@@ -23,9 +24,9 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         $scope.loadingSpinner = true;
         $scope.body = false;
         listData.then(function(data) {
+            data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops'  ;})
             $scope.loadingSpinner = false;
             $scope.body = true;
-            $scope.loadingSpinner = false;
             $scope.body = true;
             $scope.noUpdates = true;
 
@@ -38,18 +39,6 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 // $scope.components[i].componentImage = $scope.components[i].component.split('-')[0].replace(/[0-9]/g,'')
                 if($scope.components[i].is_current == 0 && $scope.components[i].current_version){
                     $scope.noUpdates = false;
-                }
-
-                if ($scope.noUpdates) {
-                    $scope.uibStatus = {
-                        newComponents : true,
-                        installedComponents : true
-                    }
-                }else{
-                    $scope.uibStatus = {
-                        newComponents : false,
-                        installedComponents : false
-                    }
                 }
             }
 
@@ -66,6 +55,17 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 }
                 if($scope.allComponents[i].is_updated == 1){
                     $scope.hideLatestInstalled = false;
+                }
+                if ($scope.noUpdates) {
+                    $scope.uibStatus = {
+                        newComponents : true,
+                        installedComponents : true
+                    }
+                }else{
+                    $scope.uibStatus = {
+                        newComponents : false,
+                        installedComponents : false
+                    }
                 }
             }
         });

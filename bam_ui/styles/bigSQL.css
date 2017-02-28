@@ -6613,12 +6613,13 @@ span.update-component-arrow-wrapper {
 }
 
 .test-comp-icon {
+  position: absolute;
   width: 16px;
   height: 16px;
   background-image: url('../assets/img/test-icon.svg');
   background-repeat: no-repeat;
   float: left;
-  margin-left: 7px;
+  /*margin-left: 7px;*/
   margin-top: 5px
 }
 
@@ -6712,7 +6713,7 @@ span.new-comp-wrapper {
   }
 
   .bgs-plprofiler {
-    background-image: url('../assets/img/plProfiler-40.png');
+    background-image: url('../assets/img/plprofilerIcon.png');
     background-repeat: no-repeat;
     background-position: 0 0;
     margin-left: -2px;
@@ -6845,7 +6846,7 @@ text-align: center;}
 .select-comp-area{
   display: block;
     padding: 15px 40px 1px 40px;
-    margin-bottom: 11px;
+    margin-bottom: -12px;
     background-color: #dfdfdf;
     border-radius: 4px;
 }
@@ -6880,7 +6881,7 @@ text-align: center;}
 }
 
 .expandExt{
-  margin-bottom: 58px;
+  margin-bottom: 15px;
   padding-top: 1px;
   align-items: center;
 }
@@ -6908,8 +6909,6 @@ text-align: center;}
   margin-left: 0px; 
   background-color: #dfdfdf; 
   width: 100%; 
-  margin-top: -70px;
-  /*height: 310px;*/
 }
 
 .non-pg-comp-row{

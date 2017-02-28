@@ -525,6 +525,18 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         });
     };
 
+    $scope.openDetailsModal = function (comp) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/details.html',
+            windowClass: 'comp-details-modal',
+            controller: 'ComponentDetailsController',
+            keyboard  : false,
+            backdrop  : 'static',
+        });
+        modalInstance.component = comp;
+        modalInstance.isExtension = true;
+    };
+
     $scope.openGraphModal = function (chartName) {
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/hostGraphModal.html',

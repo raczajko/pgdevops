@@ -138,7 +138,7 @@
                                                 <tr ng-repeat="comp in host.comps" ng-if="comp.component != 'pgdevops'">
                                                     <td class="col-md-1 col-xs-2">
                                                         <div ng-if="comp.category != 1">
-                                                            <a ui-sref="components.detailsView({component:comp.component}) " ng-click="changeHost(host.host)">
+                                                            <a ng-click="changeHost(host.host); openDetailsModal(comp.component)">
                                                                 {{ comp.component }}
                                                             </a>
                                                         </div>

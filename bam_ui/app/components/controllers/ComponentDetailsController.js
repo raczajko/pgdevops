@@ -17,6 +17,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     }
 
     $scope.cancel = function () {
+        $rootScope.$emit('refreshPgbadger');
         $rootScope.$emit('updatePackageManager');
         $uibModalInstance.dismiss('cancel');
     };
@@ -226,9 +227,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
-        if($scope.component == 'pgbadger'){
-            $rootScope.$on('refreshPgbadger');
-        }
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);
         }

@@ -1,4 +1,7 @@
 <div class="modal-header">
+    <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <i class="fa fa-lg fa-close"></i>
+    </div>
     <h3 class="modal-title">Set Logging Parameters</h3>
 </div>
 <div class="modal-body">
@@ -58,5 +61,5 @@
 </div>
 <div class="modal-footer">
     <button class="btn btn-primary" type="button" ng-click="save(changedVales, comp)">Save & Reload</button>
-    <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+    <!-- <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button> -->
 </div>

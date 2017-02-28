@@ -4,9 +4,9 @@
             <select class="form-control" ng-change="hostChange(selecthost)" ng-model="selecthost">
             <option ng-repeat="host in hosts" value="{{ host.host }}">{{ host.host }}</option> </select>
         </form>
-    <h3>
-        <strong> OS </strong> : {{ data.os }} &nbsp;
-        <strong>HW </strong>: {{ data.mem }} GB, {{ data.cores }} x {{ data.cpu }} &nbsp;
+    <h3 class="pull-left">
+        <strong> OS </strong> : {{ data.os }} 
+        <strong>HW </strong>: {{ data.mem }} GB, {{ data.cores }} x {{ data.cpu }} 
         <strong>PGC</strong> : {{ data.version }}
     </h3>
 </div>

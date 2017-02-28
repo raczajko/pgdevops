@@ -26,7 +26,7 @@
     <div ng-if="nothingInstalled" class="jumbotron" style="background-color: #fff; margin-top: 15px; text-align: center;"> <h3> You haven't installed anything yet</h3>
     </div>
     <div ng-if="!loading && !retry">
-        <div ng-repeat="(key, value) in components | groupBy: 'category_desc'">
+        <div ng-repeat="(key, value) in allComponents | groupBy: 'category_desc'">
             <div class="box-header" ng-if="key != 'Extensions'">
                 <h3 class="box-title" ng-bind="key" ng-if="value.length"></h3>
             </div>

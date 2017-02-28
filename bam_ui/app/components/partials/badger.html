@@ -15,7 +15,8 @@
         <div class="box">
             <div class="box-header with-border">
                 <div class="col-md-12">
-                    <strong> Settings</strong>
+                    <strong class="pull-left"> Settings</strong>
+                    <a class="pull-right" ng-click="openDetailsModal()">About pgBadger</a>
                 </div>
             </div>
             <div class="box-body">
@@ -90,7 +91,7 @@
                         <div class="form-actions">
                             <div class="text-right">
                                 <button type="submit" class="btn btn-primary"
-                                        ng-disabled="generatingReportSpinner"
+                                        ng-disabled="generatingReportSpinner || disableGenrate"
                                         ng-click="openGenerateModal()">Generate
                                 </button>
                             </div>
@@ -108,9 +109,10 @@
             </div>
             <div class="box-body">
                 <div class="col-md-12 recent-report-list">
+                    <input type="checkbox" name="" ng-click="toggleAll()" ng-model="isAllSelected" /> <strong> Select all </strong>
                     <div ng-repeat="c in files_list">
                         <label>
-                        <input type="checkbox" name="" ng-model="c.selected"/>
+                        <input type="checkbox" ng-model="c.selected" ng-change="optionToggled()"/>
                             <span>&nbsp;{{ c.file }}</span>
                         </label>&nbsp;&nbsp;<a target="_blank" href="{{ c.file_link }}"><i class="fa fa-external-link"></i></a>
                         <span class="pull-right">{{ c.mtime }}</span>
@@ -118,8 +120,8 @@
                 </div>
             </div>
             <div class="box-footer">
-            <button class="btn btn-default pull-left" ng-click="deleteReports(files_list, true)">Delete all</button>
-            <button class="btn btn-default pull-right" ng-click="deleteReports(files_list, false)">Delete</button>
+            <button class="btn btn-default pull-left" ng-disabled="!isAllSelected && !checked" ng-click="deleteReports(files_list, true)">Delete all</button>
+            <button class="btn btn-default pull-right" ng-disabled="!isAllSelected && !checked" ng-click="deleteReports(files_list, false)">Delete</button>
             </div>
         </div>
     </div>
