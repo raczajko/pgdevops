@@ -18,16 +18,18 @@ angular.module('bigSQL.components').controller('switchLogfileController', ['$sco
     $scope.currentLogfile = $uibModalInstance.currentLogfile;
 
     $scope.switchFile = function (fileName) {
+        $scope.logAction = true;
         session.call('com.bigsql.switch_log_file', [
             $scope.comp, fileName
         ]);
 
         session.subscribe("com.bigsql.onSwitchLogfile", function (data) {
             var result = data[0];
-            
+
             if(result.error == 0){
                 $scope.logAction = true;
-                $scope.$apply()
+                $scope.$apply();
+
                 window.setTimeout(function() {
                     $rootScope.$emit('switchLogfile', fileName, $scope.comp);
                 }, 2000);
@@ -43,7 +45,7 @@ angular.module('bigSQL.components').controller('switchLogfileController', ['$sco
         session.subscribe("com.bigsql.log_files_list", function (data) {
             $uibModalInstance.dismiss('cancel');
         });       
-    }
+    };
 
     $scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');
