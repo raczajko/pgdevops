@@ -171,7 +171,6 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         modalInstance.pgLogPrefix = $scope.pgLogPrefix;
     };
 
-    // $scope.isAllSelected = false;
     $scope.toggleAll = function() { 
         if($scope.isAllSelected){
             $scope.isAllSelected = false;
@@ -183,7 +182,6 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
       
     $scope.optionToggled = function(){
         $scope.checked = true;
-        $scope.isAllSelected = $scope.files_list.every(function(itm){ return itm.selected; })
     }
 
     $scope.deleteReports = function (files, selectAll) {
