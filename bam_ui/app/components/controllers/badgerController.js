@@ -88,7 +88,10 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                 $scope.showReports = false;
             }else{
                 $scope.files_list=files_list; 
-                $scope.showReports = true;               
+                $scope.showReports = true; 
+                for (var i = $scope.files_list.length - 1; i >= 0; i--) {
+                    $scope.files_list[i].selected = false;
+                }              
             }
         });
 
@@ -168,21 +171,14 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         modalInstance.pgLogPrefix = $scope.pgLogPrefix;
     };
 
-    $scope.enableDeletebtns = function (argument) {
-        $scope.checked = true;
-    }
-
-    $scope.allSelect = function (files,argument) {
-        for (var i = $scope.files_list.length - 1; i >= 0; i--) {
-                $scope.files_list[i].selected = true;
-                console.log($scope.files_list[i].selected)
+    // $scope.isAllSelected = false;
+    $scope.toggleAll = function() { 
+        if($scope.isAllSelected){
+            $scope.isAllSelected = false;
+        }else{
+            $scope.isAllSelected = true;
         }
-    }
-
-    $scope.toggleAll = function() {
-        var toggleStatus = !$scope.isAllSelected;
-        angular.forEach($scope.files_list, function(itm){ itm.selected = toggleStatus; });
-       
+        angular.forEach($scope.files_list, function(itm){ itm.selected = $scope.isAllSelected; });
     }
       
     $scope.optionToggled = function(){

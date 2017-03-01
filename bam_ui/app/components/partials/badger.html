@@ -91,7 +91,7 @@
                         <div class="form-actions">
                             <div class="text-right">
                                 <button type="submit" class="btn btn-primary"
-                                        ng-disabled="generatingReportSpinner || disableGenrate"
+                                        ng-disabled="generatingReportSpinner || disableGenrate || !selectComp"
                                         ng-click="openGenerateModal()">Generate
                                 </button>
                             </div>
@@ -104,12 +104,12 @@
     <div class="col-md-6 col-sm-6 col-xs-12">
         <div class="box" ng-if="showReports">
             <div class="box-header">
-                <span><label>Report</label></span>
-                <span class="pull-right"><label>Created on</label></span>                
+                <span class="pull-left" style="padding-left: 15px;"><label>Report</label></span>
+                <span class="pull-right" style="padding-right: 15px;"><label>Created on</label></span>                
             </div>
             <div class="box-body">
                 <div class="col-md-12 recent-report-list">
-                    <input type="checkbox" name="" ng-click="toggleAll()" ng-model="isAllSelected" /> <strong> Select all </strong>
+                    <input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected"/> <strong>&nbsp;Select all </strong>
                     <div ng-repeat="c in files_list">
                         <label>
                         <input type="checkbox" ng-model="c.selected" ng-change="optionToggled()"/>
