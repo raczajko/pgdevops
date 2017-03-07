@@ -26,7 +26,7 @@
     <div ng-if="nothingInstalled" class="jumbotron" style="background-color: #fff; margin-top: 15px; text-align: center;"> <h3> You haven't installed anything yet</h3>
     </div>
     <div ng-if="!loading && !retry">
-        <div ng-repeat="(key, value) in allComponents | groupBy: 'category_desc'">
+        <div ng-repeat="(key, value) in components | groupBy: 'category_desc'">
             <div class="box-header" ng-if="key != 'Extensions'">
                 <h3 class="box-title" ng-bind="key" ng-if="value.length"></h3>
             </div>
@@ -54,7 +54,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row extensions-row" ng-if="$index == 1 && extensionsList.length">
+            <div class="row extensions-row" ng-if="$index == 0 && extensionsList.length">
                 <div class="col-md-2 col-sm-3 col-xs-6 extensions-area" ng-click="openDetailsModal(ext.component)" style="width: 11.499999995% ; padding: 13px;" ng-repeat="ext in extensionsList">
                     <span class="badge new-comp-wrapper" ng-if="ext.is_new == 1 && ext.status == 'NotInstalled'" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="Release date: {{ ext.release_date }}">New</span>
                     <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="ext.status == 'Installed'|| ext.status == 'NotInitialized'" style="position: absolute; margin-left: 95px"></i>

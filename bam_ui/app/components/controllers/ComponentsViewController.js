@@ -64,7 +64,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 for (var i = $scope.extensionsList.length - 1; i >= 0; i--) {
                     $scope.extensionsList[i].modifiedName = $scope.extensionsList[i].component.split('-')[0].replace(/[0-9]/g,'');
                 }
-                $scope.allComponents = $scope.extensionsList.concat($scope.components);
             }
         })   
     }
@@ -86,7 +85,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.retry = true;
             } else {
                 $scope.nothingInstalled = false;
-                data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops' && n.category_desc != 'Extensions';})
+                data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops'});
                 if ($scope.showInstalled) {
                     $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
                     if($scope.components.length == 0){
