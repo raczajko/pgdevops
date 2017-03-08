@@ -49,27 +49,29 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                     });
                 }else{
                     $scope.enableBtns = true;
+                    session.call('com.bigsql.db_list', [$scope.selectComp]);
                 }
             });
     }
 
     $scope.onSelectChange = function (argument) {
+        $scope.extensionAlerts.splice(0,1);
         localStorage.setItem('selectedCluster', argument);
         $scope.alerts.splice(0, 1);
         $scope.selectDatabase = '';
         if(argument){
             $scope.component = 'plprofiler3-'+argument;
             checkplProfilerStatus();
-            session.call('com.bigsql.db_list', [argument]);
             getInstanceInfo(argument);
         }
     }
 
     $scope.onDatabaseChange = function (argument) {
+        $scope.extensionAlerts.splice(0,1);
         if (argument) {
-            localStorage.setItem('selectedDatabase', JSON.stringify({'database': $scope.selectDatabase, 'component': $scope.selectComp}));   
+            localStorage.setItem('selectedDatabase', JSON.stringify({'database': argument, 'component': $scope.selectComp}));   
             session.call('com.bigsql.checkExtension', [
-                $scope.selectDatabase, $scope.selectComp, 'plprofiler'
+                argument, $scope.selectComp, 'plprofiler'
             ]);
         }
     }
@@ -99,9 +101,9 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                 $scope.selectComp = $scope.components[0].component;
                 $scope.onSelectChange($scope.selectComp);
                 $scope.component = 'plprofiler3-'+ $scope.selectComp;
-                session.call('com.bigsql.db_list', [$scope.selectComp]);
+                // session.call('com.bigsql.db_list', [$scope.selectComp]);
                 getInstanceInfo($scope.selectComp);
-                localStorage.setItem('runningPostgres');
+                // localStorage.setItem('runningPostgres');
             }else if($scope.components.length > 1 && selectedCluster){
                 $scope.selectComp = selectedCluster;
                 $scope.onSelectChange(selectedCluster);
@@ -120,7 +122,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         session.subscribe("com.bigsql.onCheckExtension", function (data) {
             if (!data[0].status) {
                 $scope.extensionAlerts.push({
-                        msg:  'plprofiler extension is not created in ' + $scope.selectDatabase + ' database. Do you want to create?',
+                        msg:  'plprofiler extension is not enabled on ' + $scope.selectDatabase + '. Do you want to enable?',
                         type: 'warning',
                         showBtns : true,
                     });
