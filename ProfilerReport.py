@@ -58,6 +58,16 @@ class ProfilerReport(object):
     def resetSharedData(self):
         self.prof.reset_shared()
 
+    def is_installed(self):
+        check_query = "select extname,extversion from pg_extension where extname='plprofiler'"
+
+        cur = self.prof.dbconn.cursor()
+        cur.execute(check_query)
+        row = cur.fetchone()
+        if row:
+            return True
+        return False
+
     def is_enabled(self):
         check_query = "select name,setting from pg_settings where name='plprofiler.enabled'"
 
