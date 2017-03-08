@@ -5,26 +5,20 @@
 </div>
 <div class="modal-body">
     <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
-    <!-- <p ng-hide="noUpdates">Select the components you want to update. (Or All)</p> -->
     <div class="container-fluid">
-        <!-- /.box-header -->
         <div class="row" id="updatesTable" ng-hide="noUpdates">
             <div ng-show="loadingSpinner">
                 <h4 class="control-label" ng-hide="noUpdates"><i class="fa fa-spinner fa-2x  fa-pulse"></i>&#160;&#160;&#160; Checking for updates..</h4>
             </div>
-            <h4 class="control-label" ng-hide="noUpdates || loadingSpinner">{{components.length}} Updates Available</h4>
+            <h4 class="control-label" ng-hide="noUpdates || loadingSpinner">{{components.length}} Update(s) Available</h4>
             <div class="pull-right" style="margin-top: -35px;">
                 <button class="btn btn-sm" type="button" ng-click="selectedUpdate()" ng-hide="noUpdates || loadingSpinner">Update All</button>
             </div>
             <div style="border-bottom: 2px solid #ddd;width: 100%;vertical-align: middle;">
-                <!-- <div class="col-md-2 col-xs-2"></div>
-                <div class="col-md-4 col-xs-4"><strong>Component</strong></div>
-                <div class="col-md-5 col-xs-5"><strong>Description</strong></div> -->        
             </div>
             <div class="col-md-12 col-xs-12" id="updatesTableTbody " ng-repeat="(key, value) in components" ng-if="value.updates>0 && value.component != 'bam2'" style="border-bottom: 1px solid #ddd;">
                 <div class="component_box" id="{{value.component}}">
                     <div class="col-md-2 col-xs-2">
-                        <!-- <input type="checkbox" ng-model="value.selected" ng-checked="selectedComp.component == value.component"> -->
                         <img class="img-responsive" style="width: 35%; padding: 6px; margin-left: 35px;" ng-src="assets/img/component-logos/{{value.component}}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
                         <div style="text-align: center; white-space: nowrap;">
                             <a ng-if="value.category != 1"  ng-click="cancel(); openDetailsModal(value.component)">
@@ -41,13 +35,11 @@
                             </div>
                         </div>
                     </div>
-                    <!-- <div class="col-md-1 col-xs-1"></div> -->
                     <div class="col-md-9 col-xs-9">
                         <div style="overflow: auto; height: 100px; margin-bottom: 5px;" id="relnotesId_{{value.component}}">
                             <div class="update-comp-relnotes" style="margin-top: -20px;" ng-bind-html="value.rel_notes"></div>
                         </div>
                         <a class="pull-right" ng-if="value.rel_notes" id="showText_{{value.component}}" ng-click="changeHeight(value.component);">More....</a>
-                        <!-- <hm-read hmtext="{{value.relnotes}}" class="update-comp-relnotes" hmlimit="200" hm-more-text="read more" hm-less-text="read less"></hm-read> -->
                     </div>
                     <div class="col-md-1 col-xs-1">
                         <button class="btn btn-sm" type="button" style="margin-left: 25px;" ng-click="selectedUpdate(value.component)" ng-hide="noUpdates">Update</button>
@@ -86,30 +78,6 @@
                     <i class="pull-right glyphicon" ng-class="{'fa fa-plus': !uibStatus.newComponents, 'fa fa-minus': uibStatus.newComponents}"></i>
                     </span> 
                   </uib-accordion-heading>
-            
-               <!--  <div class="box-body update-modal-table-header">
-                    <div class="col-md-4 col-xs-4"><strong>Installed/Updated Date</strong></div>
-                    <div class="col-md-4 col-xs-4"><strong>Component Type</strong></div>
-                    <div class="col-md-4 col-xs-4"><strong>Component</strong></div>
-                </div>
-                <div class="col-md-12 col-xs-12 update-modal-table" id="updatesTableTbody " ng-repeat=" value in allComponents | toArray:false | orderBy : 'install_date' : true" ng-if="value.is_updated == 1  && value.component != 'bam2' ">
-                    <div class="component_box" id="{{value.component}}">
-                        <div class="col-md-4 col-xs-4">
-                            <span>{{value.install_date}}</span>
-                        </div>
-                        <div class="col-md-4 col-xs-4">
-                            <span>{{value.category_desc}}</span>
-                        </div>
-                        <div class="col-md-4 col-xs-4">
-                            <a ng-if="value.category != 1" ng-click="cancel(); openDetailsModal(value.component)">
-                                {{value.disp_name}}
-                            </a>
-                            <a ng-if="value.category == 1" nui-sref="components.detailspg95({component:value.component}) " ng-click="cancel()">
-                                {{value.disp_name}}
-                            </a>
-                        </div>
-                    </div>
-                </div> -->
                 <div class="col-md-12 col-xs-12" id="updatesTableTbody " ng-repeat=" value in allComponents | toArray:false | orderBy : 'install_date' : true" ng-if="value.is_updated == 1  && value.component != 'bam2' " style="border-bottom: 1px solid #ddd;">
                 <div class="component_box" id="{{value.component}}">
                     <div class="col-md-2 col-xs-2">

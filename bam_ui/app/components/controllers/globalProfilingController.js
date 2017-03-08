@@ -1,6 +1,13 @@
 angular.module('bigSQL.components').controller('globalProfilingController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', '$window', '$location', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, $window, $location) {
 
 	var session;
+    $scope.hostName = $uibModalInstance.hostName;
+    $scope.pgUser = $uibModalInstance.pgUser;
+    $scope.pgPass = $uibModalInstance.pgPass;
+    $scope.pgDB = $uibModalInstance.pgDB;
+    $scope.pgPort = $uibModalInstance.pgPort;
+    $scope.enableProfiler = false;
+    $scope.comp = $uibModalInstance.comp;
 
     $scope.showResult = false;
     $scope.showStatus =  true;
@@ -14,7 +21,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            "check"
+            "check", $scope.comp
         ]);
 
         session.subscribe("com.bigsql.profilerReports", function (data) {
@@ -34,13 +41,6 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
 
     });
 
-    $scope.hostName = $uibModalInstance.hostName;
-    $scope.pgUser = $uibModalInstance.pgUser;
-    $scope.pgPass = $uibModalInstance.pgPass;
-    $scope.pgDB = $uibModalInstance.pgDB;
-    $scope.pgPort = $uibModalInstance.pgPort;
-    $scope.enableProfiler = false;
-
     $scope.enableProfiler = function (argument) {
         $scope.showStatus = false;
     	session.call('com.bigsql.plprofiler', [
@@ -48,7 +48,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            "enable"
+            "enable", $scope.comp
 
         ]).then(function (argument) {
             session.call('com.bigsql.plprofiler', [
@@ -56,7 +56,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
                 $scope.pgPort, $scope.pgDB,
                 $scope.pgPass, $scope.pgQuery,
                 $scope.pgTitle, $scope.pgDesc,
-                "check"
+                "check", $scope.comp
             ]);
         }) ;
     };
@@ -70,7 +70,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            "disable"
+            "disable", $scope.comp
 
         ]).then(function (argument) {
             session.call('com.bigsql.plprofiler', [
@@ -78,7 +78,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
                 $scope.pgPort, $scope.pgDB,
                 $scope.pgPass, $scope.pgQuery,
                 $scope.pgTitle, $scope.pgDesc,
-                "check"
+                "check", $scope.comp
             ]);
         });
     };
@@ -89,7 +89,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            "reset"
+            "reset", $scope.comp
         ]);
     };
 
@@ -99,7 +99,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            "generate"
+            "generate", $scope.comp
         ]).then(function (sub) {
             $uibModalInstance.dismiss('cancel');
         });
@@ -107,6 +107,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
 
 
     $scope.cancel = function () {
+        $rootScope.$emit('refreshPage');
         $uibModalInstance.dismiss('cancel');
     };
 

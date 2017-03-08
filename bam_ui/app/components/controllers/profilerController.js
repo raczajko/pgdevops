@@ -1,6 +1,7 @@
 angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall) {
 
     $scope.alerts = [];
+    $scope.extensionAlerts = [];
 
     var subscriptions = [];
     $scope.components = {};
@@ -10,6 +11,8 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     $scope.loading = true;
     $scope.retry = false;
     $scope.disableShowInstalled = false;
+    $scope.component;
+    $scope.enableBtns = false;
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -18,22 +21,146 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         });
     });
 
-    var statusData = bamAjaxCall.getCmdData('status');
-    statusData.then(function(info) {
-        if(info.length > 0 && localStorage.length == 0){
-            var infoData = bamAjaxCall.getCmdData('read/env/' + info[0].component)
-            infoData.then(function(info) {
-                $scope.hostName = 'localhost';
-                $scope.pgUser = info.PGUSER;
-                $scope.pgDB = info.PGDATABASE;
-                $scope.pgPort = info.PGPORT; 
-            });
-        } 
+    var infoData = bamAjaxCall.getCmdData('getrecentreports/profiler');
+    infoData.then(function (data) {
+        var files_list = data.data;
+        if(files_list.length > 0){
+            $scope.report_file = files_list[0].file_link.replace('reports/','');
+            $scope.report_url = files_list[0].file_link;
+        }
     });
+
+    function getInstanceInfo(comp) {
+    
+        var instanceInfo = bamAjaxCall.getCmdData('status/'+ comp);
+        instanceInfo.then(function (argument) {
+            $scope.pgPort = argument.port;
+        })
+    }
+
+    function checkplProfilerStatus(argument) {
+        var compStatus = bamAjaxCall.getCmdData('status/'+ $scope.component);
+            compStatus.then(function (data) {
+                if (data.state != "Installed") {
+                    $scope.alerts.push({
+                        msg:  $scope.component + ' is not Installed yet. ',
+                        type: 'danger',
+                        pgComp: false
+                    });
+                }else{
+                    $scope.enableBtns = true;
+                }
+            });
+    }
+
+    $scope.onSelectChange = function (argument) {
+        localStorage.setItem('selectedCluster', argument);
+        $scope.alerts.splice(0, 1);
+        $scope.selectDatabase = '';
+        if(argument){
+            $scope.component = 'plprofiler3-'+argument;
+            checkplProfilerStatus();
+            session.call('com.bigsql.db_list', [argument]);
+            getInstanceInfo(argument);
+        }
+    }
+
+    $scope.onDatabaseChange = function (argument) {
+        if (argument) {
+            localStorage.setItem('selectedDatabase', JSON.stringify({'database': $scope.selectDatabase, 'component': $scope.selectComp}));   
+            session.call('com.bigsql.checkExtension', [
+                $scope.selectDatabase, $scope.selectComp, 'plprofiler'
+            ]);
+        }
+    }
+
+    $scope.createExtension = function (argument) {
+        $scope.extensionAlerts.splice(0,1);
+        session.call('com.bigsql.createExtension', [
+                $scope.selectDatabase, $scope.selectComp, 'plprofiler'
+            ]);
+    }
+
+    $rootScope.$on('refreshPage',function (argument) {
+        $window.location.reload();
+    } );
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
+
+        session.call('com.bigsql.checkLogdir');
+
+
+        session.subscribe("com.bigsql.onCheckLogdir", function (components) {
+            var selectedCluster = localStorage.getItem('selectedCluster');
+            $scope.components = JSON.parse(components[0]);
+            if($scope.components.length == 1){
+                $scope.selectComp = $scope.components[0].component;
+                $scope.onSelectChange($scope.selectComp);
+                $scope.component = 'plprofiler3-'+ $scope.selectComp;
+                session.call('com.bigsql.db_list', [$scope.selectComp]);
+                getInstanceInfo($scope.selectComp);
+                localStorage.setItem('runningPostgres');
+            }else if($scope.components.length > 1 && selectedCluster){
+                $scope.selectComp = selectedCluster;
+                $scope.onSelectChange(selectedCluster);
+            }else if($scope.components.length <= 0){
+                $scope.alerts.push({
+                    msg:  "No Postgres component Installed/ Initialized.",
+                    type: 'danger',
+                    pgComp: true
+                });
+            }
+            $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
+        session.subscribe("com.bigsql.onCheckExtension", function (data) {
+            if (!data[0].status) {
+                $scope.extensionAlerts.push({
+                        msg:  'plprofiler extension is not created in ' + $scope.selectDatabase + ' database. Do you want to create?',
+                        type: 'warning',
+                        showBtns : true,
+                    });
+                $scope.$apply();
+            }
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
+        session.subscribe("com.bigsql.onCreateExtension", function (data) {
+            if (data[0].status) {
+                $scope.extensionAlerts.push({
+                        msg:  'Successfully created plprofiler extension.',
+                        type: 'success',
+                        showBtns: false,
+                    });
+                $scope.$apply();
+            }
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+        session.subscribe('com.bigsql.ondblist', function (data) {
+            var selectedDatabase = JSON.parse(localStorage.getItem('selectedDatabase'));
+            for (var i = data.length - 1; i >= 0; i--) {
+                if ($scope.selectComp == data[i].component) {
+                    $scope.databases = data[i].list;
+                    if (selectedDatabase.database && data[i].component == selectedDatabase.component) {
+                        for (var i = $scope.databases.length - 1; i >= 0; i--) {
+                            if (selectedDatabase.database == $scope.databases[i].datname) {
+                                $scope.onDatabaseChange(selectedDatabase.database);
+                                $scope.selectDatabase = selectedDatabase.database;
+                            }
+                        }
+                    }
+                }
+                $scope.$apply();
+            }
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
 
         session.subscribe("com.bigsql.profilerReports", function (data) {
             $scope.generatingReportSpinner=false;
@@ -46,17 +173,9 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                 }
                 else{
                     $scope.errorMsg = result.msg;
-                    $scope.report_file = '';
                 }
-
-                //$scope.report_file = result.report_file;
-                //$scope.report_url = "/reports/" + result.report_file;
-                // $window.open("http://localhost:8050/reports/" + result.report_file);
-                //$scope.$apply();
-                //$scope.message = data;
             } else {
                 $scope.errorMsg = result.msg;
-                $scope.report_file = '';
             }
             $scope.$apply();
 
@@ -65,12 +184,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         });
     });
 
-    $scope.hostName = localStorage.getItem('hostName');
-    $scope.pgUser = localStorage.getItem('pgUser');
-    $scope.pgDB = localStorage.getItem('pgDB');
-    $scope.pgPort = localStorage.getItem('pgPort');
-
-
+    $scope.hostName = 'localhost';
 
     $scope.generateReport = function () {
         $scope.report_file = "";
@@ -96,43 +210,57 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
             windowClass: 'switch-modal-window'
         });
         modalInstance.reportsType="profiler";
+        modalInstance.comp = $scope.selectComp;
     };
 
     $scope.queryProfiler = function (hostName, pgUser, pgPass, pgDB, pgPort) {
-
-        localStorage.setItem('hostName',hostName);
-        localStorage.setItem('pgUser',pgUser);
-        localStorage.setItem('pgDB',pgDB);
-        localStorage.setItem('pgPort',pgPort);
-
-
+        $scope.alerts.splice(0, 1);
+        $scope.extensionAlerts.splice(0,1);
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/statementProfilingModal.html',
             controller: 'statementProfilingController',
         });
         modalInstance.hostName = hostName;
-        modalInstance.pgUser = pgUser;
-        modalInstance.pgPass = pgPass;
-        modalInstance.pgDB = pgDB;
+        modalInstance.pgUser = '';
+        modalInstance.pgPass = '';
+        modalInstance.pgDB = $scope.selectDatabase;
         modalInstance.pgPort = pgPort;
+        modalInstance.comp = $scope.selectComp;
     };
 
     $scope.globalProfiling = function (hostName, pgUser, pgPass, pgDB, pgPort) {
-
-        localStorage.setItem('hostName',hostName);
-        localStorage.setItem('pgUser',pgUser);
-        localStorage.setItem('pgDB',pgDB);
-        localStorage.setItem('pgPort',pgPort);
-
+        $scope.alerts.splice(0, 1);
+        $scope.extensionAlerts.splice(0,1);
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/globalProfilingModal.html',
             controller: 'globalProfilingController',
         });
         modalInstance.hostName = hostName;
-        modalInstance.pgUser = pgUser;
-        modalInstance.pgPass = pgPass;
-        modalInstance.pgDB = pgDB;
+        modalInstance.pgUser = '';
+        modalInstance.pgPass = '';
+        modalInstance.pgDB = $scope.selectDatabase;
         modalInstance.pgPort = pgPort;
+        modalInstance.comp = $scope.selectComp;
+    };
+
+    $scope.openDetailsModal = function (comp) {
+        $scope.alerts.splice(0, 1);
+        $scope.extensionAlerts.splice(0,1);
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/details.html',
+            // windowClass: 'comp-details-modal',
+            size: 'lg',
+            controller: 'ComponentDetailsController',
+            keyboard  : false,
+            backdrop  : 'static',
+        });
+        modalInstance.component = $scope.component;
+        modalInstance.isExtension = true;
+    };
+
+    $scope.closeAlert = function (index) {
+        $scope.alerts.splice(index, 1);
+        $scope.extensionAlerts.splice(index,1);
     };
 
     //need to destroy all the subscriptions on a template before exiting it

@@ -2,12 +2,12 @@
     <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
         <i class="fa fa-lg fa-close"></i>
     </div>
-    <h3 class="modal-title">Statement Profiling</h3>
+    <h3 class="modal-title">plpgsql Statement Profiling</h3>
 </div>
 <div class="modal-body">
 <form class="form plProfiler-form">
     <div class="form-group">
-        <textarea ng-model="pgQuery" class="form-control" placeholder="select statement_to_profile(param_1, param_2)"></textarea>
+        <textarea ng-model="pgQuery" class="form-control" placeholder="select plpgsql_function_to_profile(param_1, param_2)"></textarea>
         <span class="required-plprofiler-form">*</span>
     </div>
     <div class="form-group">

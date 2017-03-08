@@ -1,18 +1,14 @@
-angular.module('bigSQL.components').controller('recentReportsController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', 'bamAjaxCall', '$sce', '$http', '$window', function ($scope, $rootScope, $uibModalInstance, PubSubService, bamAjaxCall, $sce, $http, $window) {
-
-	var session;
+angular.module('bigSQL.components').controller('recentReportsController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', 'bamAjaxCall', '$sce', '$http', '$window', '$uibModal', function ($scope, $rootScope, $uibModalInstance, PubSubService, bamAjaxCall, $sce, $http, $window, $uibModal) {
 
     $scope.showResult = false;
     $scope.showStatus =  true;
     $scope.autoSelect = false;
     $scope.logAction = false;
     $scope.showError = false;
-    $scope.logFile = 'pgbadger-%Y%m%d_%H.log';
-    var subscriptions = [];
-    var sessionPromise = PubSubService.getSession();
-    sessionPromise.then(function (val) {
-    	session = val;
+    $scope.comp = $uibModalInstance.comp;
+    $scope.reportsType = $uibModalInstance.reportsType;
 
+    function getReports(argument) {
         var reportsType = $scope.reportsType;
         var infoData = bamAjaxCall.getCmdData('getrecentreports/' + reportsType);
         infoData.then(function (data) {
@@ -23,12 +19,27 @@ angular.module('bigSQL.components').controller('recentReportsController', ['$sco
                 $scope.files_list=files_list;                
             }
         });
+    }
 
+    getReports();
 
+    $rootScope.$on('refreshReports', function (argument) {
+        $uibModalInstance.dismiss('cancel');
+        // getReports();
+    })
 
-    });
-
-    $scope.reportsType = $uibModalInstance.reportsType;
+    $scope.toggleAll = function() { 
+        if($scope.isAllSelected){
+            $scope.isAllSelected = false;
+        }else{
+            $scope.isAllSelected = true;
+        }
+        angular.forEach($scope.files_list, function(itm){ itm.selected = $scope.isAllSelected; });
+    }
+      
+    $scope.optionToggled = function(){
+        $scope.checked = true;
+    }
 
     $scope.removeFiles = function (files, selectAll) {
         var deleteFiles = [];
@@ -43,23 +54,22 @@ angular.module('bigSQL.components').controller('recentReportsController', ['$sco
                 }
             }            
         }
-        var removeFiles = $http.post($window.location.origin + '/api/remove_reports/profiler', deleteFiles);
-        removeFiles.then(function (data) {
-            if(data.data.error == 0){
-                $uibModalInstance.dismiss('cancel');
-            }
-        });   
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/confirmDeletionModal.html',
+            controller: 'confirmDeletionModalController',
+        });
+        modalInstance.deleteFiles = deleteFiles;
+        modalInstance.comp = $scope.comp;
     }
 
     $scope.cancel = function () {
+        $rootScope.$emit('refreshPage');
         $uibModalInstance.dismiss('cancel');
     };
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
-        for (var i = 0; i < subscriptions.length; i++) {
-            session.unsubscribe(subscriptions[i])
-        }
+        
     });
 
 

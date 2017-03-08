@@ -293,3 +293,52 @@ class Monitoring(object):
             pass
 
         yield self.session.publish('com.bigsql.onPGhba', result)
+
+    @inlineCallbacks
+    def checkExtension(self, database, comp, extension):
+        """
+        Method to get the list of database available in cluster.
+        :return: It yields json string.
+        """
+        result = dict()
+        result['component'] = comp
+        port = util.get_column('port', comp)
+        try:
+            if comp in self.pgpassfiles:
+                os.environ['PGPASSFILE'] = self.pgpassfiles[comp]
+            else:
+                util.read_env_file(comp)
+                self.pgpassfiles[comp] = os.environ['PGPASSFILE']
+            pg = PgInstance("localhost", "postgres", database, int(port))
+            pg.connect()
+            is_extension_installed = pg.is_extension_installed(extension)
+            pg.close()
+            result['status'] = is_extension_installed
+        except Exception as e:
+            pass
+        yield self.session.publish('com.bigsql.onCheckExtension', result)
+
+    @inlineCallbacks
+    def createExtension(self, database, comp, extension):
+        """
+        Method to get the list of database available in cluster.
+        :return: It yields json string.
+        """
+        result = dict()
+        result['component'] = comp
+        port = util.get_column('port', comp)
+        try:
+            if comp in self.pgpassfiles:
+                os.environ['PGPASSFILE'] = self.pgpassfiles[comp]
+            else:
+                util.read_env_file(comp)
+                self.pgpassfiles[comp] = os.environ['PGPASSFILE']
+            pg = PgInstance("localhost", "postgres", database, int(port))
+            pg.connect()
+            create_extension = pg.create_extension(extension)
+            pg.close()
+            result['status'] = create_extension
+        except Exception as e:
+            pass
+        yield self.session.publish('com.bigsql.onCreateExtension', result)
+

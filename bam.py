@@ -137,6 +137,10 @@ class AppSession(ApplicationSession):
 
         self.register(monitoring.activity, 'com.bigsql.activity')
 
+        self.register(monitoring.checkExtension, 'com.bigsql.checkExtension')
+
+        self.register(monitoring.createExtension, 'com.bigsql.createExtension')
+
         self.register(reporting.generate_profiler_reports, 'com.bigsql.plprofiler')
 
         self.register(reporting.generate_badger_reports, 'com.bigsql.pgbadger')
