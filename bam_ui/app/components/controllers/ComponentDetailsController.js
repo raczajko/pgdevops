@@ -17,7 +17,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     }
 
     $scope.cancel = function () {
-        $rootScope.$emit('refreshPgbadger');
+        $rootScope.$emit('refreshPage');
         $rootScope.$emit('updatePackageManager');
         $uibModalInstance.dismiss('cancel');
     };

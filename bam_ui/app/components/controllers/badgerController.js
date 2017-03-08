@@ -27,42 +27,41 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         });
     });
 
-    $rootScope.$on('refreshPgbadger',function (argument) {
+    $rootScope.$on('refreshPage',function (argument) {
         $window.location.reload();
     } );
 
-    var compStatus = bamAjaxCall.getCmdData('status/pgbadger');
-        compStatus.then(function (data) {
-            if (data.state == "Installed") {
-                $scope.badgerInstalled = true;
-                var noPostgresRunning = false;
-                var serverStatus = bamAjaxCall.getCmdData('status');
-                serverStatus.then(function (data) {
-                    for (var i = data.length - 1; i >= 0; i--) {
-                        if (data[i].state == "Running") {
-                            noPostgresRunning = true;
-                        }
-                    }
-                    if(!noPostgresRunning){
+    var serverStatus = bamAjaxCall.getCmdData('status');
+        serverStatus.then(function (data) {
+            var noPostgresRunning = false;
+            for (var i = data.length - 1; i >= 0; i--) {
+                if (data[i].state == "Running") {
+                    noPostgresRunning = true;
+                }
+            }
+            if(!noPostgresRunning){
+                $scope.disableGenrate = true;
+                $scope.alerts.push({
+                    msg:  "No Postgres component Installed/ Initialized.",
+                    type: 'danger',
+                    pgComp: true
+                });
+            }else{
+                var compStatus = bamAjaxCall.getCmdData('status/pgbadger');
+                compStatus.then(function (data) {
+                    if (data.state == "Installed") {
+                        $scope.badgerInstalled = true;
+                    }else{
                         $scope.disableGenrate = true;
                         $scope.alerts.push({
-                            msg:  "No Postgres component Installed/ Initialized.",
+                            msg:  'pgBadger is not Installed. ',
                             type: 'danger',
-                            pgComp: true
+                            pgComp: false
                         });
                     }
                 });
-            } else{
-                $scope.disableGenrate = true;
-                $scope.alerts.push({
-                    msg:  'pgBadger is not Installed yet. ',
-                    type: 'danger',
-                    pgComp: false
-                });
             }
-        });
-
-    
+        });    
 
     $scope.onSelectChange = function (comp) {
         if(comp){
@@ -71,16 +70,18 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             session.subscribe('com.bigsql.onInfoComponent', function (args) {
                 $scope.logDir = JSON.parse(args[0][0])[0].logdir;
                 $scope.$apply();
-            });    
+            });
+            localStorage.setItem('selectedDB', comp);  
         }else{
             $scope.logfiles = [];
             $scope.logDir = '';
+            localStorage.setItem('selectedDB', '');
         }
         
     };
 
     function getReports(argument) {
-        
+
         var infoData = bamAjaxCall.getCmdData('getrecentreports/badger');
         infoData.then(function (data) {
             var files_list = data.data;
@@ -107,9 +108,13 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 
         session.subscribe("com.bigsql.onCheckLogdir", function (components) {
             $scope.components = JSON.parse(components[0]);
+            var selectedDB = localStorage.getItem('selectedDB');
             if($scope.components.length == 1){
                 $scope.selectComp = $scope.components[0].component;
                 $scope.onSelectChange($scope.selectComp);
+            }else if (selectedDB) {
+                $scope.selectComp = selectedDB;
+                $scope.onSelectChange(selectedDB);
             }
             $scope.$apply();
         }).then(function (subscription) {
@@ -202,6 +207,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             controller: 'confirmDeletionModalController',
         });
         modalInstance.deleteFiles = deleteFiles;
+        modalInstance.comp = 'pgbadger';
     }
 
     $rootScope.$on('updateReports', function (argument) {
@@ -233,7 +239,8 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         $scope.alerts.splice(0, 1);
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/details.html',
-            windowClass: 'comp-details-modal',
+            // windowClass: 'comp-details-modal',
+            size : 'lg',
             controller: 'ComponentDetailsController',
             keyboard  : false,
             backdrop  : 'static',
