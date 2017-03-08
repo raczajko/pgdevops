@@ -83,3 +83,4 @@ WTForms==2.0.2
 zope.interface==4.3.2
 psutil
 psycopg2==2.7
+htmlmin==0.1.10
