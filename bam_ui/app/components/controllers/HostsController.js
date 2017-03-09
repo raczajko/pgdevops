@@ -311,7 +311,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     }else if(data == "error" || data[0].state == 'error' && $scope.hostsList[idx].state == true){
                         $interval.cancel(stopPGCall);
                         stopPGCall = $interval(function (argument) {
-                            console.log("in stopPGCall");
                             $scope.loadHost(p_idx, idx, true);
                         } , 3000);
                         $scope.retry = true;
@@ -380,6 +379,23 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
+    }
+
+    $scope.stopServerCall = function (argument) {
+        $interval.cancel(stopStatusCall);
+    }
+
+    $scope.startServerCall = function (p_idx, idx) {
+        var remote_host = $scope.hostsList[idx].host;
+        if (remote_host == "localhost") {
+            remote_host = "";
+        }
+        stopStatusCall = $interval(function (){
+            if ($scope.groupsList[p_idx].hosts[idx].comps) {
+                $scope.updateComps(p_idx, idx);
+                $scope.getGraphValues(remote_host);
+            }
+        }, 5000);
     }
 
     $scope.deleteGroup = function (idx){
