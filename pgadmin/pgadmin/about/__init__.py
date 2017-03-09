@@ -31,7 +31,7 @@ class AboutModule(PgAdminModule):
                          callback='about_show',
                          icon='fa fa-info-circle',
                          label=gettext('About %(appname)s',
-                                       appname=config.APP_NAME))
+                                       appname="pgAdmin4 Web"))
             ]
         }
 

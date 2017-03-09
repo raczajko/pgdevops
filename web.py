@@ -27,7 +27,7 @@ import hashlib
 parser = reqparse.RequestParser()
 #parser.add_argument('data')
 
-config.APP_NAME = "BigSQL Manager"
+config.APP_NAME = "pgDevOps by BigSQL"
 config.LOGIN_NAME = "pgDevOps"
 application = Flask(__name__)
 
