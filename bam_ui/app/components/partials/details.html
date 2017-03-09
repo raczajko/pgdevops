@@ -7,9 +7,11 @@
         <h4>Component Details</h4>
         <!-- <server-info-details title="Component Details"></server-info-details> -->
     </div>
-        <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert()" dismiss-on-timeout="8000" class="uib-text">
-            {{alert.msg }} 
-        </uib-alert>    
+        <div class="uib-text">
+            <div uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert()" dismiss-on-timeout="8000">
+                {{alert.msg }} 
+            </div>
+        </div>    
         <div class="row">
         <div ng-if="loading" style="position: absolute;width: 100px; height: 45px; top: 45%;left: 45%; margin-left: -50px; margin-top: -25px;">
             <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>

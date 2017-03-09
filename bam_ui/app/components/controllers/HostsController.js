@@ -184,7 +184,17 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         } else {
             var infoData = bamAjaxCall.getCmdData('hostcmd/top/' + remote_host);
         }
+        if (previousTopData == "") {
+            var timeVal = new Date(Date.now());
+            $scope.cpuData[0].values.push({x: timeVal, y: 0});
+            $scope.cpuData[1].values.push({x: timeVal, y: 0});
 
+            $scope.diskIO[0].values.push({x: timeVal, y: 0});
+            $scope.diskIO[1].values.push({x: timeVal, y: 0});
+
+            $scope.NetworkIO[0].values.push({x: timeVal, y: 0});
+            $scope.NetworkIO[1].values.push({x: timeVal, y: 0});
+        }
         infoData.then(function (data) {
 
             if (previousTopData != "") {
@@ -311,6 +321,17 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     }
                 });
             $interval.cancel(stopStatusCall);
+
+            var timeVal = new Date(Date.now());
+            $scope.cpuData[0].values.push({x: timeVal, y: 0});
+            $scope.cpuData[1].values.push({x: timeVal, y: 0});
+
+            $scope.diskIO[0].values.push({x: timeVal, y: 0});
+            $scope.diskIO[1].values.push({x: timeVal, y: 0});
+
+            $scope.NetworkIO[0].values.push({x: timeVal, y: 0});
+            $scope.NetworkIO[1].values.push({x: timeVal, y: 0});
+
             stopStatusCall = $interval(function (){
                 if ($scope.groupsList[p_idx].hosts[idx].comps) {
                     $scope.updateComps(p_idx, idx);
@@ -528,7 +549,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.openDetailsModal = function (comp) {
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/details.html',
-            windowClass: 'comp-details-modal',
+            // windowClass: 'comp-details-modal',
+            size: 'lg',
             controller: 'ComponentDetailsController',
             keyboard  : false,
             backdrop  : 'static',
