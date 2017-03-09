@@ -27,7 +27,7 @@ angular.module('bigSQL.components').controller('statementProfilingController', [
             $scope.pgTitle, $scope.pgDesc,
             'profile_query', $scope.comp
         ]).then(function (sub) {
-            // $rootScope.$emit('refreshPage');
+            $rootScope.$emit('refreshPage');
         	$uibModalInstance.dismiss('cancel');
         });
     };
