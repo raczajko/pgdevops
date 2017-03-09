@@ -11,6 +11,9 @@
             <div uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert()" dismiss-on-timeout="8000">
                 {{alert.msg }} 
             </div>
+            <uib-alert ng-repeat="alert in startAlert" type="{{startAlert.type}}" close="closeAlert()">
+                {{alert.msg }} <button class="btn btn-default btn-sm" ng-click="compAction('install'); closeAlert()" >Yes</button> <button class="btn btn-default btn-sm" ng-click="closeAlert()">No</button>
+            </uib-alert>
         </div>    
         <div class="row">
         <div ng-if="loading" style="position: absolute;width: 100px; height: 45px; top: 45%;left: 45%; margin-left: -50px; margin-top: -25px;">

@@ -43,7 +43,7 @@ class ComponentAction(object):
         self.process = ""
 
     @inlineCallbacks
-    def install_comp(self, comp_name):
+    def install_comp(self, comp_name, p_yes=None):
         """
         Method to install a component.
         :param comp_name: Name of the component to be installed.
@@ -51,6 +51,8 @@ class ComponentAction(object):
         """
 
         command_line = PGC_HOME + os.sep + "pgc --json install " + comp_name
+        if p_yes:
+            command_line = command_line + " -y"
         process = subprocess.Popen(command_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell= True)
         self.process = process
         for line in iter(process.stdout.readline, ''):

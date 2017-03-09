@@ -9,6 +9,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     var componentStatus = 0;
 
     $scope.alerts = [];
+    $scope.startAlert = [];
+    $scope.checkplProfiler = true;
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -34,7 +36,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
         }
     };
 
-    function compAction(action) {
+    $scope.compAction = function (action) {
+        var is_yes=false;
         if(action == 'start'){
             $scope.component.spinner = 'Starting..';
         }else if(action == 'stop'){
@@ -43,9 +46,12 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
             $scope.component.spinner = 'Removing..';
         }else if(action == 'restart'){
             $scope.component.spinner = 'Restarting..';
+        } else if(action == 'install'){
+            is_yes=true;
+            $scope.checkplProfiler = true;
         }
         var sessionKey = "com.bigsql." + action;
-        session.call(sessionKey, [$scope.component.component]);
+        session.call(sessionKey, [$scope.component.component, is_yes]);
     };
 
     function callInfo(argument) {
@@ -138,12 +144,20 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                     $scope.component.spinner = 'Stopping..';
                 }else if(event.target.attributes.action.value == 'remove'){
                     $scope.component.spinner = 'Removing..';
+                }else if($scope.component.component.includes("plprofiler") && event.target.attributes.action.value == 'install'){
+                    $scope.checkplProfiler = false;
+                    $scope.startAlert.push({
+                        msg: "After installation of plprofiler, " + $scope.component.component.split('-')[1] + " restart will be done. Continue?",
+                        type: 'warning'
+                    });
                 }
                 // var sessionKey = "com.bigsql." + event.target.attributes.action.value;
                 // session.call(sessionKey, [$scope.component.component]);
                 if($scope.currentHost == 'localhost'){
                     var sessionKey = "com.bigsql." + event.target.attributes.action.value;
-                    session.call(sessionKey, [$scope.component.component]);
+                    if ($scope.checkplProfiler) {
+                        session.call(sessionKey, [$scope.component.component]); 
+                    }
                 }else {
                     if(event.target.attributes.action.value == 'install'){
                         $scope.component.spinner = 'installing..';
@@ -223,6 +237,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
 
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);
+        $scope.startAlert.splice(index, 1);
     };
 
     //need to destroy all the subscriptions on a template before exiting it
