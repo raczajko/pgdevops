@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall) {
+angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies) {
 
     var subscriptions = [];
     var count = 1;
@@ -23,16 +23,18 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         $scope.pgcInfo = data[0];
     });
 
+    var logComponent = $location.path().split('log/').pop(-1);
+    var cookieVal = $cookies.get('selectedLog');
+    if(cookieVal){
+        $window.location.href = cookieVal;
+        $scope.selectComp = cookieVal;
+    }else{
+        $scope.selectComp = "#"+$location.path();
+    }
+
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
-        var logComponent = $location.path().split('log/').pop(-1);
-        var cookieVal = localStorage.getItem('selectedLog');
-        if(cookieVal){
-            $scope.selectComp = cookieVal;
-        }else{
-            $scope.selectComp = "#"+$location.path();
-        }
         if (logComponent != 'pgcli'){
             session.call('com.bigsql.infoComponent',[logComponent]);
         } else {
@@ -147,9 +149,12 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
     };
 
     $scope.onLogCompChange = function () {
-        localStorage.setItem('selectedLog', $scope.selectComp);
+        $cookies.put('selectedLog', $scope.selectComp);
         $interval.cancel($scope.intervalPromise);
         $window.location.href = $scope.selectComp;
+        for (var i = 0; i < subscriptions.length; i++) {
+            session.unsubscribe(subscriptions[i]);
+        }
     };
 
     /**
