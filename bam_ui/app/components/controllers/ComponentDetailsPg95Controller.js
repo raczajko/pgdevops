@@ -53,6 +53,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             if (window.location.href.split('/').pop(-1) == data[0].component) {
                 $scope.component = data[0];
                 if ($scope.component.status != "Running") {
+                    $scope.activeReleaseNotes = true;
                     $scope.uibStatus = {
                         tpsChartCollapsed: false,
                         rpsChartCollapsed: false,
@@ -61,6 +62,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                         connectionsCollapsed: false
                     };
                 } else {
+                    $scope.activeReleaseNotes = false;
                     $scope.uibStatus = {
                         tpsChartCollapsed: true,
                         rpsChartCollapsed: true,

@@ -27,7 +27,12 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
     sessionPromise.then(function (val) {
         session = val;
         var logComponent = $location.path().split('log/').pop(-1);
-        $scope.selectComp = "#"+$location.path();
+        var cookieVal = localStorage.getItem('selectedLog');
+        if(cookieVal){
+            $scope.selectComp = cookieVal;
+        }else{
+            $scope.selectComp = "#"+$location.path();
+        }
         if (logComponent != 'pgcli'){
             session.call('com.bigsql.infoComponent',[logComponent]);
         } else {
@@ -142,6 +147,7 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
     };
 
     $scope.onLogCompChange = function () {
+        localStorage.setItem('selectedLog', $scope.selectComp);
         $interval.cancel($scope.intervalPromise);
         $window.location.href = $scope.selectComp;
     };
