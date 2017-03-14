@@ -13,6 +13,7 @@ from autobahn.twisted.wamp import ApplicationSession
 from pygtail import Pygtail
 import json
 import sys
+from collections import deque
 
 PGC_HOME = os.getenv("PGC_HOME", "")
 PGC_LOGS = os.getenv("PGC_LOGS", "")
@@ -315,12 +316,13 @@ class Components(ComponentAction):
             if logdir == 'pgcli': 
                 logdir = PGC_LOGS
             self.session.publish('com.bigsql.pgcliDir',logdir)
-            log_file = Pygtail(logdir)
-            ln = log_file.readlines()
-            read_file = open(logdir)
-            _lines = read_file.readlines()[-1000:]
-            for _li in _lines:
-                yield self.session.publish('com.bigsql.log', _li)
+            try:
+                read_file = open(logdir)
+                _lines=deque(read_file,1000)
+                lines_out = "<br/>".join(_lines)
+                yield self.session.publish('com.bigsql.log', lines_out)
+            except Exception as e:
+                pass
 
     @inlineCallbacks
     def autostart(self,val,name):
@@ -349,12 +351,13 @@ class Components(ComponentAction):
         else:
             if logdir == 'pgcli':
                 logdir = PGC_LOGS
-            log_file = Pygtail(logdir)
-            ln = log_file.readlines()
-            read_file = open(logdir)
-            _lines = read_file.readlines()[-number:]
-            for _li in _lines:
-                yield self.session.publish('com.bigsql.log', _li)
+            try:
+                read_file = open(logdir)
+                _lines=deque(read_file,number)
+                lines_out = "<br/>".join(_lines)
+                yield self.session.publish('com.bigsql.log', lines_out)
+            except Exception as e:
+                pass
 
     @inlineCallbacks
     def liveLog(self,logdir):

@@ -34,7 +34,8 @@
                             </div>
                         </div>
                         <div class="col-sm-2">
-                            <input type="checkbox" value="checked" ng-model="checked" ng-checked="true" ng-click="stopScrolling($event)"> Auto Scroll</input>
+                            <!-- <input type="checkbox" value="checked" ng-model="checked" ng-checked="true" ng-click="stopScrolling($event)"> Auto Scroll</input> -->
+                            <div class="pull-right" ng-click="action(tab)"> <i class="fa fa-refresh fa-fw"></i>Refresh</div>
                             </div>
                         </div>
                         <div class="form-group">
@@ -48,7 +49,7 @@
             </div>
             <div class="box">
                 <div class="box-body" style="overflow: auto;">
-                    <div style="background-color: #fff; height: 400px; overflow: auto;" id="logviewer">
+                    <div style="background-color: #fff; height: 400px; overflow: auto;" ng-bind-html="logFile" id="logviewer">
                     </div>
                 </div>
                 <!-- /.box-body -->
