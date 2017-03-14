@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$sce', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $sce) {
+angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$sce', '$timeout', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $sce, $timeout) {
 
     var subscriptions = [];
     var count = 1;
@@ -77,6 +77,10 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
 
         session.subscribe("com.bigsql.log", function (lg) {
             $scope.logFile = $sce.trustAsHtml(lg[0]);
+            $timeout(function() {
+              var scroller = document.getElementById("logviewer");
+              scroller.scrollTop = scroller.scrollHeight;
+            }, 0, false)
             $scope.$apply();
         }).then(function (subscription) {
             subscriptions.push(subscription);
@@ -85,7 +89,6 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         session.subscribe("com.bigsql.logError", function (err) {
             $("#logviewer").empty();
             $("#logviewer").append("<h4><br />" + err[0] + "</h4>");
-            tailScroll();
         }).then(function (sub) {
             subscriptions.push(sub);
         });
