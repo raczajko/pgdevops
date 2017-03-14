@@ -468,7 +468,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     });
 
     $scope.action = function ( event, host) {
-        var showingSpinnerEvents = ['Initialize', 'Start', 'Stop'];
+        var showingSpinnerEvents = ['Initialize', 'Start', 'Stop', 'Restart'];
         if(showingSpinnerEvents.indexOf(event.target.innerText) >= 0 ){
             currentComponent = getCurrentComponent( event.currentTarget.getAttribute('value'), host);
             currentComponent.showingSpinner = true;
