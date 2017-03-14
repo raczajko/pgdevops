@@ -316,7 +316,6 @@ class Components(ComponentAction):
             if logdir == 'pgcli': 
                 logdir = PGC_LOGS
             self.session.publish('com.bigsql.pgcliDir',logdir)
-            print "chek"
             try:
                 read_file = open(logdir)
                 _lines=deque(read_file,1000)

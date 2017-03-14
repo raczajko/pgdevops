@@ -77,7 +77,6 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
 
         session.subscribe("com.bigsql.log", function (lg) {
             // $scope.logFile = lg[0];
-            console.log(lg[0].length);
             $("#logviewer").append("<br />" + lg[0].split('\n'))
         }).then(function (subscription) {
             subscriptions.push(subscription);
