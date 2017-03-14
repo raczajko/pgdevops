@@ -44,6 +44,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     }
 
     $scope.getExtensions = function( comp, idx) {
+        if ($scope.components[idx].extensionOpened) {
+            $window.location = '#/details-pg/' + comp
+        }
         $cookies.putObject('openedExtensions', {'component': comp, 'index': idx});
         for (var i = 0; i < $scope.components.length; i++) {
             $scope.components[i].extensionOpened = false;           
@@ -97,13 +100,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 }
                 $scope.loading = false;
                 for (var i = 0; i < $scope.components.length; i++) {
-                    if(i==0){
-                        $scope.components[i].extensionOpened = true;
-                    }else{
-                        $scope.components[i].extensionOpened = false;
-                    }
-                    $scope.components[i].progress = 0;
-                    
+                    $scope.components[i].extensionOpened = false;                    
                 }
                 var Checkupdates = 0;
                 for (var i = 0; i < $scope.components.length; i++) {
@@ -117,33 +114,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.getExtensions( $scope.components[0].component, 0);                
             }
         });
-        
-        // $http.get($window.location.origin + '/api/list')
-        // .success(function(data) {
-        //     $scope.nothingInstalled = false;
-        //     if ($scope.showInstalled) {
-        //         $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
-        //         if($scope.components.length == 0){
-        //             $scope.components = [];
-        //             $scope.nothingInstalled = true;
-        //         }
-        //     } else{
-        //             $scope.components = changePostgresOrder(data);
-        //     }
-        //     $scope.loading = false;
-        //     for (var i = 0; i < $scope.components.length; i++) {
-        //         $scope.components[i].progress = 0;
-        //     }
-        //     var Checkupdates = 0;
-        //     for (var i = 0; i < $scope.components.length; i++) {
-        //         Checkupdates += $scope.components[i].updates;
-        //     }
-        // })
-        // .error(function(error) {
-        //     $timeout(wait, 5000);
-        //     $scope.loading = false;
-        //     $scope.retry = true;
-        // });
     };
 
     getList($cookies.get('remote_host'));
@@ -157,10 +127,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.currentHost = host;
         getList(host);
     });
-
-    // $scope.refreshData=function(hostArgument){
-        
-    // };
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();

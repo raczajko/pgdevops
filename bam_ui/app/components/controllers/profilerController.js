@@ -13,6 +13,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     $scope.disableShowInstalled = false;
     $scope.component;
     $scope.enableBtns = false;
+    $scope.disableAbout = false;
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -108,6 +109,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                 $scope.selectComp = selectedCluster;
                 $scope.onSelectChange(selectedCluster);
             }else if($scope.components.length <= 0){
+                $scope.disableAbout = true;
                 $scope.alerts.push({
                     msg:  "No Postgres component Installed/ Initialized.",
                     type: 'danger',
@@ -246,18 +248,20 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     };
 
     $scope.openDetailsModal = function (comp) {
-        $scope.alerts.splice(0, 1);
-        $scope.extensionAlerts.splice(0,1);
-        var modalInstance = $uibModal.open({
-            templateUrl: '../app/components/partials/details.html',
-            // windowClass: 'comp-details-modal',
-            size: 'lg',
-            controller: 'ComponentDetailsController',
-            keyboard  : false,
-            backdrop  : 'static',
-        });
-        modalInstance.component = $scope.component;
-        modalInstance.isExtension = true;
+        if(!$scope.disableAbout){
+            $scope.alerts.splice(0, 1);
+            $scope.extensionAlerts.splice(0,1);
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/details.html',
+                // windowClass: 'comp-details-modal',
+                size: 'lg',
+                controller: 'ComponentDetailsController',
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+            modalInstance.component = $scope.component;
+            modalInstance.isExtension = true;
+        }
     };
 
     $scope.closeAlert = function (index) {
