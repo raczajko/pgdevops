@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies) {
+angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$sce', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $sce) {
 
     var subscriptions = [];
     var count = 1;
@@ -23,7 +23,6 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         $scope.pgcInfo = data[0];
     });
 
-    var logComponent = $location.path().split('log/').pop(-1);
     var cookieVal = $cookies.get('selectedLog');
     if(cookieVal){
         $window.location.href = cookieVal;
@@ -35,11 +34,12 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
+        var logComponent = $location.path().split('log/').pop(-1);
         if (logComponent != 'pgcli'){
             session.call('com.bigsql.infoComponent',[logComponent]);
         } else {
             $scope.logfile = 'pgcli';
-            $scope.intervalPromise;
+            // $scope.intervalPromise;
             session.call('com.bigsql.selectedLog',['pgcli']);  
         }
         
@@ -51,7 +51,7 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
                         $scope.logfile = jsonD[0].current_logfile;
                     } 
                     session.call('com.bigsql.selectedLog',[$scope.logfile]);
-                    $scope.intervalPromise;
+                    // $scope.intervalPromise;
                 }
                 count += 1;
             }
@@ -76,7 +76,9 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         });
 
         session.subscribe("com.bigsql.log", function (lg) {
-            on_log(lg);
+            // $scope.logFile = lg[0];
+            console.log(lg[0].length);
+            $("#logviewer").append("<br />" + lg[0].split('\n'))
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -84,24 +86,25 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         session.subscribe("com.bigsql.logError", function (err) {
             $("#logviewer").empty();
             $("#logviewer").append("<h4><br />" + err[0] + "</h4>");
+            tailScroll();
         }).then(function (sub) {
             subscriptions.push(sub);
         });
 
-        $scope.intervalPromise = $interval(function(){
-                                    if($scope.logfile != undefined){
-                                        session.call('com.bigsql.liveLog',[$scope.logfile]);                                        
-                                    }
-                                 },5000);
+        // $scope.intervalPromise = $interval(function(){
+        //                             if($scope.logfile != undefined){
+        //                                 session.call('com.bigsql.liveLog',[$scope.logfile]);                                        
+        //                             }
+        //                          },5000);
 
-        var tab = 1000;
+        $scope.tab = 1000;
 
         $scope.setTab = function (tabId) {
-            tab = tabId;
+            $scope.tab = tabId;
         };
 
         $scope.isSet = function (tabId) {
-            return tab === tabId;
+            return $scope.tab === tabId;
         };
 
         $scope.selectedButton;
@@ -150,7 +153,7 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
 
     $scope.onLogCompChange = function () {
         $cookies.put('selectedLog', $scope.selectComp);
-        $interval.cancel($scope.intervalPromise);
+        // $interval.cancel($scope.intervalPromise);
         $window.location.href = $scope.selectComp;
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);
