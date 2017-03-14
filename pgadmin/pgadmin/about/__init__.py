@@ -23,6 +23,9 @@ import config
 
 class AboutModule(PgAdminModule):
     def get_own_menuitems(self):
+        appname = config.PGADMIN_APP_NAME
+        if hasattr(str, 'decode'):
+            appname = appname.decode('utf-8')
         return {
             'help_items': [
                 MenuItem(name='mnu_about',
@@ -30,8 +33,10 @@ class AboutModule(PgAdminModule):
                          module="pgAdmin.About",
                          callback='about_show',
                          icon='fa fa-info-circle',
-                         label=gettext('About %(appname)s',
-                                       appname="pgAdmin4 Web"))
+                         label=gettext(u'About %(appname)s',
+                                       appname=appname
+                                       )
+                         )
             ]
         }
 

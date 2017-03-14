@@ -2,7 +2,7 @@ define(
   ['jquery', 'underscore', 'underscore.string', 'alertify', 'pgadmin','pgadmin.browser',
    'backbone', 'backgrid', 'codemirror', 'backform','pgadmin.tools.debugger.ui',
   'wcdocker', 'pgadmin.backform', 'pgadmin.backgrid', 'codemirror/addon/selection/active-line',
-  'codemirror/addon/fold/foldgutter', 'codemirror/addon/fold/foldcode', 'codemirror/addon/fold/pgadmin-sqlfoldcode'],
+  'codemirror/addon/fold/foldgutter', 'codemirror/addon/fold/foldcode', 'pgadmin-sqlfoldcode'],
   function($, _, S, Alertify, pgAdmin, pgBrowser, Backbone, Backgrid, CodeMirror, Backform, debug_function_again) {
 
   if (pgAdmin.Browser.tree != null) {
@@ -1338,8 +1338,8 @@ define(
           '#container', {
           allowContextMenu: false,
           allowCollapse: false,
-          themePath: '{{ url_for('static', filename='css/wcDocker/Themes') }}',
-          theme: 'pgadmin'
+          themePath: '{{ url_for("static", filename="css") }}',
+          theme: 'webcabin.overrides.css'
         });
 
       this.panels = [];

@@ -24,6 +24,7 @@ from pgadmin.utils.ajax import make_json_response, \
     make_response as ajax_response, internal_server_error, gone
 from pgadmin.utils.ajax import precondition_required
 from pgadmin.utils.driver import get_driver
+from pgadmin.utils.preferences import Preferences
 
 from config import PG_DEFAULT_DRIVER
 
@@ -91,6 +92,23 @@ class EdbFuncModule(CollectionNodeModule):
             False as this node doesn't have child nodes.
         """
         return False
+
+    def register_preferences(self):
+        """
+        Register preferences for this module.
+        """
+        # Add the node informaton for browser, not in respective
+        # node preferences
+        self.browser_preference = Preferences.module('browser')
+        self.pref_show_system_objects = self.browser_preference.preference(
+            'show_system_objects'
+        )
+        self.pref_show_node = self.browser_preference.register(
+            'node', 'show_node_' + self.node_type,
+            gettext('Package {0}').format(self.label), 'boolean',
+            self.SHOW_ON_BROWSER, category_label=gettext('Nodes')
+        )
+
 
 blueprint = EdbFuncModule(__name__)
 
@@ -265,7 +283,7 @@ class EdbFuncView(PGChildNodeView, DataTypeReader):
         if edbfnid is not None:
             if len(rset['rows']) == 0:
                 return gone(
-                    errormsg=_("Couldn't find the function")
+                    errormsg=_("Could not find the function")
                 )
             row = rset['rows'][0]
             return make_json_response(
@@ -524,11 +542,9 @@ It may have been removed by another user or moved to another schema.
         if not status:
             return internal_server_error(errormsg=res)
 
-        sql = "-- Package {}: {}".format(
+        sql = u"-- Package {}: {}".format(
             'Function' if self.node_type == 'edbfunc' else 'Procedure',
             name)
-        if hasattr(str, 'decode'):
-            sql = sql.decode('utf-8')
         if body != '':
             sql += "\n\n"
             sql += body
@@ -656,6 +672,21 @@ class EdbProcModule(CollectionNodeModule):
         """
         return packages.PackageModule.NODE_TYPE
 
+    def register_preferences(self):
+        """
+        Register preferences for this module.
+        """
+        # Add the node informaton for browser, not in respective
+        # node preferences
+        self.browser_preference = Preferences.module('browser')
+        self.pref_show_system_objects = self.browser_preference.preference(
+            'show_system_objects'
+        )
+        self.pref_show_node = self.browser_preference.register(
+            'node', 'show_node_' + self.node_type,
+            gettext('Package {0}').format(self.label), 'boolean',
+            self.SHOW_ON_BROWSER, category_label=gettext('Nodes')
+        )
 
 procedure_blueprint = EdbProcModule(__name__)
 

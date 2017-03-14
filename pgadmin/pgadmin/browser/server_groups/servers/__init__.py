@@ -274,7 +274,7 @@ class ServerNode(PGChildNodeView):
                 success=0,
                 errormsg=gettext(
                     gettext(
-                        "Couldn't find the server with id# {0}!"
+                        "Could not find the server with id# {0}."
                     ).format(sid)
                 )
             )
@@ -584,14 +584,15 @@ class ServerNode(PGChildNodeView):
                     password=password,
                     server_types=ServerType.types()
                 )
-
+                if hasattr(str, 'decode') and errmsg is not None:
+                    errmsg = errmsg.decode('utf-8')
                 if not status:
                     db.session.delete(server)
                     db.session.commit()
                     return make_json_response(
                         status=401,
                         success=0,
-                        errormsg=gettext("Unable to connect to server:\n\n%s" % errmsg)
+                        errormsg=gettext(u"Unable to connect to server:\n\n%s" % errmsg)
                     )
                 else:
                     if 'save_password' in data and data['save_password'] and have_password:
@@ -958,7 +959,7 @@ class ServerNode(PGChildNodeView):
                     status=400,
                     success=0,
                     errormsg=gettext(
-                        "Couldn't find the required parameter(s)."
+                        "Could not find the required parameter(s)."
                     )
                 )
 

@@ -34,9 +34,13 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
   };
 
   var processTreeData = function(payload) {
-    var data = JSON.parse(payload).data.sort(function(a, b) {
-        return pgAdmin.natural_sort(a.label, b.label, {'_type': a._type});
-    });
+    var data = JSON.parse(payload).data;
+    if (data.length && data[0]._type !== 'column' &&
+        data[0]._type !== 'catalog_object_column') {
+      data = data.sort(function(a, b) {
+          return pgAdmin.natural_sort(a.label, b.label);
+      });
+    }
     _.each(data, function(d){
       d._label = d.label;
       d.label = _.escape(d.label);
@@ -323,8 +327,8 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
         '#dockerContainer', {
         allowContextMenu: true,
         allowCollapse: false,
-        themePath: '../static/css/wcDocker/Themes',
-        theme: 'pgadmin'
+        themePath: '../static/css/',
+        theme: 'webcabin.overrides.css'
       });
       if (obj.docker) {
         // Initialize all the panels
@@ -868,7 +872,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label, {'_type': d._type}
+                              d._label, _data._label
                             ) == 1
                           )
                             return true;
@@ -893,7 +897,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label, {'_type': d._type}
+                              d._label, _data._label
                             ) != -1
                           )
                             return true;
@@ -901,7 +905,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label, {'_type': d._type}
+                              d._label, _data._label
                             ) != 1
                           )
                             return true;
@@ -910,7 +914,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label, {'_type': d._type}
+                              d._label, _data._label
                             ) == 1
                           ) {
                             s = m + 1;
@@ -1652,10 +1656,9 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
     pgAdmin.Browser.editor_shortcut_keys.Tab = "insertSoftTab";
   }
 
-  window.onbeforeunload = null;
   /*window.onbeforeunload = function(ev) {
     var e = ev || window.event,
-        msg = '{{ _('Do you really want to leave the page?') }}';
+        msg = '{{ _('Are you sure you wish to close the %(appname)s browser?', appname=config.APP_NAME) }}';
 
     // For IE and Firefox prior to version 4
     if (e) {

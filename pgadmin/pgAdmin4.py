@@ -34,9 +34,11 @@ config.SETTINGS_SCHEMA_VERSION = SCHEMA_VERSION
 
 # Check if the database exists. If it does not, create it.
 if not os.path.isfile(config.SQLITE_PATH):
-    setupfile = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                             'setup.py')
-    exec (open(setupfile).read())
+    from pgadmin.utils import u, fs_encoding, file_quote
+    setupfile = os.path.join(
+        os.path.dirname(os.path.realpath(u(__file__, fs_encoding))), u'setup.py'
+    )
+    exec(open(file_quote(setupfile), 'r').read())
 
 ##########################################################################
 # Server starup
@@ -59,6 +61,12 @@ if 'PGADMIN_PORT' in globals():
                      globals()['PGADMIN_PORT'])
     server_port = int(globals()['PGADMIN_PORT'])
     PGADMIN_RUNTIME = True
+elif 'PGADMIN_PORT' in os.environ:
+    port = os.environ['PGADMIN_PORT']
+    app.logger.debug(
+        'Not running under the desktop runtime, port: %s',
+        port)
+    server_port = int(port)
 else:
     app.logger.debug(
         'Not running under the desktop runtime, port: %s',
@@ -67,6 +75,13 @@ else:
 
 # Let the application save the status about the runtime for using it later.
 app.PGADMIN_RUNTIME = PGADMIN_RUNTIME
+
+# Set the key if appropriate
+if 'PGADMIN_KEY' in globals():
+    app.PGADMIN_KEY = globals()['PGADMIN_KEY']
+    app.logger.debug("Desktop security key: %s" % app.PGADMIN_KEY)
+else:
+    app.PGADMIN_KEY = ''
 
 # Output a startup message if we're not under the runtime and startup.
 # If we're under WSGI, we don't need to worry about this

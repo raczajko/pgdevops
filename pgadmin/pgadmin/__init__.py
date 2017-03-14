@@ -31,8 +31,6 @@ from werkzeug.local import LocalProxy
 from werkzeug.utils import find_modules
 
 from pgadmin.model import db, Role, Server, ServerGroup, User, Version, Keys
-# Configuration settings
-import config
 
 # If script is running under python3, it will not have the xrange function
 # defined
@@ -130,7 +128,13 @@ def _find_blueprint():
 current_blueprint = LocalProxy(_find_blueprint)
 
 
-def create_app(app_name=config.APP_NAME):
+def create_app(app_name=None):
+
+    # Configuration settings
+    import config
+    if not app_name:
+        app_name = config.APP_NAME
+
     """Create the Flask application, startup logging and dynamically load
     additional modules (blueprints) that are found in this directory."""
     app = PgAdmin(__name__, static_url_path='/static')
@@ -194,8 +198,8 @@ def create_app(app_name=config.APP_NAME):
     # Setup authentication
     ##########################################################################
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{0}?timeout={1}'.format(
-        config.SQLITE_PATH.replace('\\', '/'),
+    app.config['SQLALCHEMY_DATABASE_URI'] = u'sqlite:///{0}?timeout={1}'.format(
+        config.SQLITE_PATH.replace(u'\\', u'/'),
         getattr(config, 'SQLITE_TIMEOUT', 500)
     )
 
@@ -388,9 +392,15 @@ def create_app(app_name=config.APP_NAME):
                     svr_superuser = registry.get(section, 'Superuser')
                     svr_port = registry.getint(section, 'Port')
                     svr_discovery_id = section
-                    svr_comment = gettext("Auto-detected %s installation with the data directory at %s" % (
-                        registry.get(section, 'Description'),
-                        registry.get(section, 'DataDirectory')))
+                    description = registry.get(section, 'Description')
+                    data_directory = registry.get(section, 'DataDirectory')
+                    if hasattr(str, 'decode'):
+                        description = description.decode('utf-8')
+                        data_directory = data_directory.decode('utf-8')
+                    svr_comment = gettext(u"Auto-detected %s installation with the data directory at %s" % (
+                        description,
+                        data_directory
+                    ))
                     add_server(user_id, servergroup_id, svr_name, svr_superuser, svr_port, svr_discovery_id, svr_comment)
 
         except:
@@ -411,7 +421,14 @@ def create_app(app_name=config.APP_NAME):
     @app.before_request
     def before_request():
         """Login the default user if running in desktop mode"""
-        if config.SERVER_MODE is False:
+        if not config.SERVER_MODE and app.PGADMIN_KEY != '':
+            if (
+                (not 'key' in request.args or request.args['key'] != app.PGADMIN_KEY) and
+                request.cookies.get('PGADMIN_KEY') != app.PGADMIN_KEY
+            ):
+                abort(401)
+
+        if not config.SERVER_MODE:
             user = user_datastore.get_user(config.DESKTOP_USER)
 
             # Throw an error if we failed to find the desktop user, to give
@@ -435,6 +452,13 @@ def create_app(app_name=config.APP_NAME):
                 return redirect(url_base, code=302)
             if request.path == "/change" and current_user.is_authenticated:
                 return redirect(url_base +"/change", code=302)
+
+    @app.after_request
+    def after_request(response):
+        if 'key' in request.args:
+            response.set_cookie('PGADMIN_KEY', value=request.args['key'])
+
+        return response
 
     ##########################################################################
     # Minify output

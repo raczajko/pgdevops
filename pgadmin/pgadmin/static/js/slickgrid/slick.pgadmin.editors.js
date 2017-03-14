@@ -110,11 +110,11 @@
 
     // When text editor opens
     this.loadValue = function (item) {
-      if (item[args.column.field] === "") {
+      if (item[args.column.pos] === "") {
         $input.val("''");
       }
       else {
-        $input.val(defaultValue = item[args.column.field]);
+        $input.val(defaultValue = item[args.column.pos]);
         $input.select();
       }
     };
@@ -141,7 +141,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      item[args.column.pos] = state;
     };
 
     this.isValueChanged = function () {
@@ -252,7 +252,7 @@
     };
 
     this.loadValue = function (item) {
-      var data = defaultValue = item[args.column.field];
+      var data = defaultValue = item[args.column.pos];
       if (typeof data === "object" && !Array.isArray(data)) {
         data = JSON.stringify(data);
       } else if (Array.isArray(data)) {
@@ -278,7 +278,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      item[args.column.pos] = state;
     };
 
     this.isValueChanged = function () {
@@ -385,7 +385,7 @@
     };
 
     this.loadValue = function (item) {
-      $input.val(defaultValue = item[args.column.field]);
+      $input.val(defaultValue = item[args.column.pos]);
       $input.select();
     };
 
@@ -394,7 +394,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      item[args.column.pos] = state;
     };
 
     this.isValueChanged = function () {
@@ -468,12 +468,12 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field];
-      if (_.isNull(defaultValue)) {
+      defaultValue = item[args.column.pos];
+      if (_.isNull(defaultValue)||_.isUndefined(defaultValue)) {
         $select.prop('indeterminate', true);
       }
       else {
-        defaultValue = !!item[args.column.field];
+        defaultValue = !!item[args.column.pos];
         if (defaultValue) {
           $select.prop('checked', true);
         } else {
@@ -490,7 +490,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      item[args.column.pos] = state;
     };
 
     this.isValueChanged = function () {
@@ -590,7 +590,7 @@
     };
 
     this.loadValue = function (item) {
-      var data = defaultValue = item[args.column.field];
+      var data = defaultValue = item[args.column.pos];
       if (typeof data === "object" && !Array.isArray(data)) {
         data = JSON.stringify(data);
       } else if (Array.isArray(data)) {
@@ -613,7 +613,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      item[args.column.pos] = state;
     };
 
     this.isValueChanged = function () {
@@ -667,7 +667,7 @@
     };
 
     this.loadValue = function (item) {
-      var value = item[args.column.field];
+      var value = item[args.column.pos];
 
       // Check if value is null or undefined
       if (value === undefined && typeof value === "undefined") {
@@ -709,14 +709,39 @@
   }
 
   function ReadOnlyCheckboxEditor(args) {
-    var $select;
+    var $select, el;
     var defaultValue;
     var scope = this;
 
     this.init = function () {
-      $select = $("<INPUT type=checkbox value='true' class='editor-checkbox' hideFocus readonly>");
+      $select = $("<INPUT type=checkbox value='true' class='editor-checkbox' hideFocus disabled>");
       $select.appendTo(args.container);
       $select.focus();
+
+      // The following code is taken from https://css-tricks.com/indeterminate-checkboxes/
+      $select.data('checked', 0).bind("click", function (e) {
+        el = $(this);
+        switch(el.data('checked')) {
+          // unchecked, going indeterminate
+          case 0:
+            el.data('checked', 1);
+            el.prop('indeterminate', true);
+            break;
+
+          // indeterminate, going checked
+          case 1:
+            el.data('checked', 2);
+            el.prop('indeterminate', false);
+            el.prop('checked', true);
+            break;
+
+          // checked, going unchecked
+          default:
+            el.data('checked', 0);
+            el.prop('indeterminate', false);
+            el.prop('checked', false);
+        }
+      });
     };
 
     this.destroy = function () {
@@ -728,16 +753,29 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = !!item[args.column.field];
-      if (defaultValue) {
-        $select.prop('checked', true);
-      } else {
-        $select.prop('checked', false);
+      defaultValue = item[args.column.field];
+      if (_.isNull(defaultValue)||_.isUndefined(defaultValue)) {
+        $select.prop('indeterminate', true);
+      }
+      else {
+        defaultValue = !!item[args.column.field];
+        if (defaultValue) {
+          $select.prop('checked', true);
+        } else {
+          $select.prop('checked', false);
+        }
       }
     };
 
     this.serializeValue = function () {
+      if ($select.prop('indeterminate')) {
+        return null;
+      }
       return $select.prop('checked');
+    };
+
+    this.applyValue = function (item, state) {
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
@@ -781,7 +819,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field];
+      defaultValue = item[args.column.pos];
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -791,11 +829,11 @@
       if ($input.val() === "") {
         return null;
       }
-      return parseInt($input.val(), 10) || 0;
+      return $input.val();
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      item[args.column.pos] = state;
     };
 
     this.isValueChanged = function () {

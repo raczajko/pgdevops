@@ -128,7 +128,7 @@ class DatabaseView(PGChildNodeView):
 
                 self.manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(kwargs['sid'])
                 if self.manager is None:
-                    return gone(errormsg="Couldn't find the server.")
+                    return gone(errormsg="Could not find the server.")
 
                 if action and action in ["drop"]:
                     self.conn = self.manager.connection()
@@ -194,8 +194,6 @@ class DatabaseView(PGChildNodeView):
 
         for row in rset['rows']:
             dbname = row['name']
-            if hasattr(str, 'decode'):
-                dbname = dbname.decode('utf-8')
             if self.manager.db == dbname:
                 connected = True
                 canDrop = canDisConn = False
@@ -253,8 +251,6 @@ class DatabaseView(PGChildNodeView):
 
         for row in rset['rows']:
             db = row['name']
-            if hasattr(str, 'decode'):
-                db = db.decode('utf-8')
             if self.manager.db == db:
                 connected = True
             else:
@@ -289,7 +285,7 @@ class DatabaseView(PGChildNodeView):
 
         if len(res['rows']) == 0:
             return gone(
-                _("Couldnot find the database on the server.")
+                _("Could not find the database on the server.")
             )
 
         if not status:
@@ -905,9 +901,7 @@ class DatabaseView(PGChildNodeView):
         frmtd_variables = parse_variables_from_db(res1['rows'])
         result.update(frmtd_variables)
 
-        sql_header = "-- Database: {0}\n\n-- ".format(result['name'])
-        if hasattr(str, 'decode'):
-            sql_header = sql_header.decode('utf-8')
+        sql_header = u"-- Database: {0}\n\n-- ".format(result['name'])
 
         sql_header += render_template(
             "/".join([self.template_path, 'delete.sql']),

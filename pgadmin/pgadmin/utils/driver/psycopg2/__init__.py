@@ -26,7 +26,7 @@ from flask import g, current_app, session
 from flask_babel import gettext
 from flask_security import current_user
 from pgadmin.utils.crypto import decrypt
-from psycopg2.extensions import adapt
+from psycopg2.extensions import adapt, encodings
 
 import config
 from pgadmin.model import Server, User
@@ -37,12 +37,12 @@ from .cursor import DictCursor
 
 if sys.version_info < (3,):
     from StringIO import StringIO
+    psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+    psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 else:
     from io import StringIO
 
 _ = gettext
-
-ASYNC_WAIT_TIMEOUT = 0.01  # in seconds or 10 milliseconds
 
 # This registers a unicode type caster for datatype 'RECORD'.
 psycopg2.extensions.register_type(
@@ -50,49 +50,63 @@ psycopg2.extensions.register_type(
                                  psycopg2.extensions.UNICODE)
 )
 
-# Cast bytea fields to text. By default, this will render as hex strings with
-# Postgres 9+ and as escaped binary in earlier versions.
-psycopg2.extensions.register_type(
-    psycopg2.extensions.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING)
-)
-
-# This registers a type caster for datatype 'NaN'.
-psycopg2.extensions.register_type(
-    psycopg2.extensions.new_type((701,), 'NaN_TEXT', psycopg2.STRING)
-)
-
-# This registers a type caster for datatype 'interval'.
-psycopg2.extensions.register_type(
-    psycopg2.extensions.new_type((1186,), 'INTERVAL_TEXT', psycopg2.STRING)
-)
-
-# This registers a type caster for int4range, int8range, numrange
-# tsrange, tstzrange, daterange
+# This registers a type caster to convert various pg types into string type
 psycopg2.extensions.register_type(
     psycopg2.extensions.new_type(
-        (3904, 3926, 3906, 3908, 3910, 3912),
-        'NUMERIC_RANGE_TEXT', psycopg2.STRING)
+        (
+            # To cast bytea and interval type
+            17, 1186,
+            # to cast int4range, int8range, numrange tsrange, tstzrange
+            3904,3926, 3906, 3908, 3910, 3912,
+            # date, timestamp, timestamptz, bigint, double precision
+            1700, 1082, 1114, 1184, 20, 701
+         ),
+        'TYPECAST_TO_STRING', psycopg2.STRING)
 )
 
+
 def register_string_typecasters(connection):
-    """
-    Casts various types to string, resolving issues with out of
-    range dates (e.g. BC) and rounded numbers which psycopg2 can't
-    handle
-    """
+    if connection.encoding != 'UTF8':
+        # In python3 when database encoding is other than utf-8 and client
+        # encoding is set to UNICODE then we need to map data from database
+        # encoding to utf-8.
+        # This is required because when client encoding is set to UNICODE then
+        # psycopg assumes database encoding utf-8 and not the actual encoding.
+        # Not sure whether it's bug or feature in psycopg for python3.
+        if sys.version_info >= (3,):
+            def return_as_unicode(value, cursor):
+                if value is None:
+                    return None
+                # Treat value as byte sequence of database encoding and then
+                # decode it as utf-8 to get correct unicode value.
+                return bytes(
+                    value, encodings[cursor.connection.encoding]
+                ).decode('utf-8')
 
-    def return_as_string(value, cursor):
-        return value
+            unicode_type = psycopg2.extensions.new_type(
+                # "char", name, text, character, character varying
+                (19, 18, 25, 1042, 1043, 0),
+                'UNICODE', return_as_unicode)
+        else:
+            def return_as_unicode(value, cursor):
+                if value is None:
+                    return None
+                # Decode it as utf-8 to get correct unicode value.
+                return value.decode('utf-8')
 
-    cursor = connection.cursor()
-    cursor.execute('SELECT NULL::date, NULL::timestamp, NULL::timestamptz, NULL::bigint')
-    # Oid(s): Date, timestamp, timestamptz, bigint, double precision
-    oids = (
-        cursor.description[0][1], cursor.description[1][1],
-        cursor.description[2][1], cursor.description[3][1]
-    )
-    new_type = psycopg2.extensions.new_type(oids, 'RETURN_STRING', return_as_string)
-    psycopg2.extensions.register_type(new_type)
+            unicode_type = psycopg2.extensions.new_type(
+                # "char", name, text, character, character varying
+                (19, 18, 25, 1042, 1043, 0),
+                'UNICODE', return_as_unicode)
+
+        unicode_array_type = psycopg2.extensions.new_array_type(
+            # "char"[], name[], text[], character[], character varying[]
+            (1002, 1003, 1009, 1014, 1015, 0
+             ), 'UNICODEARRAY', unicode_type)
+
+        psycopg2.extensions.register_type(unicode_type)
+        psycopg2.extensions.register_type(unicode_array_type)
+
 
 class Connection(BaseConnection):
     """
@@ -260,10 +274,13 @@ class Connection(BaseConnection):
 
             try:
                 password = decrypt(encpass, user.password)
-
+                # Handling of non ascii password (Python2)
+                if hasattr(str, 'decode'):
+                    password = password.decode('utf-8').encode('utf-8')
                 # password is in bytes, for python3 we need it in string
-                if isinstance(password, bytes):
+                elif isinstance(password, bytes):
                     password = password.decode()
+
             except Exception as e:
                 current_app.logger.exception(e)
                 return False, \
@@ -306,12 +323,12 @@ class Connection(BaseConnection):
                 msg = e.diag.message_detail
             else:
                 msg = str(e)
-            current_app.logger.info("""
+            current_app.logger.info(u"""
 Failed to connect to the database server(#{server_id}) for connection ({conn_id}) with error message as below:
 {msg}""".format(
                 server_id=self.manager.sid,
                 conn_id=conn_id,
-                msg=msg
+                msg=msg.decode('utf-8') if hasattr(str, 'decode') else msg
             )
             )
 
@@ -364,8 +381,8 @@ Failed to connect to the database server(#{server_id}) for connection ({conn_id}
                 self.conn.autocommit = False
             else:
                 self.conn.autocommit = True
-            register_string_typecasters(self.conn)
 
+        register_string_typecasters(self.conn)
         status = _execute(cur, """
 SET DateStyle=ISO;
 SET client_min_messages=notice;
@@ -568,10 +585,16 @@ WHERE
             query: SQL query to run.
             params: Extra parameters
         """
+
+        if sys.version_info < (3,):
+            if type(query) == unicode:
+                query = query.encode('utf-8')
+        else:
+            query = query.encode('utf-8')
+
         cur.execute(query, params)
         if self.async == 1:
             self._wait(cur.connection)
-
 
     def execute_on_server_as_csv(self, query, params=None, formatted_exception_msg=False, records=2000):
         status, cur = self.__cursor(server_cursor=True)
@@ -581,11 +604,14 @@ WHERE
             return False, str(cur)
         query_id = random.randint(1, 9999999)
 
+        if sys.version_info < (3,) and type(query) == unicode:
+            query = query.encode('utf-8')
+
         current_app.logger.log(25,
                                u"Execute (with server cursor) for server #{server_id} - {conn_id} (Query-id: {query_id}):\n{query}".format(
                                    server_id=self.manager.sid,
                                    conn_id=self.conn_id,
-                                   query=query,
+                                   query=query.decode('utf-8') if sys.version_info < (3,) else query,
                                    query_id=query_id
                                )
                                )
@@ -703,6 +729,13 @@ WHERE
             params: extra parameters to the function
             formatted_exception_msg: if True then function return the formatted exception message
         """
+
+        if sys.version_info < (3,):
+            if type(query) == unicode:
+                query = query.encode('utf-8')
+        else:
+            query = query.encode('utf-8')
+
         self.__async_cursor = None
         status, cur = self.__cursor()
 
@@ -715,7 +748,7 @@ WHERE
             u"Execute (async) for server #{server_id} - {conn_id} (Query-id: {query_id}):\n{query}".format(
                 server_id=self.manager.sid,
                 conn_id=self.conn_id,
-                query=query,
+                query=query.decode('utf-8'),
                 query_id=query_id
             )
         )
@@ -724,7 +757,7 @@ WHERE
             self.__notices = []
             self.execution_aborted = False
             cur.execute(query, params)
-            res = self._wait_timeout(cur.connection, ASYNC_WAIT_TIMEOUT)
+            res = self._wait_timeout(cur.connection)
         except psycopg2.Error as pe:
             errmsg = self._formatted_exception_msg(pe, formatted_exception_msg)
             current_app.logger.error(u"""
@@ -733,7 +766,7 @@ Failed to execute query (execute_async) for the server #{server_id} - {conn_id}
 """.format(
                 server_id=self.manager.sid,
                 conn_id=self.conn_id,
-                query=query,
+                query=query.decode('utf-8'),
                 errmsg=errmsg,
                 query_id=query_id
             )
@@ -1031,7 +1064,7 @@ Failed to reset the connection to the server due to following error:
             else:
                 raise psycopg2.OperationalError("poll() returned %s from _wait function" % state)
 
-    def _wait_timeout(self, conn, time):
+    def _wait_timeout(self, conn):
         """
         This function is used for the asynchronous connection,
         it will call poll method and return the status. If state is
@@ -1049,7 +1082,7 @@ Failed to reset the connection to the server due to following error:
         elif state == psycopg2.extensions.POLL_WRITE:
             # Wait for the given time and then check the return status
             # If three empty lists are returned then the time-out is reached.
-            timeout_status = select.select([], [conn.fileno()], [], time)
+            timeout_status = select.select([], [conn.fileno()], [])
             if timeout_status == ([], [], []):
                 return self.ASYNC_WRITE_TIMEOUT
 
@@ -1062,16 +1095,25 @@ Failed to reset the connection to the server due to following error:
         elif state == psycopg2.extensions.POLL_READ:
             # Wait for the given time and then check the return status
             # If three empty lists are returned then the time-out is reached.
-            timeout_status = select.select([conn.fileno()], [], [], time)
+            timeout_status = select.select([conn.fileno()], [], [])
             if timeout_status == ([], [], []):
                 return self.ASYNC_READ_TIMEOUT
 
-            # poll again to check the state if it is still POLL_READ
-            # then return ASYNC_READ_TIMEOUT else return ASYNC_OK.
-            state = conn.poll()
-            if state == psycopg2.extensions.POLL_READ:
-                return self.ASYNC_READ_TIMEOUT
-            return self.ASYNC_OK
+            # select.select timeout option works only if we provide
+            #  empty [] [] [] file descriptor in select.select() function
+            # and that also works only on UNIX based system, it do not support Windows
+            # Hence we have wrote our own pooling mechanism to read data fast
+            # each call conn.poll() reads chunks of data from connection object
+            # more we poll more we read data from connection
+            cnt = 0
+            while cnt < 1000:
+                # poll again to check the state if it is still POLL_READ
+                # then return ASYNC_READ_TIMEOUT else return ASYNC_OK.
+                state = conn.poll()
+                if state == psycopg2.extensions.POLL_OK:
+                    return self.ASYNC_OK
+                cnt += 1
+            return self.ASYNC_READ_TIMEOUT
         else:
             raise psycopg2.OperationalError(
                 "poll() returned %s from _wait_timeout function" % state
@@ -1103,42 +1145,48 @@ Failed to reset the connection to the server due to following error:
         )
 
         try:
-            status = self._wait_timeout(self.conn, ASYNC_WAIT_TIMEOUT)
+            status = self._wait_timeout(self.conn)
         except psycopg2.Error as pe:
-            if cur.closed:
+            if self.conn.closed:
                 raise ConnectionLost(
                     self.manager.sid,
                     self.db,
                     self.conn_id[5:]
                 )
             errmsg = self._formatted_exception_msg(pe, formatted_exception_msg)
-            return False, errmsg, None
+            return False, errmsg
 
         if self.conn.notices and self.__notices is not None:
             while self.conn.notices:
                 self.__notices.append(self.conn.notices.pop(0)[:])
 
-        colinfo = None
         result = None
         self.row_count = 0
+        self.column_info = None
+
         if status == self.ASYNC_OK:
 
             # if user has cancelled the transaction then changed the status
             if self.execution_aborted:
                 status = self.ASYNC_EXECUTION_ABORTED
                 self.execution_aborted = False
-                return status, result, colinfo
+                return status, result
 
             # Fetch the column information
             if cur.description is not None:
-                colinfo = [
+                self.column_info = [
                     desc.to_dict() for desc in cur.ordered_description()
                 ]
 
+                pos = 0
+                for col in self.column_info:
+                    col['pos'] = pos
+                    pos = pos + 1
+
             self.row_count = cur.rowcount
+
             if cur.rowcount > 0:
                 result = []
-
                 # For DDL operation, we may not have result.
                 #
                 # Because - there is not direct way to differentiate DML and
@@ -1146,10 +1194,15 @@ Failed to reset the connection to the server due to following error:
                 # out at the moment.
                 try:
                     for row in cur:
-                        result.append(dict(row))
+                        new_row = []
+                        for col in self.column_info:
+                            new_row.append(row[col['name']])
+                        result.append(new_row)
+
                 except psycopg2.ProgrammingError:
                     result = None
-        return status, result, colinfo
+
+        return status, result
 
     def status_message(self):
         """
@@ -1175,6 +1228,14 @@ Failed to reset the connection to the server due to following error:
         """
 
         return self.row_count
+
+    def get_column_info(self):
+        """
+        This function will returns list of columns for last async sql command
+        executed on the server.
+        """
+
+        return self.column_info
 
     def cancel_transaction(self, conn_id, did=None):
         """
@@ -1277,44 +1338,53 @@ Failed to reset the connection to the server due to following error:
         if not formatted_msg:
             return errmsg
 
-        errmsg += '********** Error **********\n\n'
+        errmsg += u'********** Error **********\n\n'
 
         if exception_obj.diag.severity is not None \
                 and exception_obj.diag.message_primary is not None:
-            errmsg += exception_obj.diag.severity + ": " + \
-                      exception_obj.diag.message_primary
+            errmsg += u"{}: {}".format(
+                exception_obj.diag.severity,
+                exception_obj.diag.message_primary.decode('utf-8') if
+                hasattr(str, 'decode') else exception_obj.diag.message_primary)
+
         elif exception_obj.diag.message_primary is not None:
-            errmsg += exception_obj.diag.message_primary
+            errmsg += exception_obj.diag.message_primary.decode('utf-8') if \
+                hasattr(str, 'decode') else exception_obj.diag.message_primary
 
         if exception_obj.diag.sqlstate is not None:
             if not errmsg[:-1].endswith('\n'):
                 errmsg += '\n'
             errmsg += gettext('SQL state: ')
-            errmsg += exception_obj.diag.sqlstate
+            errmsg += exception_obj.diag.sqlstate.decode('utf-8') if \
+                hasattr(str, 'decode') else exception_obj.diag.sqlstate
 
         if exception_obj.diag.message_detail is not None:
             if not errmsg[:-1].endswith('\n'):
                 errmsg += '\n'
             errmsg += gettext('Detail: ')
-            errmsg += exception_obj.diag.message_detail
+            errmsg += exception_obj.diag.message_detail.decode('utf-8') if \
+                hasattr(str, 'decode') else exception_obj.diag.message_detail
 
         if exception_obj.diag.message_hint is not None:
             if not errmsg[:-1].endswith('\n'):
                 errmsg += '\n'
             errmsg += gettext('Hint: ')
-            errmsg += exception_obj.diag.message_hint
+            errmsg += exception_obj.diag.message_hint.decode('utf-8') if \
+                hasattr(str, 'decode') else exception_obj.diag.message_hint
 
         if exception_obj.diag.statement_position is not None:
             if not errmsg[:-1].endswith('\n'):
                 errmsg += '\n'
             errmsg += gettext('Character: ')
-            errmsg += exception_obj.diag.statement_position
+            errmsg += exception_obj.diag.statement_position.decode('utf-8') if \
+                hasattr(str, 'decode') else exception_obj.diag.statement_position
 
         if exception_obj.diag.context is not None:
             if not errmsg[:-1].endswith('\n'):
                 errmsg += '\n'
             errmsg += gettext('Context: ')
-            errmsg += exception_obj.diag.context
+            errmsg += exception_obj.diag.context.decode('utf-8') if \
+                hasattr(str, 'decode') else exception_obj.diag.context
 
         return errmsg
 
@@ -1421,8 +1491,6 @@ class ServerManager(object):
                 database = self.db
             elif did in self.db_info:
                 database = self.db_info[did]['datname']
-                if hasattr(str, 'decode'):
-                    database = database.decode('utf-8')
             else:
                 maintenance_db_id = u'DB:{0}'.format(self.db)
                 if maintenance_db_id in self.connections:
@@ -1440,14 +1508,11 @@ WHERE db.oid = {0}""".format(did))
                         if status and len(res['rows']) > 0:
                             for row in res['rows']:
                                 self.db_info[did] = row
-                                if hasattr(str, 'decode'):
-                                    self.db_info[did]['datname'] = \
-                                        self.db_info[did]['datname'].decode('utf-8')
                                 database = self.db_info[did]['datname']
 
                         if did not in self.db_info:
                             raise Exception(gettext(
-                                "Couldn't find the specified database."
+                                "Could not find the specified database."
                             ))
 
         if database is None:
@@ -1773,7 +1838,10 @@ class Driver(BaseDriver):
         # Returns in bytes, we need to convert it in string
         if isinstance(res, bytes):
             try:
-                res = res.decode()
+                try:
+                    res = res.decode()
+                except UnicodeDecodeError:
+                    res = res.decode(sys.getfilesystemencoding())
             except UnicodeDecodeError:
                 res = res.decode('utf-8')
 

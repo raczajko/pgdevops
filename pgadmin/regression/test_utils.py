@@ -153,10 +153,34 @@ def create_table(server, db_name, table_name):
         traceback.print_exc(file=sys.stderr)
 
 
+def create_table(server, db_name, table_name):
+    try:
+        connection = get_db_connection(db_name,
+                                       server['username'],
+                                       server['db_password'],
+                                       server['host'],
+                                       server['port'])
+        old_isolation_level = connection.isolation_level
+        connection.set_isolation_level(0)
+        pg_cursor = connection.cursor()
+        pg_cursor.execute('''CREATE TABLE "%s" (name VARCHAR, value NUMERIC)''' % table_name)
+        pg_cursor.execute('''INSERT INTO "%s" VALUES ('Some-Name', 6)''' % table_name)
+        connection.set_isolation_level(old_isolation_level)
+        connection.commit()
+
+    except Exception:
+        traceback.print_exc(file=sys.stderr)
+
+
 def drop_database(connection, database_name):
     """This function used to drop the database"""
     if database_name not in ["postgres", "template1", "template0"]:
         pg_cursor = connection.cursor()
+
+        pg_cursor.execute(
+            "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity "
+            "WHERE pg_stat_activity.datname ='%s' and pid <> pg_backend_pid();" % database_name
+                          )
         pg_cursor.execute("SELECT * FROM pg_database db WHERE"
                           " db.datname='%s'" % database_name)
         if pg_cursor.fetchall():
@@ -187,7 +211,7 @@ def drop_tablespace(connection):
 def create_server(server):
     """This function is used to create server"""
     try:
-        conn = sqlite3.connect(config.SQLITE_PATH)
+        conn = sqlite3.connect(config.TEST_SQLITE_PATH)
         # Create the server
         cur = conn.cursor()
         server_details = (1, SERVER_GROUP, server['name'], server['host'],
@@ -230,53 +254,30 @@ def add_schema_to_parent_node_dict(srv_id, db_id, schema_id, schema_name):
                                                   "schema_name": schema_name})
 
 
-def create_parent_server_node(server_info, node_name):
+def create_parent_server_node(server_info):
     """
     This function create the test server which will act as parent server,
     the other node will add under this server
     :param server_info: server details
     :type server_info: dict
-    :param node_name: node name
-    :type node_name: str
     :return: None
     """
     srv_id = create_server(server_info)
-    if node_name == "databases":
-        # Create test database
-        test_db_name = "test_db_%s" % str(uuid.uuid4())[1:6]
-        db_id = create_database(server_info, test_db_name)
-        add_db_to_parent_node_dict(srv_id, db_id, test_db_name)
-    elif node_name == "schemas":
-        test_db_name = "test_db_%s" % str(uuid.uuid4())[1:6]
-        db_id = create_database(server_info, test_db_name)
-        add_db_to_parent_node_dict(srv_id, db_id, test_db_name)
-        # Create schema
-        schema_name = "test_schema_%s" % str(uuid.uuid4())[1:6]
-        connection = get_db_connection(test_db_name,
-                                       server_info['username'],
-                                       server_info['db_password'],
-                                       server_info['host'],
-                                       server_info['port'])
+    # Create database
+    test_db_name = "test_db_%s" % str(uuid.uuid4())[1:6]
+    db_id = create_database(server_info, test_db_name)
+    add_db_to_parent_node_dict(srv_id, db_id, test_db_name)
+    # Create schema
+    schema_name = "test_schema_%s" % str(uuid.uuid4())[1:6]
+    connection = get_db_connection(test_db_name,
+                                   server_info['username'],
+                                   server_info['db_password'],
+                                   server_info['host'],
+                                   server_info['port'])
 
-        schema = regression.schema_utils.create_schema(connection, schema_name)
-        add_schema_to_parent_node_dict(srv_id, db_id, schema[0],
-                                       schema[1])
-    elif node_name not in ["servers", "roles", "tablespaces", "browser"]:
-        # Create test database
-        test_db_name = "test_db_%s" % str(uuid.uuid4())[1:6]
-        db_id = create_database(server_info, test_db_name)
-        add_db_to_parent_node_dict(srv_id, db_id, test_db_name)
-        # Create schema
-        schema_name = "test_schema_%s" % str(uuid.uuid4())[1:6]
-        connection = get_db_connection(test_db_name,
-                                       server_info['username'],
-                                       server_info['db_password'],
-                                       server_info['host'],
-                                       server_info['port'])
-
-        schema = regression.schema_utils.create_schema(connection, schema_name)
-        add_schema_to_parent_node_dict(srv_id, db_id, schema[0],
-                                       schema[1])
+    schema = regression.schema_utils.create_schema(connection, schema_name)
+    add_schema_to_parent_node_dict(srv_id, db_id, schema[0],
+                                   schema[1])
 
 
 def delete_test_server(tester):
@@ -333,7 +334,7 @@ def get_db_password(config_servers, name, host, db_port):
 
 def get_db_server(sid):
     connection = ''
-    conn = sqlite3.connect(config.SQLITE_PATH)
+    conn = sqlite3.connect(config.TEST_SQLITE_PATH)
     cur = conn.cursor()
     server = cur.execute('SELECT name, host, port, maintenance_db,'
                          ' username FROM server where id=%s' % sid)
@@ -360,11 +361,11 @@ def get_db_server(sid):
 
 def remove_db_file():
     """This function use to remove SQLite DB file"""
-    if os.path.isfile(config.SQLITE_PATH):
-        os.remove(config.SQLITE_PATH)
+    if os.path.isfile(config.TEST_SQLITE_PATH):
+        os.remove(config.TEST_SQLITE_PATH)
 
 
-def _drop_objects(tester):
+def _cleanup(tester, app_starter):
     """This function use to cleanup the created the objects(servers, databases,
      schemas etc) during the test suite run"""
     try:
@@ -403,11 +404,12 @@ def _drop_objects(tester):
         logout_tester_account(tester)
         # Remove SQLite db file
         remove_db_file()
+        app_starter.stop_app()
 
 
-def get_cleanup_handler(tester):
+def get_cleanup_handler(tester, app_starter):
     """This function use to bind variable to drop_objects function"""
-    return partial(_drop_objects, tester)
+    return partial(_cleanup, tester, app_starter)
 
 
 class Database:

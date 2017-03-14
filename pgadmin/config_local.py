@@ -28,7 +28,8 @@ SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
 
 SECURITY_LOGIN_URL= "/auth"
 
-SESSION_COOKIE_NAME = 'bam_session'
+SESSION_COOKIE_NAME = 'pgdevops_session'
 
+PGADMIN_APP_NAME="pgAdmin4"
 
 #APP_ICON="bigsql-logo"

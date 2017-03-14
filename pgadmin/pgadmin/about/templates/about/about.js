@@ -19,7 +19,13 @@ define(
               setup: function() {
                 return {
                   buttons:[{ text: "OK", key: 27, className: "btn btn-primary" }],
-                  options: {modal: 0, resizable: true}
+                  options: {
+                    modal: false,
+                    resizable: true,
+                    maximizable: true,
+                    pinnable: false,
+                    closableByDimmer: false
+                  }
                 };
               },
               build: function() {
@@ -35,7 +41,7 @@ define(
         var content = '';
         $.get("{{ url_for('about.index') }}",
             function(data) {
-              alertify.aboutDialog('About {{ config.APP_NAME }}', data).resizeTo(800, 450);
+              alertify.aboutDialog('About {{ config.PGADMIN_APP_NAME }}', data).resizeTo(800, 450);
             });
       }
     };

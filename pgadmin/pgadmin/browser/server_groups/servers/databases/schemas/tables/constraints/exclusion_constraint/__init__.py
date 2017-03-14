@@ -538,7 +538,7 @@ class ExclusionConstraintView(PGChildNodeView):
                     status=400,
                     success=0,
                     errormsg=_(
-                        "Couldn't find required parameter (%s)." % str(arg)
+                        "Could not find required parameter (%s)." % str(arg)
                     )
                 )
             elif isinstance(data[arg], list) and len(data[arg]) < 1:
@@ -546,7 +546,7 @@ class ExclusionConstraintView(PGChildNodeView):
                     status=400,
                     success=0,
                     errormsg=_(
-                        "Couldn't find required parameter (%s)." % str(arg)
+                        "Could not find required parameter (%s)." % str(arg)
                     )
                 )
 
@@ -868,9 +868,7 @@ class ExclusionConstraintView(PGChildNodeView):
             SQL = render_template(
                 "/".join([self.template_path, 'create.sql']), data=data)
 
-            sql_header = "-- Constraint: {0}\n\n-- ".format(data['name'])
-            if hasattr(str, 'decode'):
-                sql_header = sql_header.decode('utf-8')
+            sql_header = u"-- Constraint: {0}\n\n-- ".format(data['name'])
 
             sql_header += render_template(
                 "/".join([self.template_path, 'delete.sql']),

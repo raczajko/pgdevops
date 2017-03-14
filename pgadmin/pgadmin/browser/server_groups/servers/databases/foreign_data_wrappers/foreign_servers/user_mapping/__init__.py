@@ -346,7 +346,7 @@ class UserMappingView(PGChildNodeView):
 
         if len(res['rows']) == 0:
             return gone(
-                gettext("Couldnot find the user mapping information.")
+                gettext("Could not find the user mapping information.")
             )
 
         if res['rows'][0]['umoptions'] is not None:
@@ -709,13 +709,11 @@ class UserMappingView(PGChildNodeView):
                               conn=self.conn)
         sql += "\n"
 
-        sql_header = """-- User Mapping : {0}
+        sql_header = u"""-- User Mapping : {0}
 
 -- DROP USER MAPPING FOR {0} SERVER {1}
 
 """.format(res['rows'][0]['name'], fdw_data['name'])
-        if hasattr(str, 'decode'):
-            sql_header = sql_header.decode('utf-8')
 
         sql = sql_header + sql
 

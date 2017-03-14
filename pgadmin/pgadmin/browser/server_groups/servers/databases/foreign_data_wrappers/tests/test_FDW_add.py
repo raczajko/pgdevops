@@ -33,10 +33,7 @@ class FDWDAddTestCase(BaseTestGenerator):
         self.server_id = self.schema_data['server_id']
         self.db_id = self.schema_data['db_id']
         self.schema_name = self.schema_data['schema_name']
-        self.extension_name = "postgres_fdw"
         self.db_name = parent_node_dict["database"][-1]["db_name"]
-        self.extension_id = extension_utils.create_extension(
-            self.server, self.db_name, self.extension_name, self.schema_name)
 
     def runTest(self):
         """This function will add foreign data wrapper under test database."""
@@ -46,10 +43,6 @@ class FDWDAddTestCase(BaseTestGenerator):
                                                  self.db_id)
         if not db_con["info"] == "Database connected.":
             raise Exception("Could not connect to database.")
-        extension_response = extension_utils.verify_extension(
-            self.server, self.db_name, self.extension_name)
-        if not extension_response:
-            raise Exception("Could not find extension.")
         self.data = fdw_utils.get_fdw_data(self.schema_name,
                                            self.server['username'])
         response = self.tester.post(
@@ -62,7 +55,5 @@ class FDWDAddTestCase(BaseTestGenerator):
     def tearDown(self):
         """This function disconnect the test database and
             drop added extension."""
-        extension_utils.drop_extension(self.server, self.db_name,
-                                       self.extension_name)
         database_utils.disconnect_database(self, self.server_id,
                                            self.db_id)

@@ -491,7 +491,7 @@ class CheckConstraintView(PGChildNodeView):
                     status=400,
                     success=0,
                     errormsg=_(
-                        "Couldn't find the required parameter (%s)." % arg
+                        "Could not find the required parameter (%s)." % arg
                     )
                 )
 
@@ -706,9 +706,7 @@ class CheckConstraintView(PGChildNodeView):
                                         'create.sql']),
                               data=data)
 
-        sql_header = "-- Constraint: {0}\n\n-- ".format(data['name'])
-        if hasattr(str, 'decode'):
-            sql_header = sql_header.decode('utf-8')
+        sql_header = u"-- Constraint: {0}\n\n-- ".format(data['name'])
 
         sql_header += render_template(
             "/".join([self.template_path, 'delete.sql']),
