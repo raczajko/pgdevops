@@ -5,11 +5,11 @@
     </div>
     <div ng-if="!bamLoading">
         <div class="row">
-            <div class="col-md-2 col-sm-3 col-xs-6" ng-if="pgComp">
-                <a href="#/details-pg/{{pgComp}}" class="thumbnail">
+            <div class="col-md-2 col-sm-3 col-xs-6" ng-if="pgComp" ng-repeat="comp in pgComp">
+                <a href="#/details-pg/{{comp.component}}" class="thumbnail">
                     <img src="assets/img/sloni.png" alt="">
                     <div class="caption">
-                        <h4 style="text-align:center;">{{pgComp}}</h4>
+                        <h4 style="text-align:center;">{{comp.component}}</h4>
                     </div>
                 </a>
             </div>

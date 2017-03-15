@@ -169,6 +169,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
         var statusData = bamAjaxCall.getCmdData(status_url);
         statusData.then(function(data) {
+                data = $(data).filter(function(i,n){ return n.category == '1' });
                 $scope.groupsList[p_idx].hosts[idx].comps = data;
                 if ($scope.groupsList[p_idx].hosts[idx].comps.length == 0) {
                     $scope.groupsList[p_idx].hosts[idx].showMsg = true;
@@ -305,6 +306,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             var statusData = bamAjaxCall.getCmdData(status_url);
             statusData.then(function(data) {
                 $scope.hostStatus = false;
+                data = $(data).filter(function(i,n){ return n.category == '1' });
                     if(data.length <= 0){
                         $scope.groupsList[p_idx].hosts[idx].comps = data;
                         $scope.groupsList[p_idx].hosts[idx].showMsg = true;

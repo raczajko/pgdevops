@@ -14,7 +14,7 @@ angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubS
         $scope.$apply();
    			var components = $(JSON.parse(args[0])).filter(function(i,n){ return n.category === 1;});
     		if(components.length != 0){
-    			$scope.pgComp = components[0].component;
+    			$scope.pgComp = components;
     		}
     }).then(function (subscription) {
         subscriptions.push(subscription);
