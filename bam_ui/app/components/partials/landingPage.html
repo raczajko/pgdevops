@@ -1,3 +1,8 @@
+<section class="content-header">
+    <h1 class="components-update-title-wrapper">
+        Dashboard
+    </h1>
+</section>
 <section class="content">
     <div ng-if="bamLoading" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
         <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
@@ -7,49 +12,59 @@
         <div class="row">
             <div class="col-md-2 col-sm-3 col-xs-6" ng-if="pgComp" ng-repeat="comp in pgComp">
                 <a href="#/details-pg/{{comp.component}}" class="thumbnail">
-                    <img src="assets/img/sloni.png" alt="">
+                    <img class="img-responsive" src="assets/img/pgdevops-postgres.png" alt="">
                     <div class="caption">
-                        <h4 style="text-align:center;">{{comp.component}}</h4>
+                        <h4 class="home-page-tile-name">{{comp.component}}</h4>
                     </div>
                 </a>
             </div>
             <div class="col-md-2 col-sm-3 col-xs-6">
                 <a href="/admin" class="thumbnail">
-                    <img src="assets/img/logoBIG.png" alt="">
+                    <img class="img-responsive" src="assets/img/pgadmin4-web.png" alt="">
                     <div class="caption">
-                        <h4 style="text-align:center;">pgAdmin4 Web</h4>
+                        <h4 class="home-page-tile-name">pgAdmin4 Web</h4>
                     </div>
                 </a>
             </div>
             <div class="col-md-2 col-sm-3 col-xs-6">
                 <a ui-sref="components.view" class="thumbnail">
-                    <img style="padding: 14px;" src="assets/img/bigsql-manager.png" alt="">
+                    <img class="img-responsive" src="assets/img/pgdevops-pkg-mgr.png" alt="">
                     <div class="caption">
-                        <h4 style="text-align:center;">Package Manager</h4>
+                        <h4 class="home-page-tile-name">Package Manager</h4>
                     </div>
                 </a>
             </div>
             <div class="col-md-2 col-sm-3 col-xs-6">
                 <a ui-sref="components.badger" class="thumbnail">
-                    <img src="assets/img/pgbadger-lg.png" alt="">
+                    <img class="img-responsive" src="assets/img/pgbadger-lg.png" alt="">
                     <div class="caption">
-                        <h4 style="text-align:center;">pgBadger</h4>
+                        <h4 class="home-page-tile-name">pgBadger Console</h4>
                     </div>
                 </a>
             </div>
             <div class="col-md-2 col-sm-3 col-xs-6">
                 <a ui-sref="components.profiler" class="thumbnail">
-                    <img src="assets/img/pl-profiler-opt-1.png" alt="">
+                    <img class="img-responsive" src="assets/img/pl-profiler-opt-1.png" alt="">
                     <div class="caption">
-                        <h4 style="text-align:center;">plProfiler</h4>
+                        <h4 class="home-page-tile-name">plProfiler Console</h4>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-2 col-sm-3 col-xs-6">
+                <a ui-sref="components.componentLog({component:'pgcli'})" class="thumbnail">
+                    <div style="text-align: center;">
+                        <img class="img-responsive" src="assets/img/pgdevops-logtailer.png" alt="">
+                    </div>
+                    <div class="caption">
+                        <h4 class="home-page-tile-name">Log Tailer</h4>
                     </div>
                 </a>
             </div>
             <div class="col-md-2 col-sm-3 col-xs-6">
                 <a ui-sref="components.hosts" class="thumbnail">
-                    <img src="assets/img/cloud-mgr-lg.png" alt="">
+                    <img class="img-responsive" src="assets/img/cloud-mgr-lg.png" alt="">
                     <div class="caption">
-                        <h4 style="text-align:center;">Cloud Manager</h4>
+                        <h4 class="home-page-tile-name">Cloud Manager</h4>
                     </div>
                 </a>
             </div>

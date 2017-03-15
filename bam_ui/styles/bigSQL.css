@@ -6740,6 +6740,12 @@ span.new-comp-wrapper {
     background-position: 0 0;
   }
 
+  .bgs-package-manager-menu{
+    background-image: url('../assets/img/pgdevops-pkg-mgr-icon-for-nav-17x17.png');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+  }
+
   #comp-details-tabs-wrapper>.nav>li.disabled>a {
      background-color: #d8d8d8;
 }
@@ -6959,4 +6965,9 @@ span.more-text.show {
 
 .details-page-tab > a{
   font-weight: bold;
+}
+
+.home-page-tile-name {
+  text-align:center; 
+  white-space: nowrap;
 }

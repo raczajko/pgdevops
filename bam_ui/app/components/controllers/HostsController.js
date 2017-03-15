@@ -513,36 +513,41 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
 
     $scope.open = function (p_idx, idx) {
-            $scope.editHost = '';
-            if(idx >= 0){
-                $scope.editHost = $scope.groupsList[p_idx].hosts[idx];
-            }
+            $scope.alerts.push({
+                    type: 'warning'
+                });
+            // $scope.editHost = '';
+            // if(idx >= 0){
+            //     $scope.editHost = $scope.groupsList[p_idx].hosts[idx];
+            // }
 
-            var modalInstance = $uibModal.open({
-                templateUrl: '../app/components/partials/addHostModal.html',
-                windowClass: 'modal',
-                controller: 'addHostController',
-                scope: $scope,
-            });
+            // var modalInstance = $uibModal.open({
+            //     templateUrl: '../app/components/partials/addHostModal.html',
+            //     windowClass: 'modal',
+            //     controller: 'addHostController',
+            //     scope: $scope,
+            // });
         };
 
     $scope.openGroupsModal = function (idx) {
-
-            var modalInstance = $uibModal.open({
-                templateUrl: '../app/components/partials/addServerGroupsModal.html',
-                windowClass: 'modal',
-                controller: 'addServerGroupsController',
-                scope: $scope,
-            });
-            $scope.editGroup = '';
-            if(idx){
-                $scope.editGroup = $scope.groupsList[idx];
-                for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
-                    if($scope.groupsList[i].group == $scope.editGroup.group){
-                        modalInstance.groupServers = $scope.groupsList[i].hosts;
-                    }
-                }
-            }
+            $scope.alerts.push({
+                    type: 'warning'
+                });
+            // var modalInstance = $uibModal.open({
+            //     templateUrl: '../app/components/partials/addServerGroupsModal.html',
+            //     windowClass: 'modal',
+            //     controller: 'addServerGroupsController',
+            //     scope: $scope,
+            // });
+            // $scope.editGroup = '';
+            // if(idx){
+            //     $scope.editGroup = $scope.groupsList[idx];
+            //     for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+            //         if($scope.groupsList[i].group == $scope.editGroup.group){
+            //             modalInstance.groupServers = $scope.groupsList[i].hosts;
+            //         }
+            //     }
+            // }
         };
 
     $scope.showTop = function (idx) {
