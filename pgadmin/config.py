@@ -29,7 +29,8 @@ from pgadmin.utils import env, IS_PY2, IS_WIN, fs_short_path
 
 # Name of the application to display in the UI
 APP_NAME = 'pgAdmin4 Web'
-APP_ICON = 'icon-postgres-alt'
+#APP_ICON = 'icon-postgres-alt'
+APP_ICON = 'icon-bigsql-pgadmin-alt'
 
 ##########################################################################
 # Application settings

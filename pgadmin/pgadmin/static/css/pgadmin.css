@@ -767,3 +767,10 @@ lgg-el-container[el=md] .pg-el-lg-8,
 .show_progress {
   cursor: progress;
 }
+
+/* Bigsql flavored logo config for pgAdmin */
+.icon-bigsql-pgadmin-alt{
+  content:url('../img/bigsql-pgadmin-30x30.png');
+  float: left;
+  padding-right: 5px;
+}
