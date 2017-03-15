@@ -72,7 +72,7 @@ def do_setup(app):
             # Prompt the user for their default username and password.
             print(
                 u"Enter the email address and password to use for the initial "
-                u"pgAdmin user account:\n"
+                u"pgDevOps user account:\n"
             )
 
             email_filter = re.compile(
@@ -437,7 +437,7 @@ if __name__ == '__main__':
         'sqlite:///' + config.SQLITE_PATH.replace('\\', '/')
     db.init_app(app)
 
-    print(u"pgAdmin 4 - Application Initialisation")
+    print(u"pgDevOps - Application Initialization")
     print(u"======================================\n")
 
     from pgadmin.utils import u, fs_encoding, file_quote
