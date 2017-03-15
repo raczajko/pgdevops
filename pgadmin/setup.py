@@ -142,6 +142,40 @@ def do_setup(app):
 
         db.session.commit()
 
+        sys.path.append(os.path.join(os.environ.get("PGC_HOME"),"hub","scripts"))
+        import util
+        servergroup_id = 1
+        user_id=user.id
+        servergroups = ServerGroup.query.filter_by(
+            user_id=user_id
+        ).order_by("id")
+
+        if servergroups.count() > 0:
+            servergroup = servergroups.first()
+            servergroup_id = servergroup.id
+
+        get_pg_instance=util.get_installed_postgres_components()
+        for pg in get_pg_instance:
+            srv_name=pg[0]
+            srv_proj=pg[1]
+            srv_port=pg[3]
+            srv_datadir=pg[4]
+            svr_comment=srv_proj
+            if srv_datadir!="" and srv_datadir!="None" and os.path.exists(srv_datadir):
+                svr = Server(user_id=user_id,
+                            servergroup_id=servergroup_id,
+                            name=srv_name,
+                            host='localhost',
+                            port=srv_port,
+                            maintenance_db='postgres',
+                            username="postgres",
+                            ssl_mode='prefer',
+                            comment=svr_comment,
+                            discovery_id="BigSQL PostgreSQL")
+
+                db.session.add(svr)
+                db.session.commit()
+
     # Done!
     print(u"")
     print(
