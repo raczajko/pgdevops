@@ -142,6 +142,8 @@ def do_setup(app):
 
         db.session.commit()
 
+
+        ## Check if there are any postgres components installed add them to servers list.
         sys.path.append(os.path.join(os.environ.get("PGC_HOME"),"hub","scripts"))
         import util
         servergroup_id = 1
