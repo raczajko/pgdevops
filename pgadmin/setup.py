@@ -164,6 +164,7 @@ def do_setup(app):
             srv_datadir=pg[4]
             svr_comment=srv_proj
             if srv_datadir!="" and srv_datadir!="None" and os.path.exists(srv_datadir):
+                print ("Adding {} to pgdevops metadata ".format(srv_name))
                 svr = Server(user_id=user_id,
                             servergroup_id=servergroup_id,
                             name=srv_name,
