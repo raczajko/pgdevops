@@ -123,6 +123,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         };
 
         $scope.cancel = function () {
+            $rootScope.$emit('refreshUpdateDate');
             $uibModalInstance.dismiss('cancel');
         };
 
@@ -282,6 +283,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
      Unsubscribe to all the apis on the template and scope destroy
      **/
     $scope.$on('$destroy', function () {
+        $rootScope.$emit('refreshUpdateDate');
         $rootScope.$emit('topMenuEvent');
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);

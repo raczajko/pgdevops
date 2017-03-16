@@ -85,6 +85,10 @@ class AppSession(ApplicationSession):
 
         self.register(components.setTestSetting, 'com.bigsql.setTestSetting')
 
+        self.register(components.getBetaFeatureSetting, 'com.bigsql.getBetaFeatureSetting')
+
+        self.register(components.setBetaFeatureSetting, 'com.bigsql.setBetaFeatureSetting')
+
         self.register(components.logIntLines, 'com.bigsql.logIntLines')
 
         self.register(components.isInstalled, 'com.bigsql.isInstalled')

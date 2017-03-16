@@ -305,6 +305,22 @@ class Components(ComponentAction):
         util.set_value("GLOBAL", "STAGE", val)
 
     @inlineCallbacks
+    def getBetaFeatureSetting(self):
+        """
+        Method to get test list setting of bam.
+        :return: It yields json string.
+        """
+        yield self.session.publish('com.bigsql.onGetBeataFeatureSetting', util.get_value ("GLOBAL", "BETA", ""))
+
+
+    def setBetaFeatureSetting(self, val):
+        """
+        Method to set the test list setting of bam.
+        :return: It yields json string.
+        """
+        util.set_value("GLOBAL", "BETA", val)
+
+    @inlineCallbacks
     def selectedLog(self,logdir):
         """
         Method to tail the last 1000 lines from the PGC_LOGS to display default.

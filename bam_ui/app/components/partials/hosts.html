@@ -16,7 +16,7 @@
 <span id="components"></span>
 <section class="content">
     <div class="uib-text" uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert()" dismiss-on-timeout="8000">
-        This is a beta feature. Sign up at <a href="https://www.bigsql.org/" target="_blank">https://www.bigsql.org/</a> to know more. 
+        This is a beta feature, you need to enable this in <a ui-sref="components.settingsView">settings.</a> 
     </div>
     <div ng-if="nothingInstalled" class="jumbotron"
          style="background-color: #fff; margin-top: 15px; text-align: center;"><h3> You haven't registered any

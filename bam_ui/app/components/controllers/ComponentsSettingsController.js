@@ -42,7 +42,20 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     sessionPromise.then(function (val) {
         $rootScope.$emit('topMenuEvent');
         session = val;
-        
+
+        session.call('com.bigsql.getBetaFeatureSetting');
+
+        session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
+            if(settings[0] == '0'){
+                $scope.betaFeature = false;
+            }else{
+                $scope.betaFeature = true;
+            }
+           $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
         $scope.updateManualSettings = function () {
             session.call('com.bigsql.update_host_settings', ['localhost', "None", '']).then(
                 function (subscription) {
@@ -77,6 +90,24 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             $scope.alerts.splice(index, 1);
         };
 
+        $scope.changeBetaFeature = function (argument) {
+            var value, msg, type;
+            if($scope.betaFeature){
+                value = '1';
+                msg = "Beta features enabled.";
+                type = 'success';
+            }else{
+                value = '0';
+                msg = "Beta features disabled.";
+                type = 'warning';
+            }
+            session.call('com.bigsql.setBetaFeatureSetting', [value]);
+            $scope.alerts.push({
+                msg : msg,
+                type : type
+            });
+        }
+
     });
 
     function getInfo(argument) {
@@ -91,7 +122,8 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         infoData.then(function(data) {
         $scope.pgcInfo = data[0];
         if (data[0].last_update_utc) {
-            $scope.lastUpdateStatus = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
+            var l_date = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
+            $scope.lastUpdateStatus = l_date.split(' ')[0] + ' ' + l_date.split(' ')[1].replace(/^0+/, '') + ', ' + l_date.split(' ')[2] + ' ' + l_date.split(' ')[3]
         }
         if (MachineInfo.getUpdationMode() == "manual") {
             $scope.settingType = 'manual';
@@ -102,6 +134,10 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
     });
     };
+
+    $rootScope.$on('refreshUpdateDate', function (argument) {
+       $window.location.reload(); 
+    });
 
     getInfo($cookies.get('remote_host'));
 

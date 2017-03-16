@@ -21,7 +21,7 @@ angular.module('bigSQL.menus').component('topMenu', {
                 var Checkupdates = 0;
                 $scope.components = data;
                 for (var i = 0; i < $scope.components.length; i++) {
-                    if ($scope.components[i].component != 'devops') {
+                    if ($scope.components[i].component != 'pgdevops') {
                         Checkupdates += $scope.components[i].updates;
                     }
                 }

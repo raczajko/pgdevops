@@ -127,6 +127,19 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     sessionPromise.then(function (val) {
         session = val;
+
+        session.call('com.bigsql.getBetaFeatureSetting');
+
+        session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
+            if(settings[0] == '0'){
+                $scope.betaFeature = false;
+            }else{
+                $scope.betaFeature = true;
+            }
+           $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
     });
 
     var getCurrentComponent = function (name, host) {
@@ -513,41 +526,47 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
 
     $scope.open = function (p_idx, idx) {
-            $scope.alerts.push({
+            if ($scope.betaFeature) {
+                $scope.editHost = '';
+                if(idx >= 0){
+                    $scope.editHost = $scope.groupsList[p_idx].hosts[idx];
+                }
+
+                var modalInstance = $uibModal.open({
+                    templateUrl: '../app/components/partials/addHostModal.html',
+                    windowClass: 'modal',
+                    controller: 'addHostController',
+                    scope: $scope,
+                });
+            }else{
+                $scope.alerts.push({
                     type: 'warning'
                 });
-            // $scope.editHost = '';
-            // if(idx >= 0){
-            //     $scope.editHost = $scope.groupsList[p_idx].hosts[idx];
-            // }
-
-            // var modalInstance = $uibModal.open({
-            //     templateUrl: '../app/components/partials/addHostModal.html',
-            //     windowClass: 'modal',
-            //     controller: 'addHostController',
-            //     scope: $scope,
-            // });
+            }
         };
 
     $scope.openGroupsModal = function (idx) {
-            $scope.alerts.push({
+            if($scope.betaFeature){
+                var modalInstance = $uibModal.open({
+                    templateUrl: '../app/components/partials/addServerGroupsModal.html',
+                    windowClass: 'modal',
+                    controller: 'addServerGroupsController',
+                    scope: $scope,
+                });
+                $scope.editGroup = '';
+                if(idx){
+                    $scope.editGroup = $scope.groupsList[idx];
+                    for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                        if($scope.groupsList[i].group == $scope.editGroup.group){
+                            modalInstance.groupServers = $scope.groupsList[i].hosts;
+                        }
+                    }
+                }
+            }else{
+                $scope.alerts.push({
                     type: 'warning'
                 });
-            // var modalInstance = $uibModal.open({
-            //     templateUrl: '../app/components/partials/addServerGroupsModal.html',
-            //     windowClass: 'modal',
-            //     controller: 'addServerGroupsController',
-            //     scope: $scope,
-            // });
-            // $scope.editGroup = '';
-            // if(idx){
-            //     $scope.editGroup = $scope.groupsList[idx];
-            //     for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
-            //         if($scope.groupsList[i].group == $scope.editGroup.group){
-            //             modalInstance.groupServers = $scope.groupsList[i].hosts;
-            //         }
-            //     }
-            // }
+            }
         };
 
     $scope.showTop = function (idx) {
