@@ -124,7 +124,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         session.subscribe("com.bigsql.onCheckExtension", function (data) {
             if (!data[0].status) {
                 $scope.extensionAlerts.push({
-                        msg:  'plprofiler extension is not enabled on ' + $scope.selectDatabase + '. Do you want to enable?',
+                        msg:  'plprofiler extension is not enabled on ' + $scope.selectDatabase + ' database. Do you want to enable?',
                         type: 'warning',
                         showBtns : true,
                     });
