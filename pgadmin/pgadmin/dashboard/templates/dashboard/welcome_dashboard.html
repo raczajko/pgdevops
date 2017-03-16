@@ -5,11 +5,26 @@
                 <legend class="badge">{{ _('Welcome') }}</legend>
             </div>
             <div class="well well-lg">
-                <img src="{{ url_for('dashboard.static', filename='img/welcome_logo.png') }}" alt="pgAdmin 4">
+                <div style="display:block;float:left">
+                <map name="pgdevops">
+                  <area shape="rect" coords="122,58,400,350" target="_blank" href="http://www.pgdevops.org">
+                </map>
+                <img usemap="#pgdevops" src="{{ url_for('dashboard.static', filename='img/welcome_logo.png') }}" alt="pgAdmin 4">
+                </div>
+                <div style="display:block;float:left;padding: 0px 0px 0px 50px;">
+                <h3>{{ _('BigSQL Info') }}</h3>
+                <ul style="list-style: none;padding-left: 0px;">
+                <li><a href="https://www.bigsql.org/about.jsp" target="_blank">{{ _('About Us') }}</a></li>
+                <li><a href="https://www.bigsql.org/forum.jsp" target="_blank">{{ _('Feedback') }}</a></li>
+                <li><a href="https://www.bigsql.org/docs/" target="_blank">{{_('Documentation') }}</a></li>
+                </div>
+                <div style="display: inline-block;">
                 <h4>{{ _('Feature rich') }} | {{ _('Maximises PostgreSQL') }} | {{ _('Open Source') }} </h4>
                 <p>
                     {{ _('pgAdmin is an open source administration and management tool for the PostgreSQL database. The tools include a graphical administration interface, an SQL query tool, a procedural code debugger and much more. The tool is designed to answer the needs of developers, DBAs and system administrators alike.') }}
                 </p>
+                </div>
+
             </div>
         </div>
     </div>
