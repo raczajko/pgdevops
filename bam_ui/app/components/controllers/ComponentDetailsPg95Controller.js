@@ -32,48 +32,57 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     }
 
     function callInfo(argument) {
-        var remote_host = $cookies.get('remote_host');
-        remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
-        $scope.currentHost = remote_host;
-        if (remote_host == "" || remote_host == "localhost") {
-            var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component);
-        } else {
-            var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component + "/" + remote_host);
-        }
+        var checkStatus = bamAjaxCall.getCmdData('status/' + $stateParams.component);
+        checkStatus.then(function (data) {
+            var remote_host = $cookies.get('remote_host');
+            remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
+            $scope.currentHost = remote_host;
 
-        //var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
-        infoData.then(function (data) {
-            $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
-            $scope.loading = false;
-            if (data[0]['autostart'] == "on") {
-                data[0]['autostart'] = true;
+            var infoUrl = 'info/'
+            if (data.state != 'Running') {
+                $scope.releaseTabEvent();
+            }
+
+            if (remote_host == "" || remote_host == "localhost") {
+                var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
             } else {
-                data[0]['autostart'] = false;
+                var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component + "/" + remote_host);
             }
-            if (window.location.href.split('/').pop(-1) == data[0].component) {
-                $scope.component = data[0];
-                if ($scope.component.status != "Running") {
-                    $scope.activeReleaseNotes = true;
-                    $scope.activeOverview = false;
-                    $scope.uibStatus = {
-                        tpsChartCollapsed: false,
-                        rpsChartCollapsed: false,
-                        diskChartCollapsed: true,
-                        cpuChartCollapsed: true,
-                        connectionsCollapsed: false
-                    };
+
+            //var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+            infoData.then(function (data) {
+                $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
+                $scope.loading = false;
+                if (data[0]['autostart'] == "on") {
+                    data[0]['autostart'] = true;
                 } else {
-                    $scope.activeReleaseNotes = false;
-                    $scope.activeOverview = true;
-                    $scope.uibStatus = {
-                        tpsChartCollapsed: true,
-                        rpsChartCollapsed: true,
-                        diskChartCollapsed: false,
-                        cpuChartCollapsed: true,
-                        connectionsCollapsed: false
-                    };
+                    data[0]['autostart'] = false;
                 }
-            }
+                if (window.location.href.split('/').pop(-1) == data[0].component) {
+                    $scope.component = data[0];
+                    if ($scope.component.status != "Running") {
+                        $scope.activeReleaseNotes = true;
+                        $scope.activeOverview = false;
+                        $scope.uibStatus = {
+                            tpsChartCollapsed: false,
+                            rpsChartCollapsed: false,
+                            diskChartCollapsed: true,
+                            cpuChartCollapsed: true,
+                            connectionsCollapsed: false
+                        };
+                    } else {
+                        $scope.activeReleaseNotes = false;
+                        $scope.activeOverview = true;
+                        $scope.uibStatus = {
+                            tpsChartCollapsed: true,
+                            rpsChartCollapsed: true,
+                            diskChartCollapsed: false,
+                            cpuChartCollapsed: true,
+                            connectionsCollapsed: false
+                        };
+                    }
+                }
+            });
         });
     };
 
@@ -97,7 +106,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         });
     }
 
-    callInfo();
+    // callInfo();
     callStatus();
 
     $interval(callStatus, 5000);
@@ -314,12 +323,13 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             $scope.alerts.splice(index, 1);
         };
 
-        // $scope.releaseTabEvent = function (argument) {
-        //     var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );
-        //     relnotes.then(function (data) {
-        //         $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
-        //     });
-        // }
+        
+        $scope.releaseTabEvent = function (argument) {
+            var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );
+            relnotes.then(function (data) {
+                $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
+            });
+        }
 
         session.subscribe('com.bigsql.onActivity', function (data) {
             if (data[0].component == $stateParams.component) {
