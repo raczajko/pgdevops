@@ -46,7 +46,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         session.call('com.bigsql.getBetaFeatureSetting');
 
         session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
-            if(settings[0] == '0'){
+            if(settings[0] == '0' || !settings[0]){
                 $scope.betaFeature = false;
             }else{
                 $scope.betaFeature = true;
