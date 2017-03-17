@@ -49,9 +49,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component + "/" + remote_host);
             }
 
-            //var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
             infoData.then(function (data) {
-                $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
+                // $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
                 $scope.loading = false;
                 if (data[0]['autostart'] == "on") {
                     data[0]['autostart'] = true;
