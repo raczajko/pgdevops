@@ -19,7 +19,7 @@
             <div class="col-md-12 col-xs-12" id="updatesTableTbody " ng-repeat="(key, value) in components" ng-if="value.updates>0 && value.component != 'bam2'" style="border-bottom: 1px solid #ddd;">
                 <div class="component_box" id="{{value.component}}">
                     <div class="col-md-2 col-xs-2">
-                        <img class="img-responsive" style="width: 35%; padding: 6px; margin-left: 35px;" ng-src="assets/img/component-logos/{{value.component}}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
+                        <img class="img-responsive" style="width: 35%; padding: 6px; margin-left: 35px;" ng-src="assets/img/component-logos/{{value.componentImage || value.component }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
                         <div style="text-align: center; white-space: nowrap;">
                             <a ng-if="value.category != 1"  ng-click="cancel(); openDetailsModal(value.component)">
                                         <strong>{{value.component}}</strong>
@@ -82,7 +82,7 @@
                 <div class="component_box" id="{{value.component}}">
                     <div class="col-md-2 col-xs-2">
                         <!-- <input type="checkbox" ng-model="value.selected" ng-checked="selectedComp.component == value.component"> -->
-                        <img class="img-responsive" style="width: 35%; padding: 5px; margin-left: 35px;" ng-src="assets/img/component-logos/{{value.component}}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
+                        <img class="img-responsive" style="width: 35%; padding: 5px; margin-left: 35px;" ng-src="assets/img/component-logos/{{value.componentImage || value.component}}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
                         <div style="text-align: center; white-space: nowrap;">
                             <a ng-if="value.category != 1"  ng-click="cancel(); openDetailsModal(value.component)">
                                         <strong>{{value.component}}</strong>
@@ -150,7 +150,7 @@
                 <div class="component_box" id="{{value.component}}">
                     <div class="col-md-2 col-xs-2">
                         <!-- <input type="checkbox" ng-model="value.selected" ng-checked="selectedComp.component == value.component"> -->
-                        <img class="img-responsive" style="width: 35%; padding: 5px;margin-left: 35px;" ng-src="assets/img/component-logos/{{value.component}}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
+                        <img class="img-responsive" style="width: 35%; padding: 5px;margin-left: 35px;" ng-src="assets/img/component-logos/{{value.componentImage || value.component}}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
                         <div style="text-align: center; white-space: nowrap;">
                             <a ng-if="value.category != 1"  ng-click="cancel(); openDetailsModal(value.component)">
                                         <strong>{{value.component}}</strong>
