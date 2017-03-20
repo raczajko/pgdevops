@@ -34,15 +34,17 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
             $scope.hideLatestInstalled = true;
 
             $scope.components = $(data).filter(function(i,n){ return n.updates>0 ;});
-
+            
             for (var i = 0; i < $scope.components.length; i++) {
-                // $scope.components[i].componentImage = $scope.components[i].component.split('-')[0].replace(/[0-9]/g,'')
                 if($scope.components[i].is_current == 0 && $scope.components[i].current_version){
                     $scope.noUpdates = false;
                 }
             }
 
             for (var i = 0; i < $scope.allComponents.length; i++) {
+                if ($scope.allComponents[i].category_desc == "Extensions") {
+                    $scope.allComponents[i].componentImage = $scope.allComponents[i].component.split('-')[0].replace(/[0-9]/g,'')                    
+                }
                 $scope.allComponents[i].rel_notes = $sce.trustAsHtml($scope.allComponents[i].rel_notes);
                 $scope.allComponents[i].curr_release_date = new Date($scope.allComponents[i].curr_release_date).toString().split(' ',[4]).splice(1).join(' ');
                 $scope.allComponents[i].curr_release_date = $scope.allComponents[i].curr_release_date.split(' ')[0] + ' ' + $scope.allComponents[i].curr_release_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.allComponents[i].curr_release_date.split(' ')[2];
