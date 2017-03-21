@@ -326,20 +326,25 @@ class AddtoMetadata(Resource):
                 servergroup_id = servergroup.id
 
 
-            svr = Server(user_id=user_id,
-                        servergroup_id=servergroup_id,
-                        name=component_name,
-                        host=component_host,
-                        port=component_port,
-                        maintenance_db='postgres',
-                        username="postgres",
-                        password=component_pass,
-                        ssl_mode='prefer',
-                        comment=component_proj,
-                        discovery_id="BigSQL PostgreSQL")
+            component_server = Server.query.filter_by(
+                name=component_name,
+                host=component_host
+            )
+            if component_server.count()==0:
+                svr = Server(user_id=user_id,
+                            servergroup_id=servergroup_id,
+                            name=component_name,
+                            host=component_host,
+                            port=component_port,
+                            maintenance_db='postgres',
+                            username="postgres",
+                            password=component_pass,
+                            ssl_mode='prefer',
+                            comment=component_proj,
+                            discovery_id="BigSQL PostgreSQL")
 
-            db.session.add(svr)
-            db.session.commit()
+                db.session.add(svr)
+                db.session.commit()
         except Exception as e:
             result = {}
             result['error'] = 1
