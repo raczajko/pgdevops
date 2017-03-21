@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('pgInitializeController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', 'bamAjaxCall', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, bamAjaxCall) {
+angular.module('bigSQL.components').controller('pgInitializeController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', 'bamAjaxCall', '$http', '$window', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, bamAjaxCall, $http, $window) {
 
 	var session;
     var subscriptions = [];
@@ -76,7 +76,34 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             function (subscription){
                 subscriptions.push(subscription);
             });
+
+        session.subscribe('com.bigsql.onInit',
+        function (data) {
+                var compStatus = JSON.parse(data[0]);
+                if(compStatus[0].status == 'complete'){
+                    $scope.addToMetaData();
+                }else{
+                    $uibModalInstance.dismiss('cancel');
+                }
+            }).then(function (subscription){
+                subscriptions.push(subscription);
+            });
     });
+
+    $scope.addToMetaData = function (comp, remote_host) {
+        if($scope.host == 'localhost' || $scope.host == ''){
+            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp)
+        }else{
+            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp + '/' + $scope.host)
+        }
+        infoComp.then(function(args) { 
+            args[0]['host'] = $scope.host;
+            var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', args[0]);
+            addToMetaData.then(function (argument) {
+                $uibModalInstance.dismiss('cancel');                        
+            });
+        });
+    }
 
     $scope.init = function() {
         if($scope.host == 'localhost' || $scope.host == ''){
@@ -84,17 +111,19 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
                 $scope.portNumber = document.getElementById('portNumber').value;
             }
             session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDirVal, $scope.portNumber ] );
-    	    $rootScope.$emit('initComp', [$scope.comp]);    		
-    		$uibModalInstance.dismiss('cancel');
+    	    $rootScope.$emit('initComp', [$scope.comp]);  		
+    		// $uibModalInstance.dismiss('cancel');
         } else {
             var event_url =  'initpg/'  + $scope.host + '/' + $scope.userName +'/' + $scope.userPassword + '/' + $scope.comp + '/' +$scope.formData.password ;
             var eventData = bamAjaxCall.getCmdData(event_url);
             $rootScope.$emit('addedHost');
             $uibModalInstance.dismiss('cancel');
             eventData.then(function(data) {
-                $uibModalInstance.dismiss('cancel');
+                // $uibModalInstance.dismiss('cancel');   
+                $scope.addToMetaData();                     
             });
         }
+
     }
 
     $scope.$on('$destroy', function () {

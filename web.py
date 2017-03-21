@@ -15,7 +15,7 @@ from flask_security import login_required, roles_required, current_user
 # from flask_login import current_user
 from flask_babel import Babel, gettext
 from pgadmin.utils.session import create_session_interface
-from pgadmin.model import db, Role, User
+from pgadmin.model import db, Role, User, Server, ServerGroup
 from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.pickleSessions import PickleSessionInterface
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
@@ -308,12 +308,11 @@ class AddtoMetadata(Resource):
     def post(self):
         result = {}
         result['error'] = 0
-        args = request.json['data']
-        component_name = args.get("comp")
+        args = request.json
+        component_name = args.get("component")
         component_port = args.get("port",5432)
-        component_pass = args.get("pass")
         component_host = args.get("host","localhost")
-        component_proj = args.get("proj")
+        component_proj = args.get("project")
         servergroup_id = 1
         try:
             user_id=current_user.id
@@ -338,7 +337,6 @@ class AddtoMetadata(Resource):
                             port=component_port,
                             maintenance_db='postgres',
                             username="postgres",
-                            password=component_pass,
                             ssl_mode='prefer',
                             comment=component_proj,
                             discovery_id="BigSQL PostgreSQL")
