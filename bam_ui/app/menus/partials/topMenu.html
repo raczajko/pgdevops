@@ -33,6 +33,15 @@
                 <li>
 
                 </li>
+                <li ng-click="openDetailsModal()" id="pgDevOpsUpdate" ng-if="pgdevopsUpdate">
+                    <!-- <button class="btn btn-default btn-sm btn-warning" style="margin-top: 12px">New version of pgDevOps available</button> -->
+                    <a href="">
+                        <div>
+                            <small class="label bg-orange">New version of pgDevOps available
+                            </small>
+                        </div>
+                    </a>
+                </li>
                 <li ng-click="open()" id="updatesAvailable" ng-if="updates">
                     <a href="">
                         <div>

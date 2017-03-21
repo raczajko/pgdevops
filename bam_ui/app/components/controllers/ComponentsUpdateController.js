@@ -256,7 +256,8 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
     $scope.openDetailsModal = function (comp) {
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/details.html',
-            windowClass: 'comp-details-modal',
+            // windowClass: 'comp-details-modal',
+            size : 'lg',
             controller: 'ComponentDetailsController',
             keyboard  : false,
             backdrop  : 'static',

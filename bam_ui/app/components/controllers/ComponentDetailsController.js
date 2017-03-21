@@ -19,6 +19,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     }
 
     $scope.cancel = function () {
+        $interval.cancel(callStatus);
         $rootScope.$emit('refreshPage');
         $rootScope.$emit('updatePackageManager');
         $uibModalInstance.dismiss('cancel');
@@ -53,6 +54,21 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
         var sessionKey = "com.bigsql." + action;
         session.call(sessionKey, [$scope.component.component, is_yes]);
     };
+
+    if ($scope.currentComponent == 'pgdevops') {
+        var remote_host = $cookies.get('remote_host');
+        $scope.currentHost = remote_host;
+        remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
+        if (remote_host == "" || remote_host == "localhost") {
+            var pgcInfo = bamAjaxCall.getCmdData('info')
+        }else{
+            var pgcInfo = bamAjaxCall.getCmdData('info/' + remote_host)
+        }
+
+        pgcInfo.then(function (data) {
+            $scope.PGC_HOME = data[0].home;
+        })
+    }
 
     function callInfo(argument) {
         var remote_host = $cookies.get('remote_host');
@@ -92,10 +108,12 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     function callStatus(argument) {
         var statusData = bamAjaxCall.getCmdData('status')
         statusData.then(function(data) {
-            componentStatus = getCurrentObject($scope.currentComponent);
-            $rootScope.$emit('componentStatus', componentStatus);
-            if (componentStatus.state != $scope.component.status) {
-                callInfo();
+            componentStatus = getCurrentObject(data, $scope.currentComponent);
+            if(componentStatus != undefined){
+                $rootScope.$emit('componentStatus', componentStatus);
+                if (componentStatus.state != $scope.component.status) {
+                    callInfo();
+                }
             }
         });
     }
@@ -103,12 +121,21 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     callInfo();
     callStatus();
 
-    $interval(callStatus, 5000);
+    if($scope.currentComponent != 'pgdevops'){
+          $interval(callStatus, 5000);  
+    }
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
         $scope.component = {};
+
+        if ($scope.currentComponent == 'pgdevops') {
+            session.call('com.bigsql.checkOS');
+            session.subscribe('com.bigsql.onCheckOS', function (args) {
+                $scope.os = args[0];
+            });  
+        }
 
         var onRemove = function (response) {
             var data = JSON.parse(response[0])[0];

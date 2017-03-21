@@ -4,7 +4,8 @@
         <i class="fa fa-lg fa-close"></i>
     </div>
     <div class="details-modal">
-        <h4>Component Details</h4>
+        <h4 ng-if="component.component != 'pgdevops'">Component Details</h4>
+        <h4 ng-if="component.component == 'pgdevops'">&nbsp;</h4>
         <!-- <server-info-details title="Component Details"></server-info-details> -->
     </div>
         <div class="uib-text">
@@ -55,7 +56,7 @@
                             <span class="pull-left"><b>Connections</b></span>
                             <a class="pull-right" ng-bind="component.connections" id="home_url"></a>
                         </li>
-                        <li class="list-group-item" ng-show="component.datadir != '' && component.datadir != undefined">
+                        <li class="list-group-item" ng-show="component.datadir != '' && component.datadir != undefined && component.component != 'pgdevops'">
                             <span class="pull-left"><b>Data Dir</b></span>
                             <span class="pull-right" ng-bind="component.datadir" id="comp_doc"></span>
                         </li>
@@ -74,7 +75,7 @@
                             </span>
                         </li>
                     </ul>
-                    <div id="button-act" ng-click="action($event)">
+                    <div id="button-act" ng-click="action($event)" ng-if="component.component != 'pgdevops'">
                         <a ng-show="component.status == undefined && component.is_installed == 0" action="install" class="btn btn-default" ng-disabled=" component.installation != undefined">Install</a>
                         <a ng-show="component.status == 'Stopped' && component.port != 1" action="start" class="btn btn-default" ng-disabled=" component.spinner != undefined">Start</a>
                         <a ng-if="component.current_version" action="update" class="btn btn-warning" ng-disabled=" component.spinner != undefined">Update v{{component.current_version}}</a>
@@ -126,6 +127,61 @@
                 <uib-tab heading="Release Notes" class="details-page-tab" select="tabClick($event)">
                     <div class="col-md-12 details-relnotes">
                         <span class="details-page-relnotes" ng-bind-html="rel_notes"></span>
+                    </div>
+                </uib-tab>
+                <uib-tab heading="Update Instructions" class="details-page-tab" ng-if="component.component == 'pgdevops'">
+                    <div class="col-md-12 details-relnotes">
+                        <div ng-if="os != 'Windows'">
+                            <h4><strong>Upgrade steps </strong></h4>
+                            <ul>
+                                <li>
+                                    <p>Open a terminal window. </p>
+                                </li>
+                                <li>
+                                    <p>Go to your directory of installation </p>
+                                    <p style="font-family: monospace;">cd {{PGC_HOME}}</p>
+                                </li>
+                                <li>
+                                    <p>Get the latest update related information</p>
+                                    <p style="font-family: monospace;">./pgc update</p>
+                                </li>
+                                <li>
+                                    <p>Upgrade the pgdevops using following command </p>
+                                    <p style="font-family: monospace;">./pgc upgrade pgdevops</p>
+                                    <p style="font-style: italic;">The above command may take couple of minutes based on the speed of the system and network. It shuts down the pgDevOps service, Upgrade the pgDevOps and Starts the service again.</p>
+                                </li>
+                                <li>
+                                    <p>In case you want to manually start the pgdevops</p>
+                                    <p style="font-family: monospace;">./pgc start pgdevops</p>
+                                </li>
+                            </ul>
+                        </div>
+                        <div ng-if="os == 'Windows'">
+                            <h4><strong>Upgrade steps </strong></h4>
+                            <ul>
+                                <li>
+                                    <p>Open a command prompt as administrator.</p>
+                                    <img src="assets/img/component-logos/runAsAdmin.png">
+                                </li>
+                                <li>
+                                    <p>Go to your Installation Directory in windows:</p>
+                                    <p style="font-family: monospace;">cd {{PGC_HOME}}</p>
+                                </li>
+                                <li>
+                                    <p>Get information about the lastest packages available.</p>
+                                    <p style="font-family: monospace;">./pgc update</p>
+                                </li>
+                                <li>
+                                    <p>Upgrade the pgdevops using following command </p>
+                                    <p style="font-family: monospace;">./pgc upgrade pgdevops</p>
+                                    <p style="font-style: italic;">The above command may take couple of minutes based on the speed of the system and network. It shuts down the pgDevOps service, Upgrade the pgDevOps and Starts the service again.</p>
+                                </li>
+                                <li>
+                                    <p>In case you want to manually start the pgdevops</p>
+                                    <p style="font-family: monospace;">./pgc start pgdevops</p>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </uib-tab>
             </uib-tabset>

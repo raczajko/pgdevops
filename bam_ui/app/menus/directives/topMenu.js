@@ -6,6 +6,7 @@ angular.module('bigSQL.menus').component('topMenu', {
          **/
 
         $scope.hideUpdates = false;
+        $scope.pgdevopsUpdate = false;
         $scope.currentHost = $cookies.get('remote_host');
         function callList(argument) {
             argument = typeof argument !== 'undefined' ? argument : "";
@@ -23,6 +24,9 @@ angular.module('bigSQL.menus').component('topMenu', {
                 for (var i = 0; i < $scope.components.length; i++) {
                     if ($scope.components[i].component != 'pgdevops') {
                         Checkupdates += $scope.components[i].updates;
+                    }
+                    if ($scope.components[i].component == 'pgdevops' && $scope.components[i].updates == 1) {
+                        $scope.pgdevopsUpdate = true;
                     }
                 }
                 if(!$scope.hideUpdates){
@@ -73,6 +77,19 @@ angular.module('bigSQL.menus').component('topMenu', {
                 windowClass: 'comp-details-modal',
                 controller: 'ComponentsUpdateController',
             });
+        };
+
+        $scope.openDetailsModal = function (comp) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/details.html',
+                // windowClass: 'comp-details-modal',
+                size: 'lg',
+                controller: 'ComponentDetailsController',
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+            modalInstance.component = 'pgdevops';
+            modalInstance.isExtension = true;
         };
 
         $scope.usersPopup = function () {
