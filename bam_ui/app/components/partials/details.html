@@ -3,7 +3,7 @@
     <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
         <i class="fa fa-lg fa-close"></i>
     </div>
-    <div class="details-modal">
+    <div class="details-modal" ng-if="!loading">
         <h4 ng-if="component.component != 'pgdevops'">Component Details</h4>
         <h4 ng-if="component.component == 'pgdevops'">&nbsp;</h4>
         <!-- <server-info-details title="Component Details"></server-info-details> -->
@@ -34,8 +34,11 @@
                             <i style="font-size: small;">{{component.release_desc}}</i>
                         </div>
                     <ul class="list-group list-group-unbordered" id="comp_details">
-                        <li class="list-group-item" ng-show="component.version != '' && component.version != undefined">
+                        <li class="list-group-item" ng-show="component.version != '' && component.version != undefined && component.component !='pgdevops'">
                             <span class="pull-left"><b>Version</b></span> <span class="pull-right" ng-bind="component.version" id="comp_version"></span>
+                        </li>
+                        <li class="list-group-item" ng-show="component.version != '' && component.version != undefined && component.component =='pgdevops'">
+                            <span class="pull-left"><b>Install Version</b></span> <span class="pull-right" ng-bind="component.version" id="comp_version"></span>
                         </li>
                         <li class="list-group-item" ng-show="component.home_url != '' && component.home_url != undefined || component.doc_url != '' && component.doc_url != undefined">
                             <span class="pull-left"><a ng-show="component.home_url != ''" href="{{component.home_url}}" target='_blank'> Homepage <i class="fa fa-external-link"></i> </a></span> <span class="pull-right"> <a ng-show="component.doc_url != ''" href="{{component.doc_url}}" target='_blank'> Documentation <i class="fa fa-external-link"></i> </a> </span>
@@ -46,7 +49,7 @@
                         <li class="list-group-item" id="li-pointer" ng-show="component.install_date">
                             <span class="pull-left"><b>Install Date</b></span> <span class="pull-right" ng-bind="component.install_date"></span>
                         </li>
-                        <li class="list-group-item" ng-show="component.port != '' && component.port != undefined && component.port != 0 && component.port != 1">
+                        <li class="list-group-item" ng-show="component.port != '' && component.port != undefined && component.port != 0 && component.port != 1 && component.component != 'pgdevops'">
                             <span class="pull-left"><b>Port</b></span> <span class="pull-right" ng-bind="component.port"></span>
                         </li>
                         <li class="list-group-item" ng-show="component.up_time != '' && component.up_time != undefined">
@@ -68,7 +71,13 @@
                             <span class="pull-left"><b>Data Size</b></span>
                             <a class="pull-right" ng-bind="component.data_size" id="dt_added"></a>
                         </li>
-                        <li class="list-group-item" id="li-pointer" ng-show="component.status != '' && component.status != undefined && component.port != 1">
+                        <li class="list-group-item" id="li-pointer" ng-show="component.release_date && component.component == 'pgdevops' ">
+                            <span class="pull-left"><b>Upgrade Version</b></span> <span class="pull-right" ng-bind="component.current_version" id="dt_added"></span>
+                        </li>
+                        <li class="list-group-item" id="li-pointer" ng-show="component.release_date && component.component == 'pgdevops' ">
+                            <span class="pull-left"><b>Release Date</b></span> <span class="pull-right" ng-bind="component.release_date" id="dt_added"></span>
+                        </li>
+                        <li class="list-group-item" id="li-pointer" ng-show="component.status != '' && component.status != undefined && component.port != 1 &&  component.component != 'pgdevops'">
                             <span class="pull-left"><b>State</b></span>
                             <span class="pull-right" style="margin-top: -4px;"><i ng-class="statusColors[component.status]" class="fa fa-stop fa-2x"></i>
                                 <div style="margin-left: 30px; margin-top: -24px;"> {{component.status}}</div>
@@ -129,16 +138,16 @@
                         <span class="details-page-relnotes" ng-bind-html="rel_notes"></span>
                     </div>
                 </uib-tab>
-                <uib-tab heading="Update Instructions" class="details-page-tab" ng-if="component.component == 'pgdevops'">
+                <uib-tab heading="Upgrade Instructions" class="details-page-tab" ng-if="component.component == 'pgdevops'" active="true">
                     <div class="col-md-12 details-relnotes">
                         <div ng-if="os != 'Windows'">
-                            <h4><strong>Upgrade steps </strong></h4>
+                            <h3></h3>
                             <ul>
                                 <li>
                                     <p>Open a terminal window. </p>
                                 </li>
                                 <li>
-                                    <p>Go to your directory of installation </p>
+                                    <p>Go to the installation directory </p>
                                     <p style="font-family: monospace;">cd {{PGC_HOME}}</p>
                                 </li>
                                 <li>
@@ -146,39 +155,77 @@
                                     <p style="font-family: monospace;">./pgc update</p>
                                 </li>
                                 <li>
-                                    <p>Upgrade the pgdevops using following command </p>
+                                    <p>Upgrade pgDevOps using the following command </p>
                                     <p style="font-family: monospace;">./pgc upgrade pgdevops</p>
-                                    <p style="font-style: italic;">The above command may take couple of minutes based on the speed of the system and network. It shuts down the pgDevOps service, Upgrade the pgDevOps and Starts the service again.</p>
+                                    <p style="font-style: italic;">The above command may take a couple of minutes based on the speed of the system and network. It shuts down the pgDevOps service, upgrades pgDevOps, and starts the service again.</p>
                                 </li>
                                 <li>
-                                    <p>In case you want to manually start the pgdevops</p>
-                                    <p style="font-family: monospace;">./pgc start pgdevops</p>
+                                    <p>Verify status of the pgDevOps service</p>
+                                    <p style="font-family: monospace;">&nbsp; ./pgc status pgdevops</p>
+                                    <div class="well">
+                                        <strong><i class="fa fa-lightbulb-o fa-lg" aria-hidden="true"> &nbsp;</i>Other commands you might find useful</strong>
+                                        <br />
+                                        <br />
+                                        <ul>
+                                            <li>
+                                            <p>Start pgDevOps</p>
+                                            <p style="font-family: monospace;">&nbsp; ./pgc start pgdevops</p>
+                                            </li>
+                                            <li>
+                                            <p>Stop pgDevOps</p>
+                                            <p style="font-family: monospace;">&nbsp; ./pgc stop pgdevops</p>
+                                            </li>
+                                            <li>
+                                            <p>Restart pgDevOps</p>
+                                            <p style="font-family: monospace;">&nbsp; ./pgc restart pgdevops</p>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </li>
                             </ul>
                         </div>
                         <div ng-if="os == 'Windows'">
-                            <h4><strong>Upgrade steps </strong></h4>
+                            <h3></h3>
                             <ul>
                                 <li>
                                     <p>Open a command prompt as administrator.</p>
                                     <img src="assets/img/component-logos/runAsAdmin.png">
                                 </li>
                                 <li>
-                                    <p>Go to your Installation Directory in windows:</p>
+                                    <p>Go to the installation directory</p>
                                     <p style="font-family: monospace;">cd {{PGC_HOME}}</p>
                                 </li>
                                 <li>
-                                    <p>Get information about the lastest packages available.</p>
-                                    <p style="font-family: monospace;">./pgc update</p>
+                                    <p>Get the latest update related information</p>
+                                    <p style="font-family: monospace;">pgc update</p>
                                 </li>
                                 <li>
-                                    <p>Upgrade the pgdevops using following command </p>
-                                    <p style="font-family: monospace;">./pgc upgrade pgdevops</p>
-                                    <p style="font-style: italic;">The above command may take couple of minutes based on the speed of the system and network. It shuts down the pgDevOps service, Upgrade the pgDevOps and Starts the service again.</p>
+                                    <p>Upgrade pgDevOps using the following command </p>
+                                    <p style="font-family: monospace;">pgc upgrade pgdevops</p>
+                                    <p style="font-style: italic;">The above command may take a couple of minutes based on the speed of the system and network. It shuts down the pgDevOps service, upgrades pgDevOps, and starts the service again.</p>
                                 </li>
                                 <li>
-                                    <p>In case you want to manually start the pgdevops</p>
-                                    <p style="font-family: monospace;">./pgc start pgdevops</p>
+                                    <p>Verify status of the pgDevOps service</p>
+                                    <p style="font-family: monospace;">&nbsp; pgc status pgdevops</p>
+                                    <div class="well">
+                                        <strong><i class="fa fa-lightbulb-o fa-lg" aria-hidden="true"> &nbsp;</i>Other commands you might find useful</strong>
+                                        <br />
+                                        <br />
+                                        <ul>
+                                            <li>
+                                            <p>Start pgDevOps</p>
+                                            <p style="font-family: monospace;">&nbsp; pgc start pgdevops</p>
+                                            </li>
+                                            <li>
+                                            <p>Stop pgDevOps</p>
+                                            <p style="font-family: monospace;">&nbsp; pgc stop pgdevops</p>
+                                            </li>
+                                            <li>
+                                            <p>Restart pgDevOps</p>
+                                            <p style="font-family: monospace;">&nbsp; pgc restart pgdevops</p>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </li>
                             </ul>
                         </div>
