@@ -63,6 +63,15 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             }
         });    
 
+    $scope.logFileChecked = function () {
+        $scope.selectedLog = false;
+        angular.forEach($scope.logfiles, function (item) {
+            if(item.selected){
+                $scope.selectedLog = true;
+            }
+        });
+    }
+
     $scope.onSelectChange = function (comp) {
         if(comp){
             session.call('com.bigsql.get_log_files_list', [comp]);
@@ -73,6 +82,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             });
             localStorage.setItem('selectedDB', comp);  
         }else{
+            $scope.disableLog = true;
             $scope.logfiles = [];
             $scope.logDir = '';
             localStorage.setItem('selectedDB', '');
@@ -123,10 +133,14 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 
         session.subscribe("com.bigsql.log_files_list", function (data) {
             $scope.logfiles = JSON.parse(data[0]);
-            if($scope.autoSelectLogFile){
-                $scope.checkedFirst = true;
-            }
             $scope.disableLog = false;
+            for (var i = 0; i <= $scope.logfiles.length; i++) {
+                $scope.logfiles[i]['selected'] = false;
+                if(i==0){
+                    $scope.logfiles[i]['selected'] = true;
+                    $scope.selectedLog = true;  
+                }
+            }
             $scope.apply();
 
         });
@@ -156,10 +170,17 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         $scope.report_file = "";
         $scope.report_url = "";
         var selectedFiles = [];
+        var totalSize = 0;
+        var smallFiles = [];
         var selectLog = document.getElementsByName("selectLog");
         for (var i=0;i<selectLog.length; i++){
             if(selectLog[i].checked){
-                selectedFiles.push(selectLog[i].value);
+                var units = selectLog[i].value.split('; ')[1].split(' ')[1];
+                totalSize += parseInt(selectLog[i].value.split('; ')[1].split(' ')[0]);
+                if (units == 'B' || (units == 'KB' && totalSize<=2)) {
+                    smallFiles.push(selectLog[i].value.split('; ')[0])
+                } 
+                selectedFiles.push(selectLog[i].value.split('; ')[0]);
             }
         }
         var modalInstance = $uibModal.open({
@@ -174,6 +195,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         modalInstance.pgDB = $scope.pgDB;
         modalInstance.pgJobs = $scope.pgJobs;
         modalInstance.pgLogPrefix = $scope.pgLogPrefix;
+        modalInstance.smallFiles = smallFiles;
     };
 
     $scope.toggleAll = function() { 
@@ -186,7 +208,12 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     }
       
     $scope.optionToggled = function(){
-        $scope.checked = true;
+        $scope.checked = false;
+        angular.forEach($scope.files_list, function (item) {
+            if(item.selected){
+                $scope.checked = true;
+            }
+        });
     }
 
     $scope.deleteReports = function (files, selectAll) {

@@ -24,7 +24,9 @@ angular.module('bigSQL.components').controller('generateBadgerReportController',
             subscriptions.push(subscription);
         });
 
-        if ($uibModalInstance.selectedFiles.length > 0) {
+        if($uibModalInstance.smallFiles.length > 0){
+            $scope.badgerError = $uibModalInstance.smallFiles + '. There is insufficient number of entries in the file(s) to deduce line format.'
+        }else if ($uibModalInstance.selectedFiles.length > 0) {
             $scope.generatingReportSpinner = true;
             session.call('com.bigsql.pgbadger', [
                 $uibModalInstance.selectedFiles, $uibModalInstance.pgDB,

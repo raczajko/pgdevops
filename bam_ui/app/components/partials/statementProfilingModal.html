@@ -4,6 +4,9 @@
     </div>
     <h3 class="modal-title">PL/pgSQL Statement Profiling</h3>
 </div>
+<uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert()" class="uib-text" dismiss-on-timeout="8000">
+        {{alert.msg}}  
+</uib-alert>
 <div class="modal-body">
 <form class="form plProfiler-form">
     <div class="form-group">

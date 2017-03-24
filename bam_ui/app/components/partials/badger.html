@@ -55,10 +55,9 @@
                         <div class="form-group">
                             <div class="pg-badger-select-log" ng-model="selectLog">
                                 <div ng-if="refreshMsg"><i class="fa fa-refresh fa-spin fa-fw"></i>Refreshing..</div>
-                                <div ng-repeat="c in logfiles" ng-if="!refreshMsg">
+                                <div ng-repeat="c in logfiles" ng-if="!refreshMsg && selectComp">
                                     <label>
-                                        <input type="checkbox" name="selectLog" ng-if="$index == 0" ng-checked="true" value="{{c.log_file}}">
-                                        <input type="checkbox" name="selectLog" ng-if="$index != 0" ng-checked="logFileChecked()" value="{{c.log_file}}">
+                                        <input type="checkbox" name="selectLog" ng-model="c.selected" ng-change="logFileChecked()" value="{{c.log_file}}; {{c.file_size}}">
                                         <span>&nbsp;{{c.file}}</span>
                                     </label>
                                     <span class="pull-right">{{c.file_size}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{c.mtime}}</span>
@@ -91,7 +90,7 @@
                         <div class="form-actions">
                             <div class="text-right">
                                 <button type="submit" class="btn btn-primary"
-                                        ng-disabled="generatingReportSpinner || disableGenrate || !selectComp"
+                                        ng-disabled="generatingReportSpinner || disableGenrate || !selectComp || !selectedLog"
                                         ng-click="openGenerateModal()">Generate
                                 </button>
                             </div>

@@ -38,7 +38,12 @@ angular.module('bigSQL.components').controller('recentReportsController', ['$sco
     }
       
     $scope.optionToggled = function(){
-        $scope.checked = true;
+        $scope.checked = false;
+        angular.forEach($scope.files_list, function (item) {
+            if(item.selected){
+                $scope.checked = true;
+            }
+        });
     }
 
     $scope.removeFiles = function (files, selectAll) {

@@ -1,6 +1,7 @@
 angular.module('bigSQL.components').controller('globalProfilingController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', '$window', '$location', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, $window, $location) {
 
 	var session;
+    $scope.alerts = [];
     $scope.hostName = $uibModalInstance.hostName;
     $scope.pgUser = $uibModalInstance.pgUser;
     $scope.pgPass = $uibModalInstance.pgPass;
@@ -33,6 +34,18 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
                 $scope.result=data[0];
             }
             $scope.showResult = true;
+            
+            var result=data[0];
+            if (result.error != 0 && result.action =="generate") {
+                $scope.alerts.push({
+                            msg:  result.msg,
+                            type: 'danger',
+                        });
+                $scope.showResult = false;
+            }else if (result.error == 0 && result.action =="generate"){
+                $uibModalInstance.dismiss('cancel');   
+            }
+
             $scope.$apply();
 
         }).then(function (sub) {
@@ -101,7 +114,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgTitle, $scope.pgDesc,
             "generate", $scope.comp
         ]).then(function (sub) {
-            $uibModalInstance.dismiss('cancel');
+            // $uibModalInstance.dismiss('cancel');
         });
     };
 
@@ -109,6 +122,10 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
     $scope.cancel = function () {
         $rootScope.$emit('refreshPage');
         $uibModalInstance.dismiss('cancel');
+    };
+
+    $scope.closeAlert = function (index) {
+        $scope.alerts.splice(index, 1);
     };
 
     //need to destroy all the subscriptions on a template before exiting it

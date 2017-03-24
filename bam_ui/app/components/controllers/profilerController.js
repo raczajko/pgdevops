@@ -1,6 +1,7 @@
 angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall) {
 
     $scope.alerts = [];
+    $scope.successAlerts = [];
     $scope.extensionAlerts = [];
 
     var subscriptions = [];
@@ -73,6 +74,13 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
             localStorage.setItem('selectedDatabase', JSON.stringify({'database': argument, 'component': $scope.selectComp}));   
             session.call('com.bigsql.checkExtension', [
                 argument, $scope.selectComp, 'plprofiler'
+            ]);
+            session.call('com.bigsql.plprofiler', [
+                $scope.hostName, '',
+                $scope.pgPort, argument,
+                '', $scope.pgQuery,
+                $scope.pgTitle, $scope.pgDesc,
+                "check", $scope.selectComp
             ]);
         }
     }
@@ -168,18 +176,28 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
 
         session.subscribe("com.bigsql.profilerReports", function (data) {
             $scope.generatingReportSpinner=false;
+            $scope.errorMsg = '';
             var result=data[0];
+            if(data[0].action == 'check'){
+                $scope.status = data[0];
+            }
             if (result.error == 0) {
 
                 if(result.action == "profile_query" || result.action == "generate"){
                     $scope.report_file = result.report_file;
                     $scope.report_url = "/reports/" + result.report_file;
+                    $scope.successAlerts.push({
+                        msg:  'Your report has been generated, please see below.',
+                        type: 'success',
+                        pgComp: false
+                    });
                 }
                 else{
-                    $scope.errorMsg = result.msg;
+                    // $scope.errorMsg = result.msg;
+
                 }
             } else {
-                $scope.errorMsg = result.msg;
+                // $scope.errorMsg = result.msg;
             }
             $scope.$apply();
 
@@ -265,6 +283,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     };
 
     $scope.closeAlert = function (index) {
+        $scope.successAlerts.splice(index, 1);
         $scope.alerts.splice(index, 1);
         $scope.extensionAlerts.splice(index,1);
     };

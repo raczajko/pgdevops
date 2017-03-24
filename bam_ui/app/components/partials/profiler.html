@@ -10,6 +10,9 @@
         <a ng-click="openDetailsModal()" ng-if="!alert.pgComp">Click here to install</a> 
         <a ui-sref="components.view" ng-if="alert.pgComp">Click here to install</a>
     </uib-alert>
+    <uib-alert ng-repeat="alert in successAlerts" type="{{alert.type}}" close="closeAlert()" class="uib-text" dismiss-on-timeout="8000">
+        {{alert.msg}}  
+    </uib-alert>
     <uib-alert ng-repeat="alert in extensionAlerts" type="{{startAlert.type}}" close="closeAlert()" class="uib-text">
             {{alert.msg }} <button ng-if="alert.showBtns" class="btn btn-default btn-sm" ng-click="createExtension(); closeAlert()" >Yes</button> <button ng-if="alert.showBtns" class="btn btn-default btn-sm" ng-click="closeAlert()">No</button>
         </uib-alert>
@@ -92,6 +95,7 @@
                     </div>
                     </div>
                     <div class="col-md-12">
+                    <div class="form-group col-md-12" ng-if="status && selectDatabase">Global Profiling is {{status.status}}</div>
                     <!-- <div class="form-group">
                         <input ng-disabled="!selectComp" type="text" ng-model="pgPort" required class="form-control" placeholder="DB Port">
                         <span class="required-plprofiler-form">*</span>
