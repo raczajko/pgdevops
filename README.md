@@ -1,11 +1,12 @@
-# DEVOPS : BigSQL DevOps #
+# pgDevOps by BigSQL #
 
-DEVOPS is a multi-user & multi-server PostgreSQL dev-ops web console that features integration with pgAdmin4.  
+pgDevOps is a multi-user & multi-server PostgreSQL dev-ops web console that features integration with pgAdmin4.  
 
 It's a WSGI Python27 Flask application that runs cross-platform (Windows, OSX & Linux) in Crossbar. 
 
 
 ### Setup python env
+Make sure you are running at least PIP 9.0.x
 
 ```
 #!bash
@@ -15,7 +16,7 @@ pip install -r requirements.txt
 
 ```
 
-### Setup admin user
+### Setup admin user (shared by pgDevOps and pgAdmin4 Web)
 ```
 #!bash
 
@@ -23,7 +24,7 @@ python pgadmin/setup.py
 
 ```
 
-### Startup crossbar running pgAdmin4 (Dev) + BAM (Ops)
+### Startup crossbar
 ```
 #!bash
 
