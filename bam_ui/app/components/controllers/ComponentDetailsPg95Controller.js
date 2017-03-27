@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'bamAjaxCall', '$uibModal', '$sce', '$cookies', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal, $sce, $cookies) {
+angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'bamAjaxCall', '$uibModal', '$sce', '$cookies', '$http', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal, $sce, $cookies, $http) {
 
     $scope.alerts = [];
     var subscriptions = [];
@@ -324,10 +324,12 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
         
         $scope.releaseTabEvent = function (argument) {
-            var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );
-            relnotes.then(function (data) {
-                $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
-            });
+            if($scope.relnotes == undefined){
+                var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );                
+                relnotes.then(function (data) {
+                    $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
+                });
+            }
         }
 
         session.subscribe('com.bigsql.onActivity', function (data) {
@@ -436,16 +438,17 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             } else if (event.target.attributes.action.value == 'restart') {
                 $scope.component.spinner = 'Restarting..';
             }
-            if($scope.currentHost == '' || $scope.currentHost == 'localhost'){
-                var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+            var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+            if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
                 session.call(sessionKey, [$scope.component.component]);
             }else {
-                var event_url = event.target.attributes.action.value + '/' + $scope.component.component + '/' + $scope.currentHost ;
-                var eventData = bamAjaxCall.getCmdData(event_url);
-                eventData.then(function(data) {
-                    callInfo($scope.currentHost);
-                });
-            }
+                if (event.target.attributes.action.value == 'install') {
+                    session.call(sessionKey, [$scope.component.component, false, $scope.currentHost]);
+                }else{
+                    session.call(sessionKey, [$scope.component.component, $scope.currentHost]);
+                }
+            } 
+            
         }
     };
 

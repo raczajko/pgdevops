@@ -178,22 +178,17 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                         type: 'warning'
                     });
                 }
-                // var sessionKey = "com.bigsql." + event.target.attributes.action.value;
-                // session.call(sessionKey, [$scope.component.component]);
-                if($scope.currentHost == 'localhost'){
-                    var sessionKey = "com.bigsql." + event.target.attributes.action.value;
-                    if ($scope.checkplProfiler) {
-                        session.call(sessionKey, [$scope.component.component]); 
-                    }
-                }else {
-                    if(event.target.attributes.action.value == 'install'){
-                        $scope.component.spinner = 'installing..';
-                    }
-                    var event_url = event.target.attributes.action.value + '/' + $scope.component.component + '/' + $scope.currentHost ;
-                    var eventData = bamAjaxCall.getCmdData(event_url);
-                    eventData.then(function(data) {
-                        callInfo($scope.currentHost);
-                    });
+                var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+                if ($scope.checkplProfiler) {
+                    if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
+                        session.call(sessionKey, [$scope.component.component]);
+                    }else {
+                        if (event.target.attributes.action.value == 'install') {
+                            session.call(sessionKey, [$scope.component.component, false, $scope.currentHost]);
+                        }else{
+                            session.call(sessionKey, [$scope.component.component, $scope.currentHost]);
+                        }
+                    } 
                 }
             }
         };

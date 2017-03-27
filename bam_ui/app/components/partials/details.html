@@ -71,10 +71,10 @@
                             <span class="pull-left"><b>Data Size</b></span>
                             <a class="pull-right" ng-bind="component.data_size" id="dt_added"></a>
                         </li>
-                        <li class="list-group-item" id="li-pointer" ng-show="component.release_date && component.component == 'pgdevops' ">
+                        <li class="list-group-item" id="li-pointer" ng-show="component.release_date && component.component == 'pgdevops' && component.current_version ">
                             <span class="pull-left"><b>Upgrade Version</b></span> <span class="pull-right" ng-bind="component.current_version" id="dt_added"></span>
                         </li>
-                        <li class="list-group-item" id="li-pointer" ng-show="component.release_date && component.component == 'pgdevops' ">
+                        <li class="list-group-item" id="li-pointer" ng-show="component.release_date && component.component == 'pgdevops' && component.current_version ">
                             <span class="pull-left"><b>Release Date</b></span> <span class="pull-right" ng-bind="component.release_date" id="dt_added"></span>
                         </li>
                         <li class="list-group-item" id="li-pointer" ng-show="component.status != '' && component.status != undefined && component.port != 1 &&  component.component != 'pgdevops'">
@@ -138,7 +138,7 @@
                         <span class="details-page-relnotes" ng-bind-html="rel_notes"></span>
                     </div>
                 </uib-tab>
-                <uib-tab heading="Upgrade Instructions" class="details-page-tab" ng-if="component.component == 'pgdevops'" active="true">
+                <uib-tab heading="Upgrade Instructions" class="details-page-tab" ng-if="component.component == 'pgdevops' && component.current_version" active="true">
                     <div class="col-md-12 details-relnotes">
                         <div ng-if="os != 'Windows'">
                             <h3></h3>

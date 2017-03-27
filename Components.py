@@ -44,7 +44,7 @@ class ComponentAction(object):
         self.process = ""
 
     @inlineCallbacks
-    def install_comp(self, comp_name, p_yes=None):
+    def install_comp(self, comp_name, p_yes=None, host=None):
         """
         Method to install a component.
         :param comp_name: Name of the component to be installed.
@@ -54,6 +54,8 @@ class ComponentAction(object):
         command_line = PGC_HOME + os.sep + "pgc --json install " + comp_name
         if p_yes:
             command_line = command_line + " -y"
+        if host:
+            command_line = command_line + " --host " + host
         process = subprocess.Popen(command_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell= True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
@@ -82,13 +84,15 @@ class ComponentAction(object):
         
 
     @inlineCallbacks
-    def remove_comp(self, comp_name):
+    def remove_comp(self, comp_name, host=None):
         """
         Method to uninstall/remove a component.
         :param comp_name: Name of the component to be removed.
         :return: It yields json string for the remove process.
         """
         pgcCmd = PGC_HOME + os.sep + "pgc --json remove " + comp_name
+        if host:
+            pgcCmd = pgcCmd + " --host " + host
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         for line in iter(process.stdout.readline, ''):
             ln = (line).rstrip('\n')
