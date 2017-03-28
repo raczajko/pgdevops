@@ -177,7 +177,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         };
 
         $scope.cancelInstallation = function (action) {
-            session.call("com.bigsql.cancelInstall");
+            session.call("com.bigsql.cancelInstall", [$scope.currentHost]);
         }
 
         $scope.openInitPopup = function (comp) {
@@ -380,17 +380,16 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             }
 
             if (data.status == "complete" || data.status == "cancelled") {
-                if (data.state == 'unpack') {
-                    session.call('com.bigsql.infoComponent', [$stateParams.component]);
-                    $scope.component.status = 'NotInitialized';
-                    $scope.openInitPopup($stateParams.component);
-                }
 
                 if (data.status == "cancelled") {
                     $scope.alerts.push({
                         msg: data.msg,
                         type: 'danger'
                     });
+                } else if (data.state == 'unpack') {
+                    session.call('com.bigsql.infoComponent', [$stateParams.component]);
+                    $scope.component.status = 'NotInitialized';
+                    $scope.openInitPopup($stateParams.component);
                 }
 
                 if (dependentCount != 0) {
@@ -402,7 +401,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
                 delete $scope.component.installationStart;
                 delete $scope.component.installationRunning;
-                // delete $scope.component.installation;
+                delete $scope.component.installation;
 
             }
             if (data.state == "error") {

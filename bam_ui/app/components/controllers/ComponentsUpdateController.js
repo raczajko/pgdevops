@@ -273,7 +273,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
     };
 
     $scope.cancelInstallation = function (action) {
-        session.call("com.bigsql.cancelInstall");
+        session.call("com.bigsql.cancelInstall", [$scope.currentComponent]);
         getList($scope.currentHost);
     }
 
