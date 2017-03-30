@@ -13,6 +13,7 @@ from Components import Components as pgc
 
 from flask_security import login_required, roles_required, current_user
 # from flask_login import current_user
+from flask_mail import Mail
 from flask_babel import Babel, gettext
 from pgadmin.utils.session import create_session_interface
 from pgadmin.model import db, Role, User, Server, ServerGroup
@@ -60,6 +61,7 @@ application.config['SECURITY_RECOVERABLE'] = True
 application.config['SECURITY_CHANGEABLE'] = True
 
 db.init_app(application)
+Mail(application)
 import pgadmin.utils.paths as paths
 
 paths.init_app(application)
