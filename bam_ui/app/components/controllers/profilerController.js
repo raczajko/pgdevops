@@ -15,6 +15,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     $scope.component;
     $scope.enableBtns = false;
     $scope.disableAbout = false;
+    $scope.refreshingFields = false;
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -58,6 +59,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
 
     $scope.onSelectChange = function (argument) {
         $scope.extensionAlerts.splice(0,1);
+        $scope.successAlerts.splice(0,1);
         localStorage.setItem('selectedCluster', argument);
         $scope.alerts.splice(0, 1);
         $scope.selectDatabase = '';
@@ -110,7 +112,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                 $scope.selectComp = $scope.components[0].component;
                 $scope.onSelectChange($scope.selectComp);
                 $scope.component = 'plprofiler3-'+ $scope.selectComp;
-                // session.call('com.bigsql.db_list', [$scope.selectComp]);
+                session.call('com.bigsql.db_list', [$scope.selectComp]);
                 getInstanceInfo($scope.selectComp);
                 // localStorage.setItem('runningPostgres');
             }else if($scope.components.length > 1 && selectedCluster){
@@ -124,6 +126,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                     pgComp: true
                 });
             }
+            $scope.refreshingFields = false;
             $scope.$apply();
         }).then(function (subscription) {
             subscriptions.push(subscription);
@@ -154,8 +157,19 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
+
         session.subscribe('com.bigsql.ondblist', function (data) {
-            var selectedDatabase = JSON.parse(localStorage.getItem('selectedDatabase'));
+            try{
+                var selectedDatabase = JSON.parse(localStorage.getItem('selectedDatabase'));
+            }catch(e){
+                var selectedDatabase = '';
+            }
+            if (data[0].error) {
+                $scope.successAlerts.push({
+                    msg: data[0].error,
+                    type: 'danger',
+                });
+            }
             for (var i = data.length - 1; i >= 0; i--) {
                 if ($scope.selectComp == data[i].component) {
                     $scope.databases = data[i].list;
@@ -168,8 +182,8 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                         }
                     }
                 }
-                $scope.$apply();
             }
+            $scope.$apply();
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -206,6 +220,14 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         });
     });
 
+    $scope.refreshFields = function (argument) {
+        $scope.refreshingFields = true;
+        $timeout( refreshFields, 1000);
+    }
+
+    function refreshFields(argument) {
+        session.call('com.bigsql.checkLogdir');
+    }
     $scope.hostName = 'localhost';
 
     $scope.generateReport = function () {

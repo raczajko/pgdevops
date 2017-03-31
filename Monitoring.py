@@ -232,6 +232,7 @@ class Monitoring(object):
             pg.close()
             result['list'] = database_list
         except Exception as e:
+            result['error'] = "Unable to establish connection to {0} :{1}".format(comp,str(e))
             pass
         yield self.session.publish('com.bigsql.ondblist', result)
 
