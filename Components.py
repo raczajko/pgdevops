@@ -65,23 +65,21 @@ class ComponentAction(object):
         self.process = ''
         returnValue(1)
 
-    def cancelInstall(self):
+    def cancelInstall(self, host=None):
         """
         Method to cancel installation of a component.
         :param pid: processid of the component to be installed.
         :return: It yields process status.
         """
-        if platform.system() == "Windows":
-            pid_file = os.path.join(os.getenv('PGC_HOME'), 'conf', 'pgc.pid')
-            if os.path.isfile(pid_file):
-                os.remove(pid_file)
-        else:
-            import signal, psutil
-            p = psutil.Process(self.process.pid)
-            for proc in p.children(recursive=True):
-                os.kill(proc.pid,signal.SIGINT)
-            os.kill(p.pid,signal.SIGINT)
-        
+        pid_file = os.path.join(os.getenv('PGC_HOME'), 'conf', 'pgc.pid')
+        if os.path.isfile(pid_file):
+            os.remove(pid_file)
+        pgcCmd = PGC_HOME + os.sep + "pgc cancel"
+        if host:
+            pgcCmd = pgcCmd + " --host " + host
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
+        pgcData = pgcProcess.communicate()
+                
 
     @inlineCallbacks
     def remove_comp(self, comp_name, host=None):

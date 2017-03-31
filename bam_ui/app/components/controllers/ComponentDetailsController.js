@@ -213,19 +213,17 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 $scope.component.installationRunning = data;
                 $scope.component.progress = data.pct;
             } else if (data.status == "complete" || data.status == "cancelled") {
-                if (data.state == 'unpack' || data.state == 'update' || data.state == 'install') {
-                    // session.call('com.bigsql.infoComponent', [$scope.currentComponent])
-                    $scope.alerts.push({
-                            msg:  data.msg,
-                            type: 'success'
-                        });
-                    callInfo();
-                } 
                 if (data.status == "cancelled") {
                         $scope.alerts.push({
                             msg:  data.msg,
                             type: 'danger'
                         });
+                }else if (data.state == 'unpack' || data.state == 'update' || data.state == 'install'){
+                    $scope.alerts.push({
+                            msg:  data.msg,
+                            type: 'success'
+                        });
+                    callInfo();
                 }
 
                 delete $scope.component.installationStart;
@@ -254,7 +252,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     });
 
     $scope.cancelInstallation = function (action) {
-        session.call("com.bigsql.cancelInstall");
+        session.call("com.bigsql.cancelInstall", [$scope.currentHost]);
     }
 
     $scope.closeAlert = function (index) {
