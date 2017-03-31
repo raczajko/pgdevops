@@ -24,6 +24,10 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	$scope.firstPhase = true;
 	$scope.secondPhase = false;
 
+	$scope.refreshHostManager = function (argument) {
+		$rootScope.$emit('addedHost');
+	}
+
     sessPromise.then(function (sessParam) {
         session = sessParam;
         $scope.addHost = function () {

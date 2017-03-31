@@ -70,7 +70,7 @@
             </div>
             <div class="form-actions">
                 <div class="text-right">
-                    <button class="btn btn-default" type="button" ng-click="cancel()">Cancel</button>
+                    <button class="btn btn-default" type="button" ng-click="cancel(); refreshHostManager()">Cancel</button>
                     <button class="btn btn-default" type="button" ng-show="secondPhase" ng-click="back()">Back</button>
                     <button ng-show="!secondPhase" class="btn btn-default" type="button" ng-click="next()" ng-disabled="!(hostName && userName && connectionName && connectionName) || (!pgInstall && thirdPhase) ">Next</button>
                     <button ng-show="secondPhase" class="btn btn-default" type="button" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Create</button>

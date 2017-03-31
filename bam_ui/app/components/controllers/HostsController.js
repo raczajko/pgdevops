@@ -438,8 +438,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     function getGroupsList(checkStorage) {
         $http.get($window.location.origin + '/api/groups')
             .success(function (data) {
-                var storageData = JSON.parse(localStorage.getItem('groupsListCookie'));
-                if(localStorage.getItem('groupsListCookie') && checkStorage && data.length == storageData.length && data[0].hosts.length == storageData[0].hosts.length){
+                var storageData;
+                try{
+                    storageData = JSON.parse(localStorage.getItem('groupsListCookie'));
+                }catch(err){
+                    storageData = '';
+                }
+                if(storageData && checkStorage && data.length == storageData.length && data[0].hosts.length == storageData[0].hosts.length){
                     $scope.groupsList = storageData;
                     for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
                         if ($scope.groupsList[i].state == true) {

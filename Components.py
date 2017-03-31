@@ -208,10 +208,13 @@ class ComponentAction(object):
         pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + " '" + pgcDir + "' " + userName + " " +password + " '" + name + "'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         for line in iter(pgcProcess.stdout.readline, ''):
-            ln = (line).rstrip('\n')
-            if type(eval(ln)) is list:
-                self.session.publish('com.bigsql.onRegisterHost', ln)
-            yield sleep(0.001)  
+            try:
+                ln = (line).rstrip('\n')
+                if type(eval(ln)) is list:
+                    self.session.publish('com.bigsql.onRegisterHost', ln)
+                yield sleep(0.001)  
+            except Exception as e:
+                pass
 
     @inlineCallbacks
     def deleteHost(self, hostName):

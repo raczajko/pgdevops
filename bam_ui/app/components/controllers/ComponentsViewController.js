@@ -86,6 +86,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
+                $cookies.remove('remote_host');
             } else {
                 $scope.nothingInstalled = false;
                 data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops'});
