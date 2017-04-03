@@ -33,6 +33,10 @@ pgclib_scripts_path = os.path.join(PGC_HOME, 'hub', 'scripts','lib')
 if pgclib_scripts_path not in sys.path:
   sys.path.append(pgclib_scripts_path)
 
+this_uname = str(platform.system())
+devops_lib_path = os.path.join(os.path.dirname(__file__), 'lib')
+sys.path.append(devops_lib_path)
+
 import util
 
 class ComponentAction(object):
@@ -205,6 +209,8 @@ class ComponentAction(object):
         """
         Method to Register remote host
         """
+        if this_uname!="Windows":
+            os.environ["PYTHONPATH"] = devops_lib_path
         pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + " '" + pgcDir + "' " + userName + " " +password + " '" + name + "'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         for line in iter(pgcProcess.stdout.readline, ''):
