@@ -9,5 +9,7 @@
         <input class="btn btn-lg btn-success btn-block" type="submit" value="{{ _('Login') }}">
     </fieldset>
 </form>
+{% if config.MAIL_ENABLED %}
 <span class="help-block">{{ _('Forgotten your <a href="%(url)s">password</a>?', url=url_for('security.forgot_password')) }}</span>
+{% endif %}
 {% endblock %}
