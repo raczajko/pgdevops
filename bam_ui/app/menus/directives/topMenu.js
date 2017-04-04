@@ -6,7 +6,6 @@ angular.module('bigSQL.menus').component('topMenu', {
          **/
 
         $scope.hideUpdates = false;
-        $scope.pgdevopsUpdate = false;
         $scope.currentHost = $cookies.get('remote_host');
         function callList(argument) {
             argument = typeof argument !== 'undefined' ? argument : "";
@@ -21,6 +20,7 @@ angular.module('bigSQL.menus').component('topMenu', {
             listData.then(function(data) {
                 var Checkupdates = 0;
                 $scope.components = data;
+                $scope.pgdevopsUpdate = false;
                 for (var i = 0; i < $scope.components.length; i++) {
                     if ($scope.components[i].component != 'pgdevops') {
                         Checkupdates += $scope.components[i].updates;

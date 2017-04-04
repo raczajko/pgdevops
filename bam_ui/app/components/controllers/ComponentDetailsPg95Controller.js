@@ -26,27 +26,35 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             $scope.component.spinner = 'Restarting..';
         }
         var sessionKey = "com.bigsql." + action;
-        session.call(sessionKey, [$scope.component.component]).then(function (argument) {
+        session.call(sessionKey, [$scope.component.component, $cookies.get('remote_host')]).then(function (argument) {
             callInfo();
         })
     }
 
     function callInfo(argument) {
-        var checkStatus = bamAjaxCall.getCmdData('status/' + $stateParams.component);
+        if (argument) {
+            var remote_host = argument;
+        }else{
+            var remote_host = $cookies.get('remote_host');            
+        }
+        remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
+        $scope.currentHost = remote_host;
+        if (remote_host == "" || remote_host == "localhost") {
+            var checkStatus = bamAjaxCall.getCmdData('status/' + $stateParams.component);    
+        }else{
+            var checkStatus = bamAjaxCall.getCmdData('status/' + $stateParams.component + '/' + remote_host);
+        }
+        
         checkStatus.then(function (data) {
-            var remote_host = $cookies.get('remote_host');
-            remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
-            $scope.currentHost = remote_host;
 
             var infoUrl = 'info/'
             if (data.state != 'Running') {
                 $scope.releaseTabEvent();
             }
-
             if (remote_host == "" || remote_host == "localhost") {
                 var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
             } else {
-                var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component + "/" + remote_host);
+                var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component + "/" + remote_host);
             }
 
             infoData.then(function (data) {
@@ -324,7 +332,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
         
         $scope.releaseTabEvent = function (argument) {
-            if($scope.relnotes == undefined){
+            if($scope.relnotes == undefined || $scope.relnotes == ''){
                 var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );                
                 relnotes.then(function (data) {
                     $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
@@ -421,6 +429,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
     $rootScope.$on('refreshData', function (argument, host) {
         $scope.loading = true;
+        $interval.cancel(infoRefreshRate);
         callInfo(host);
     });
 
@@ -438,10 +447,12 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 $scope.component.spinner = 'Restarting..';
             }
             var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+            $scope.currentHost = $cookies.get('remote_host');
             if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
                 session.call(sessionKey, [$scope.component.component]);
             }else {
                 if (event.target.attributes.action.value == 'install') {
+                    $scope.component.installation = true;
                     session.call(sessionKey, [$scope.component.component, false, $scope.currentHost]);
                 }else{
                     session.call(sessionKey, [$scope.component.component, $scope.currentHost]);

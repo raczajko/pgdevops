@@ -102,28 +102,34 @@ class ComponentAction(object):
             yield sleep(0.001)
         returnValue(1)
 
-    def start(self, name):
+    def start(self, name, host=None):
         """
         Method to start a server component.
         :param name: Name of the component to be started.
         """
         pgcCmd = PGC_HOME + os.sep + "pgc start " + name
+        if host:
+            pgcCmd = pgcCmd + " --host " + host
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
 
-    def restart(self, name):
+    def restart(self, name, host=None):
         """
         Method to restart a server component.
         :param name: Name of the component to be restared.
         """
         pgcCmd = PGC_HOME + os.sep + "pgc restart " + name
+        if host:
+            pgcCmd = pgcCmd + " --host " + host
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
 
-    def stop(self, name):
+    def stop(self, name, host=None):
         """
         Method to stop a server component.
         :param name: Name of the component to be stopped.
         """
         pgcCmd = PGC_HOME + os.sep + "pgc stop " + name
+        if host:
+            pgcCmd = pgcCmd + " --host " + host
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
 
     @inlineCallbacks
@@ -147,7 +153,7 @@ class ComponentAction(object):
         yield self.session.publish('com.bigsql.onServerStatus', pgcInfo[0])
 
     @inlineCallbacks
-    def init(self, name, password, dataDir, port):
+    def init(self, name, password, dataDir, port, host=None):
         """
         Method to initialize a server component.
         :param name: Name of the component to be initialized.
@@ -157,6 +163,8 @@ class ComponentAction(object):
             pgcCmd = pgcCmd.split(' --port')[0]
         if dataDir == '':
             pgcCmd = pgcCmd.split(' --datadir')[0]
+        if host:
+            pgcCmd = pgcCmd + ' --host ' + host
         if (name > 'pg90') and (name < 'pg99'):
             pgpass_file = PGC_HOME + os.sep + name + os.sep + ".pgpass"
             if not os.path.isfile(pgpass_file):

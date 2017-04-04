@@ -499,12 +499,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value')]); 
                 }
             }else{
-                var cmd = event.target.innerText.toLowerCase();
-                if( cmd == 'initialize'){
-                    cmd = 'init';
+                if(event.target.innerText.toLowerCase() != 'initialize'){
+                    var sessionKey = "com.bigsql." + cmd;
+                    session.call(sessionKey, [event.currentTarget.getAttribute('value'), host]);
                 }
-                var event_url = cmd + '/' + event.currentTarget.getAttribute('value') + '/' + host;
-                var eventData = bamAjaxCall.getCmdData(event_url);
+                // var event_url = cmd + '/' + event.currentTarget.getAttribute('value') + '/' + host;
+                // var eventData = bamAjaxCall.getCmdData(event_url);
             }
         }
         ;

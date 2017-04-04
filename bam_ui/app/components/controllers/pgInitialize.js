@@ -45,8 +45,13 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
         });
         session.call('com.bigsql.getAvailPort',[$scope.comp,'']);
 
-        var promise = MachineInfo.get(val);
-        promise.then(function (data) {
+        if($scope.host == 'localhost' || $scope.host == ''){
+            var hostInfo = bamAjaxCall.getCmdData('info');
+        } else{
+            var hostInfo = bamAjaxCall.getCmdData('hostcmd/info/' + $scope.host);
+        }
+        hostInfo.then(function (argument) {
+            var data = argument[0];
             if(!$scope.dataDir){
                 $scope.dataDir = data.home + '/data/' + $scope.comp;      
             }
@@ -114,12 +119,17 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
     	    $rootScope.$emit('initComp', [$scope.comp]);  		
     		// $uibModalInstance.dismiss('cancel');
         } else {
-            var event_url =  'initpg/'  + $scope.host + '/' + $scope.userName +'/' + $scope.userPassword + '/' + $scope.comp + '/' +$scope.formData.password ;
+            if ($scope.userName == undefined || $scope.password == undefined) {
+                var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password ;
+            }else{
+                var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password + '/' + $scope.userName +'/' + $scope.userPassword;
+            }
             var eventData = bamAjaxCall.getCmdData(event_url);
-            $rootScope.$emit('addedHost');
-            $uibModalInstance.dismiss('cancel');
+            // session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDirVal, $scope.portNumber, $scope.host ] );
+            // $rootScope.$emit('addedHost');
+            // $uibModalInstance.dismiss('cancel');
             eventData.then(function(data) {
-                // $uibModalInstance.dismiss('cancel');   
+                $uibModalInstance.dismiss('cancel');   
                 $scope.addToMetaData();                     
             });
         }
