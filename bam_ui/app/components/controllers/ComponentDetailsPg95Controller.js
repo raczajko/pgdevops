@@ -333,7 +333,14 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         
         $scope.releaseTabEvent = function (argument) {
             if($scope.relnotes == undefined || $scope.relnotes == ''){
-                var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );                
+                var remote_host = $cookies.get('remote_host');
+                remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
+
+                if (remote_host == "" || remote_host == "localhost") {
+                    var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );
+                } else{
+                    var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component + '/' + remote_host );
+                }             
                 relnotes.then(function (data) {
                     $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
                 });
@@ -429,6 +436,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
     $rootScope.$on('refreshData', function (argument, host) {
         $scope.loading = true;
+        $scope.relnotes = '';
         $interval.cancel(infoRefreshRate);
         callInfo(host);
     });
