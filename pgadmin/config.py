@@ -13,7 +13,7 @@
 
 import os
 import sys
-
+import platform
 
 # We need to include the root directory in sys.path to ensure that we can
 # find everything we need when running in the standalone runtime.
@@ -243,7 +243,13 @@ MAIL_USERNAME = ''
 MAIL_PASSWORD = ''
 MAIL_DEBUG = False
 
-MAIL_ENABLED = True
+MAIL_ENABLED = False
+
+this_uname = str(platform.system())
+
+if this_uname == "Linux":
+    MAIL_ENABLED = True
+
 ##########################################################################
 # Mail content settings
 ##########################################################################
