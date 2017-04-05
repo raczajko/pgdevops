@@ -13,7 +13,6 @@
 
 import os
 import sys
-import platform
 
 # We need to include the root directory in sys.path to ensure that we can
 # find everything we need when running in the standalone runtime.
@@ -245,11 +244,8 @@ MAIL_DEBUG = False
 
 MAIL_ENABLED = False
 
-this_uname = str(platform.system())
-
-if this_uname == "Linux":
-    MAIL_ENABLED = True
-
+# Need to send the email when password has been changed
+SECURITY_SEND_PASSWORD_CHANGE_EMAIL=False
 ##########################################################################
 # Mail content settings
 ##########################################################################
