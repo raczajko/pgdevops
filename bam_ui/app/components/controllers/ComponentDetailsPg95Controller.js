@@ -26,9 +26,16 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             $scope.component.spinner = 'Restarting..';
         }
         var sessionKey = "com.bigsql." + action;
-        session.call(sessionKey, [$scope.component.component, $cookies.get('remote_host')]).then(function (argument) {
-            callInfo();
-        })
+        var currentHost = $cookies.get('remote_host');
+        if(currentHost == 'localhost' || currentHost == ''){
+            session.call(sessionKey, [$scope.component.component]).then(function (argument) {
+                callInfo();
+            })
+        }else{
+            session.call(sessionKey, [$scope.component.component, $cookies.get('remote_host')]).then(function (argument) {
+                callInfo();
+            })
+        }
     }
 
     function callInfo(argument) {
@@ -59,34 +66,36 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
             infoData.then(function (data) {
                 // $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
-                $scope.loading = false;
-                if (data[0]['autostart'] == "on") {
-                    data[0]['autostart'] = true;
-                } else {
-                    data[0]['autostart'] = false;
-                }
-                if (window.location.href.split('/').pop(-1) == data[0].component) {
-                    $scope.component = data[0];
-                    if ($scope.component.status != "Running") {
-                        $scope.activeReleaseNotes = true;
-                        $scope.activeOverview = false;
-                        $scope.uibStatus = {
-                            tpsChartCollapsed: false,
-                            rpsChartCollapsed: false,
-                            diskChartCollapsed: true,
-                            cpuChartCollapsed: true,
-                            connectionsCollapsed: false
-                        };
+                if( typeof data !== 'string'){
+                    $scope.loading = false;
+                    if (data[0]['autostart'] == "on") {
+                        data[0]['autostart'] = true;
                     } else {
-                        $scope.activeReleaseNotes = false;
-                        $scope.activeOverview = true;
-                        $scope.uibStatus = {
-                            tpsChartCollapsed: true,
-                            rpsChartCollapsed: true,
-                            diskChartCollapsed: false,
-                            cpuChartCollapsed: true,
-                            connectionsCollapsed: false
-                        };
+                        data[0]['autostart'] = false;
+                    }
+                    if (window.location.href.split('/').pop(-1) == data[0].component) {
+                        $scope.component = data[0];
+                        if ($scope.component.status != "Running") {
+                            $scope.activeReleaseNotes = true;
+                            $scope.activeOverview = false;
+                            $scope.uibStatus = {
+                                tpsChartCollapsed: false,
+                                rpsChartCollapsed: false,
+                                diskChartCollapsed: true,
+                                cpuChartCollapsed: true,
+                                connectionsCollapsed: false
+                            };
+                        } else {
+                            $scope.activeReleaseNotes = false;
+                            $scope.activeOverview = true;
+                            $scope.uibStatus = {
+                                tpsChartCollapsed: true,
+                                rpsChartCollapsed: true,
+                                diskChartCollapsed: false,
+                                cpuChartCollapsed: true,
+                                connectionsCollapsed: false
+                            };
+                        }
                     }
                 }
             });
@@ -108,7 +117,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             componentStatus = getCurrentObject(data, $stateParams.component);
             $rootScope.$emit('componentStatus', componentStatus);
             if (componentStatus != undefined && componentStatus.state != $scope.component.status) {
-                callInfo();
+                callInfo(remote_host);
             }
         });
     }
@@ -157,7 +166,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
-        infoRefreshRate = $interval(callInfo, 60000);
+        infoRefreshRate = $interval(function(){ callInfo(); }, 60000);
         $scope.component = {};
         callInfo();
 
@@ -194,7 +203,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 controller: 'pgInitializeController',
             });
             modalInstance.component = comp;
-            modalInstance.autoStartButton = true;
+            modalInstance.autoStartButton = $scope.component.autostart;
             modalInstance.dataDir = '';
             modalInstance.host = $scope.currentHost;
         };
