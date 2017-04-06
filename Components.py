@@ -360,12 +360,14 @@ class Components(ComponentAction):
                 pass
 
     @inlineCallbacks
-    def autostart(self,val,name):
+    def autostart(self,val,name, host=None):
         """
         Method to set the autostart configuration.
         :return: It yields the message.
         """
         pgcCmd = PGC_HOME + os.sep + "pgc --json config " + name + " --autostart=" + val
+        if host:
+            pgcCmd = pgcCmd + " --host " + host
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         for line in iter(pgcProcess.stdout.readline, ''):
             try:

@@ -500,8 +500,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 }
             }else{
                 if(event.target.innerText.toLowerCase() != 'initialize'){
-                    var sessionKey = "com.bigsql." + cmd;
-                    session.call(sessionKey, [event.currentTarget.getAttribute('value'), host]);
+                    session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value'), host]);
                 }
                 // var event_url = cmd + '/' + event.currentTarget.getAttribute('value') + '/' + host;
                 // var eventData = bamAjaxCall.getCmdData(event_url);

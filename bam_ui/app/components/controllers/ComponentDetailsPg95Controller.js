@@ -181,10 +181,18 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             } else {
                 autoStartVal = 'off';
             }
-            session.call('com.bigsql.autostart', [autoStartVal, $stateParams.component]).then(
-                function (sub) {
-                    callInfo();
-                });
+            var currentHost = $cookies.get('remote_host');
+            if(currentHost == 'localhost' || currentHost == ''){
+                session.call('com.bigsql.autostart', [autoStartVal, $stateParams.component]).then(
+                    function (sub) {
+                        callInfo();
+                    });
+            }else{
+                session.call('com.bigsql.autostart', [autoStartVal, $stateParams.component, currentHost]).then(
+                    function (sub) {
+                        // callInfo();
+                    });   
+            }
         }
 
         $scope.dataBaseTabEvent = function (args) {

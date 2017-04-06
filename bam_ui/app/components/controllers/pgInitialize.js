@@ -46,8 +46,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             }
         });
         session.call('com.bigsql.getAvailPort',[$scope.comp,'']);
-
-        if($scope.host == 'localhost' || $scope.host == ''){
+        if($scope.host == 'localhost' || $scope.host == '' || !$scope.host ){
             var hostInfo = bamAjaxCall.getCmdData('info');
         } else{
             var hostInfo = bamAjaxCall.getCmdData('hostcmd/info/' + $scope.host);
@@ -72,9 +71,15 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             } else {
                 autoStartVal = 'off';       
             }
-            session.call('com.bigsql.autostart',[autoStartVal,$scope.comp]).then(function (argument) {
+            if($scope.host == 'localhost' || $scope.host == '' || !$scope.host ){
+                session.call('com.bigsql.autostart',[autoStartVal,$scope.comp]).then(function (argument) {
                 getInfoComp();
             });
+            } else{
+                session.call('com.bigsql.autostart',[autoStartVal,$scope.comp, $scope.host]).then(function (argument) {
+                    getInfoComp();
+                });
+            }
         }
 
 
