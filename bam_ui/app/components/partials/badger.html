@@ -30,10 +30,10 @@
                             <span class="required-pgbadger-form">*</span>
                         </div>
                         <div class="col-md-4 col-sm-4 col-xs-4">
-                            <button class="btn btn-default pull-right" ng-click="openSwitchlog()" ng-disabled="disableLog">Switch log file</button>
+                            <button class="btn btn-default pull-right" ng-click="openSwitchlog()" ng-disabled="disableLog || selectComp == 'pg93' || selectComp == 'pg92'">Switch log file</button>
                         </div>
                         <div class="col-md-5 col-sm-5 col-xs-5">
-                            <button class="btn btn-default pull-right" ng-click="openLoggingParam()" ng-disabled="disableLog">
+                            <button class="btn btn-default pull-right" ng-click="openLoggingParam()" ng-disabled="disableLog || selectComp == 'pg93' || selectComp == 'pg92'">
                             Change logging parameters
                             </button>
                         </div>

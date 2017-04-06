@@ -14,7 +14,6 @@
 import os
 import sys
 
-
 # We need to include the root directory in sys.path to ensure that we can
 # find everything we need when running in the standalone runtime.
 root = os.path.dirname(os.path.realpath(__file__))
@@ -243,7 +242,10 @@ MAIL_USERNAME = ''
 MAIL_PASSWORD = ''
 MAIL_DEBUG = False
 
-MAIL_ENABLED = True
+MAIL_ENABLED = False
+
+# Need to send the email when password has been changed
+SECURITY_SEND_PASSWORD_CHANGE_EMAIL=False
 ##########################################################################
 # Mail content settings
 ##########################################################################
