@@ -100,7 +100,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
     });
 
     $scope.addToMetaData = function (comp, remote_host) {
-        if($scope.host == 'localhost' || $scope.host == ''){
+        if($scope.host == 'localhost' || $scope.host == '' || !$scope.host){
             var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp)
         }else{
             var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp + '/' + $scope.host)
@@ -116,7 +116,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
 
     $scope.init = function() {
         $scope.initializing = true;
-        if($scope.host == 'localhost' || $scope.host == ''){
+        if($scope.host == 'localhost' || $scope.host == '' || !$scope.host){
         	if(!$scope.portNumber){
                 $scope.portNumber = document.getElementById('portNumber').value;
             }
