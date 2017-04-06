@@ -186,10 +186,13 @@ api.add_resource(checkUser, '/api/checkUser/<string:host>/<string:username>/<str
 
 
 class initPGComp(Resource):
-    def get(self, host, username, comp, password, pgpasswd):
+    def get(self, host, comp, pgpasswd, username=None, password=None):
         from PgcRemote import PgcRemote
         json_dict = {}
         try:
+            if password == None or username == None:
+                import util
+                [home, username, password] = util.get_pgc_host(host)
             remote = PgcRemote(host, username, password)
             remote.connect()
             is_file_added = remote.add_file('/tmp/.pgpass', pgpasswd)
@@ -202,7 +205,7 @@ class initPGComp(Resource):
             data = json.dumps([json_dict])
         return data
 
-api.add_resource(initPGComp, '/api/initpg/<string:host>/<string:username>/<string:password>/<string:comp>/<string:pgpasswd>')
+api.add_resource(initPGComp, '/api/initpg/<string:host>/<string:comp>/<string:pgpasswd>','/api/initpg/<string:host>/<string:comp>/<string:pgpasswd>/<string:username>/<string:password>')
 
 
 class bamUserInfo(Resource):
