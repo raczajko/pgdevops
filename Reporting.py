@@ -51,12 +51,14 @@ class Reporting(object):
         self.session = appsession
 
     def get_process_status(self, process_log_dir):
-        status_file = os.path.join(process_log_dir,"status")
-        with open(status_file) as data_file:
-            data = json.load(data_file)
         process_dict = {}
-        process_dict['exit_code']= data.get("exit_code",None)
-        process_dict['pid'] = data.get("pid")
+        status_file = os.path.join(process_log_dir,"status")
+        if os.path.exists(status_file):
+            with open(status_file) as data_file:
+                data = json.load(data_file)
+                process_dict['exit_code'] = data.get("exit_code", None)
+                process_dict['pid'] = data.get("pid")
+
         return process_dict
 
     @inlineCallbacks
@@ -134,9 +136,9 @@ class Reporting(object):
             report_file = badgerRpts.generateReports(log_files, db, jobs, log_prefix, title)
             process_log_dir = report_file['log_dir']
             report_status=self.get_process_status(process_log_dir)
-            result['pid'] = report_status['pid']
-            result['exit_code'] = report_status['exit_code']
-            if report_status['exit_code'] is None:
+            result['pid'] = report_status.get('pid')
+            result['exit_code'] = report_status.get('exit_code')
+            if report_status.get('exit_code') is None:
                 result['in_progress'] =  True
             if report_file['error']:
                 result['error'] = 1

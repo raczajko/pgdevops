@@ -37,12 +37,6 @@ def convert_environment_variables(env):
         temp_env[key] = value
     return temp_env
 
-def get_process_id(process_log_dir):
-    status_file = os.path.join(process_log_dir,"status")
-    with open(status_file) as data_file:
-        data = json.load(data_file)
-    pid = data.get("pid")
-    return pid
 
 def which(program, paths):
     def is_exe(fpath):
@@ -153,5 +147,5 @@ def detached_process(p_cmd):
         # as standard output, and standard error were redirected to
         # devnull.
         process_completed=True
-    return {"status":process_completed, "log_dir":log_dir, "pid":get_process_id(log_dir), 'process_log_id':id}
+    return {"status":process_completed, "log_dir":log_dir, 'process_log_id':id}
 

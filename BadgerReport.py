@@ -81,7 +81,6 @@ class BadgerReport(object):
         result['report_generation_completed'] =process_status['status']
         result['log_dir'] = process_status['log_dir']
         result['file']="badger/" + report_file
-        result['pid'] = process_status['pid']
         return result
 
     def getLoggingSettings(self,comp):
