@@ -13,7 +13,7 @@ import time
 from operator import itemgetter
 
 import util
-
+from detached_process import detached_process
 import psycopg2
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -76,12 +76,12 @@ class BadgerReport(object):
         options = options + " -o " + os.path.join(badger_reports_path, report_file)
 
         report_cmd = pgbadger_command + " " + options
-        proc = subprocess.Popen(report_cmd, shell=True, stdout=subprocess.PIPE ,stderr=subprocess.PIPE)
-        stdout_data, stderr_data  = proc.communicate()
+        process_status = detached_process(report_cmd)
         result['error']=None
-        if proc.returncode != 0:
-            result['error']=stderr_data
+        result['report_generation_completed'] =process_status['status']
+        result['log_dir'] = process_status['log_dir']
         result['file']="badger/" + report_file
+        result['pid'] = process_status['pid']
         return result
 
     def getLoggingSettings(self,comp):
