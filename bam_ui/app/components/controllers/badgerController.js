@@ -110,6 +110,10 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 
     getReports();
 
+    $scope.refreshReports = function (argument) {
+    getReports();
+
+    }
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;

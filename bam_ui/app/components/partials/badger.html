@@ -103,7 +103,8 @@
     <div class="col-md-6 col-sm-6 col-xs-12">
         <div class="box" ng-if="showReports">
             <div class="box-header with-border">
-                <span style="margin-left: 13px;"><label>Reports</label> &nbsp; &nbsp;<input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected">&nbsp;Select all </span>
+                <span style="margin-left: 13px;"><label>Reports</label> &nbsp; &nbsp;<input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected">&nbsp;Select all
+                    <div class="pull-right" ng-click="refreshReports()"> <i class="fa fa-refresh fa-fw"></i></div>
                 <span class="pull-right"><label>Created on</label></span>
             </div>
             <div class="box-body" style="padding-left: 20px; height: 404px; overflow: auto;">

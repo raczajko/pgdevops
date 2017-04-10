@@ -24,6 +24,8 @@ import config
 from flask_restful import reqparse
 from datetime import datetime
 import hashlib
+import time
+import pytz
 
 parser = reqparse.RequestParser()
 #parser.add_argument('data')
@@ -251,7 +253,6 @@ class GenerateReports(Resource):
     def post(self):
         args = request.json['data']
         from ProfilerReport import ProfilerReport
-        #print args.get('hostName')
         try:
             plReport = ProfilerReport(args)
             report_file = plReport.generateSQLReports(args.get('pgQuery'),
@@ -357,6 +358,119 @@ class AddtoMetadata(Resource):
 
 
 api.add_resource(AddtoMetadata, '/api/add_to_metadata')
+
+
+def get_process_status(process_log_dir):
+    process_dict = {}
+    status_file = os.path.join(process_log_dir, "status")
+    if os.path.exists(status_file):
+        with open(status_file) as data_file:
+            data = json.load(data_file)
+            process_dict = data
+            err_file = os.path.join(process_log_dir, "err")
+            exit_code = process_dict.get("exit_code", None)
+            with open(err_file) as err_data:
+                process_dict['out_data'] = err_data.read()
+
+    return process_dict
+
+
+def get_current_time(format='%Y-%m-%d %H:%M:%S.%f %z'):
+    """
+    Generate the current time string in the given format.
+    """
+    return datetime.utcnow().replace(
+        tzinfo=pytz.utc
+    ).strftime(format)
+
+
+class GenerateBadgerReports(Resource):
+    def post(self):
+        result = {}
+        args = request.json
+        log_files=args.get("log_files")
+        db=args.get("db")
+        jobs=args.get("jobs")
+        log_prefix=args.get("log_prefix")
+        title=args.get("title")
+        try:
+            from BadgerReport import BadgerReport
+            ctime = get_current_time(format='%y%m%d%H%M%S%f')
+            badgerRpts = BadgerReport()
+            pid_file_path = os.path.join(config.SESSION_DB_PATH,"process_logs", ctime)
+            report_file = badgerRpts.generateReports(log_files, db, jobs, log_prefix, title, ctime, pid_file_path)
+            process_log_dir = report_file['log_dir']
+            report_status = get_process_status(process_log_dir)
+            result['pid'] = report_status.get('pid')
+            result['exit_code'] = report_status.get('exit_code')
+            result['process_log_id'] = report_file["process_log_id"]
+            if report_status.get('exit_code') is None:
+                result['in_progress'] = True
+                old_process = []
+                if 'bg_process' in session:
+                    old_process=session['bg_process']
+                bg_process={}
+                bg_process['process_log_id'] = report_file["process_log_id"]
+                old_process.append(bg_process)
+                session['bg_process']=old_process
+            if report_file['error']:
+                result['error'] = 1
+                result['msg'] = report_file['error']
+            else:
+                result['error'] = 0
+                result['report_file'] = report_file['file']
+                report_file_path = os.path.join(reports_path, report_file['file'])
+                if not os.path.exists(report_file_path):
+                    result['error'] = 1
+                    result['msg'] = "Check the parameters provided."
+        except Exception as e:
+            import traceback
+            result = {}
+            result['error'] = 1
+            result['msg'] = str(e)
+        time.sleep(2)
+        return result
+
+api.add_resource(GenerateBadgerReports, '/api/generate_badger_reports')
+
+
+class GetBgProcessList(Resource):
+    def get(self):
+        result={}
+        if 'bg_process' in session:
+            result['process'] = []
+            i=0
+            for proc in session['bg_process']:
+                proc_log_dir = os.path.join(config.SESSION_DB_PATH,
+                                            "process_logs",
+                                            proc['process_log_id'])
+                if os.path.exists(proc_log_dir):
+                    proc_status = get_process_status(proc_log_dir)
+                    if proc_status.get("exit_code") is None:
+                        result['process'].append(proc_status)
+        return result
+
+api.add_resource(GetBgProcessList, '/api/bgprocess_list')
+
+
+class GetBgProcessStatus(Resource):
+    def get(self,process_log_id):
+        result={}
+        proc_log_dir = os.path.join(config.SESSION_DB_PATH,
+                                    "process_logs",
+                                    process_log_id)
+        proc_status = get_process_status(proc_log_dir)
+        proc_status['process_log_id'] = process_log_id
+        proc_status['process_failed'] = False
+        proc_status['process_completed'] = True
+        if proc_status.get("exit_code") is None:
+            proc_status['process_completed'] = False
+        elif proc_status.get("exit_code") != 0:
+            proc_status['process_failed'] = True
+        result=proc_status
+        return result
+
+api.add_resource(GetBgProcessStatus, '/api/bgprocess_status/<string:process_log_id>')
 
 
 @application.route('/list')

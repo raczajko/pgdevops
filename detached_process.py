@@ -58,7 +58,7 @@ def get_current_time(format='%Y-%m-%d %H:%M:%S.%f %z'):
         tzinfo=pytz.utc
     ).strftime(format)
 
-def detached_process(p_cmd):
+def detached_process(p_cmd, p_ctime=None):
 
 
     executor = file_quote(os.path.join(
@@ -85,7 +85,10 @@ def detached_process(p_cmd):
     ]
     #cmd.extend(self.args)
 
-    ctime = get_current_time(format='%y%m%d%H%M%S%f')
+    if not p_ctime:
+        ctime = get_current_time(format='%y%m%d%H%M%S%f')
+    else:
+        ctime = p_ctime
     log_dir = os.path.join(
         config.SESSION_DB_PATH, 'process_logs'
     )
