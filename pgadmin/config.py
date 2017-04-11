@@ -14,6 +14,7 @@
 import os
 import sys
 
+
 # We need to include the root directory in sys.path to ensure that we can
 # find everything we need when running in the standalone runtime.
 root = os.path.dirname(os.path.realpath(__file__))
@@ -27,9 +28,8 @@ from pgadmin.utils import env, IS_PY2, IS_WIN, fs_short_path
 ##########################################################################
 
 # Name of the application to display in the UI
-APP_NAME = 'pgAdmin4 Web'
-#APP_ICON = 'icon-postgres-alt'
-APP_ICON = 'icon-bigsql-pgadmin-alt'
+APP_NAME = 'pgAdmin 4'
+APP_ICON = 'icon-postgres-alt'
 
 ##########################################################################
 # Application settings
@@ -45,7 +45,7 @@ APP_ICON = 'icon-bigsql-pgadmin-alt'
 
 # Application version number components
 APP_RELEASE = 1
-APP_REVISION = 3
+APP_REVISION = 4
 
 # Application version suffix, e.g. 'beta1', 'dev'. Usually an empty string
 # for GA releases.
@@ -56,7 +56,7 @@ APP_SUFFIX = ''
 # zero if needed, and Z represents the suffix, with a leading zero if needed
 # Note that we messed this up in v1.x, where the format is [X]XYZZZ. This
 # should be fixed for v2.x!!
-APP_VERSION_INT = 13001
+APP_VERSION_INT = 14001
 
 # DO NOT CHANGE!
 # The application version string, constructed from the components
@@ -79,7 +79,9 @@ HELP_PATH = '../../../docs/en_US/_build/html/'
 # Languages we support in the UI
 LANGUAGES = {
     'en': 'English',
-    'zh': 'Chinese (Simplified)'
+    'zh': 'Chinese (Simplified)',
+    'de': 'German',
+    'pl': 'Polish'
 }
 
 # DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING!
@@ -100,8 +102,6 @@ if IS_WIN:
     )
 else:
     DATA_DIR = os.path.realpath(os.path.expanduser(u'~/.pgadmin/'))
-
-DATA_DIR = os.path.join(os.getenv("PGC_HOME"), "data", "pgdevops")
 
 
 ##########################################################################
@@ -173,6 +173,8 @@ SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
 #       configuration databases 'keys' table and are auto-generated.
 
 # Should HTML be minified on the fly when not in debug mode?
+# NOTE: The HTMLMIN module doesn't work with Python 2.6, so this option
+#       has no effect on <= Python 2.7.
 MINIFY_PAGE = True
 
 ##########################################################################
@@ -193,15 +195,17 @@ MAX_SESSION_IDLE_TIME = 60
 # The default path to the SQLite database used to store user accounts and
 # settings. This default places the file in the same directory as this
 # config file, but generates an absolute path for use througout the app.
-SQLITE_PATH = os.path.join(
-    DATA_DIR,
-    'devops.db'
-)
+SQLITE_PATH = env('SQLITE_PATH') or os.path.join(DATA_DIR, 'pgadmin4.db')
+
 # SQLITE_TIMEOUT will define how long to wait before throwing the error -
 # OperationError due to database lock. On slower system, you may need to change
 # this to some higher value.
 # (Default: 500 milliseconds)
 SQLITE_TIMEOUT = 500
+
+# Allow database connection passwords to be saved if the user chooses.
+# Set to False to disable password saving.
+ALLOW_SAVE_PASSWORD = True
 
 ##########################################################################
 # Server-side session storage path
@@ -242,10 +246,6 @@ MAIL_USERNAME = ''
 MAIL_PASSWORD = ''
 MAIL_DEBUG = False
 
-MAIL_ENABLED = False
-
-# Need to send the email when password has been changed
-SECURITY_SEND_PASSWORD_CHANGE_EMAIL=False
 ##########################################################################
 # Mail content settings
 ##########################################################################
@@ -263,7 +263,7 @@ SECURITY_EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE = \
 ##########################################################################
 
 # Check for new versions of the application?
-UPGRADE_CHECK_ENABLED = False
+UPGRADE_CHECK_ENABLED = True
 
 # Where should we get the data from?
 UPGRADE_CHECK_URL = 'https://www.pgadmin.org/versions.json'
@@ -338,3 +338,4 @@ try:
     from config_local import *
 except ImportError:
     pass
+

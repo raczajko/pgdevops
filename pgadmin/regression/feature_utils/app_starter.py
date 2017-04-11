@@ -1,3 +1,12 @@
+##########################################################################
+#
+# pgAdmin 4 - PostgreSQL Tools
+#
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# This software is released under the PostgreSQL Licence
+#
+##########################################################################
+
 import os
 import subprocess
 
@@ -33,5 +42,5 @@ class AppStarter:
         self.driver.get("http://" + self.app_config.DEFAULT_SERVER + ":" + random_server_port)
 
     def stop_app(self):
-        self.driver.close()
+        self.driver.quit()
         os.killpg(os.getpgid(self.pgadmin_process.pid), signal.SIGTERM)

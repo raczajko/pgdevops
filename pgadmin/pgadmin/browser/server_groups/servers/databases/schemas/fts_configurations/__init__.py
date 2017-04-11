@@ -415,7 +415,7 @@ class FtsConfigurationView(PGChildNodeView):
                 status=410,
                 success=0,
                 errormsg=_(
-                    "provide atleast copy config or parser"
+                    "Provide at least copy config or parser."
                 )
             )
 
@@ -627,9 +627,7 @@ class FtsConfigurationView(PGChildNodeView):
                 return internal_server_error(errormsg=res)
 
             if len(res['rows']) == 0:
-                return gone(_("""
-                    Could not find the FTS Configuration node.
-                """))
+                return gone(_("Could not find the FTS Configuration node."))
 
             old_data = res['rows'][0]
 
@@ -690,7 +688,7 @@ class FtsConfigurationView(PGChildNodeView):
                                       conn=self.conn
                                       )
             else:
-                sql = u"-- incomplete definition"
+                sql = u"-- definition incomplete"
             return sql.strip('\n'), data['name']
 
     @check_precondition

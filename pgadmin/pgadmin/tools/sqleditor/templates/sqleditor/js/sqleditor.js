@@ -1,8 +1,10 @@
 define(
   [
     'jquery', 'underscore', 'underscore.string', 'alertify', 'pgadmin',
-    'backbone', 'backgrid', 'codemirror', 'pgadmin.misc.explain', 'slickgrid',
-    'bootstrap', 'pgadmin.browser', 'wcdocker',
+    'backbone', 'backgrid', 'codemirror', 'pgadmin.misc.explain',
+    'sources/selection/clipboard',
+
+    'slickgrid', 'bootstrap', 'pgadmin.browser', 'wcdocker',
     'codemirror/mode/sql/sql', 'codemirror/addon/selection/mark-selection',
     'codemirror/addon/selection/active-line', 'codemirror/addon/fold/foldcode',
     'codemirror/addon/fold/foldgutter', 'codemirror/addon/hint/show-hint',
@@ -25,7 +27,7 @@ define(
     'slickgrid/slick.grid'
   ],
   function(
-    $, _, S, alertify, pgAdmin, Backbone, Backgrid, CodeMirror, pgExplain
+    $, _, S, alertify, pgAdmin, Backbone, Backgrid, CodeMirror, pgExplain, clipboard
   ) {
     /* Return back, this has been called more than once */
     if (pgAdmin.SqlEditor)
@@ -48,74 +50,6 @@ define(
         F8_KEY = 119;
 
     var is_query_running = false;
-
-    // Defining the backbone model for the sql grid
-    var sqlEditorViewModel = Backbone.Model.extend({
-
-      /* Keep track of values for the original primary keys for later reference,
-       * to allow to change the value of primary keys in the model, which will be
-       * required to identify the value of any row in the datagrid for the relation.
-       */
-      parse: function(data) {
-        var self = this;
-        self.grid_keys = {};
-        self.changed_data = false;
-
-        if (data && 'primary_keys' in self && self.primary_keys && _.size(self.primary_keys) > 0) {
-          _.each(self.primary_keys, function (value, key) {
-            // Assumption - the data, which are coming will always have data for primary_keys
-            self.grid_keys[key] = data[key];
-          });
-        }
-
-        return data;
-      },
-      /* We also need primary key along with the original data,
-       * which is required to identify this row in the database for modification.
-       */
-      toJSON: function(overridden, keys_only) {
-        var res = Backbone.Model.prototype.toJSON.apply(this, arguments);
-        if (!overridden) {
-          return res;
-        }
-
-        if (keys_only)
-          return this.grid_keys;
-
-        return {
-          'keys': this.grid_keys,
-          'data': res
-        };
-      },
-
-      // This function updates the primary key if changed.
-      update_keys: function() {
-        var self = this;
-
-        /* If 'grid_keys' present in the changed object
-         * then it is an update else insert.
-         */
-        if ('grid_keys' in self) {
-          /* Iterate through primary keys and check if the key
-           * is updated or not. If it is updated we need to update
-           * the grid_keys of the model as well.
-           */
-          _.each(self.primary_keys, function (value, key) {
-            if (self.grid_keys[key] != self.attributes[key])
-                self.grid_keys[key] = self.attributes[key]
-          });
-        }
-        else {
-          self.grid_keys = {};
-          /* Iterate through primary keys and insert
-           * the values in models grid_keys.
-           */
-          _.each(self.primary_keys, function (value, key) {
-            self.grid_keys[key] = self.attributes[key]
-          });
-        }
-      }
-    });
 
     // Defining Backbone view for the sql grid.
     var SQLEditorView = Backbone.View.extend({
@@ -242,7 +176,7 @@ define(
         // Create panels for 'Data Output', 'Explain', 'Messages' and 'History'
         var data_output = new pgAdmin.Browser.Panel({
           name: 'data_output',
-          title: '{{ _('Data Output') }}',
+          title: "{{ _('Data Output') }}",
           width: '100%',
           height:'100%',
           isCloseable: false,
@@ -252,7 +186,7 @@ define(
 
         var explain = new pgAdmin.Browser.Panel({
           name: 'explain',
-          title: '{{ _('Explain') }}',
+          title: "{{ _('Explain') }}",
           width: '100%',
           height:'100%',
           isCloseable: false,
@@ -262,7 +196,7 @@ define(
 
         var messages = new pgAdmin.Browser.Panel({
           name: 'messages',
-          title: '{{ _('Messages') }}',
+          title: "{{ _('Messages') }}",
           width: '100%',
           height:'100%',
           isCloseable: false,
@@ -272,7 +206,7 @@ define(
 
         var history = new pgAdmin.Browser.Panel({
           name: 'history',
-          title: '{{ _('History') }}',
+          title: "{{ _('History') }}",
           width: '100%',
           height:'100%',
           isCloseable: false,
@@ -294,36 +228,38 @@ define(
 
         self.render_history_grid();
 
-        // Listen on the panel closed event and notify user to save modifications.
-        _.each(window.top.pgAdmin.Browser.docker.findPanels('frm_datagrid'), function(p) {
-          if(p.isVisible()) {
-            p.on(wcDocker.EVENT.CLOSING, function() {
-              // Only if we can edit data then perform this check
-              var notify = false, msg;
-              if(self.handler.can_edit) {
-                var data_store = self.handler.data_store;
-                if(data_store && (_.size(data_store.added) ||
-                    _.size(data_store.updated))) {
-                  msg = '{{ _('The data has been modified, but not saved. Are you sure you wish to discard the changes?') }}';
+        if (!self.handler.is_new_browser_tab) {
+          // Listen on the panel closed event and notify user to save modifications.
+          _.each(window.top.pgAdmin.Browser.docker.findPanels('frm_datagrid'), function(p) {
+            if(p.isVisible()) {
+              p.on(wcDocker.EVENT.CLOSING, function() {
+                // Only if we can edit data then perform this check
+                var notify = false, msg;
+                if(self.handler.can_edit) {
+                  var data_store = self.handler.data_store;
+                  if(data_store && (_.size(data_store.added) ||
+                      _.size(data_store.updated))) {
+                    msg = "{{ _('The data has been modified, but not saved. Are you sure you wish to discard the changes?') }}";
+                    notify = true;
+                  }
+                } else if(self.handler.is_query_tool && self.handler.is_query_changed) {
+                  msg = "{{ _('The query has been modified, but not saved. Are you sure you wish to discard the changes?') }}";
                   notify = true;
                 }
-              } else if(self.handler.is_query_tool && self.handler.is_query_changed) {
-                msg = '{{ _('The query has been modified, but not saved. Are you sure you wish to discard the changes?') }}';
-                notify = true;
-              }
-              if(notify) {return self.user_confirmation(p, msg);}
-              return true;
-            });
-            // Set focus on query tool of active panel
-            p.on(wcDocker.EVENT.GAIN_FOCUS, function() {
-              if (!$(p.$container).hasClass('wcPanelTabContentHidden')) {
-                setTimeout(function() {
-                  self.handler.gridView.query_tool_obj.focus();
-                }, 200);
-              }
-            });
-          }
-        });
+                if(notify) {return self.user_confirmation(p, msg);}
+                return true;
+              });
+              // Set focus on query tool of active panel
+              p.on(wcDocker.EVENT.GAIN_FOCUS, function() {
+                if (!$(p.$container).hasClass('wcPanelTabContentHidden')) {
+                  setTimeout(function() {
+                    self.handler.gridView.query_tool_obj.focus();
+                  }, 200);
+                }
+              });
+            }
+          });
+        }
 
         // set focus on query tool once loaded
         setTimeout(function() {
@@ -457,7 +393,7 @@ define(
       /* To prompt user for unsaved changes */
       user_confirmation: function(panel, msg) {
         // If there is anything to save then prompt user
-        alertify.confirm('{{ _('Unsaved changes') }}', msg,
+        alertify.confirm("{{ _('Unsaved changes') }}", msg,
           function() {
             // Do nothing as user do not want to save, just continue
             window.onbeforeunload = null;
@@ -806,8 +742,7 @@ define(
           }
 
           var grid = args.grid, column_info, column_values, value,
-            cell = args.cell, row = args.row, selected_rows,
-            self = this.editor.handler;
+            cell = args.cell, row = args.row;
 
           // Copy operation (Only when if there is no row selected)
           // When user press `Ctrl + c` on selected cell
@@ -820,12 +755,12 @@ define(
             value = column_values[column_info.pos] || '';
             // Copy this value to Clipboard
             if(value)
-              this.editor.handler.copyTextToClipboard(value);
+              clipboard.copyTextToClipboard(value);
             // Go to cell again
             grid.gotoCell(row, cell, false);
           }
 
-        }.bind(editor_data));
+        });
 
 
         // Listener function which will be called when user updates existing rows
@@ -1360,8 +1295,8 @@ define(
          */
         if (self.handler.is_query_changed) {
           alertify.confirm(
-            '{{ _('Unsaved changes') }}',
-            '{{ _('Are you sure you wish to discard the current changes?') }}',
+            "{{ _('Unsaved changes') }}",
+            "{{ _('Are you sure you wish to discard the current changes?') }}",
             function() {
               // Do nothing as user do not want to save, just continue
               self.query_tool_obj.setValue('');
@@ -1383,8 +1318,8 @@ define(
         // ask for confirmation only if anything to clear
         if(!self.history_collection.length) { return; }
 
-        alertify.confirm('{{ _('Clear history') }}',
-          '{{ _('Are you sure you wish to clear the history?') }}',
+        alertify.confirm("{{ _('Clear history') }}",
+          "{{ _('Are you sure you wish to clear the history?') }}",
           function() {
             // Remove any existing grid first
             if (self.history_grid) {
@@ -1584,7 +1519,7 @@ define(
          * call the render method of the grid view to render the backgrid
          * header and loading icon and start execution of the sql query.
          */
-        start: function(is_query_tool, editor_title, script_sql) {
+        start: function(is_query_tool, editor_title, script_sql, is_new_browser_tab) {
           var self = this;
 
           self.is_query_tool = is_query_tool;
@@ -1594,6 +1529,7 @@ define(
           self.explain_costs = false;
           self.explain_buffers = false;
           self.explain_timing = false;
+          self.is_new_browser_tab = is_new_browser_tab;
 
           // We do not allow to call the start multiple times.
           if (self.gridView)
@@ -1675,8 +1611,8 @@ define(
                 _.size(self.data_store.updated) ||
                 _.size(self.data_store.deleted))
             ) {
-                alertify.confirm('{{ _('Unsaved changes') }}',
-                  '{{ _('The data has been modified, but not saved. Are you sure you wish to discard the changes?') }}',
+                alertify.confirm("{{ _('Unsaved changes') }}",
+                  "{{ _('The data has been modified, but not saved. Are you sure you wish to discard the changes?') }}",
                   function(){
                     // Do nothing as user do not want to save, just continue
                     self._run_query();
@@ -1700,14 +1636,14 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            '{{ _('Initializing query execution.') }}'
+            "{{ _('Initializing query execution.') }}"
           );
 
           $("#btn-flash").prop('disabled', true);
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:message',
-              '{{ _('Waiting for the query execution to complete...') }}'
+              "{{ _('Waiting for the query execution to complete...') }}"
           );
 
           $.ajax({
@@ -1760,7 +1696,7 @@ define(
               self.trigger('pgadmin-sqleditor:loading-icon:hide');
               if (e.readyState == 0) {
                 self.update_msg_history(false,
-                  '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                  "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                 );
                 return;
               }
@@ -1824,7 +1760,7 @@ define(
           else {
             // Show message in message and history tab in case of query tool
             self.total_time = self.get_query_run_time(self.query_start_time, self.query_end_time);
-            var msg = S('{{ _('Query returned successfully in %s.') }}').sprintf(self.total_time).value();
+            var msg = S("{{ _('Query returned successfully in %s.') }}").sprintf(self.total_time).value();
             res.result += "\n\n" + msg;
             self.update_msg_history(true, res.result, false);
             // Display the notifier if the timeout is set to >= 0
@@ -1860,7 +1796,7 @@ define(
                   if (res.data.status === 'Success') {
                     self.trigger(
                       'pgadmin-sqleditor:loading-icon:message',
-                      '{{ _('Loading data from the database server and rendering...') }}'
+                      "{{ _('Loading data from the database server and rendering...') }}"
                     );
                     self.get_columns(res.data);
                   }
@@ -1896,7 +1832,7 @@ define(
 
                   if (e.readyState == 0) {
                     self.update_msg_history(false,
-                      '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                     );
                     return;
                   }
@@ -1907,6 +1843,8 @@ define(
                     msg = e.responseJSON.errormsg;
 
                   self.update_msg_history(false, msg);
+                  // Highlight the error in the sql panel
+                  self._highlight_error(msg);
                 }
               });
           }, self.POLL_FALLBACK_TIME());
@@ -1964,15 +1902,15 @@ define(
 
               self.trigger(
                 'pgadmin-sqleditor:loading-icon:message',
-                '{{ _('Loading data from the database server and rendering...') }}',
+                "{{ _('Loading data from the database server and rendering...') }}",
                 self
               );
 
               // Show message in message and history tab in case of query tool
               self.total_time = self.get_query_run_time(self.query_start_time, self.query_end_time);
               self.update_msg_history(true, "", false);
-              var msg1 = S('{{ _('Total query runtime: %s.') }}').sprintf(self.total_time).value();
-              var msg2 = S('{{ _('%s rows retrieved.') }}').sprintf(self.rows_affected).value();
+              var msg1 = S("{{ _('Total query runtime: %s.') }}").sprintf(self.total_time).value();
+              var msg2 = S("{{ _('%s rows retrieved.') }}").sprintf(self.rows_affected).value();
 
               // Display the notifier if the timeout is set to >= 0
               if (self.info_notifier_timeout >= 0) {
@@ -2050,7 +1988,7 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:message',
-            '{{ _('Retrieving information about the columns returned...') }}'
+            "{{ _('Retrieving information about the columns returned...') }}"
           );
 
           // Make ajax call to fetch the pg types to map numeric data type
@@ -2276,17 +2214,17 @@ define(
                   } else {
                     $("#btn-save").prop('disabled', true);
                   }
-                  alertify.success('{{ _('Row(s) deleted') }}');
+                  alertify.success("{{ _('Row(s) deleted') }}");
               } else {
                 // There are other data to needs to be updated on server
                 if(is_updated) {
-                  alertify.alert('{{ _('Operation failed') }}',
-                    '{{ _('There are unsaved changes in grid, Please save them first to avoid inconsistency in data') }}'
+                  alertify.alert("{{ _('Operation failed') }}",
+                    "{{ _('There are unsaved changes in grid, Please save them first to avoid inconsistency in data') }}"
                   );
                   return;
                 }
-                alertify.confirm('{{ _('Delete Row(s)') }}',
-                  '{{ _('Are you sure you wish to delete selected row(s)?') }}',
+                alertify.confirm("{{ _('Delete Row(s)') }}",
+                  "{{ _('Are you sure you wish to delete selected row(s)?') }}",
                   function() {
                     $("#btn-delete-row").prop('disabled', true);
                     $("#btn-copy-row").prop('disabled', true);
@@ -2348,7 +2286,7 @@ define(
 
             self.trigger(
               'pgadmin-sqleditor:loading-icon:show',
-              '{{ _('Saving the updated data...') }}'
+              "{{ _('Saving the updated data...') }}"
             );
 
             // Add the columns to the data so the server can remap the data
@@ -2404,7 +2342,7 @@ define(
                   // Something went wrong while saving data on the db server
                   $("#btn-flash").prop('disabled', false);
                   $('.sql-editor-message').text(res.data.result);
-                  var err_msg = S('{{ _('%s.') }}').sprintf(res.data.result).value();
+                  var err_msg = S("{{ _('%s.') }}").sprintf(res.data.result).value();
                   alertify.notify(err_msg, 'error', 20);
 
                   // To highlight the row at fault
@@ -2435,7 +2373,7 @@ define(
               error: function(e) {
                 if (e.readyState == 0) {
                   self.update_msg_history(false,
-                    '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                    "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                   );
                   return;
                 }
@@ -2490,11 +2428,17 @@ define(
 
         // Set panel title.
         setTitle: function(title) {
-          _.each(window.top.pgAdmin.Browser.docker.findPanels('frm_datagrid'), function(p) {
-            if(p.isVisible()) {
-              p.title(decodeURIComponent(title));
-            }
-          });
+          var self = this;
+
+          if (self.is_new_browser_tab) {
+            window.document.title = title;
+          } else {
+            _.each(window.top.pgAdmin.Browser.docker.findPanels('frm_datagrid'), function(p) {
+              if(p.isVisible()) {
+                p.title(decodeURIComponent(title));
+              }
+            });
+          }
         },
 
         // load select file dialog
@@ -2505,8 +2449,8 @@ define(
            * confirm with the user for unsaved changes.
            */
           if (self.is_query_changed) {
-            alertify.confirm('{{ _('Unsaved changes') }}',
-              '{{ _('Are you sure you wish to discard the current changes?') }}',
+            alertify.confirm("{{ _('Unsaved changes') }}",
+              "{{ _('Are you sure you wish to discard the current changes?') }}",
               function() {
                 // User do not want to save, just continue
                 self._open_select_file_manager();
@@ -2540,7 +2484,7 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            '{{ _('Loading the file...') }}'
+            "{{ _('Loading the file...') }}"
           );
           // set cursor to progress before file load
           var $busy_icon_div = $('.sql-editor-busy-fetching');
@@ -2588,7 +2532,7 @@ define(
           }
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            '{{ _('Saving the queries in the file...') }}'
+            "{{ _('Saving the queries in the file...') }}"
           );
 
           // Make ajax call to save the data to file
@@ -2599,7 +2543,7 @@ define(
             data: JSON.stringify(data),
             success: function(res) {
               if (res.data.status) {
-                alertify.success('{{ _('File saved successfully.') }}');
+                alertify.success("{{ _('File saved successfully.') }}");
                 self.gridView.current_file = e;
                 self.setTitle(self.gridView.current_file.replace(/^.*[\\\/]/g, ''));
                 // disable save button on file save
@@ -2638,14 +2582,18 @@ define(
             } else {
               var title = '';
 
-              // Find the title of the visible panel
-              _.each(window.top.pgAdmin.Browser.docker.findPanels('frm_datagrid'), function(p) {
-                if(p.isVisible()) {
-                  self.gridView.panel_title = p._title;
-                }
-              });
+              if (self.is_new_browser_tab) {
+                title = window.document.title + ' *';
+              } else {
+                // Find the title of the visible panel
+                _.each(window.top.pgAdmin.Browser.docker.findPanels('frm_datagrid'), function(p) {
+                  if(p.isVisible()) {
+                    self.gridView.panel_title = p._title;
+                  }
+                });
 
-              title = self.gridView.panel_title + ' *';
+                title = self.gridView.panel_title + ' *';
+              }
               self.setTitle(title);
             }
 
@@ -2706,7 +2654,7 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            '{{ _('Loading the existing filter options...') }}'
+            "{{ _('Loading the existing filter options...') }}"
           );
           $.ajax({
             url: "{{ url_for('sqleditor.index') }}" + "filter/get/" + self.transId,
@@ -2736,7 +2684,7 @@ define(
               var msg;
               if (e.readyState == 0) {
                 msg =
-                  '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                  "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
               } else {
                 msg = e.responseText;
                 if (e.responseJSON != undefined &&
@@ -2772,11 +2720,11 @@ define(
             return;
 
           // Add column position and it's value to data
-          data[column_info.pos] = _values[column_info.pos] || '';
+          data[column_info.field] = _values[column_info.pos] || '';
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            '{{ _('Applying the new filter...') }}'
+            "{{ _('Applying the new filter...') }}"
           );
 
           // Make ajax call to include the filter by selection
@@ -2805,7 +2753,7 @@ define(
                 function() {
                   if (e.readyState == 0) {
                     alertify.alert('Filter By Selection Error',
-                      '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                     );
                     return;
                   }
@@ -2842,11 +2790,11 @@ define(
             return;
 
           // Add column position and it's value to data
-          data[column_info.pos] = _values[column_info.pos] || '';
+          data[column_info.field] = _values[column_info.pos] || '';
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            '{{ _('Applying the new filter...') }}'
+            "{{ _('Applying the new filter...') }}"
           );
 
           // Make ajax call to exclude the filter by selection.
@@ -2876,7 +2824,7 @@ define(
                 function() {
                   if (e.readyState == 0) {
                     alertify.alert('Filter Exclude Selection Error',
-                      '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                     );
                     return;
                   }
@@ -2899,7 +2847,7 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            '{{ _('Removing the filter...') }}'
+            "{{ _('Removing the filter...') }}"
           );
 
           // Make ajax call to exclude the filter by selection.
@@ -2926,7 +2874,7 @@ define(
                 function() {
                   if (e.readyState == 0) {
                     alertify.alert('Remove Filter Error',
-                      '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                     );
                     return;
                   }
@@ -2950,7 +2898,7 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            '{{ _('Applying the filter...') }}'
+            "{{ _('Applying the filter...') }}"
           );
 
           // Make ajax call to include the filter by selection
@@ -2981,7 +2929,7 @@ define(
                 function() {
                   if (e.readyState == 0) {
                     alertify.alert('Apply Filter Error',
-                      '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                     );
                     return;
                   }
@@ -2996,63 +2944,6 @@ define(
               );
             }
           });
-        },
-
-        // This function will copy the selected rows(s) in Clipboard.
-        copyTextToClipboard: function (text) {
-          var textArea = document.createElement("textarea");
-
-          //
-          // *** This styling is an extra step which is likely not required. ***
-          //
-          // Why is it here? To ensure:
-          // 1. the element is able to have focus and selection.
-          // 2. if element was to flash render it has minimal visual impact.
-          // 3. less flakyness with selection and copying which **might** occur if
-          //    the textarea element is not visible.
-          //
-          // The likelihood is the element won't even render, not even a flash,
-          // so some of these are just precautions. However in IE the element
-          // is visible whilst the popup box asking the user for permission for
-          // the web page to copy to the clipboard.
-          //
-
-          // Place in top-left corner of screen regardless of scroll position.
-          textArea.style.position = 'fixed';
-          textArea.style.top = 0;
-          textArea.style.left = 0;
-
-          // Ensure it has a small width and height. Setting to 1px / 1em
-          // doesn't work as this gives a negative w/h on some browsers.
-          textArea.style.width = '2em';
-          textArea.style.height = '2em';
-
-          // We don't need padding, reducing the size if it does flash render.
-          textArea.style.padding = 0;
-
-          // Clean up any borders.
-          textArea.style.border = 'none';
-          textArea.style.outline = 'none';
-          textArea.style.boxShadow = 'none';
-
-          // Avoid flash of white box if rendered for any reason.
-          textArea.style.background = 'transparent';
-
-
-          textArea.value = text;
-
-          document.body.appendChild(textArea);
-
-          textArea.select();
-
-          try {
-            document.execCommand('copy');
-          } catch (err) {
-            alertify.alert('{{ _('Error') }}',
-                           '{{ _('Oops, unable to copy to clipboard') }}');
-          }
-
-          document.body.removeChild(textArea);
         },
 
         // This function will copy the selected row.
@@ -3094,7 +2985,7 @@ define(
           }
           // If there is something to set into clipboard
           if(copied_text)
-            self.copyTextToClipboard(copied_text);
+            clipboard.copyTextToClipboard(copied_text);
         },
 
         // This function will paste the selected row.
@@ -3162,7 +3053,7 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            '{{ _('Setting the limit on the result...') }}'
+            "{{ _('Setting the limit on the result...') }}"
           );
           // Make ajax call to change the limit
           $.ajax({
@@ -3189,7 +3080,7 @@ define(
                 function() {
                   if (e.readyState == 0) {
                     alertify.alert('Change limit Error',
-                      '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                     );
                     return;
                   }
@@ -3236,12 +3127,12 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            '{{ _('Initializing the query execution!') }}'
+            "{{ _('Initializing the query execution!') }}"
           );
 
           $("#btn-flash").prop('disabled', true);
 
-          if (explain_prefix != undefined)
+          if (explain_prefix != undefined && !sql.trim().toUpperCase().startsWith("EXPLAIN"))
             sql = explain_prefix + ' ' + sql;
 
           self.query_start_time = new Date();
@@ -3270,7 +3161,7 @@ define(
               if (res.data.status) {
                 self.trigger(
                   'pgadmin-sqleditor:loading-icon:message',
-                   '{{ _('Waiting for the query execution to complete...') }}'
+                   "{{ _('Waiting for the query execution to complete...') }}"
                 );
 
                 self.can_edit = res.data.can_edit;
@@ -3297,7 +3188,7 @@ define(
 
               if (e.readyState == 0) {
                 self.update_msg_history(false,
-                  '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                  "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                 );
                 return;
               }
@@ -3395,7 +3286,7 @@ define(
 
               if (e.readyState == 0) {
                 alertify.alert('Cancel Query Error',
-                  '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                  "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                 );
                 return;
               }
@@ -3440,7 +3331,7 @@ define(
               error: function(e) {
                 if (e.readyState == 0) {
                   alertify.alert('Get Object Name Error',
-                   '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                   "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                   );
                   return;
                 }
@@ -3493,7 +3384,7 @@ define(
             error: function(e) {
               if (e.readyState == 0) {
                 alertify.alert('Auto Rollback Error',
-                 '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                 "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                 );
                 return;
               }
@@ -3532,7 +3423,7 @@ define(
             error: function(e) {
               if (e.readyState == 0) {
                 alertify.alert('Auto Commit Error',
-                 '{{ _('Not connected to the server or the connection to the server has been closed.') }}'
+                 "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
                 );
                 return;
               }
@@ -3597,13 +3488,13 @@ define(
             success: function(res) {
               if(res.success == undefined || !res.success) {
                 alertify.alert('Explain options error',
-                  '{{ _('Error occurred while setting verbose option in explain') }}'
+                  "{{ _('Error occurred while setting verbose option in explain') }}"
                 );
               }
             },
             error: function(e) {
               alertify.alert('Explain options error',
-                  '{{ _('Error occurred while setting verbose option in explain') }}'
+                  "{{ _('Error occurred while setting verbose option in explain') }}"
               );
               return;
             }
@@ -3635,13 +3526,13 @@ define(
             success: function(res) {
               if(res.success == undefined || !res.success) {
                 alertify.alert('Explain options error',
-                  '{{ _('Error occurred while setting costs option in explain') }}'
+                  "{{ _('Error occurred while setting costs option in explain') }}"
                 );
               }
             },
             error: function(e) {
               alertify.alert('Explain options error',
-                  '{{ _('Error occurred while setting costs option in explain') }}'
+                  "{{ _('Error occurred while setting costs option in explain') }}"
               );
             }
           });
@@ -3672,13 +3563,13 @@ define(
             success: function(res) {
               if(res.success == undefined || !res.success) {
                 alertify.alert('Explain options error',
-                  '{{ _('Error occurred while setting buffers option in explain') }}'
+                  "{{ _('Error occurred while setting buffers option in explain') }}"
                 );
               }
             },
             error: function(e) {
               alertify.alert('Explain options error',
-                '{{ _('Error occurred while setting buffers option in explain') }}'
+                "{{ _('Error occurred while setting buffers option in explain') }}"
               );
             }
           });
@@ -3708,13 +3599,13 @@ define(
             success: function(res) {
               if(res.success == undefined || !res.success) {
                 alertify.alert('Explain options error',
-                  '{{ _('Error occurred while setting timing option in explain') }}'
+                  "{{ _('Error occurred while setting timing option in explain') }}"
                 );
               }
             },
             error: function(e) {
               alertify.alert('Explain options error',
-                '{{ _('Error occurred while setting timing option in explain') }}'
+                "{{ _('Error occurred while setting timing option in explain') }}"
               );
             }
           });
@@ -3792,7 +3683,7 @@ define(
             error: function(e) {
               updateUI();
               alertify.alert('Get Preferences error',
-                '{{ _('Error occurred while getting query tool options ') }}'
+                "{{ _('Error occurred while getting query tool options ') }}"
               );
             }
           });

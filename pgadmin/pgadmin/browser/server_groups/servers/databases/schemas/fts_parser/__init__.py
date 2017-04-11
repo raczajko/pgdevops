@@ -303,9 +303,7 @@ class FtsParserView(PGChildNodeView):
             return internal_server_error(errormsg=res)
 
         if len(res['rows']) == 0:
-            return gone(_("""
-                Could not find the FTS Parser node in the database node.
-                """))
+            return gone(_("Could not find the FTS Parser node in the database node."))
 
         return ajax_response(
             response=res['rows'][0],
@@ -613,7 +611,7 @@ class FtsParserView(PGChildNodeView):
                     conn=self.conn
                 )
             else:
-                sql = "-- incomplete definition"
+                sql = "-- definition incomplete"
         return sql.strip('\n'), data['name']
 
     @check_precondition

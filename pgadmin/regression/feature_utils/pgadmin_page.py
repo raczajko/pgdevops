@@ -1,3 +1,12 @@
+##########################################################################
+#
+# pgAdmin 4 - PostgreSQL Tools
+#
+# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# This software is released under the PostgreSQL Licence
+#
+##########################################################################
+
 import time
 
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
@@ -22,10 +31,14 @@ class PgadminPage:
         self.click_element(self.find_by_partial_link_text("File"))
         self.find_by_partial_link_text("Reset Layout").click()
         self.click_modal_ok()
+        self.wait_for_reloading_indicator_to_disappear()
 
     def click_modal_ok(self):
-        time.sleep(0.1)
-        self.click_element(self.find_by_xpath("//button[contains(.,'OK')]"))
+        time.sleep(0.5)
+        # Find active alertify dialog in case of multiple alertify dialog & click on that dialog
+        self.click_element(
+            self.find_by_xpath("//div[contains(@class, 'alertify') and not(contains(@class, 'ajs-hidden'))]//button[.='OK']")
+        )
 
     def add_server(self, server_config):
         self.find_by_xpath("//*[@class='aciTreeText' and contains(.,'Servers')]").click()
@@ -51,18 +64,21 @@ class PgadminPage:
         self.find_by_partial_link_text("Delete/Drop").click()
         self.click_modal_ok()
 
+    def select_tree_item(self, tree_item_text):
+        self.find_by_xpath("//*[@id='tree']//*[.='" + tree_item_text + "' and @class='aciTreeItem']").click()
+
     def toggle_open_tree_item(self, tree_item_text):
         self.find_by_xpath("//*[@id='tree']//*[.='" + tree_item_text + "']/../*[@class='aciTreeButton']").click()
 
     def find_by_xpath(self, xpath):
-        return self.wait_for_element(lambda (driver): driver.find_element_by_xpath(xpath))
+        return self.wait_for_element(lambda driver: driver.find_element_by_xpath(xpath))
 
     def find_by_id(self, element_id):
-        return self.wait_for_element(lambda (driver): driver.find_element_by_id(element_id))
+        return self.wait_for_element(lambda driver: driver.find_element_by_id(element_id))
 
     def find_by_partial_link_text(self, link_text):
         return self._wait_for(
-            'link with text "#{0}"'.format(link_text),
+            'link with text "{0}"'.format(link_text),
             EC.element_to_be_clickable((By.PARTIAL_LINK_TEXT, link_text))
         )
 
@@ -91,7 +107,8 @@ class PgadminPage:
         ActionChains(self.driver).send_keys(field_content).perform()
 
     def click_tab(self, tab_name):
-        self.find_by_xpath("//*[contains(@class,'wcPanelTab') and contains(.,'" + tab_name + "')]").click()
+        self.find_by_xpath("//*[contains(@class,'wcTabTop')]//*[contains(@class,'wcPanelTab') "
+                           "and contains(.,'" + tab_name + "')]").click()
 
     def wait_for_input_field_content(self, field_name, content):
         def input_field_has_content(driver):
@@ -112,6 +129,16 @@ class PgadminPage:
                 return False
 
         return self._wait_for("element to exist", element_if_it_exists)
+
+    def wait_for_reloading_indicator_to_disappear(self):
+        def reloading_indicator_has_disappeared(driver):
+            try:
+                driver.find_element_by_id("reloading-indicator")
+                return False
+            except NoSuchElementException:
+                return True
+
+        self._wait_for("reloading indicator to disappear", reloading_indicator_has_disappeared)
 
     def wait_for_spinner_to_disappear(self):
         def spinner_has_disappeared(driver):

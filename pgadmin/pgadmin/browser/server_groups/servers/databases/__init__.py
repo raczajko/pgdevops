@@ -198,7 +198,7 @@ class DatabaseView(PGChildNodeView):
                 connected = True
                 canDrop = canDisConn = False
             else:
-                conn = self.manager.connection(dbname)
+                conn = self.manager.connection(dbname,did=row['did'])
                 connected = conn.connected()
                 canDrop = canDisConn = True
 
@@ -489,7 +489,7 @@ class DatabaseView(PGChildNodeView):
         if 'datacl' in data:
             data['datacl'] = parse_priv_to_db(data['datacl'], 'DATABASE')
 
-        # The below SQL will execute rest DMLs because we can not execute CREATE with any other
+        # The below SQL will execute rest DMLs because we cannot execute CREATE with any other
         SQL = render_template(
             "/".join([self.template_path, 'grant.sql']),
             data=data, conn=self.conn

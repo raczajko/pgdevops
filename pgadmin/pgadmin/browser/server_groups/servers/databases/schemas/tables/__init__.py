@@ -295,7 +295,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             self.index_constraint_template_path = 'index_constraint/sql'
 
             # Template for foreign key constraint node
-            self.foreign_key_template_path = 'foreign_key/sql'
+            self.foreign_key_template_path = 'foreign_key/sql/#{0}#'.format(ver)
 
             # Template for index node
             self.index_template_path = 'index/sql/#{0}#'.format(ver)
@@ -1446,6 +1446,12 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             if not status:
                 return internal_server_error(errormsg=res)
 
+            # PostgreSQL truncates the table name to 63 characters.
+            # Have to truncate the name like PostgreSQL to get the proper schema id
+            CONST_MAX_CHAR_COUNT = 63
+            if len(data['name']) > CONST_MAX_CHAR_COUNT:
+                data['name'] = data['name'][0:CONST_MAX_CHAR_COUNT]
+
             # Get updated schema oid
             SQL = render_template("/".join([self.template_path,
                                   'get_schema_oid.sql']), tname=data['name'])
@@ -1817,7 +1823,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                         else:
                             sql.append(
                                 gettext(
-                                    '-- incomplete definition for {0} constraint'.format(index_constraints[ctype])
+                                    '-- definition incomplete for {0} constraint'.format(index_constraints[ctype])
                                 )
                             )
         if len(sql) > 0:
@@ -1878,7 +1884,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                     if not self.validate_constrains('foreign_key', c):
                         sql.append(
                             gettext(
-                                '-- incomplete definition for foreign_key constraint'
+                                '-- definition incomplete for foreign_key constraint'
                             )
                         )
                         return '\n\n'.join(sql)
@@ -1909,7 +1915,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                     if not self.validate_constrains('foreign_key', c):
                         sql.append(
                             gettext(
-                                '-- incomplete definition for foreign_key constraint'
+                                '-- definition incomplete for foreign_key constraint'
                             )
                         )
                         return '\n\n'.join(sql)
@@ -2003,7 +2009,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                     if not self.validate_constrains('check_constraint', c):
                         sql.append(
                             gettext(
-                                '-- incomplete definition for check_constraint'
+                                '-- definition incomplete for check_constraint'
                             )
                         )
                         return '\n\n'.join(sql)
@@ -2079,7 +2085,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                     if not self.validate_constrains('exclude_constraint', c):
                         sql.append(
                             gettext(
-                                '-- incomplete definition for exclusion_constraint'
+                                '-- definition incomplete for exclusion_constraint'
                             )
                         )
                         return '\n\n'.join(sql)
@@ -2286,7 +2292,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
 
             for arg in required_args:
                 if arg not in data:
-                    return gettext('-- incomplete definition')
+                    return gettext('-- definition incomplete')
 
             # validate constraint data.
             for key in ['primary_key', 'unique_constraint',
@@ -2295,7 +2301,7 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                 if key in data and len(data[key]) > 0:
                     for constraint in data[key]:
                         if not self.validate_constrains(key, constraint):
-                            return gettext('-- incomplete definition for {0}'.format(key))
+                            return gettext('-- definition incomplete for {0}'.format(key))
 
             # We will convert privileges coming from client required
             # in server side format
@@ -2544,25 +2550,25 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
             # 'options' we need true/false to render switch ASC(false)/DESC(true)
             columns = []
             cols = []
-            for row in rset['rows']:
+            for col_row in rset['rows']:
                 # We need all data as collection for ColumnsModel
                 cols_data = {
-                    'colname': row['attdef'].strip('"'),
-                    'collspcname': row['collnspname'],
-                    'op_class': row['opcname'],
+                    'colname': col_row['attdef'].strip('"'),
+                    'collspcname': col_row['collnspname'],
+                    'op_class': col_row['opcname'],
                 }
-                if row['options'][0] == 'DESC':
+                if col_row['options'][0] == 'DESC':
                     cols_data['sort_order'] = True
                 columns.append(cols_data)
 
                 # We need same data as string to display in properties window
                 # If multiple column then separate it by colon
-                cols_str = row['attdef']
-                if row['collnspname']:
-                    cols_str += ' COLLATE ' + row['collnspname']
-                if row['opcname']:
-                    cols_str += ' ' + row['opcname']
-                if row['options'][0] == 'DESC':
+                cols_str = col_row['attdef']
+                if col_row['collnspname']:
+                    cols_str += ' COLLATE ' + col_row['collnspname']
+                if col_row['opcname']:
+                    cols_str += ' ' + col_row['opcname']
+                if col_row['options'][0] == 'DESC':
                     cols_str += ' DESC'
                 cols.append(cols_str)
 
@@ -2634,8 +2640,8 @@ class TableView(PGChildNodeView, DataTypeReader, VacuumSettings):
                 # 'tgattr' contains list of columns from table used in trigger
                 columns = []
 
-                for row in rset['rows']:
-                    columns.append({'column': row['name']})
+                for col_row in rset['rows']:
+                    columns.append({'column': col_row['name']})
 
                 data['columns'] = columns
 

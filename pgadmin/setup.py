@@ -72,7 +72,7 @@ def do_setup(app):
             # Prompt the user for their default username and password.
             print(
                 u"Enter the email address and password to use for the initial "
-                u"pgDevOps user account:\n"
+                u"pgAdmin user account:\n"
             )
 
             email_filter = re.compile(
@@ -141,43 +141,6 @@ def do_setup(app):
         db.session.merge(key)
 
         db.session.commit()
-
-
-        ## Check if there are any postgres components installed add them to servers list.
-        sys.path.append(os.path.join(os.environ.get("PGC_HOME"),"hub","scripts"))
-        import util
-        servergroup_id = 1
-        user_id=user.id
-        servergroups = ServerGroup.query.filter_by(
-            user_id=user_id
-        ).order_by("id")
-
-        if servergroups.count() > 0:
-            servergroup = servergroups.first()
-            servergroup_id = servergroup.id
-
-        get_pg_instance=util.get_installed_postgres_components()
-        for pg in get_pg_instance:
-            srv_name=pg[0]
-            srv_proj=pg[1]
-            srv_port=pg[3]
-            srv_datadir=pg[4]
-            svr_comment=srv_proj
-            if srv_datadir and srv_datadir!="" and srv_datadir!="None" and os.path.exists(srv_datadir):
-                print ("Adding {} to pgdevops metadata ".format(srv_name))
-                svr = Server(user_id=user_id,
-                            servergroup_id=servergroup_id,
-                            name=srv_name,
-                            host='localhost',
-                            port=srv_port,
-                            maintenance_db='postgres',
-                            username="postgres",
-                            ssl_mode='prefer',
-                            comment=svr_comment,
-                            discovery_id="BigSQL PostgreSQL")
-
-                db.session.add(svr)
-                db.session.commit()
 
     # Done!
     print(u"")
@@ -440,7 +403,7 @@ if __name__ == '__main__':
         'sqlite:///' + config.SQLITE_PATH.replace('\\', '/')
     db.init_app(app)
 
-    print(u"pgDevOps - Application Initialization")
+    print(u"pgAdmin 4 - Application Initialisation")
     print(u"======================================\n")
 
     from pgadmin.utils import u, fs_encoding, file_quote

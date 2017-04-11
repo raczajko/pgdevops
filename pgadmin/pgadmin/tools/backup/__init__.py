@@ -119,7 +119,7 @@ class BackupMessage(IProcessDesc):
                 self.database
             )
         if self.backup_type == BACKUP.GLOBALS:
-            return _("Backing up the global objects on the server - '{0}'...").format(
+            return _("Backing up the global objects on the server '{0}'...").format(
                 "{0} ({1}:{2})".format(s.name, s.host, s.port)
             )
         elif self.backup_type == BACKUP.SERVER:
@@ -146,11 +146,11 @@ class BackupMessage(IProcessDesc):
                 self.database
             )
         elif self.backup_type == BACKUP.GLOBALS:
-            res += _("Backing up the global objects on the server '{0}'").format(
+            res += _("Backing up the global objects on the server '{0}'...").format(
                 "{0} ({1}:{2})".format(s.name, s.host, s.port)
             )
         elif self.backup_type == BACKUP.SERVER:
-            res += _("Backing up the server '{0}'").format(
+            res += _("Backing up the server '{0}'...").format(
                 "{0} ({1}:{2})".format(s.name, s.host, s.port)
             )
         else:
@@ -168,7 +168,7 @@ class BackupMessage(IProcessDesc):
 @blueprint.route("/")
 @login_required
 def index():
-    return bad_request(errormsg=_("This URL can not be called directly."))
+    return bad_request(errormsg=_("This URL cannot be called directly."))
 
 
 @blueprint.route("/backup.js")
@@ -226,7 +226,10 @@ def create_backup_job(sid):
     else:
         data = json.loads(request.data, encoding='utf-8')
 
-    backup_file = filename_with_file_manager_path(data['file'])
+    try:
+        backup_file = filename_with_file_manager_path(data['file'])
+    except Exception as e:
+        return bad_request(errormsg=str(e))
 
     # Fetch the server details like hostname, port, roles etc
     server = Server.query.filter_by(
@@ -324,7 +327,10 @@ def create_backup_objects_job(sid):
     else:
         data = json.loads(request.data, encoding='utf-8')
 
-    backup_file = filename_with_file_manager_path(data['file'])
+    try:
+        backup_file = filename_with_file_manager_path(data['file'])
+    except Exception as e:
+        return bad_request(errormsg=str(e))
 
     # Fetch the server details like hostname, port, roles etc
     server = Server.query.filter_by(

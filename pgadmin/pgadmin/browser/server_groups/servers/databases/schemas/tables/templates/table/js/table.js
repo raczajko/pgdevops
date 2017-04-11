@@ -209,7 +209,7 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
 
           alertify.confirm(
             '{{ _('Reset statistics') }}',
-            S('{{ _('Are you sure you want to reset the statistics for table %%s?') }}').sprintf(d._label).value(),
+            S('{{ _('Are you sure you want to reset the statistics for table %s?') }}').sprintf(d._label).value(),
             function (e) {
               if (e) {
                 var data = d;
@@ -734,8 +734,6 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
               schema = this.get('schema'),
               relowner = this.get('relowner');
 
-          this.errorModel.clear();
-
           // If nothing to validate or VacuumSetting keys then
           // return from here
           if ( keys && (keys.length == 0
@@ -744,19 +742,22 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
             return null;
           }
 
+          // Have to clear existing validation before initiating current state validation only
+          this.errorModel.clear();
+
           if (_.isUndefined(name) || _.isNull(name) ||
             String(name).replace(/^\s+|\s+$/g, '') == '') {
-            msg = '{{ _('Table name can not be empty.') }}';
+            msg = '{{ _('Table name cannot be empty.') }}';
             this.errorModel.set('name', msg);
             return msg;
           } else if (_.isUndefined(schema) || _.isNull(schema) ||
             String(schema).replace(/^\s+|\s+$/g, '') == '') {
-            msg = '{{ _('Table schema can not be empty.') }}';
+            msg = '{{ _('Table schema cannot be empty.') }}';
             this.errorModel.set('schema', msg);
             return msg;
           } else if (_.isUndefined(relowner) || _.isNull(relowner) ||
             String(relowner).replace(/^\s+|\s+$/g, '') == '') {
-            msg = '{{ _('Table owner can not be empty.') }}';
+            msg = '{{ _('Table owner cannot be empty.') }}';
             this.errorModel.set('relowner', msg);
             return msg;
           }
