@@ -18,7 +18,6 @@ from flask_babel import Babel, gettext
 from pgadmin.utils.session import create_session_interface
 from pgadmin.model import db, Role, User, Server, ServerGroup
 from flask_security import Security, SQLAlchemyUserDatastore
-from pgadmin.utils.pickleSessions import PickleSessionInterface
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 import config
 from flask_restful import reqparse

@@ -369,9 +369,7 @@ class FtsDictionaryView(PGChildNodeView):
             return internal_server_error(errormsg=res)
 
         if len(res['rows']) == 0:
-            return gone(_("""
-                Could not find the FTS Dictionary node in the database node.
-                """))
+            return gone(_("Could not find the FTS Dictionary node in the database node."))
 
         if res['rows'][0]['options'] is not None:
             res['rows'][0]['options'] = self.tokenize_options(res['rows'][0]['options'])
@@ -612,9 +610,7 @@ class FtsDictionaryView(PGChildNodeView):
                 return internal_server_error(errormsg=res)
 
             if len(res['rows']) == 0:
-                return gone(_("""
-                    Could not find the FTS Dictionary node.
-                """))
+                return gone(_("Could not find the FTS Dictionary node."))
 
             old_data = res['rows'][0]
 
@@ -673,7 +669,7 @@ class FtsDictionaryView(PGChildNodeView):
                                       conn=self.conn
                                       )
             else:
-                sql = u"-- incomplete definition"
+                sql = u"-- definition incomplete"
             return sql.strip('\n'), data['name']
 
     @check_precondition
@@ -729,7 +725,7 @@ class FtsDictionaryView(PGChildNodeView):
             if not status:
                 return internal_server_error(
                     _(
-                        "Could not generate reversed engineered query for the FTS Dictionary!\n{0}").format(
+                        "Could not generate reversed engineered query for the FTS Dictionary.\n{0}").format(
                         res
                     )
                 )
@@ -737,7 +733,7 @@ class FtsDictionaryView(PGChildNodeView):
             if res is None:
                 return gone(
                     _(
-                        "Could not generate reversed engineered query for FTS Dictionary node!")
+                        "Could not generate reversed engineered query for FTS Dictionary node.")
                 )
 
             return ajax_response(response=res)

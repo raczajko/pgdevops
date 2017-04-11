@@ -1,27 +1,28 @@
-#############################################################
+##########################################################################
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
 # Copyright (C) 2013 - 2017, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
-##############################################################
+##########################################################################
 
 from selenium.webdriver import ActionChains
 
 import config as app_config
-from regression import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
+from regression.python_test_utils import test_utils
 
 
 class ConnectsToServerFeatureTest(BaseFeatureTest):
     """
     Tests that a database connection can be created from the UI
     """
+    scenarios = [
+        ("Test database connection", dict())
+    ]
 
-    def setUp(self):
-        super(ConnectsToServerFeatureTest, self).setUp()
-
+    def before(self):
         connection = test_utils.get_db_connection(self.server['db'],
                                                   self.server['username'],
                                                   self.server['db_password'],
@@ -32,13 +33,15 @@ class ConnectsToServerFeatureTest(BaseFeatureTest):
         test_utils.create_table(self.server, "acceptance_test_db", "test_table")
 
     def runTest(self):
+        """This function tests that a database connection can be created from
+        the UI"""
         self.assertEqual(app_config.APP_NAME, self.page.driver.title)
         self.page.wait_for_spinner_to_disappear()
 
         self._connects_to_server()
         self._tables_node_expandable()
 
-    def tearDown(self):
+    def after(self):
         self.page.remove_server(self.server)
 
         connection = test_utils.get_db_connection(self.server['db'],

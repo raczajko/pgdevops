@@ -55,7 +55,7 @@ define(
          * otherwise enabled.
          */
         query_tool_menu_enabled = function(obj) {
-          if(!_.isUndefined(obj) && !_.isNull(obj))
+          if(!_.isUndefined(obj) && !_.isNull(obj)) {
             if(_.indexOf(unsupported_nodes, obj._type) == -1) {
               if (obj._type == 'database' && obj.allowConn)
                 return true;
@@ -63,9 +63,12 @@ define(
                 return true;
               else
                 return false;
+             } else {
+                return false;
              }
-          else
+          } else {
             return false;
+          }
         };
 
         // Define the nodes on which the menus to be appear
@@ -324,39 +327,57 @@ define(
             var panel_title = ' Query-' + self.title_index;
             self.title_index += 1;
 
-            var dashboardPanel = pgBrowser.docker.findPanels('dashboard');
-            dataGridPanel = pgBrowser.docker.addPanel('frm_datagrid', wcDocker.DOCK.STACKED, dashboardPanel[0]);
-            dataGridPanel.title(panel_title);
-            dataGridPanel.icon('fa fa-bolt');
-            dataGridPanel.focus();
-
-            // Listen on the panel closed event.
-            dataGridPanel.on(wcDocker.EVENT.CLOSED, function() {
-              $.ajax({
-                url: "{{ url_for('datagrid.index') }}" + "close/" + res.data.gridTransId,
-                method: 'GET'
-              });
-            });
-
-            // Open the panel if frame is initialized
             baseUrl = "{{ url_for('datagrid.index') }}"  + "panel/" + res.data.gridTransId + "/false/"
                                                                     + encodeURIComponent(grid_title);
-            var openDataGridURL = function(j) {
-              j.data('embeddedFrame').$container.append(self.spinner_el);
-              setTimeout(function() {
-                var frameInitialized = j.data('frameInitialized');
-                if (frameInitialized) {
-                  var frame = j.data('embeddedFrame');
-                  if (frame) {
-                    frame.openURL(baseUrl);
-                    frame.$container.find('.wcLoadingContainer').hide(1);
-                  }
-                } else {
+
+            if (res.data.newBrowserTab) {
+              var newWin = window.open(baseUrl, '_blank');
+
+              // Listen on the window closed event.
+              newWin.addEventListener("unload", function(e){
+                $.ajax({
+                  url: "{{ url_for('datagrid.index') }}" + "close/" + res.data.gridTransId,
+                  method: 'GET'
+                });
+              }, false);
+
+              // add a load listener to the window so that the title gets changed on page load
+              newWin.addEventListener("load", function() {
+                newWin.document.title = panel_title;
+              });
+            } else {
+              var dashboardPanel = pgBrowser.docker.findPanels('dashboard');
+              dataGridPanel = pgBrowser.docker.addPanel('frm_datagrid', wcDocker.DOCK.STACKED, dashboardPanel[0]);
+              dataGridPanel.title(panel_title);
+              dataGridPanel.icon('fa fa-bolt');
+              dataGridPanel.focus();
+
+              // Listen on the panel closed event.
+              dataGridPanel.on(wcDocker.EVENT.CLOSED, function() {
+                $.ajax({
+                  url: "{{ url_for('datagrid.index') }}" + "close/" + res.data.gridTransId,
+                  method: 'GET'
+                });
+              });
+
+              var openDataGridURL = function(j) {
+                j.data('embeddedFrame').$container.append(self.spinner_el);
+                setTimeout(function() {
+                  var frameInitialized = j.data('frameInitialized');
+                  if (frameInitialized) {
+                    var frame = j.data('embeddedFrame');
+                    if (frame) {
+                      frame.openURL(baseUrl);
+                      frame.$container.find('.wcLoadingContainer').hide(1);
+                    }
+                  } else {
                     openDataGridURL(j);
-                }
-              }, 100);
-            };
-            openDataGridURL($(dataGridPanel));
+                  }
+                }, 100);
+              };
+
+              openDataGridURL($(dataGridPanel));
+            }
           },
           error: function(e) {
             alertify.alert(
@@ -419,42 +440,61 @@ define(
           contentType: "application/json",
           success: function(res) {
 
-            /* On successfully initialization find the dashboard panel,
-             * create new panel and add it to the dashboard panel.
-             */
-            var dashboardPanel = pgBrowser.docker.findPanels('dashboard');
-            queryToolPanel = pgBrowser.docker.addPanel('frm_datagrid', wcDocker.DOCK.STACKED, dashboardPanel[0]);
-            queryToolPanel.title(panel_title);
-            queryToolPanel.icon('fa fa-bolt');
-            queryToolPanel.focus();
-
-            // Listen on the panel closed event.
-            queryToolPanel.on(wcDocker.EVENT.CLOSED, function() {
-              $.ajax({
-                url: "{{ url_for('datagrid.index') }}" + "close/" + res.data.gridTransId,
-                method: 'GET'
-              });
-            });
-
             // Open the panel if frame is initialized
             baseUrl = "{{ url_for('datagrid.index') }}"  + "panel/" + res.data.gridTransId + "/true/"
                         + encodeURIComponent(grid_title) + '?' + "query_url=" + encodeURI(sURL);
-            var openQueryToolURL = function(j) {
-              j.data('embeddedFrame').$container.append(pgAdmin.DataGrid.spinner_el);
-              setTimeout(function() {
-                var frameInitialized = j.data('frameInitialized');
-                if (frameInitialized) {
-                  var frame = j.data('embeddedFrame');
-                  if (frame) {
-                    frame.openURL(baseUrl);
-                    frame.$container.find('.wcLoadingContainer').delay(1000).hide(1);
+
+            if (res.data.newBrowserTab) {
+              var newWin = window.open(baseUrl, '_blank');
+
+              // Listen on the window closed event.
+              newWin.addEventListener("unload", function(e){
+                $.ajax({
+                  url: "{{ url_for('datagrid.index') }}" + "close/" + res.data.gridTransId,
+                  method: 'GET'
+                });
+              }, false);
+
+              // add a load listener to the window so that the title gets changed on page load
+              newWin.addEventListener("load", function() {
+                newWin.document.title = panel_title;
+              });
+            } else {
+              /* On successfully initialization find the dashboard panel,
+               * create new panel and add it to the dashboard panel.
+               */
+              var dashboardPanel = pgBrowser.docker.findPanels('dashboard');
+              queryToolPanel = pgBrowser.docker.addPanel('frm_datagrid', wcDocker.DOCK.STACKED, dashboardPanel[0]);
+              queryToolPanel.title(panel_title);
+              queryToolPanel.icon('fa fa-bolt');
+              queryToolPanel.focus();
+
+              // Listen on the panel closed event.
+              queryToolPanel.on(wcDocker.EVENT.CLOSED, function() {
+                $.ajax({
+                  url: "{{ url_for('datagrid.index') }}" + "close/" + res.data.gridTransId,
+                  method: 'GET'
+                });
+              });
+
+              var openQueryToolURL = function(j) {
+                j.data('embeddedFrame').$container.append(pgAdmin.DataGrid.spinner_el);
+                setTimeout(function() {
+                  var frameInitialized = j.data('frameInitialized');
+                  if (frameInitialized) {
+                    var frame = j.data('embeddedFrame');
+                    if (frame) {
+                      frame.openURL(baseUrl);
+                      frame.$container.find('.wcLoadingContainer').delay(1000).hide(1);
+                    }
+                  } else {
+                    openQueryToolURL(j);
                   }
-                } else {
-                  openQueryToolURL(j);
-                }
-              }, 100);
-            };
-            openQueryToolURL($(queryToolPanel));
+                }, 100);
+              };
+
+              openQueryToolURL($(queryToolPanel));
+            }
           },
           error: function(e) {
             alertify.alert(

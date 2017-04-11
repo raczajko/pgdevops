@@ -56,7 +56,8 @@ class ServerType(object):
                 _("{0} Binary Path").format(st.desc),
                 'text', default_path, category_label=_('Binary paths'),
                 help_str=_(
-                    "Path to the directory containing the {0} utility programs (pg_dump, pg_restore etc).".format(
+                    "Path to the directory containing the {0} utility"
+                    " programs (pg_dump, pg_restore etc).".format(
                         st.desc
                     )
                 )
@@ -111,8 +112,18 @@ class ServerType(object):
                     operation
                 ))
             )
+        bin_path = self.utility_path.get()
+        if "$DIR" in bin_path:
+            # When running as an WSGI application, we will not find the
+            # '__file__' attribute for the '__main__' module.
+            main_module_file = getattr(
+                sys.modules['__main__'], '__file__', None
+            )
 
-        bin_path = self.utility_path.get().replace("$DIR", os.path.dirname(sys.modules['__main__'].__file__))
+            if main_module_file is not None:
+                bin_path = bin_path.replace(
+                    "$DIR", os.path.dirname(main_module_file)
+                )
 
         return os.path.abspath(os.path.join(
             bin_path,

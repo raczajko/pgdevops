@@ -107,7 +107,7 @@ class IEMessage(IProcessDesc):
         ).first()
 
         return _(
-            "Copying table data - '{0}.{1}' on database '{2}' and server ({3}{4})..."
+            "Copying table data '{0}.{1}' on database '{2}' and server ({3}:{4})..."
         ).format(
             self.schema, self.table, self.database, s.host, s.port
         )
@@ -120,7 +120,7 @@ class IEMessage(IProcessDesc):
 
         res = '<div class="h5">'
         res += _(
-            "Copying table data '{0}.{1}' on database '{2}' for the server - '{3}'"
+            "Copying table data '{0}.{1}' on database '{2}' for the server '{3}'..."
         ).format(
             self.schema, self.table, self.database,
             "{0} ({1}:{2})".format(s.name, s.host, s.port)
@@ -138,7 +138,7 @@ class IEMessage(IProcessDesc):
 @blueprint.route("/")
 @login_required
 def index():
-    return bad_request(errormsg=_("This URL can not be called directly!"))
+    return bad_request(errormsg=_("This URL cannot be called directly!"))
 
 
 @blueprint.route("/js/import_export.js")
@@ -223,7 +223,11 @@ def create_import_export_job(sid):
     storage_dir = get_storage_directory()
 
     if 'filename' in data:
-        _file = filename_with_file_manager_path(data['filename'], data['is_import'])
+        try:
+            _file = filename_with_file_manager_path(data['filename'], data['is_import'])
+        except Exception as e:
+            return bad_request(errormsg=str(e))
+
         if not _file:
             return bad_request(errormsg=_('Please specify a valid file'))
 

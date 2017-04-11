@@ -1,8 +1,9 @@
 # Secret key for signing CSRF data. Override this in config_local.py if
 # running on a web server
-import json,os
+import json
+import os
 
-config_json_file=os.path.join(os.path.dirname(__file__),"configuration.json")
+config_json_file=os.path.join(os.path.dirname(__file__), "configuration.json")
 
 if os.path.exists(config_json_file):
     with open(config_json_file) as f:
@@ -14,15 +15,6 @@ else:
     CSRF_SESSION_KEY = ""
     SECURITY_PASSWORD_SALT = ""
     SECRET_KEY = ""
-#CSRF_SESSION_KEY = '3b862b92-5eda-11e6-8b77-86f30ca893d3'
-
-# Secret key for signing cookies. Override this in config_local.py if
-# running on a web server
-#SECRET_KEY = '3b86232c-5eda-11e6-8b77-86f30ca893d3'
-
-# Salt used when hashing passwords. Override this in config_local.py if
-# running on a web server
-#SECURITY_PASSWORD_SALT = '3b862958-5eda-11e6-8b77-86f30ca893d3'
 
 # Hashing algorithm used for password storage
 SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
@@ -34,6 +26,32 @@ SECURITY_LOGIN_URL= "/auth"
 
 SESSION_COOKIE_NAME = 'pgdevops_session'
 
-PGADMIN_APP_NAME="pgAdmin4 Web"
+APP_NAME = "pgAdmin4 Web"
 
-#APP_ICON="bigsql-logo"
+PGADMIN_APP_NAME = "pgAdmin4 Web"
+
+APP_ICON = 'icon-bigsql-pgadmin-alt'
+
+MAIL_ENABLED = False
+
+# Need to send the email when password has been changed
+SECURITY_SEND_PASSWORD_CHANGE_EMAIL=False
+
+
+DATA_DIR = os.path.join(os.getenv("PGC_HOME"), "data", "pgdevops")
+# Log file name
+LOG_FILE = os.path.join(DATA_DIR, 'pgadmin4.log')
+
+#sqlite path
+SQLITE_PATH = os.path.join(
+    DATA_DIR,
+    'devops.db'
+)
+
+STORAGE_DIR = os.path.join(DATA_DIR, 'storage')
+SESSION_DB_PATH = os.path.join(DATA_DIR, 'sessions')
+
+# The default path for SQLite database for testing
+TEST_SQLITE_PATH = os.path.join(DATA_DIR, 'test_pgadmin4.db')
+
+UPGRADE_CHECK_ENABLED = False
