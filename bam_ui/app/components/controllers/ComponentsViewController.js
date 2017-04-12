@@ -18,6 +18,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     $scope.retry = false;
     $scope.disableShowInstalled = false;
     $scope.extensionsList = [];
+    $scope.showPgDgTab = false;
 
     var getCurrentComponent = function (name) {
         for (var i = 0; i < $scope.components.length; i++) {
@@ -142,6 +143,13 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
 
         // session.call('com.bigsql.info');
 
+        session.call('com.bigsql.checkOS');
+        session.subscribe('com.bigsql.onCheckOS', function (args) {
+            if(args[0] == 'Linux'){
+                $scope.showPgDgTab = true;
+            }
+        });
+
         $scope.open = function (manual) {
 
             try {
@@ -248,6 +256,22 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         session.call('com.bigsql.setBamConfig',['showInstalled', $scope.showInstalled]);
         getList($scope.currentHost); 
         // session.call('com.bigsql.list');
+    }
+
+    $scope.repoChange = function (repo) {
+        var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
+        getRepoList.then(function (argument) {
+            $scope.repoList = argument;
+        })      
+    }
+
+    $scope.selectPgDg = function (argument) {
+        var pgdgComps = bamAjaxCall.getCmdData('repolist')
+        pgdgComps.then(function (data) {
+            $scope.pgdgRepoList = data;
+            $scope.selectRepo = $scope.pgdgRepoList[0].repo;
+            $scope.repoChange($scope.pgdgRepoList[0].repo);
+        })
     }
 
     $scope.compAction = function (action, compName) {

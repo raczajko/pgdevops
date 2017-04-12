@@ -510,5 +510,23 @@ class Components(ComponentAction):
             else:
                 pgcCmd = pgcCmd + " --host " + pgc_host
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
-        pgcInfo = pgcProcess.communicate()       
+        pgcInfo = pgcProcess.communicate()
+        print pgcInfo[0]     
+        return json.loads(pgcInfo[0])
+
+    @staticmethod
+    def get_pgdg_data(repo_id, command, component=None, pgc_host=None):
+        """
+        Method to get the host settings.
+        :param p_host: Name of the host to retrieve the settings.
+        :return: It returns dict of settings.
+        """
+
+        pgcCmd = PGC_HOME + os.sep + "pgc --json repo-pkgs " + repo_id + " " + command
+        if component:
+            pgcCmd = pgcCmd + " " + component
+        if pgc_host:
+            pgcCmd = pgcCmd + " " + pgc_host 
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        pgcInfo = pgcProcess.communicate()
         return json.loads(pgcInfo[0])

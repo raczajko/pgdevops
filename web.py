@@ -18,6 +18,7 @@ from flask_babel import Babel, gettext
 from pgadmin.utils.session import create_session_interface
 from pgadmin.model import db, Role, User, Server, ServerGroup
 from flask_security import Security, SQLAlchemyUserDatastore
+from pgadmin.utils.pickleSessions import PickleSessionInterface
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 import config
 from flask_restful import reqparse
@@ -161,6 +162,19 @@ class pgcApiHostCmd(Resource):
 
 
 api.add_resource(pgcApiHostCmd, '/api/hostcmd/<string:pgc_cmd>/<string:host_name>')
+
+
+class pgdgRepoList(Resource):
+    def get(self, repo_id, pgc_cmd, comp=None):
+        if comp==None:
+            data = pgc.get_pgdg_data(repo_id, pgc_cmd)
+        else:
+            data = pgc.get_pgdg_data(repo_id, pgc_cmd, comp=comp)
+        return data
+
+
+api.add_resource(pgdgRepoList, '/api/pgdg/<string:repo_id>/<string:pgc_cmd>', '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:comp>')
+
 
 class checkUser(Resource):
     def get(self, host, username, password):
