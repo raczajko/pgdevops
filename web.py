@@ -176,6 +176,19 @@ class pgdgRepoList(Resource):
 api.add_resource(pgdgRepoList, '/api/pgdg/<string:repo_id>/<string:pgc_cmd>', '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:comp>')
 
 
+class pgdgSupportOS(Resource):
+    def get(self):
+        import platform
+        osName = platform.linux_distribution()[0]
+        json_dict = {}
+        json_dict['status'] = osName.startswith('CentOS')
+        json_dict['platform'] = osName
+        data = json.dumps([json_dict])
+        return data
+
+
+api.add_resource(pgdgSupportOS, '/api/pgdg_support_os')
+
 class checkUser(Resource):
     def get(self, host, username, password):
         from PgcRemote import PgcRemote

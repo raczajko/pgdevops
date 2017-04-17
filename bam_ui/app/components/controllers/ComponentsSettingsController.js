@@ -5,7 +5,8 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     var subscriptions = [];
     $scope.updateSettings;
     $scope.components = {};
-    $scope.currentHost
+    $scope.currentHost;
+    $scope.showPgDgFeature = false;
     $scope.settingsOptions = [{name:'Weekly'},{name:'Daily'},{name:'Monthly'}]
 
     $scope.open = function (manual) {
@@ -45,6 +46,14 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
         session.call('com.bigsql.getBetaFeatureSetting', ['hostManager']);
         session.call('com.bigsql.getBetaFeatureSetting', ['pgdg']);
+
+        var pgdgSupportOS = bamAjaxCall.getCmdData('pgdg_support_os')
+        pgdgSupportOS.then(function (data) {
+            var response = JSON.parse(data);
+            if (response[0].status) {
+               $scope.showPgDgFeature = true; 
+            }
+        })
 
         session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
             if(settings[0].setting == 'hostManager'){

@@ -523,10 +523,12 @@ class Components(ComponentAction):
         """
 
         pgcCmd = PGC_HOME + os.sep + "pgc --json repo-pkgs " + repo_id + " " + command + " -y"
+        if command == 'register':
+            pgcCmd = PGC_HOME + os.sep + "pgc --json register REPO " + repo_id + " -y"
         if component:
             pgcCmd = pgcCmd + " " + component
         if pgc_host:
-            pgcCmd = pgcCmd + " " + pgc_host 
+            pgcCmd = pgcCmd + " " + pgc_host
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         pgcInfo = pgcProcess.communicate()
         return json.loads(pgcInfo[0])

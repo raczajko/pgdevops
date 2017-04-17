@@ -105,19 +105,36 @@
           <div style="text-align: center;">PGDG Repositories</div>
         </uib-tab-heading>
         <br>
-        <div class="pull-left" style="display: table;" ng-if="showRepoList">
+        <div class="pull-left" style="display: table;" ng-if="showRepoList && !noRepoFound">
             <label style="display: table-cell;">Repository:&nbsp;</label>
             <select style="display: table-cell;" class="form-control" ng-model="selectRepo" ng-change="repoChange(selectRepo)" ng-options="repo.repo as repo.repo for repo in pgdgRepoList">
             </select>
         </div>
         <br>
         <br>
+        <div ng-if="noRepoFound">
+            <div>
+                <strong>
+                    You haven't register any pgdg repository, you can select any repository below and register.
+                </strong>
+            </div>
+            <br>
+            <div class="pull-left" style="display: table;">
+                <label style="display: table-cell;">Available Repositories : &nbsp;</label>
+                <select style="display: table-cell;" class="form-control" ng-model="selectAvailRepo" ng-options="rep.repo as rep.repo for rep in availRepos">
+                </select>
+            </div>
+            <div> 
+                &nbsp;<button class="btn btn-default" ng-click="registerRepo(selectAvailRepo)" ng-disabled="registeringRepo">Register</button>                
+            </div>
+            <div ng-if="registeringRepo"><i class='fa fa-spinner fa-2x  fa-pulse'></i> &nbsp;Registering {{selectAvailRepo}}.....</div>
+        </div>
         <!-- <span ng-if="repoNotRegistered"> Repo is not registerd.</span> -->
-        <div ng-if="gettingPGDGdata" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+        <div ng-if="gettingPGDGdata " style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
             <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
             <span><h3>Loading...</h3></span>
         </div>
-        <div class="box" ng-if="!gettingPGDGdata">
+        <div class="box" ng-if="!gettingPGDGdata && !noRepoFound">
             <div class="box-body">
                 <div id="serversTable">
                     <div class="component_head_box">

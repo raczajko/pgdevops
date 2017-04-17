@@ -110,7 +110,7 @@
                             <input type="checkbox" ng-model="hostManager" ng-change="changeBetaFeature('hostManager', hostManager)">&nbsp;Multi Host Manager
                         </label>
                     </div>
-                    <div class="col-sm-6 col-md-6 col-xs-6">
+                    <div class="col-sm-6 col-md-6 col-xs-6" ng-if="showPgDgFeature">
                         <label>
                             <input type="checkbox" ng-model="pgdg" ng-change="changeBetaFeature('pgdg', pgdg)">&nbsp;PGDG Repositories
                         </label>
