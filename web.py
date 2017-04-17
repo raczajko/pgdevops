@@ -367,9 +367,23 @@ def get_process_status(process_log_dir):
             data = json.load(data_file)
             process_dict = data
             err_file = os.path.join(process_log_dir, "err")
+            out_file = os.path.join(process_log_dir, "out")
             exit_code = process_dict.get("exit_code", None)
+            err_data_content = None
+            out_data_content = None
+            process_dict['out_data'] = ""
             with open(err_file) as err_data:
-                process_dict['out_data'] = err_data.read()
+                err_data_content = err_data.read()
+            with open(out_file) as out_data:
+                out_data_content = out_data.read()
+            if err_data_content and out_data_content:
+                process_dict['out_data'] = '\n'.join([err_data_content, out_data_content])
+            elif err_data_content:
+                process_dict['out_data'] = err_data_content
+            elif out_data_content:
+                process_dict['out_data'] = out_data_content
+
+
 
     return process_dict
 
@@ -403,12 +417,15 @@ class GenerateBadgerReports(Resource):
             result['pid'] = report_status.get('pid')
             result['exit_code'] = report_status.get('exit_code')
             result['process_log_id'] = report_file["process_log_id"]
+            old_process = []
+            if 'bg_process' in session:
+                old_process = session['bg_process']
             if report_status.get('exit_code') is None:
                 result['in_progress'] = True
-                old_process = []
-                if 'bg_process' in session:
-                    old_process=session['bg_process']
                 bg_process={}
+                bg_process['process_type'] = "badger"
+                bg_process['file'] = report_file['file']
+                bg_process['report_file'] = report_file['report_file']
                 bg_process['process_log_id'] = report_file["process_log_id"]
                 old_process.append(bg_process)
                 session['bg_process']=old_process
@@ -445,6 +462,10 @@ class GetBgProcessList(Resource):
                                             proc['process_log_id'])
                 if os.path.exists(proc_log_dir):
                     proc_status = get_process_status(proc_log_dir)
+                    proc_status['process_log_id'] = proc['process_log_id']
+                    proc_status['process_type'] = proc.get('process_type')
+                    proc_status['file'] = proc.get('file')
+                    proc_status['report_file'] = proc.get('report_file')
                     if proc_status.get("exit_code") is None:
                         result['process'].append(proc_status)
         return result

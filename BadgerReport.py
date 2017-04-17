@@ -85,6 +85,7 @@ class BadgerReport(object):
         result['log_dir'] = process_status['log_dir']
         result['process_log_id'] = process_status['process_log_id']
         result['file']="badger/" + report_file
+        result['report_file'] = report_file
         return result
 
     def getLoggingSettings(self,comp):
