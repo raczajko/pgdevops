@@ -324,20 +324,20 @@ class Components(ComponentAction):
         util.set_value("GLOBAL", "STAGE", val)
 
     @inlineCallbacks
-    def getBetaFeatureSetting(self):
+    def getBetaFeatureSetting(self, settingName):
         """
         Method to get test list setting of bam.
         :return: It yields json string.
         """
-        yield self.session.publish('com.bigsql.onGetBeataFeatureSetting', util.get_value ("GLOBAL", "BETA", ""))
+        yield self.session.publish('com.bigsql.onGetBeataFeatureSetting', {'setting': settingName, 'value': util.get_value ("BETA", settingName)})
 
 
-    def setBetaFeatureSetting(self, val):
+    def setBetaFeatureSetting(self, settingName, val):
         """
         Method to set the test list setting of bam.
         :return: It yields json string.
         """
-        util.set_value("GLOBAL", "BETA", val)
+        util.set_value( "BETA", settingName, val)
 
     @inlineCallbacks
     def selectedLog(self,logdir):
@@ -522,7 +522,7 @@ class Components(ComponentAction):
         :return: It returns dict of settings.
         """
 
-        pgcCmd = PGC_HOME + os.sep + "pgc --json repo-pkgs " + repo_id + " " + command
+        pgcCmd = PGC_HOME + os.sep + "pgc --json repo-pkgs " + repo_id + " " + command + " -y"
         if component:
             pgcCmd = pgcCmd + " " + component
         if pgc_host:

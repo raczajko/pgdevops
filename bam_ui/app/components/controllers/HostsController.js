@@ -128,13 +128,15 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     sessionPromise.then(function (val) {
         session = val;
 
-        session.call('com.bigsql.getBetaFeatureSetting');
+        session.call('com.bigsql.getBetaFeatureSetting', ['hostManager']);
 
         session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
-            if(settings[0] == '0' || !settings[0]){
-                $scope.betaFeature = false;
-            }else{
-                $scope.betaFeature = true;
+            if(settings[0].setting == 'hostManager'){
+                if(settings[0].value == '0' || !settings[0].value){
+                    $scope.betaFeature = false;
+                }else{
+                    $scope.betaFeature = true;
+                }
             }
            $scope.$apply();
         }).then(function (subscription) {

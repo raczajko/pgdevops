@@ -169,7 +169,7 @@ class pgdgRepoList(Resource):
         if comp==None:
             data = pgc.get_pgdg_data(repo_id, pgc_cmd)
         else:
-            data = pgc.get_pgdg_data(repo_id, pgc_cmd, comp=comp)
+            data = pgc.get_pgdg_data(repo_id, pgc_cmd, comp)
         return data
 
 

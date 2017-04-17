@@ -6971,3 +6971,7 @@ span.more-text.show {
   text-align:center; 
   white-space: nowrap;
 }
+
+.oddRow{
+  background-color: #f3f3f3;
+}
