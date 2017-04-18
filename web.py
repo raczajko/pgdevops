@@ -451,12 +451,15 @@ api.add_resource(GenerateBadgerReports, '/api/generate_badger_reports')
 
 
 class GetBgProcessList(Resource):
-    def get(self):
+    def get(self, process_type=None):
         result={}
         if 'bg_process' in session:
             result['process'] = []
             i=0
+            print session['bg_process']
             for proc in session['bg_process']:
+                if process_type and proc.get('process_type') != process_type:
+                    continue
                 proc_log_dir = os.path.join(config.SESSION_DB_PATH,
                                             "process_logs",
                                             proc['process_log_id'])
@@ -470,7 +473,7 @@ class GetBgProcessList(Resource):
                         result['process'].append(proc_status)
         return result
 
-api.add_resource(GetBgProcessList, '/api/bgprocess_list')
+api.add_resource(GetBgProcessList, '/api/bgprocess_list', '/api/bgprocess_list/<string:process_type>')
 
 
 class GetBgProcessStatus(Resource):
@@ -487,6 +490,11 @@ class GetBgProcessStatus(Resource):
             proc_status['process_completed'] = False
         elif proc_status.get("exit_code") != 0:
             proc_status['process_failed'] = True
+        for proc in session['bg_process']:
+            if proc['process_log_id'] == process_log_id:
+                proc_status['process_type'] = proc.get('process_type')
+                proc_status['file'] = proc.get('file')
+                proc_status['report_file'] = proc.get('report_file')
         result=proc_status
         return result
 
