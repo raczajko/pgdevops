@@ -6971,3 +6971,21 @@ span.more-text.show {
   text-align:center; 
   white-space: nowrap;
 }
+
+.background-task {
+ position: absolute;
+ right:0;
+ bottom:0;
+ width: 450px;
+ height: 150px;
+ background-color: #fff;
+}
+
+.background-task .background-task-header {
+ border-bottom: 1px solid #ccc;
+ padding-left: 20px;
+}
+
+.background-task .background-task-body {
+  padding: 10px 25px;
+}

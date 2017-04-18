@@ -1,0 +1,27 @@
+<div class="background-task">
+     <div class="background-task-header">
+         <h5>Badger Background Task ID #{{taskID}} <i class="fa fa-lg fa-close pull-right" ng-if="procCompleted" ng-click="cancel()"></i></h5>
+     </div>
+     <div class="background-task-body">
+         <div class="row">
+             <div class="col-md-12">
+                 <div ng-if="!procCompleted" class="bt-state">Generating Report …</div>
+                 <div ng-if="generatedFile" class="bt-status">
+                   File : <a target="_blank" href="reports/{{generatedFile}}">{{generatedFileName}}</a>
+                 </div>
+                 <br>
+                 <div ng-if="procStartTime" class="bt-start-time">Start time: {{procStartTime}} </div>
+                 <div ng-if="procEndTime" class="bt-start-time">End time: {{procEndTime}} </div>
+                 <div ng-if="procStatus" class="bt-status">Status: {{procStatus}}</div>
+                 <div ng-if="procId" class="bt-status">PID: {{procId}}</div>
+                 <div ng-if="procCmd" class="bt-status">Command: {{procCmd}}</div>
+                 <span ng-if="out_data" class="bt-status">Log: {{out_data}}</span>
+             </div>
+             <!-- <div class="col-md-5"> -->
+                 
+                 <!-- <span class="bt-status">CPU: 30.2%</span> -->
+                 
+             <!-- </div> -->
+         </div>
+     </div>
+ </div>
