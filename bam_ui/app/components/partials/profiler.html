@@ -87,7 +87,7 @@
                     <div class="col-md-12">
                     <label class="col-md-7 col-sm-6 col-xs-6">Database</label>
                     <div class="form-group col-md-5 col-sm-6 col-xs-6">
-                        <select ng-disabled="!selectComp || refreshingFields" class="form-control" id="logComponents" ng-model="selectDatabase" ng-change="onDatabaseChange(selectDatabase)">
+                        <select ng-disabled="!selectComp || refreshingFields || disableDatabases" class="form-control" id="logComponents" ng-model="selectDatabase" ng-change="onDatabaseChange(selectDatabase)">
                             <option value="">Select</option>
                             <option value="{{c.datname}}" ng-repeat="c in databases">{{c.datname}}</option>
                         </select>

@@ -45,12 +45,14 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         var compStatus = bamAjaxCall.getCmdData('status/'+ $scope.component);
             compStatus.then(function (data) {
                 if (data.state != "Installed") {
+                    $scope.disableDatabases = true;
                     $scope.alerts.push({
                         msg:  $scope.component + ' is not Installed yet. ',
                         type: 'danger',
                         pgComp: false
                     });
                 }else{
+                    $scope.disableDatabases = false;
                     $scope.enableBtns = true;
                     session.call('com.bigsql.db_list', [$scope.selectComp]);
                 }
@@ -112,7 +114,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                 $scope.selectComp = $scope.components[0].component;
                 $scope.onSelectChange($scope.selectComp);
                 $scope.component = 'plprofiler3-'+ $scope.selectComp;
-                session.call('com.bigsql.db_list', [$scope.selectComp]);
+                // session.call('com.bigsql.db_list', [$scope.selectComp]);
                 getInstanceInfo($scope.selectComp);
                 // localStorage.setItem('runningPostgres');
             }else if($scope.components.length > 1 && selectedCluster){
