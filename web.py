@@ -484,7 +484,6 @@ class GetBgProcessList(Resource):
                     proc_status['process_log_id'] = proc['process_log_id']
                     proc_status['process_type'] = proc.get('process_type')
                     proc_status['file'] = proc.get('file')
-                    #proc_status['cmd'] = proc.get('cmd')
                     proc_status['report_file'] = proc.get('report_file')
                     if proc_status.get("exit_code") is None:
                         result['process'].append(proc_status)
@@ -515,7 +514,6 @@ class GetBgProcessStatus(Resource):
             proc_status['process_failed'] = True
         for proc in session['bg_process']:
             if proc['process_log_id'] == process_log_id:
-                #proc_status['cmd'] = proc.get('cmd')
                 proc_status['process_type'] = proc.get('process_type')
                 proc_status['file'] = proc.get('file')
                 proc_status['report_file'] = proc.get('report_file')
