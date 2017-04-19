@@ -19,6 +19,8 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                     $scope.procId = ret_data.data.pid;
                     $scope.procStartTime = new Date(ret_data.data.start_time).toString();
                     $scope.taskID = process_log_id;
+                    $scope.out_data = ret_data.data.out_data;
+                    $scope.procCmd = ret_data.data.cmd;
                     if (ret_data.data.process_completed){                        
                         $scope.procCompleted = true;
                         if(ret_data.data.process_failed){
@@ -26,7 +28,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                             $scope.procEndTime = '';
                             $scope.generatedFile = '';
                             $scope.generatedFileName = '';
-                            $scope.out_data = ret_data.data.out_data;
+                            $scope.error_msg = ret_data.data.error_msg;
                         }else{
                             $scope.procStatus = "Completed."
                             $scope.generatedFile = ret_data.data.file;
@@ -45,6 +47,21 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
 
                 });
             }
+
+            //for console toggle 
+
+            document.getElementById('btask-tab-pullout').onclick = function() {
+                 this.__toggle = !this.__toggle;
+                 var target = document.getElementById('btask-console-hidden');
+                 if( this.__toggle) {
+                     target.style.display = "block";
+                     this.style.backgroundPosition = "-42px 0";
+                 }
+                 else {
+                     target.style.display = "none";
+                     this.style.backgroundPosition = "0 0";
+                 }
+             }
 
             $scope.cancel = function (argument) {
                 $rootScope.$emit('hidebgProcess');
