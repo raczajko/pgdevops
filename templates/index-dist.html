@@ -35,43 +35,22 @@
 </head>
 
 <body class="hold-transition skin-black sidebar-mini sidebar-collapse">
-    <div id="meta-wrapper" ng-controller="BigSqlController">
-        <dev-ops-update></dev-ops-update>
-        <div class="wrapper">
-            <!--Top menu and Left menu are components written in Angular 1.5-->
-            <top-menu></top-menu>
-            <!-- Left side column. contains the logo and sidebar -->
-            <left-menu></left-menu>
-            <div class="content-wrapper" style="min-height: 419px;">
-                <div ui-view="main "></div>
+    <div class="wrapper">
+        <!--Top menu and Left menu are components written in Angular 1.5-->
+        <top-menu></top-menu>
+        <!-- Left side column. contains the logo and sidebar -->
+        <left-menu></left-menu>
+        <div class="content-wrapper" style="min-height: 419px;">
+            <div ui-view="main ">
             </div>
-            <footer class="main-footer">
-                <div class="pull-right hidden-xs">
-                    <b>Version</b> bam_version_number
-                </div>
-                <strong>Copyright &copy; 2017 <a href="http://www.bigsql.org">BigSQL</a>.</strong> All rights reserved.
-            </footer>
-            <!-- Control Sidebar -->
-            <aside class="control-sidebar control-sidebar-dark">
-                <!-- Create the tabs -->
-                <ul class="nav nav-tabs nav-justified control-sidebar-tabs">
-                    <li><a href="#control-sidebar-home-tab" data-toggle="tab"><i class="fa fa-home"></i></a></li>
-                    <li><a href="#control-sidebar-settings-tab" data-toggle="tab"><i class="fa fa-gears"></i></a></li>
-                </ul>
-                <!-- Tab panes -->
-                <div class="tab-content">
-                    <!-- Home tab content -->
-                    <div class="tab-pane" id="control-sidebar-home-tab">
-                    </div>
-                    <!-- /.tab-pane -->
-                    <!-- Settings tab content -->
-                    <div class="tab-pane" id="control-sidebar-settings-tab">
-                    </div>
-                    <!-- /.tab-pane -->
-                </div>
-            </aside>
-            <div class="control-sidebar-bg"></div>
         </div>
+        
+        <footer class="main-footer">
+            <div class="pull-right hidden-xs">
+                <b>Version</b> bam_version_number
+            </div>
+            <strong>Copyright &copy; 2017 <a href="http://www.bigsql.org">BigSQL</a>.</strong> All rights reserved.
+        </footer>   
     </div>
     <script>
     var hasWebsockets = Modernizr.websockets;

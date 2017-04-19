@@ -103,11 +103,12 @@
     <div class="col-md-6 col-sm-6 col-xs-12">
         <div class="box" ng-if="showReports">
             <div class="box-header with-border">
-                <span style="margin-left: 13px;"><label>Reports</label> &nbsp; &nbsp;<input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected">&nbsp;Select all
+                <span style="margin-left: 13px;"><label>Reports</label> &nbsp; &nbsp;<input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected">&nbsp;Select all &nbsp;
+                <button class="btn btn-default" ng-disabled="!isAllSelected && !checked" ng-click="deleteReports(files_list, false)">Delete</button>
                     <div class="pull-right" ng-click="refreshReports()"> <i class="fa fa-refresh fa-fw"></i></div>
                 <span class="pull-right"><label>Created on</label></span>
             </div>
-            <div class="box-body" style="padding-left: 20px; height: 404px; overflow: auto;">
+            <div class="box-body" style="padding-left: 20px; height: 450px; overflow: auto;">
                 <div ng-repeat = "option in files_list">
                     <label>
                     <input type="checkbox" ng-model="option.selected" ng-change="optionToggled()">
@@ -117,9 +118,9 @@
                     <span class="pull-right">{{ option.mtime }}</span>
                 </div>
             </div>
-            <div class="box-footer">
-            <button class="btn btn-default pull-right" ng-disabled="!isAllSelected && !checked" ng-click="deleteReports(files_list, false)">Delete</button>
-            </div>
+            <!-- <div class="box-footer">
+            
+            </div> -->
         </div>
     </div>
     <div ng-show="showBgProcess">

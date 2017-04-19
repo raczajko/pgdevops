@@ -40,57 +40,23 @@
 </head>
 
 <body class="hold-transition skin-black sidebar-mini sidebar-collapse">
-    <div id="meta-wrapper">
-        <dev-ops-update></dev-ops-update>
         <div class="wrapper">
             <!--Top menu and Left menu are components written in Angular 1.5-->
             <top-menu></top-menu>
             <!-- Left side column. contains the logo and sidebar -->
             <left-menu></left-menu>
             <div class="content-wrapper" style="min-height: 419px;">
-                <!--<div ng-controller="initialUpdateAlert">
-                    <div ng-if="show" uib-alert class="indexAlert" close="closeAlert()">
-                            <button ng-if="show" ng-click="open()" type="button" class="btn btn-xs btn-default pull-left">Turn On Updates</button>&nbsp;
-                            Turn on automatic updates to keep your BigSQL distribution current.
-                    </div>
-                    <script type="text/ng-template" id="alert.html">
-                        <div class="alert" style="background-color:#fa39c3;color:white;" role="alert">
-                            <div ng-transclude></div>
-                        </div>
-                    </script>
-                    <uib-alert ng-if="updateAlert" ng-repeat="alert in alerts" type="{{alert.type|angular}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg|angular}}</uib-alert>
-                </div>-->
                 <div ui-view="main ">
                 </div>
             </div>
+            
             <footer class="main-footer">
                 <div class="pull-right hidden-xs">
                     <b>Version</b> bam_version_number
                 </div>
                 <strong>Copyright &copy; 2017 <a href="http://www.bigsql.org">BigSQL</a>.</strong> All rights reserved.
-            </footer>
-            <!-- Control Sidebar -->
-            <aside class="control-sidebar control-sidebar-dark">
-                <!-- Create the tabs -->
-                <ul class="nav nav-tabs nav-justified control-sidebar-tabs">
-                    <li><a href="#control-sidebar-home-tab" data-toggle="tab"><i class="fa fa-home"></i></a></li>
-                    <li><a href="#control-sidebar-settings-tab" data-toggle="tab"><i class="fa fa-gears"></i></a></li>
-                </ul>
-                <!-- Tab panes -->
-                <div class="tab-content">
-                    <!-- Home tab content -->
-                    <div class="tab-pane" id="control-sidebar-home-tab">
-                    </div>
-                    <!-- /.tab-pane -->
-                    <!-- Settings tab content -->
-                    <div class="tab-pane" id="control-sidebar-settings-tab">
-                    </div>
-                    <!-- /.tab-pane -->
-                </div>
-            </aside>
-            <div class="control-sidebar-bg"></div>
+            </footer>   
         </div>
-    </div>
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/angular/angular-cookies.min.js"></script>
     <script src="bower_components/jquery/dist/jquery.min.js"></script>

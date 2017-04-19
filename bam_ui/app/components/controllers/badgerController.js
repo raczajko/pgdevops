@@ -121,6 +121,21 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 
     getReports();
 
+    function checkBGprocess(argument) {
+        var getbgProcess = bamAjaxCall.getCmdData('bgprocess_list/badger');
+        getbgProcess.then(function (argument) {
+            for (var i = argument.process.length - 1; i >= 0; i--) {
+                if (!argument.process[i].process_completed) {
+                    $scope.showBgProcess = true;
+                    $rootScope.$emit('backgroundProcessStarted', argument.process[i].process_log_id);
+                    $scope.disableGenrate = true;
+                }
+            }
+        })
+    }
+
+    checkBGprocess();
+
     $scope.refreshReports = function (argument) {
     getReports();
 

@@ -381,9 +381,11 @@ def get_process_status(process_log_dir):
             out_data_content = None
             process_dict['out_data'] = ""
             with open(err_file) as err_data:
-                err_data_content = err_data.read()
+                err_data_content = err_data.readlines()
+                err_data_content = "".join(err_data_content).replace("\r", "\n").strip(' ').strip('\t')
             with open(out_file) as out_data:
-                out_data_content = out_data.read()
+                out_data_content = out_data.readlines()
+                out_data_content = "".join(out_data_content).replace("\r", "\n").strip(' ').strip('\t')
             if err_data_content and out_data_content:
                 process_dict['out_data'] = '\n'.join([err_data_content, out_data_content])
             elif err_data_content:
