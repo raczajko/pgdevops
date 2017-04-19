@@ -6971,3 +6971,57 @@ span.more-text.show {
   text-align:center; 
   white-space: nowrap;
 }
+
+.btask-wrapper {
+ position: absolute;
+ right:0;
+ bottom:0;
+ height: 200px;
+}
+
+.btask-wrapper .btask--tab-pullout {
+ background-image: url('../assets/img/bsql-sprite-1.png');
+ background-repeat: no-repeat;
+ background-position: 0 0;
+ width: 20px;
+ height: 75px;
+ background-color: #fff;
+ float: left;
+ cursor: pointer;
+  border-left: 1px solid #d2d6de ;
+ border-top: 1px solid #d2d6de ;
+ border-bottom: 1px solid #d2d6de ;
+}
+
+.btask-wrapper  .btask, .btask-wrapper  .btask--stdout-stderr {
+ width: 450px;
+ height: 200px;
+ background-color: #fff;
+ float: left;
+ border-left: 1px solid #d2d6de ;
+ border-top: 1px solid #d2d6de ;
+}
+
+.btask-wrapper  .btask--stdout-stderr {
+   display: none;
+   margin-right: 2px;
+    border-right: 1px solid #d2d6de ;
+}
+
+.btask-wrapper .btask .btask--header, .btask-wrapper  .btask--stdout-stderr .btask--stdout-stderr---header {
+ border-bottom: 1px solid #ccc;
+ padding: 3px 0 2px 20px;
+}
+
+.btask-wrapper .btask .btask--body, .btask-wrapper .btask--stdout-stderr .btask--stdout-stderr---body {
+  padding: 10px 0 0 25px;
+  font-size: 1.2rem;
+}
+
+.btask-wrapper .btask--stdout-stderr .btask--stdout-stderr---body .console {
+ height: 170px;
+ overflow: auto;
+ background-color: #fff;
+ font-family: monospace;
+ white-space: pre;
+}

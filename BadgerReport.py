@@ -13,7 +13,7 @@ import time
 from operator import itemgetter
 
 import util
-
+from detached_process import detached_process
 import psycopg2
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -52,7 +52,7 @@ class BadgerReport(object):
     def __init__(self):
         pass
 
-    def generateReports(self, log_files, db=None, jobs=None, log_prefix=None, title=None):
+    def generateReports(self, log_files, db=None, jobs=None, log_prefix=None, title=None, ctime=None, pid_path=None):
         result={}
         time_stamp = str(datetime.now())
         file_name = re.sub('[^A-Za-z0-9]+', '', time_stamp)
@@ -73,15 +73,20 @@ class BadgerReport(object):
         if title is None:
             options = options + ' -T "' + time_stamp + '"'
 
+        if pid_path:
+            options = options + ' --pid-dir "' + pid_path + '"'
+
         options = options + " -o " + os.path.join(badger_reports_path, report_file)
 
         report_cmd = pgbadger_command + " " + options
-        proc = subprocess.Popen(report_cmd, shell=True, stdout=subprocess.PIPE ,stderr=subprocess.PIPE)
-        stdout_data, stderr_data  = proc.communicate()
+        process_status = detached_process(report_cmd, ctime)
         result['error']=None
-        if proc.returncode != 0:
-            result['error']=stderr_data
+        result['report_generation_completed'] =process_status['status']
+        result['log_dir'] = process_status['log_dir']
+        result['process_log_id'] = process_status['process_log_id']
         result['file']="badger/" + report_file
+        result['report_file'] = report_file
+        result['cmd'] = report_cmd
         return result
 
     def getLoggingSettings(self,comp):

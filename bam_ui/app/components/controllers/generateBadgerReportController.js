@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('generateBadgerReportController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', 'bamAjaxCall', '$sce', function ($scope, $rootScope, $uibModalInstance, PubSubService, bamAjaxCall, $sce) {
+angular.module('bigSQL.components').controller('generateBadgerReportController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', 'bamAjaxCall', '$sce', "$http", "$window", function ($scope, $rootScope, $uibModalInstance, PubSubService, bamAjaxCall, $sce, $http, $window) {
 
 	var session;
 
@@ -28,11 +28,26 @@ angular.module('bigSQL.components').controller('generateBadgerReportController',
             $scope.badgerError = $uibModalInstance.smallFiles + '. There is insufficient number of entries in the file(s) to deduce line format.'
         }else if ($uibModalInstance.selectedFiles.length > 0) {
             $scope.generatingReportSpinner = true;
-            session.call('com.bigsql.pgbadger', [
-                $uibModalInstance.selectedFiles, $uibModalInstance.pgDB,
-                $uibModalInstance.pgJobs, $uibModalInstance.pgLogPrefix,
-                $uibModalInstance.pgTitle
-            ]);
+            var args={
+                    "log_files": $uibModalInstance.selectedFiles,
+                    "db":       $uibModalInstance.pgDB,
+                    "jobs":   $uibModalInstance.pgJobs,
+                    "log_prefix": $uibModalInstance.pgLogPrefix,
+                    "title":$uibModalInstance.pgTitle
+            };
+            var generateReports = $http.post($window.location.origin + '/api/generate_badger_reports', args);
+            generateReports.then(function (argument) {
+            $scope.generatingReportSpinner = false;
+            if (argument.data.in_progress){
+
+                $scope.badgerError = "Started generating the report. Once it is done it may appear in your recent reports list or else refresh manualy.";
+                $scope.generatingReportSpinner = false;
+            } else{
+                $scope.report_file = argument.data.report_file;
+                $scope.report_url = "/reports/" + argument.data.report_file;
+                }
+
+            });
         }
     });
 

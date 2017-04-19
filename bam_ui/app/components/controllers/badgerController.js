@@ -11,6 +11,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $scope.selectedCurrentLogfile;
     $scope.refreshMsg= false;
     $scope.checked = false;
+    $scope.showBgProcess = false;
 
     var session;
     $scope.updateSettings;
@@ -30,6 +31,16 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $rootScope.$on('refreshPage',function (argument) {
         $window.location.reload();
     } );
+
+    $rootScope.$on('refreshBadgerReports', function (argument) {
+        getReports();
+        $scope.disableGenrate = false;
+        // $scope.showBgProcess = false;
+    })
+
+    $rootScope.$on('hidebgProcess', function (argument) {
+        $scope.showBgProcess = false;
+    })
 
     var serverStatus = bamAjaxCall.getCmdData('status');
         serverStatus.then(function (data) {
@@ -110,6 +121,25 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 
     getReports();
 
+    function checkBGprocess(argument) {
+        var getbgProcess = bamAjaxCall.getCmdData('bgprocess_list/badger');
+        getbgProcess.then(function (argument) {
+            for (var i = argument.process.length - 1; i >= 0; i--) {
+                if (!argument.process[i].process_completed) {
+                    $scope.showBgProcess = true;
+                    $rootScope.$emit('backgroundProcessStarted', argument.process[i].process_log_id);
+                    $scope.disableGenrate = true;
+                }
+            }
+        })
+    }
+
+    checkBGprocess();
+
+    $scope.refreshReports = function (argument) {
+    getReports();
+
+    }
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
@@ -167,6 +197,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 
 
     $scope.openGenerateModal = function (argument) {
+        $scope.disableGenrate = true;
         $scope.report_file = "";
         $scope.report_url = "";
         var selectedFiles = [];
@@ -183,19 +214,41 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                 selectedFiles.push(selectLog[i].value.split('; ')[0]);
             }
         }
-        var modalInstance = $uibModal.open({
-            templateUrl: '../app/components/partials/generateBadgerReport.html',
-            controller: 'generateBadgerReportController',
-            windowClass: 'switch-modal-window',
-            backdrop  : 'static',
-            keyboard  : false
+
+        var args={
+                    "log_files": selectedFiles,
+                    "db":       $scope.pgDB,
+                    "jobs":   $scope.pgJobs,
+                    "log_prefix": $scope.pgLogPrefix,
+                    "title":$scope.pgTitle
+            };
+        var generateReports = $http.post($window.location.origin + '/api/generate_badger_reports', args);
+        generateReports.then(function (argument) {
+            $scope.generatingReportSpinner = false;
+            if (argument.data.in_progress){
+                // getBGStatus(argument.data.process_log_id);
+                $scope.showBgProcess = true;
+                $rootScope.$emit('backgroundProcessStarted', argument.data.process_log_id);
+                $scope.disableGenrate = true;
+            } else{
+                $scope.report_file = argument.data.report_file;
+                $scope.report_url = "/reports/" + argument.data.report_file;
+            }
         });
-        modalInstance.selectedFiles = selectedFiles;
-        modalInstance.pgTitle = $scope.pgTitle;
-        modalInstance.pgDB = $scope.pgDB;
-        modalInstance.pgJobs = $scope.pgJobs;
-        modalInstance.pgLogPrefix = $scope.pgLogPrefix;
-        modalInstance.smallFiles = smallFiles;
+
+        // var modalInstance = $uibModal.open({
+        //     templateUrl: '../app/components/partials/generateBadgerReport.html',
+        //     controller: 'generateBadgerReportController',
+        //     windowClass: 'switch-modal-window',
+        //     backdrop  : 'static',
+        //     keyboard  : false
+        // });
+        // modalInstance.selectedFiles = selectedFiles;
+        // modalInstance.pgTitle = $scope.pgTitle;
+        // modalInstance.pgDB = $scope.pgDB;
+        // modalInstance.pgJobs = $scope.pgJobs;
+        // modalInstance.pgLogPrefix = $scope.pgLogPrefix;
+        // modalInstance.smallFiles = smallFiles;
     };
 
     $scope.toggleAll = function() { 

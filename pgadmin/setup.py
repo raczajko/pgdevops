@@ -181,7 +181,6 @@ def do_setup(app):
         except Exception as e:
             pass
 
-    # Done!
     print(u"")
     print(
         u"The configuration database has been created at {0}".format(
@@ -442,7 +441,7 @@ if __name__ == '__main__':
         'sqlite:///' + config.SQLITE_PATH.replace('\\', '/')
     db.init_app(app)
 
-    print(u"pgDevOps - Application Initialization")
+    print(u"pgDevOps - Application Initialisation")
     print(u"======================================\n")
 
     from pgadmin.utils import u, fs_encoding, file_quote
