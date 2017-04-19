@@ -25,6 +25,7 @@ from datetime import datetime
 import hashlib
 import time
 import pytz
+import psutil
 
 parser = reqparse.RequestParser()
 #parser.add_argument('data')
@@ -48,10 +49,7 @@ reports_path = os.path.join(current_path, "reports")
 ##########################################################################
 # Setup session management
 ##########################################################################
-#application.session_interface = PickleSessionInterface(config.SESSION_DB_PATH)
 application.session_interface = SqliteSessionInterface(config.SESSION_DB_PATH)
-# application.session_interface = ItsdangerousSessionInterface()
-# application.secret_key=config.SECRET_KEY
 
 application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{0}?timeout={1}'.format(
     config.SQLITE_PATH.replace('\\', '/'),
@@ -93,6 +91,7 @@ class pgcApiCom(Resource):
 
 api.add_resource(pgcApiCom, '/api/<string:cmd>/<string:comp>', '/api/<string:cmd>/<string:comp>/<string:pgc_host>')
 
+
 class pgcApiRelnotes(Resource):
     def get(self, cmd, comp=None, pgc_host=None):
         data = pgc.get_data(cmd, comp, relnotes='relnotes', pgc_host=pgc_host)
@@ -100,6 +99,7 @@ class pgcApiRelnotes(Resource):
 
 
 api.add_resource(pgcApiRelnotes, '/api/relnotes/<string:cmd>/<string:comp>', '/api/relnotes/<string:cmd>', '/api/relnotes/<string:cmd>/<string:comp>/<string:pgc_host>')
+
 
 class pgcApiListRelnotes(Resource):
     def get(self, cmd, pgc_host=None):
@@ -118,6 +118,7 @@ class pgcApiHosts(Resource):
 
 api.add_resource(pgcApiHosts, '/api/hosts')
 
+
 class pgcApiGroups(Resource):
     def get(self):
         data = pgc.get_data('register GROUP --list --json')
@@ -125,6 +126,7 @@ class pgcApiGroups(Resource):
 
 
 api.add_resource(pgcApiGroups, '/api/groups')
+
 
 class pgcApiExtensions(Resource):
     def get(self, comp, pgc_host=None):
@@ -136,6 +138,7 @@ class pgcApiExtensions(Resource):
 
 
 api.add_resource(pgcApiExtensions, '/api/extensions/<string:comp>', '/api/extensions/<string:comp>/<string:pgc_host>')
+
 
 class pgcUtilRelnotes(Resource):
     def get(self, comp, version=None):
@@ -163,6 +166,7 @@ class pgcApiHostCmd(Resource):
 
 
 api.add_resource(pgcApiHostCmd, '/api/hostcmd/<string:pgc_cmd>/<string:host_name>')
+
 
 class checkUser(Resource):
     def get(self, host, username, password):
@@ -248,6 +252,7 @@ class getRecentReports(Resource):
 
 api.add_resource(getRecentReports, '/api/getrecentreports/<string:report_type>')
 
+
 class GenerateReports(Resource):
     def post(self):
         args = request.json['data']
@@ -272,6 +277,7 @@ class GenerateReports(Resource):
 
 api.add_resource(GenerateReports, '/api/generate_profiler_reports')
 
+
 class RemoveReports(Resource):
     def post(self,report_type):
         from ProfilerReport import ProfilerReport
@@ -292,6 +298,7 @@ class RemoveReports(Resource):
 
 api.add_resource(RemoveReports, '/api/remove_reports/<string:report_type>')
 
+
 class GetEnvFile(Resource):
     def get(self, comp):
         import util
@@ -308,6 +315,7 @@ class GetEnvFile(Resource):
         return result
 
 api.add_resource(GetEnvFile, '/api/read/env/<string:comp>')
+
 
 class AddtoMetadata(Resource):
     def post(self):
@@ -424,6 +432,7 @@ class GenerateBadgerReports(Resource):
                 result['in_progress'] = True
                 bg_process={}
                 bg_process['process_type'] = "badger"
+                bg_process['cmd'] = report_file['cmd']
                 bg_process['file'] = report_file['file']
                 bg_process['report_file'] = report_file['report_file']
                 bg_process['process_log_id'] = report_file["process_log_id"]
@@ -456,7 +465,6 @@ class GetBgProcessList(Resource):
         if 'bg_process' in session:
             result['process'] = []
             i=0
-            print session['bg_process']
             for proc in session['bg_process']:
                 if process_type and proc.get('process_type') != process_type:
                     continue
@@ -465,9 +473,18 @@ class GetBgProcessList(Resource):
                                             proc['process_log_id'])
                 if os.path.exists(proc_log_dir):
                     proc_status = get_process_status(proc_log_dir)
+                    if not psutil.pid_exists(proc_status.get('pid')):
+                        continue
+                    proc_status['process_failed'] = False
+                    proc_status['process_completed'] = True
+                    if proc_status.get("exit_code") is None:
+                        proc_status['process_completed'] = False
+                    elif proc_status.get("exit_code") != 0:
+                        proc_status['process_failed'] = True
                     proc_status['process_log_id'] = proc['process_log_id']
                     proc_status['process_type'] = proc.get('process_type')
                     proc_status['file'] = proc.get('file')
+                    #proc_status['cmd'] = proc.get('cmd')
                     proc_status['report_file'] = proc.get('report_file')
                     if proc_status.get("exit_code") is None:
                         result['process'].append(proc_status)
@@ -483,18 +500,26 @@ class GetBgProcessStatus(Resource):
                                     "process_logs",
                                     process_log_id)
         proc_status = get_process_status(proc_log_dir)
+        proc_status['error_msg']=""
         proc_status['process_log_id'] = process_log_id
         proc_status['process_failed'] = False
         proc_status['process_completed'] = True
         if proc_status.get("exit_code") is None:
             proc_status['process_completed'] = False
+            if proc_status.get('pid'):
+                if not psutil.pid_exists(proc_status.get('pid')):
+                    proc_status['process_completed'] = True
+                    proc_status['process_failed'] = True
+                    proc_status['error_msg'] = "Background process terminated unexpectedly."
         elif proc_status.get("exit_code") != 0:
             proc_status['process_failed'] = True
         for proc in session['bg_process']:
             if proc['process_log_id'] == process_log_id:
+                #proc_status['cmd'] = proc.get('cmd')
                 proc_status['process_type'] = proc.get('process_type')
                 proc_status['file'] = proc.get('file')
                 proc_status['report_file'] = proc.get('report_file')
+
         result=proc_status
         return result
 

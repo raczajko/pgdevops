@@ -247,7 +247,7 @@ def update_status(**kw):
     if _out_dir:
         status = dict(
             (k, v) for k, v in kw.items() if k in [
-                'start_time', 'end_time', 'exit_code', 'pid'
+                'start_time', 'end_time', 'exit_code', 'pid', 'cmd'
             ]
         )
         _log('Updating the status:\n{0}'.format(json.dumps(status)))
@@ -279,7 +279,8 @@ def execute():
             'start_time': get_current_time(),
             'stdout': process_stdout.log,
             'stderr': process_stderr.log,
-            'pid': os.getpid()
+            'pid': os.getpid(),
+            'cmd': command[0]
         })
 
         # Update start time
@@ -300,9 +301,11 @@ def execute():
         else:
             kwargs['env'] = os.environ.copy()
 
+        std_out_file = open(os.path.join(_out_dir, "out"), 'a+')
+        std_err_file = open(os.path.join(_out_dir, "err"), 'a+')
         _log('Starting the command execution...')
         process = Popen(
-            command, stdout=PIPE, stderr=PIPE, stdin=None, **kwargs
+            command, stdout=std_out_file, stderr=std_err_file, stdin=None, **kwargs
         )
 
         _log('Attaching the loggers to stdout, and stderr...')
@@ -421,14 +424,14 @@ if __name__ == '__main__':
     _log('Starting the process executor...')
 
     # Ignore any signals
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    _log('Disabled the SIGINT, SIGTERM signals...')
+    #signal.signal(signal.SIGINT, signal_handler)
+    #signal.signal(signal.SIGTERM, signal_handler)
+    #_log('Disabled the SIGINT, SIGTERM signals...')
 
     if _IS_WIN:
-        _log('Disable the SIGBREAKM signal (windows)...')
-        signal.signal(signal.SIGBREAK, signal_handler)
-        _log('Disabled the SIGBREAKM signal (windows)...')
+        #_log('Disable the SIGBREAKM signal (windows)...')
+        #signal.signal(signal.SIGBREAK, signal_handler)
+        #_log('Disabled the SIGBREAKM signal (windows)...')
 
         # For windows:
         # We would run the process_executor in the detached mode again to make
@@ -463,10 +466,14 @@ if __name__ == '__main__':
             except Exception as e:
                 _log_exception()
 
+            std_out_file = open(os.path.join(_out_dir, "out"), 'a+')
+            std_err_file = open(os.path.join(_out_dir, "err"), 'a+')
+
+
             kwargs = {
                 'stdin': stdin.fileno(),
-                'stdout': stdout.fileno(),
-                'stderr': stderr.fileno(),
+                'stdout': std_out_file, #stdout.fileno(),
+                'stderr': std_err_file, #stderr.fileno(),
                 'creationflags': CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,
                 'close_fds': False,
                 'cwd': _out_dir,

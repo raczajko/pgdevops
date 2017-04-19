@@ -132,7 +132,7 @@ def detached_process(p_cmd, p_ctime=None):
             # Detaching from the parent process group
             os.setpgrp()
             # Explicitly ignoring signals in the child process
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            #signal.signal(signal.SIGINT, signal.SIG_IGN)
 
         p = Popen(
             cmd, close_fds=True, stdout=None, stderr=None, stdin=None,
