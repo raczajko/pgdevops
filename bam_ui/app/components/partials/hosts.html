@@ -15,6 +15,10 @@
 
 <span id="components"></span>
 <section class="content">
+    <div ng-if="loading" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+        <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+        <span><h3>Loading...</h3></span>
+    </div>
     <div class="uib-text" uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert()" dismiss-on-timeout="8000">
         This is a beta feature, you need to enable this in <a ui-sref="components.settingsView">settings.</a> 
     </div>
