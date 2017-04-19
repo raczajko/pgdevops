@@ -441,7 +441,7 @@ if __name__ == '__main__':
         'sqlite:///' + config.SQLITE_PATH.replace('\\', '/')
     db.init_app(app)
 
-    print(u"pgDevOps 4 - Application Initialisation")
+    print(u"pgDevOps - Application Initialisation")
     print(u"======================================\n")
 
     from pgadmin.utils import u, fs_encoding, file_quote
