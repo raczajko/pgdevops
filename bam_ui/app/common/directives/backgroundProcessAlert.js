@@ -17,8 +17,8 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
 
                 bgReportStatus.then(function (ret_data){
                     $scope.procId = ret_data.data.pid;
-                    $scope.error_msg = '';                       
-                    $scope.procStartTime = new Date(ret_data.data.start_time).toString();
+                    $scope.error_msg = ''; 
+                    $scope.procStartTime = new Date(ret_data.data.start_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
                     $scope.taskID = process_log_id;
                     $scope.out_data = ret_data.data.out_data;
                     $scope.procCmd = ret_data.data.cmd;
@@ -34,7 +34,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                             $scope.procStatus = "Completed."
                             $scope.generatedFile = ret_data.data.file;
                             $scope.generatedFileName = ret_data.data.report_file;
-                            $scope.procEndTime = new Date(ret_data.data.end_time).toString();
+                            $scope.procEndTime = new Date(ret_data.data.end_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
                         }
                         $rootScope.$emit("refreshBadgerReports");
                     } else{
