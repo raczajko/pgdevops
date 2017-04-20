@@ -58,8 +58,20 @@ class BadgerReport(object):
         file_name = re.sub('[^A-Za-z0-9]+', '', time_stamp)
         report_file = file_name + ".html"
         badger_path = os.path.join(PGC_HOME, "pgbadger", "pgbadger")
-        pgbadger_command = "perl " + badger_path
-        options = " ".join(log_files)
+        perl_cmd = "perl"
+        if this_uname == "Windows":
+            badger_path = badger_path.replace("\\", "\\\\")
+            perl_cmd= os.path.join(perl_path, "perl").replace("\\", "\\\\")
+
+        pgbadger_command = perl_cmd + " " + badger_path
+        options = ""
+        if this_uname == "Windows":
+            lfiles = []
+            for l in log_files:
+                lfiles.append(l.replace("\\", "\\\\"))
+            options = " ".join(lfiles)
+        else:
+            options = " ".join(log_files)
         if db:
             options = options + " -d " + db
         if jobs:
@@ -76,7 +88,10 @@ class BadgerReport(object):
         if pid_path:
             options = options + ' --pid-dir "' + pid_path + '"'
 
-        options = options + " -o " + os.path.join(badger_reports_path, report_file)
+        report_file_path = os.path.join(badger_reports_path, report_file)
+        if this_uname == "Windows":
+            report_file_path = report_file_path.replace("\\", "\\\\")
+        options = options + " -o " + report_file_path
 
         report_cmd = pgbadger_command + " " + options
         process_status = detached_process(report_cmd, ctime)
