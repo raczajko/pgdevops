@@ -257,7 +257,6 @@ class ComponentAction(object):
         Method to register server group
         """
         import util
-        print group_id
         util.register_group( name, p_parent_group=0, p_group_id = group_id, isJson=False, printMsg=False)
         util.map_group_hosts( name, hosts, p_group_id = group_id, isJson=False, printMsg=False)
 
@@ -511,7 +510,6 @@ class Components(ComponentAction):
                 pgcCmd = pgcCmd + " --host " + pgc_host
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         pgcInfo = pgcProcess.communicate()
-        print pgcInfo[0]     
         return json.loads(pgcInfo[0])
 
     @staticmethod

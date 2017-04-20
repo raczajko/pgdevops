@@ -19,13 +19,17 @@
 <span id="components"></span>
 <section class="content">
     <uib-tabset>
-        <uib-tab class="col-md-6" heading="PostgreSQL">
+        <uib-tab  heading="PostgreSQL">
             <uib-tab-heading>
               <div style="text-align: center;">BigSQL Repository</div>
             </uib-tab-heading>
-            <div ng-if="loading" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+            <div class="box" style="border-top: 0px;">
+            <div class="box-body">
+            <div ng-if="loading"  style="height: 250px">
+            <div ng-if="loading" style="position: absolute;width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
                 <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
                 <span><h3>Loading...</h3></span>
+            </div>
             </div>
             <span ng-if="retry" style="text-align: center;"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>
             <div ng-if="nothingInstalled" class="jumbotron" style="background-color: #fff; margin-top: 15px; text-align: center;"> <h3> You haven't installed anything yet</h3>
@@ -99,24 +103,24 @@
                     </div>
                 </div>
             </div>
+            </div>
+            </div>
     </uib-tab>
-    <uib-tab class="col-md-6" ng-if="showPgDgTab && checkpgdgSetting" select="selectPgDg($event)">
+    <uib-tab ng-if="showPgDgTab && checkpgdgSetting" select="selectPgDg($event)">
         <uib-tab-heading>
           <div style="text-align: center;">PGDG Repositories</div>
         </uib-tab-heading>
-        <br>
-        <div class="pull-left" style="display: table;" ng-if="showRepoList && !noRepoFound">
+        <div class="box" style="border-top: 0px;">
+        <div class="box-body">
+        <div style="display: table;" ng-if="showRepoList && !noRepoFound">
             <label style="display: table-cell;">Repository:&nbsp;</label>
             <select style="display: table-cell;" class="form-control" ng-model="selectRepo" ng-change="repoChange(selectRepo)" ng-options="repo.repo as repo.repo for repo in pgdgRepoList">
             </select>
         </div>
         <br>
-        <br>
         <div ng-if="noRepoFound">
-            <div>
-                <strong>
-                    You haven't register any pgdg repository, you can select any repository below and register.
-                </strong>
+            <div class="alert alert-warning" role="alert">
+                    You haven't registered any pgdg repositories. Select a repository below to register it.
             </div>
             <br>
             <div class="pull-left" style="display: table;">
@@ -129,12 +133,24 @@
             </div>
             <div ng-if="registeringRepo"><i class='fa fa-spinner fa-2x  fa-pulse'></i> &nbsp;Registering {{selectAvailRepo}}.....</div>
         </div>
+        <div ng-if="repoNotRegistered">
+            <div class="alert alert-warning" role="alert">
+                    {{errorMsg}}
+            </div>
+            <br>
+            <div> 
+                &nbsp;<button class="btn btn-default" ng-click="registerRepo(selectRepo)" ng-disabled="registeringRepo">Register</button>                
+            </div>
+            <div ng-if="registeringRepo"><i class='fa fa-spinner fa-2x  fa-pulse'></i> &nbsp;Registering {{selectAvailRepo}}.....</div>
+        </div>
         <!-- <span ng-if="repoNotRegistered"> Repo is not registerd.</span> -->
-        <div ng-if="gettingPGDGdata " style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+        <div ng-if="gettingPGDGdata "  style="height: 250px">
+        <div style="position: absolute; width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
             <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
             <span><h3>Loading...</h3></span>
         </div>
-        <div class="box" ng-if="!gettingPGDGdata && !noRepoFound">
+        </div>
+        <div class="box" ng-if="!gettingPGDGdata && !noRepoFound && !repoNotRegistered">
             <div class="box-body">
                 <div id="serversTable">
                     <div class="component_head_box">
@@ -170,6 +186,8 @@
                     </div>
                 </div>
             </div>
+        </div>
+        </div>
         </div>
         </uib-tab>
     </uib-tabset>
