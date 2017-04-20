@@ -7,7 +7,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
         },
         restrict: 'E',
         templateUrl: '../app/common/partials/backgroundProcessAlert.html',
-        controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', function backgroundProcessAlertController($scope, $http, $window, $cookies, $rootScope) {
+        controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', '$timeout', function backgroundProcessAlertController($scope, $http, $window, $cookies, $rootScope, $timeout) {
             
             $scope.isbgProcessStarted = false;
             // $scope.cancelbgProcess = false;
@@ -45,6 +45,11 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                         $scope.procStatus = "Running...."
                         setTimeout(function() {getBGStatus(process_log_id) },5000);
                     }
+
+                    $timeout(function() {
+                        var scroller = document.getElementById("bg_console");
+                        scroller.scrollTop = scroller.scrollHeight;
+                    }, 0, false);
 
                 });
             }
