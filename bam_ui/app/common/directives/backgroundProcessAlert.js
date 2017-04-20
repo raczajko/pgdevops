@@ -17,11 +17,12 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
 
                 bgReportStatus.then(function (ret_data){
                     $scope.procId = ret_data.data.pid;
+                    $scope.error_msg = '';                       
                     $scope.procStartTime = new Date(ret_data.data.start_time).toString();
                     $scope.taskID = process_log_id;
                     $scope.out_data = ret_data.data.out_data;
                     $scope.procCmd = ret_data.data.cmd;
-                    if (ret_data.data.process_completed){                        
+                    if (ret_data.data.process_completed){ 
                         $scope.procCompleted = true;
                         if(ret_data.data.process_failed){
                             $scope.procStatus = "Failed."

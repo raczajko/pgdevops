@@ -222,33 +222,37 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                     "log_prefix": $scope.pgLogPrefix,
                     "title":$scope.pgTitle
             };
-        var generateReports = $http.post($window.location.origin + '/api/generate_badger_reports', args);
-        generateReports.then(function (argument) {
-            $scope.generatingReportSpinner = false;
-            if (argument.data.in_progress){
-                // getBGStatus(argument.data.process_log_id);
-                $scope.showBgProcess = true;
-                $rootScope.$emit('backgroundProcessStarted', argument.data.process_log_id);
-                $scope.disableGenrate = true;
-            } else{
-                $scope.report_file = argument.data.report_file;
-                $scope.report_url = "/reports/" + argument.data.report_file;
-            }
-        });
 
-        // var modalInstance = $uibModal.open({
-        //     templateUrl: '../app/components/partials/generateBadgerReport.html',
-        //     controller: 'generateBadgerReportController',
-        //     windowClass: 'switch-modal-window',
-        //     backdrop  : 'static',
-        //     keyboard  : false
-        // });
-        // modalInstance.selectedFiles = selectedFiles;
-        // modalInstance.pgTitle = $scope.pgTitle;
-        // modalInstance.pgDB = $scope.pgDB;
-        // modalInstance.pgJobs = $scope.pgJobs;
-        // modalInstance.pgLogPrefix = $scope.pgLogPrefix;
-        // modalInstance.smallFiles = smallFiles;
+        if (smallFiles.length < 1) {
+            var generateReports = $http.post($window.location.origin + '/api/generate_badger_reports', args);
+            generateReports.then(function (argument) {
+                $scope.generatingReportSpinner = false;
+                if (argument.data.in_progress){
+                    // getBGStatus(argument.data.process_log_id);
+                    $scope.showBgProcess = true;
+                    $rootScope.$emit('backgroundProcessStarted', argument.data.process_log_id);
+                    $scope.disableGenrate = true;
+                } else{
+                    $scope.report_file = argument.data.report_file;
+                    $scope.report_url = "/reports/" + argument.data.report_file;
+                }
+            });
+        } else{
+            $scope.disableGenrate = false;
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/generateBadgerReport.html',
+                controller: 'generateBadgerReportController',
+                windowClass: 'switch-modal-window',
+                backdrop  : 'static',
+                keyboard  : false
+            });
+            modalInstance.selectedFiles = selectedFiles;
+            modalInstance.pgTitle = $scope.pgTitle;
+            modalInstance.pgDB = $scope.pgDB;
+            modalInstance.pgJobs = $scope.pgJobs;
+            modalInstance.pgLogPrefix = $scope.pgLogPrefix;
+            modalInstance.smallFiles = smallFiles;
+        }
     };
 
     $scope.toggleAll = function() { 
