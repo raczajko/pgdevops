@@ -7019,9 +7019,9 @@ span.more-text.show {
 }
 
 .btask-wrapper .btask--stdout-stderr .btask--stdout-stderr---body .console {
- height: 170px;
+ height: 135px;
  overflow: auto;
  background-color: #fff;
  font-family: monospace;
- white-space: pre;
+ white-space: pre-line;
 }

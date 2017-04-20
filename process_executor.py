@@ -304,6 +304,9 @@ def execute():
         std_out_file = open(os.path.join(_out_dir, "out"), 'a+')
         std_err_file = open(os.path.join(_out_dir, "err"), 'a+')
         _log('Starting the command execution...')
+        if _IS_WIN:
+            import shlex
+            command = shlex.split(command[0],False, True)
         process = Popen(
             command, stdout=std_out_file, stderr=std_err_file, stdin=None, **kwargs
         )

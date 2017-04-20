@@ -1,11 +1,11 @@
 <div class="btask-wrapper">
      <div id="btask-tab-pullout" class="btask--tab-pullout"></div>
-     <div id="btask-console-hidden" class="btask--stdout-stderr">
+     <div id="btask-console-hidden" class="btask--stdout-stderr" style="width: 650px;">
          <div class="btask--stdout-stderr---header">
            <h5>Console</h5>
          </div>
          <div class="btask--stdout-stderr---body">
-            <div ng-if="out_data" class="console">
+            <div ng-if="out_data" class="console" id="bg_console">
               {{out_data}}              
             </div>
          </div>
