@@ -247,7 +247,7 @@ def update_status(**kw):
     if _out_dir:
         status = dict(
             (k, v) for k, v in kw.items() if k in [
-                'start_time', 'end_time', 'exit_code', 'pid', 'cmd'
+                'start_time', 'end_time', 'exit_code', 'parent_pid', 'pid', 'cmd'
             ]
         )
         _log('Updating the status:\n{0}'.format(json.dumps(status)))
@@ -279,7 +279,7 @@ def execute():
             'start_time': get_current_time(),
             'stdout': process_stdout.log,
             'stderr': process_stderr.log,
-            'pid': os.getpid(),
+            'parent_pid': os.getpid(),
             'cmd': command[0]
         })
 
@@ -310,6 +310,13 @@ def execute():
         process = Popen(
             command, stdout=std_out_file, stderr=std_err_file, stdin=None, **kwargs
         )
+
+        args.update({
+            'pid': process.pid
+        })
+
+        # Update pid
+        update_status(**args)
 
         _log('Attaching the loggers to stdout, and stderr...')
         # Attach the stream to the process logger, and start logging.

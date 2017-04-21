@@ -514,8 +514,7 @@ class GetBgProcessStatus(Resource):
                     proc_status['error_msg'] = "Background process terminated unexpectedly."
         elif proc_status.get("exit_code") != 0:
             proc_status['process_failed'] = True
-            if proc_status.get("exit_code") == 1:
-                proc_status['error_msg'] = "Background process terminated unexpectedly."
+            proc_status['error_msg'] = "Background process terminated unexpectedly."
         for proc in session['bg_process']:
             if proc['process_log_id'] == process_log_id:
                 proc_status['process_type'] = proc.get('process_type')
