@@ -57,17 +57,19 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
             //for console toggle 
 
             document.getElementById('btask-tab-pullout').onclick = function() {
-                 this.__toggle = !this.__toggle;
-                 var target = document.getElementById('btask-console-hidden');
-                 if( this.__toggle) {
-                     target.style.display = "block";
-                     this.style.backgroundPosition = "-42px 0";
-                 }
-                 else {
-                     target.style.display = "none";
-                     this.style.backgroundPosition = "0 0";
-                 }
-             }
+              this.__toggle = !this.__toggle;
+              var target = document.getElementById('btask-console-hidden');
+              if( this.__toggle) {
+                  target.style.display = "block";
+                  this.firstElementChild.classList.remove("fa-chevron-left");
+                  this.firstElementChild.classList.add("fa-chevron-right");
+              }
+              else {
+                  target.style.display = "none";
+                  this.firstElementChild.classList.add("fa-chevron-left");
+                  this.firstElementChild.classList.remove("fa-chevron-right");
+              }
+            }
 
             $scope.cancel = function (argument) {
                 $rootScope.$emit('hidebgProcess');
