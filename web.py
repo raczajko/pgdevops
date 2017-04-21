@@ -163,30 +163,28 @@ class pgcApiHostCmd(Resource):
 api.add_resource(pgcApiHostCmd, '/api/hostcmd/<string:pgc_cmd>/<string:host_name>')
 
 
-class pgdgRepoList(Resource):
-    def get(self, repo_id, pgc_cmd, comp=None):
-        if comp==None:
-            data = pgc.get_pgdg_data(repo_id, pgc_cmd)
+class pgdgCommand(Resource):
+    def get(self, repo_id, pgc_cmd, host=None):        
+        if host:
+            data = pgc.get_pgdg_data(repo_id, pgc_cmd, host)
         else:
-            data = pgc.get_pgdg_data(repo_id, pgc_cmd, comp)
+            data = pgc.get_pgdg_data(repo_id, pgc_cmd)
         return data
 
 
-api.add_resource(pgdgRepoList, '/api/pgdg/<string:repo_id>/<string:pgc_cmd>', '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:comp>')
+api.add_resource(pgdgCommand, '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>')
 
-
-class pgdgSupportOS(Resource):
-    def get(self):
-        import platform
-        osName = platform.linux_distribution()[0]
-        json_dict = {}
-        json_dict['status'] = osName.startswith('CentOS')
-        json_dict['platform'] = osName
-        data = json.dumps([json_dict])
+class pgdgHostCommand(Resource):
+    def get(self, repo_id, pgc_cmd, comp=None, host=None):
+        if host:
+            data = pgc.get_pgdg_data(repo_id, pgc_cmd, comp, host)
+        else:
+            data = pgc.get_pgdg_data(repo_id, comp, pgc_cmd)
         return data
 
 
-api.add_resource(pgdgSupportOS, '/api/pgdg_support_os')
+api.add_resource(pgdgHostCommand, '/api/pgdghost/<string:repo_id>/<string:pgc_cmd>/<string:comp>/<string:host>')
+
 
 class checkUser(Resource):
     def get(self, host, username, password):

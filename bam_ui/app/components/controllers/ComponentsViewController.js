@@ -78,8 +78,10 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.currentHost = argument;
         if (argument=="" || argument == 'localhost'){
             var listData = bamAjaxCall.getCmdData('list');
+            var checkpgdgSupport = bamAjaxCall.getCmdData('info');
         } else{
             var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
+            var checkpgdgSupport = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
         }
 
         listData.then(function (data) {
@@ -117,17 +119,15 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.getExtensions( $scope.components[0].component, 0);                
             }
         });
+        checkpgdgSupport.then(function (argument) {
+            var data = argument[0];
+            if(data.os.split(' ')[0] == 'CentOS'){
+                $scope.showPgDgTab = true;
+            }
+        })
     };
 
     getList($cookies.get('remote_host'));
-
-    var pgdgSupportOS = bamAjaxCall.getCmdData('pgdg_support_os')
-    pgdgSupportOS.then(function (data) {
-        var response = JSON.parse(data);
-        if (response[0].status) {
-           $scope.showPgDgTab = true; 
-        }
-    })
 
     $rootScope.$on('updatePackageManager', function (argument) {
         getList($cookies.get('remote_host'));
@@ -279,7 +279,11 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.gettingPGDGdata = true;
         $scope.repoNotRegistered = false;
         localStorage.setItem('cacheRepo', repo);
-        var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
+        if ($scope.currentHost == 'localhost' || $scope.currentComponent == '') {
+            var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
+        }else{
+            var getRepoList = bamAjaxCall.getCmdData('pgdg/'+ repo + '/list/' + $scope.currentHost)
+        }        
         getRepoList.then(function (argument) {
             $scope.gettingPGDGdata = false;
             if(argument[0].status == 'error'){
@@ -294,7 +298,11 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     }
 
     $scope.refreshRepoList = function (repo) {
-        var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
+        if ($scope.currentHost == 'localhost' || $scope.currentComponent == '') {
+            var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
+        }else{
+            var getRepoList = bamAjaxCall.getCmdData('pgdg/'+ repo + '/list/' + $scope.currentHost)
+        }
         getRepoList.then(function (argument) {
             if(argument != 'error'){
                 $scope.repoList = argument;
@@ -307,7 +315,11 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.gettingPGDGdata = true;
         $scope.showRepoList = false;
         $scope.repoNotRegistered = false;
-        var pgdgComps = bamAjaxCall.getCmdData('repolist')
+        if ($scope.currentHost == 'localhost' || $scope.currentComponent == '') {
+            var pgdgComps = bamAjaxCall.getCmdData('repolist')
+        }else{
+            var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost)
+        }
         pgdgComps.then(function (data) {
             $scope.gettingPGDGdata = false;
             $scope.showRepoList = true;

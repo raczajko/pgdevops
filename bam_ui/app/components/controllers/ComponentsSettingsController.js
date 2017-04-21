@@ -47,23 +47,15 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         session.call('com.bigsql.getBetaFeatureSetting', ['hostManager']);
         session.call('com.bigsql.getBetaFeatureSetting', ['pgdg']);
 
-        var pgdgSupportOS = bamAjaxCall.getCmdData('pgdg_support_os')
-        pgdgSupportOS.then(function (data) {
-            var response = JSON.parse(data);
-            if (response[0].status) {
-               $scope.showPgDgFeature = true; 
-            }
-        })
-
         session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
             if(settings[0].setting == 'hostManager'){
-                if (settings[0].value == '0' || !settings[0]) {
+                if (settings[0].value == '0' || !settings[0].value) {
                     $scope.hostManager = false; 
                 }else{
                     $scope.hostManager = true;
                 }
             }else if(settings[0].setting == 'pgdg'){
-                if (settings[0].value == '0' || !settings[0]) {
+                if (settings[0].value == '0' || !settings[0].value) {
                     $scope.pgdg = false; 
                 }else{
                     $scope.pgdg = true;
@@ -133,24 +125,31 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         $scope.currentHost = argument;
         if (argument=="" || argument == 'localhost'){
             var infoData = bamAjaxCall.getCmdData('info');
+            var checkpgdgSupport = bamAjaxCall.getCmdData('info');
         } else{
             var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
+            var checkpgdgSupport = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
         }
 
         infoData.then(function(data) {
-        $scope.pgcInfo = data[0];
-        if (data[0].last_update_utc) {
-            var l_date = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
-            $scope.lastUpdateStatus = l_date.split(' ')[0] + ' ' + l_date.split(' ')[1].replace(/^0+/, '') + ', ' + l_date.split(' ')[2] + ' ' + l_date.split(' ')[3]
-        }
-        if (MachineInfo.getUpdationMode() == "manual") {
-            $scope.settingType = 'manual';
-        } else {
-            $scope.settingType = 'auto';
-            session.call('com.bigsql.get_host_settings');
-        }
-
-    });
+            $scope.pgcInfo = data[0];
+            if (data[0].last_update_utc) {
+                var l_date = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
+                $scope.lastUpdateStatus = l_date.split(' ')[0] + ' ' + l_date.split(' ')[1].replace(/^0+/, '') + ', ' + l_date.split(' ')[2] + ' ' + l_date.split(' ')[3]
+            }
+            if (MachineInfo.getUpdationMode() == "manual") {
+                $scope.settingType = 'manual';
+            } else {
+                $scope.settingType = 'auto';
+                session.call('com.bigsql.get_host_settings');
+            }
+        });
+        checkpgdgSupport.then(function (argument) {
+            var data = argument[0];
+            if(data.os.split(' ')[0] == 'CentOS'){
+                $scope.showPgDgFeature = true;
+            }
+        })
     };
 
     $rootScope.$on('refreshUpdateDate', function (argument) {
