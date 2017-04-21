@@ -25,7 +25,7 @@ angular.module('bigSQL.components').controller('generateBadgerReportController',
         });
 
         if($uibModalInstance.smallFiles.length > 0){
-            $scope.badgerError = $uibModalInstance.smallFiles + '. There is insufficient number of entries in the file(s) to deduce line format.'
+            $scope.badgerError = $uibModalInstance.smallFiles + '. There is insufficient lines file(s) to produce report.'
         }else if ($uibModalInstance.selectedFiles.length > 0) {
             $scope.generatingReportSpinner = true;
             var args={
