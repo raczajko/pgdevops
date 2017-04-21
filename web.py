@@ -345,7 +345,7 @@ class AddtoMetadata(Resource):
             if component_server.count()==0:
                 svr = Server(user_id=user_id,
                             servergroup_id=servergroup_id,
-                            name=component_name,
+                            name=component_name + "(%s)" %component_host,
                             host=component_host,
                             port=component_port,
                             maintenance_db='postgres',
