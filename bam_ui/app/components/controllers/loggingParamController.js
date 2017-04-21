@@ -6,6 +6,7 @@ angular.module('bigSQL.components').controller('loggingParamController', ['$scop
     $scope.showStatus =  true;
     $scope.changedVales = {};
     $scope.initialValues = {};
+    $scope.disableSaveBtn = true;
     var subscriptions = [];
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
@@ -40,8 +41,16 @@ angular.module('bigSQL.components').controller('loggingParamController', ['$scop
 
     $scope.changeSetting = function (value, setting) {
 
-        if(value != undefined){
+        if( value != undefined && $scope.initialValues[value] != setting){
             $scope.changedVales[value] = setting;
+        }else{
+            delete $scope.changedVales[value];
+        }
+
+        if(Object.keys($scope.changedVales).length > 0 && $scope.initialValues != $scope.changedVales){
+            $scope.disableSaveBtn = false;
+        }else{
+            $scope.disableSaveBtn = true;
         }
         
     }
