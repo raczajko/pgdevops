@@ -46,7 +46,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         serverStatus.then(function (data) {
             var noPostgresRunning = false;
             for (var i = data.length - 1; i >= 0; i--) {
-                if (data[i].state == "Running") {
+                if (data[i].state == "Running" || data[i].state == "Stopped") {
                     noPostgresRunning = true;
                 }
             }
@@ -88,7 +88,13 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             session.call('com.bigsql.get_log_files_list', [comp]);
             session.call('com.bigsql.infoComponent', [comp]);
             session.subscribe('com.bigsql.onInfoComponent', function (args) {
-                $scope.logDir = JSON.parse(args[0][0])[0].logdir;
+                var data = JSON.parse(args[0][0])[0]
+                $scope.logDir = data.logdir;
+                if (data.status == "Stopped") {
+                    $scope.pgNotRunning = true;
+                }else{
+                    $scope.pgNotRunning = false;
+                }
                 $scope.$apply();
             });
             localStorage.setItem('selectedDB', comp);  
