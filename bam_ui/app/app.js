@@ -1,5 +1,8 @@
 //All the modules will be created him , all the developers would have create there modules here
 "use strict";
+if (!window.location.origin) {
+    window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+}
 
 angular.module('bigSQL.common', []);
 angular.module('bigSQL.components', ['bigSQL.common', 'nvd3', 'ui.grid', 'ui.grid.expandable', 'ngCookies']);
