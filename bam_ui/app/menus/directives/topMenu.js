@@ -37,7 +37,7 @@ angular.module('bigSQL.menus').component('topMenu', {
             });
         }
         
-        // callList($scope.currentHost);
+        callList($scope.currentHost);
 
         $rootScope.$on('refreshData', function (argument, host) {
             callList(host);
@@ -52,10 +52,10 @@ angular.module('bigSQL.menus').component('topMenu', {
             callList($scope.currentHost);
         });
 
-        $rootScope.$on('showUpdates', function (argument) {
-            $scope.hideUpdates = false; 
-            callList($scope.currentHost);   
-        });
+        // $rootScope.$on('showUpdates', function (argument) {
+        //     $scope.hideUpdates = false; 
+        //     callList($scope.currentHost);   
+        // });
 
         var infoData = bamAjaxCall.getCmdData('info');
         infoData.then(function(data) {

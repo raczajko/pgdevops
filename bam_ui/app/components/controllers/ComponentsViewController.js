@@ -81,7 +81,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         }
 
         listData.then(function (data) {
-            $rootScope.$emit('showUpdates');
+            // $rootScope.$emit('showUpdates');
             if(data == "error" || data[0].state == 'error'){
                 $timeout(wait, 5000);
                 $scope.loading = false;
