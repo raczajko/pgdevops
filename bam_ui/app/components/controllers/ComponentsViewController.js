@@ -36,11 +36,14 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         var nonPgComps = [];
 
         for (var i = 0; i < comps.length; i++) {
-            if(comps[i]['category_desc'] == 'PostgreSQL'){
+            if(comps[i]['category_desc'] == 'PostgreSQL' && comps[i]['stage'] == 'prod'){
                 pgComps.push(comps[i]);
-            }else{
+            }else if(comps[i]['category_desc'] != 'PostgreSQL'){
                 nonPgComps.push(comps[i]);
             };
+        }
+        if(comps[0]['component'] == 'pg10' && comps[0]['stage'] == 'test'){
+            pgComps.push(comps[0]);
         }
         return  pgComps.reverse().concat(nonPgComps);
     }
@@ -146,26 +149,40 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         });
     });
 
+    var getLabList = bamAjaxCall.getCmdData('lablist');
+    $scope.showPG10 = false;
+    $scope.checkpgdgSetting = true;
+    getLabList.then(function (argument) {
+        for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "pg10-beta" && argument[i].enabled == "on"){
+                $scope.showPG10 = true;
+            }
+            if(argument[i].lab == "pgdg-repos" && argument[i].enabled == "on"){
+                $scope.checkpgdgSetting = true;
+            }
+        }
+    })
+
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
 
         // session.call('com.bigsql.info');
 
-         session.call('com.bigsql.getBetaFeatureSetting', ['pgdg']);
+        // session.call('com.bigsql.getBetaFeatureSetting', ['pgdg']);
 
-        session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
-            if(settings[0].setting == 'pgdg'){
-                if(settings[0].value == '0' || !settings[0].value){
-                    $scope.checkpgdgSetting = false;
-                }else{
-                    $scope.checkpgdgSetting = true;
-                }
-            }
-           $scope.$apply();
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
-        });
+        // session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
+        //     if(settings[0].setting == 'pgdg'){
+        //         if(settings[0].value == '0' || !settings[0].value){
+        //             $scope.checkpgdgSetting = false;
+        //         }else{
+        //             $scope.checkpgdgSetting = true;
+        //         }
+        //     }
+        //    $scope.$apply();
+        // }).then(function (subscription) {
+        //     subscriptions.push(subscription);
+        // });
 
         $scope.open = function (manual) {
 

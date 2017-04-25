@@ -139,6 +139,8 @@ class AppSession(ApplicationSession):
 
         self.register(components.updateServerGroup, 'com.bigsql.updateServerGroup')
 
+        self.register(components.setLabSetting, 'com.bigsql.setLabSetting')
+
         self.register(monitoring.activity, 'com.bigsql.activity')
 
         self.register(monitoring.checkExtension, 'com.bigsql.checkExtension')

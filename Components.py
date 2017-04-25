@@ -338,6 +338,20 @@ class Components(ComponentAction):
         """
         util.set_value( "BETA", settingName, val)
 
+    def setLabSetting(self, setting, value, host=None):
+        """
+        Method to set the lab setting of pgdevops.
+        """
+        if value=='on':
+            pgcCmd = PGC_HOME + os.sep + "pgc set labs " + setting + " " + value
+        else:
+            pgcCmd = PGC_HOME + os.sep + "pgc unset labs " + setting 
+        if host:
+            pgcCmd = pgcCmd + " --host " + host  
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        data = pgcProcess.communicate()     
+
+
     @inlineCallbacks
     def selectedLog(self,logdir):
         """

@@ -6975,3 +6975,9 @@ span.more-text.show {
 .oddRow{
   background-color: #f3f3f3;
 }
+
+.lab_row {
+    padding-bottom: 5px;
+    margin: 0px;
+    border-bottom: 1px solid #f4f4f4;
+}

@@ -126,9 +126,11 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         if (argument=="" || argument == 'localhost'){
             var infoData = bamAjaxCall.getCmdData('info');
             var checkpgdgSupport = bamAjaxCall.getCmdData('info');
+            var getLablist = bamAjaxCall.getCmdData('lablist');
         } else{
             var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
             var checkpgdgSupport = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
+            var getLablist = bamAjaxCall.getCmdData('lablist/'+argument);
         }
 
         infoData.then(function(data) {
@@ -144,13 +146,22 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
                 session.call('com.bigsql.get_host_settings');
             }
         });
+        
         checkpgdgSupport.then(function (argument) {
             var data = argument[0];
             if(data.os.split(' ')[0] == 'CentOS'){
                 $scope.showPgDgFeature = true;
             }
         })
+
+        getLablist.then(function function_name(argument) {
+            $scope.lablist = argument;
+        })
     };
+
+    $scope.changeSetting = function (settingName, value) {
+        session.call('com.bigsql.setLabSetting', [settingName, value])
+    }
 
     $rootScope.$on('refreshUpdateDate', function (argument) {
        $window.location.reload(); 
