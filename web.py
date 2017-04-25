@@ -164,7 +164,9 @@ api.add_resource(pgcApiHostCmd, '/api/hostcmd/<string:pgc_cmd>/<string:host_name
 
 
 class pgdgCommand(Resource):
-    def get(self, repo_id, pgc_cmd, host=None):        
+    def get(self, repo_id, pgc_cmd, host=None): 
+        print "in api..."
+        print repo_id, pgc_cmd, host
         if host:
             data = pgc.get_pgdg_data(repo_id, pgc_cmd, host)
         else:
@@ -172,7 +174,7 @@ class pgdgCommand(Resource):
         return data
 
 
-api.add_resource(pgdgCommand, '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>')
+api.add_resource(pgdgCommand, '/api/pgdg/<string:repo_id>/<string:pgc_cmd>','/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>')
 
 class pgdgHostCommand(Resource):
     def get(self, repo_id, pgc_cmd, comp=None, host=None):
@@ -183,7 +185,7 @@ class pgdgHostCommand(Resource):
         return data
 
 
-api.add_resource(pgdgHostCommand, '/api/pgdghost/<string:repo_id>/<string:pgc_cmd>/<string:comp>/<string:host>')
+api.add_resource(pgdgHostCommand, '/api/pgdghost/<string:repo_id>/<string:pgc_cmd>/<string:comp>','/api/pgdghost/<string:repo_id>/<string:pgc_cmd>/<string:comp>/<string:host>')
 
 
 class checkUser(Resource):

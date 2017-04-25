@@ -179,8 +179,8 @@
                             </i>
                             </div>
                             <div class="col-md-3 col-sm-3 col-xs-3" style="padding-left: 10px; margin-top: -7px;">
-                                <a class="btn btn-default" ng-click="pgdgAction( 'install', c.component) " ng-if="c.status == 'NotInstalled' || c.status == ''" ng-disabled=" c.showingSpinner">Install</a>
-                                <a class="btn btn-default" ng-click="pgdgAction( 'remove', c.component) " ng-if="c.status == 'Installed'" ng-disabled=" c.showingSpinner">Remove</a>
+                                <a class="btn btn-default" ng-click="pgdgAction( 'install', c.component) " ng-if="c.status == 'NotInstalled' || c.status == ''" ng-disabled=" c.showingSpinner || true">Install</a>
+                                <a class="btn btn-default" ng-click="pgdgAction( 'remove', c.component) " ng-if="c.status == 'Installed'" ng-disabled=" c.showingSpinner || true">Remove</a>
                             </div>
                         </div>
                     </div>

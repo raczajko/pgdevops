@@ -279,15 +279,18 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.gettingPGDGdata = true;
         $scope.repoNotRegistered = false;
         localStorage.setItem('cacheRepo', repo);
-        if ($scope.currentHost == 'localhost' || $scope.currentComponent == '') {
+        if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
             var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
         }else{
-            var getRepoList = bamAjaxCall.getCmdData('pgdg/'+ repo + '/list/' + $scope.currentHost)
+            var getRepoList = bamAjaxCall.getCmdData('pgdghost/'+ repo + '/list/' + $scope.currentHost)
         }        
         getRepoList.then(function (argument) {
             $scope.gettingPGDGdata = false;
-            if(argument[0].status == 'error'){
+            if(argument[0].state == 'error' || argument == 'error'){
                 $scope.errorMsg = argument[0].msg;
+                if(!$scope.errorMsg){
+                    $scope.errorMsg = "Selected Repository is not registered."
+                }
                 $scope.repoNotRegistered = true;
             }else{
                 $scope.repoNotRegistered = false;
@@ -298,13 +301,13 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     }
 
     $scope.refreshRepoList = function (repo) {
-        if ($scope.currentHost == 'localhost' || $scope.currentComponent == '') {
+        if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
             var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
         }else{
-            var getRepoList = bamAjaxCall.getCmdData('pgdg/'+ repo + '/list/' + $scope.currentHost)
+            var getRepoList = bamAjaxCall.getCmdData('pgdghost/'+ repo + '/list/' + $scope.currentHost)
         }
         getRepoList.then(function (argument) {
-            if(argument != 'error'){
+            if(argument != 'error' || argument != 'error'){
                 $scope.repoList = argument;
             }
         }) 
@@ -315,7 +318,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.gettingPGDGdata = true;
         $scope.showRepoList = false;
         $scope.repoNotRegistered = false;
-        if ($scope.currentHost == 'localhost' || $scope.currentComponent == '') {
+        if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
             var pgdgComps = bamAjaxCall.getCmdData('repolist')
         }else{
             var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost)
