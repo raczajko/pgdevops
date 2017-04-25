@@ -478,6 +478,7 @@ class GetBgProcessList(Resource):
     def get(self, process_type=None):
         result={}
         processes = Process.query.filter_by(user_id=current_user.id, desc=dumps("pgBadger Report"))
+        clean_up_old_process=False
         for p in processes:
             result['process'] = []
             proc_log_dir = os.path.join(config.SESSION_DB_PATH,
@@ -486,6 +487,13 @@ class GetBgProcessList(Resource):
             if os.path.exists(proc_log_dir):
                 proc_status = get_process_status(proc_log_dir)
                 if p.acknowledge or proc_status.get("end_time") or p.end_time:
+                    clean_up_old_process=True
+                    db_session.delete(p)
+                    try:
+                        import shutil
+                        shutil.rmtree(proc_log_dir, True)
+                    except Exception as e:
+                        pass
                     continue
                 proc_status['process_failed'] = False
                 proc_status['process_completed'] = True
@@ -503,6 +511,8 @@ class GetBgProcessList(Resource):
                     proc_status['file'] = "badger/" + proc_status.get('report_file')
                     proc_status['report_file'] = proc_status.get('report_file')
                 result['process'].append(proc_status)
+        if clean_up_old_process:
+            db_session.commit()
         return result
 
 api.add_resource(GetBgProcessList, '/api/bgprocess_list', '/api/bgprocess_list/<string:process_type>')
