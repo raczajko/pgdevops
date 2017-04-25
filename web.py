@@ -165,8 +165,6 @@ api.add_resource(pgcApiHostCmd, '/api/hostcmd/<string:pgc_cmd>/<string:host_name
 
 class pgdgCommand(Resource):
     def get(self, repo_id, pgc_cmd, host=None): 
-        print "in api..."
-        print repo_id, pgc_cmd, host
         if host:
             data = pgc.get_pgdg_data(repo_id, pgc_cmd, host)
         else:
