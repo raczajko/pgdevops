@@ -73,6 +73,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
 
             $scope.cancel = function (argument) {
                 $rootScope.$emit('hidebgProcess');
+                var bgReportAcknowledge = $http.put($window.location.origin + '/admin/misc/bgprocess/'+ argument);
                 // $scope.cancelbgProcess = true;
             }
 

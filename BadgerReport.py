@@ -94,7 +94,7 @@ class BadgerReport(object):
         options = options + " -o " + report_file_path
 
         report_cmd = pgbadger_command + " " + options
-        process_status = detached_process(report_cmd, ctime)
+        process_status = detached_process(report_cmd, ctime, report_file=report_file)
         result['error']=None
         result['report_generation_completed'] =process_status['status']
         result['log_dir'] = process_status['log_dir']

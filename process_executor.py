@@ -247,7 +247,7 @@ def update_status(**kw):
     if _out_dir:
         status = dict(
             (k, v) for k, v in kw.items() if k in [
-                'start_time', 'end_time', 'exit_code', 'parent_pid', 'pid', 'cmd'
+                'start_time', 'end_time', 'exit_code', 'parent_pid', 'pid', 'cmd', 'report_file'
             ]
         )
         _log('Updating the status:\n{0}'.format(json.dumps(status)))
@@ -275,13 +275,25 @@ def execute():
 
     try:
         # update start_time
-        args.update({
-            'start_time': get_current_time(),
-            'stdout': process_stdout.log,
-            'stderr': process_stderr.log,
-            'parent_pid': os.getpid(),
-            'cmd': command[0]
-        })
+        if 'report_file' in os.environ:
+            args.update({
+                'start_time': get_current_time(),
+                'stdout': process_stdout.log,
+                'stderr': process_stderr.log,
+                'parent_pid': os.getpid(),
+                'cmd': command[0],
+                'report_file': os.environ['report_file']
+            })
+        else:
+            args.update({
+                'start_time': get_current_time(),
+                'stdout': process_stdout.log,
+                'stderr': process_stderr.log,
+                'parent_pid': os.getpid(),
+                'cmd': command[0]
+            })
+
+
 
         # Update start time
         update_status(**args)

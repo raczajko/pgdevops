@@ -16,19 +16,24 @@ from flask_security import login_required, roles_required, current_user
 from flask_mail import Mail
 from flask_babel import Babel, gettext
 from pgadmin.utils.session import create_session_interface
-from pgadmin.model import db, Role, User, Server, ServerGroup
+from pgadmin.model import db, Role, User, Server, ServerGroup, Process
 from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 import config
 from flask_restful import reqparse
 from datetime import datetime
+import dateutil
 import hashlib
 import time
 import pytz
 import psutil
+from pickle import dumps, loads
+import csv
 
 parser = reqparse.RequestParser()
 #parser.add_argument('data')
+
+
 
 config.APP_NAME = "pgDevOps by BigSQL"
 config.LOGIN_NAME = "pgDevOps"
@@ -38,7 +43,6 @@ babel = Babel(application)
 
 Triangle(application)
 api = Api(application)
-
 application.config.from_object(config)
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -56,6 +60,8 @@ application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{0}?timeout={1}'.form
     getattr(config, 'SQLITE_TIMEOUT', 500)
 )
 
+application.config['WTF_CSRF_ENABLED'] = False
+
 application.config['SECURITY_RECOVERABLE'] = True
 application.config['SECURITY_CHANGEABLE'] = True
 
@@ -72,6 +78,7 @@ security = Security(application, user_datastore)
 PGC_HOME = os.getenv("PGC_HOME", "")
 PGC_LOGS = os.getenv("PGC_LOGS", "")
 
+db_session = db.session
 
 class pgcApi(Resource):
     def get(self, pgc_command):
@@ -427,19 +434,24 @@ class GenerateBadgerReports(Resource):
             result['pid'] = report_status.get('pid')
             result['exit_code'] = report_status.get('exit_code')
             result['process_log_id'] = report_file["process_log_id"]
-            old_process = []
-            if 'bg_process' in session:
-                old_process = session['bg_process']
             if report_status.get('exit_code') is None:
                 result['in_progress'] = True
-                bg_process={}
+                try:
+                    j = Process(
+                        pid=int(report_file["process_log_id"]), command=report_file['cmd'],
+                        logdir=process_log_dir, desc=dumps("pgBadger Report"), user_id=current_user.id
+                    )
+                    db_session.add(j)
+                    db_session.commit()
+                except Exception as e:
+                    print str(e)
+                    pass
+                """bg_process={}
                 bg_process['process_type'] = "badger"
                 bg_process['cmd'] = report_file['cmd']
                 bg_process['file'] = report_file['file']
                 bg_process['report_file'] = report_file['report_file']
-                bg_process['process_log_id'] = report_file["process_log_id"]
-                old_process.append(bg_process)
-                session['bg_process']=old_process
+                bg_process['process_log_id'] = report_file["process_log_id"]"""
             if report_file['error']:
                 result['error'] = 1
                 result['msg'] = report_file['error']
@@ -462,33 +474,35 @@ api.add_resource(GenerateBadgerReports, '/api/generate_badger_reports')
 
 
 class GetBgProcessList(Resource):
+    @login_required
     def get(self, process_type=None):
         result={}
-        if 'bg_process' in session:
+        processes = Process.query.filter_by(user_id=current_user.id, desc=dumps("pgBadger Report"))
+        for p in processes:
             result['process'] = []
-            i=0
-            for proc in session['bg_process']:
-                if process_type and proc.get('process_type') != process_type:
+            proc_log_dir = os.path.join(config.SESSION_DB_PATH,
+                                        "process_logs",
+                                        p.pid)
+            if os.path.exists(proc_log_dir):
+                proc_status = get_process_status(proc_log_dir)
+                if p.acknowledge or proc_status.get("end_time") or p.end_time:
                     continue
-                proc_log_dir = os.path.join(config.SESSION_DB_PATH,
-                                            "process_logs",
-                                            proc['process_log_id'])
-                if os.path.exists(proc_log_dir):
-                    proc_status = get_process_status(proc_log_dir)
+                proc_status['process_failed'] = False
+                proc_status['process_completed'] = True
+                if proc_status.get("exit_code") is None:
+                    proc_status['process_completed'] = False
                     if not psutil.pid_exists(proc_status.get('pid')):
-                        continue
-                    proc_status['process_failed'] = False
-                    proc_status['process_completed'] = True
-                    if proc_status.get("exit_code") is None:
-                        proc_status['process_completed'] = False
-                    elif proc_status.get("exit_code") != 0:
+                        proc_status['process_completed'] = True
                         proc_status['process_failed'] = True
-                    proc_status['process_log_id'] = proc['process_log_id']
-                    proc_status['process_type'] = proc.get('process_type')
-                    proc_status['file'] = proc.get('file')
-                    proc_status['report_file'] = proc.get('report_file')
-                    if proc_status.get("exit_code") is None:
-                        result['process'].append(proc_status)
+                        proc_status['error_msg'] = "Background process terminated unexpectedly."
+                elif proc_status.get("exit_code") != 0:
+                    proc_status['process_failed'] = True
+                proc_status['process_log_id'] = p.pid
+                proc_status['process_type'] = "badger"
+                if proc_status.get('report_file'):
+                    proc_status['file'] = "badger/" + proc_status.get('report_file')
+                    proc_status['report_file'] = proc_status.get('report_file')
+                result['process'].append(proc_status)
         return result
 
 api.add_resource(GetBgProcessList, '/api/bgprocess_list', '/api/bgprocess_list/<string:process_type>')
@@ -501,10 +515,31 @@ class GetBgProcessStatus(Resource):
                                     "process_logs",
                                     process_log_id)
         proc_status = get_process_status(proc_log_dir)
+        p = Process.query.filter_by(
+            pid=process_log_id, user_id=current_user.id
+        ).first()
+        if p.start_time is None or p.end_time is None:
+            p.start_time = proc_status['start_time']
+            if 'exit_code' in proc_status and \
+                            proc_status['exit_code'] is not None:
+                p.exit_code = proc_status['exit_code']
+
+                # We can't have 'end_time' without the 'exit_code'.
+                if 'end_time' in proc_status and proc_status['end_time']:
+                    p.end_time = proc_status['end_time']
+            db_session.commit()
+
+        stime = dateutil.parser.parse(proc_status.get("start_time"))
+        etime = dateutil.parser.parse(proc_status.get("end_time") or get_current_time())
+
+        execution_time = (etime - stime).total_seconds()
+
+        proc_status['execution_time'] = execution_time
         proc_status['error_msg']=""
         proc_status['process_log_id'] = process_log_id
         proc_status['process_failed'] = False
         proc_status['process_completed'] = True
+        proc_status['process_type'] = "badger"
         if proc_status.get("exit_code") is None:
             proc_status['process_completed'] = False
             if proc_status.get('pid'):
@@ -515,11 +550,9 @@ class GetBgProcessStatus(Resource):
         elif proc_status.get("exit_code") != 0:
             proc_status['process_failed'] = True
             proc_status['error_msg'] = "Background process terminated unexpectedly."
-        for proc in session['bg_process']:
-            if proc['process_log_id'] == process_log_id:
-                proc_status['process_type'] = proc.get('process_type')
-                proc_status['file'] = proc.get('file')
-                proc_status['report_file'] = proc.get('report_file')
+        if proc_status.get('report_file'):
+            proc_status['file'] = "badger/" + proc_status.get('report_file')
+            proc_status['report_file'] = proc_status.get('report_file')
 
         result=proc_status
         return result
