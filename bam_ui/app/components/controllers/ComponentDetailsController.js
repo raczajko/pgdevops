@@ -218,6 +218,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                             msg:  data.msg,
                             type: 'danger'
                         });
+                    delete $scope.component.installationStart;
+                    delete $scope.component.installationRunning;
+                    delete $scope.component.installation;
                 }else if (data.state == 'unpack' || data.state == 'update' || data.state == 'install'){
                     $scope.alerts.push({
                             msg:  data.msg,
@@ -225,10 +228,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                         });
                     callInfo();
                 }
-
-                delete $scope.component.installationStart;
-                delete $scope.component.installationRunning;
-                delete $scope.component.installation;
 
             }
 
