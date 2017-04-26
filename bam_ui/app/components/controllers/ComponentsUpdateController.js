@@ -46,10 +46,10 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                     $scope.allComponents[i].componentImage = $scope.allComponents[i].component.split('-')[0].replace(/[0-9]/g,'')                    
                 }
                 $scope.allComponents[i].rel_notes = $sce.trustAsHtml($scope.allComponents[i].rel_notes);
-                $scope.allComponents[i].curr_release_date = new Date($scope.allComponents[i].curr_release_date).toString().split(' ',[4]).splice(1).join(' ');
+                $scope.allComponents[i].curr_release_date = new Date($scope.allComponents[i].curr_release_date.replace(/-/g,'/')).toString().split(' ',[4]).splice(1).join(' ');
                 $scope.allComponents[i].curr_release_date = $scope.allComponents[i].curr_release_date.split(' ')[0] + ' ' + $scope.allComponents[i].curr_release_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.allComponents[i].curr_release_date.split(' ')[2];
                 if ($scope.allComponents[i].install_date) {
-                    $scope.allComponents[i].install_date = new Date($scope.allComponents[i].install_date).toString().split(' ',[4]).splice(1).join(' ');
+                    $scope.allComponents[i].install_date = new Date($scope.allComponents[i].install_date.replace(/-/g,'/')).toString().split(' ',[4]).splice(1).join(' ');
                     $scope.allComponents[i].install_date = $scope.allComponents[i].install_date.split(' ')[0] + ' ' + $scope.allComponents[i].install_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.allComponents[i].install_date.split(' ')[2];
                 }
                 if($scope.allComponents[i].is_new == 1){
