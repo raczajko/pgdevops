@@ -130,7 +130,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         } else{
             var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
             var checkpgdgSupport = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
-            var getLablist = bamAjaxCall.getCmdData('lablist/'+argument);
+            var getLablist = bamAjaxCall.getCmdData('hostcmd/lablist/'+argument);
         }
 
         infoData.then(function(data) {
