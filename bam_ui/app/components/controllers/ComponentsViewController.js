@@ -18,6 +18,8 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     $scope.retry = false;
     $scope.disableShowInstalled = false;
     $scope.extensionsList = [];
+    $scope.showPgDgTab = false;
+    $scope.gettingPGDGdata = false;
 
     var getCurrentComponent = function (name) {
         for (var i = 0; i < $scope.components.length; i++) {
@@ -34,11 +36,14 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         var nonPgComps = [];
 
         for (var i = 0; i < comps.length; i++) {
-            if(comps[i]['category_desc'] == 'PostgreSQL'){
+            if(comps[i]['category_desc'] == 'PostgreSQL' && comps[i]['stage'] == 'prod'){
                 pgComps.push(comps[i]);
-            }else{
+            }else if(comps[i]['category_desc'] != 'PostgreSQL'){
                 nonPgComps.push(comps[i]);
             };
+        }
+        if(comps[0]['component'] == 'pg10' && comps[0]['stage'] == 'test'){
+            pgComps.push(comps[0]);
         }
         return  pgComps.reverse().concat(nonPgComps);
     }
@@ -76,8 +81,10 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.currentHost = argument;
         if (argument=="" || argument == 'localhost'){
             var listData = bamAjaxCall.getCmdData('list');
+            var checkpgdgSupport = bamAjaxCall.getCmdData('info');
         } else{
             var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
+            var checkpgdgSupport = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
         }
 
         listData.then(function (data) {
@@ -115,6 +122,12 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.getExtensions( $scope.components[0].component, 0);                
             }
         });
+        checkpgdgSupport.then(function (argument) {
+            var data = argument[0];
+            if(data.os.split(' ')[0] == 'CentOS'){
+                $scope.showPgDgTab = true;
+            }
+        })
     };
 
     getList($cookies.get('remote_host'));
@@ -136,11 +149,40 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         });
     });
 
+    // var getLabList = bamAjaxCall.getCmdData('lablist');
+    // $scope.showPG10 = false;
+    // $scope.checkpgdgSetting = false;
+    // getLabList.then(function (argument) {
+    //     for (var i = argument.length - 1; i >= 0; i--) {
+    //         if(argument[i].lab == "pg10-beta" && argument[i].enabled == "on"){
+    //             $scope.showPG10 = true;
+    //         }
+    //         if(argument[i].lab == "pgdg-repos" && argument[i].enabled == "on"){
+    //             $scope.checkpgdgSetting = true;
+    //         }
+    //     }
+    // })
+
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
 
         // session.call('com.bigsql.info');
+
+        // session.call('com.bigsql.getBetaFeatureSetting', ['pgdg']);
+
+        // session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
+        //     if(settings[0].setting == 'pgdg'){
+        //         if(settings[0].value == '0' || !settings[0].value){
+        //             $scope.checkpgdgSetting = false;
+        //         }else{
+        //             $scope.checkpgdgSetting = true;
+        //         }
+        //     }
+        //    $scope.$apply();
+        // }).then(function (subscription) {
+        //     subscriptions.push(subscription);
+        // });
 
         $scope.open = function (manual) {
 
@@ -250,6 +292,96 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         // session.call('com.bigsql.list');
     }
 
+    $scope.repoChange = function (repo) {
+        $scope.gettingPGDGdata = true;
+        $scope.repoNotRegistered = false;
+        localStorage.setItem('cacheRepo', repo);
+        if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
+            var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
+        }else{
+            var getRepoList = bamAjaxCall.getCmdData('pgdghost/'+ repo + '/list/' + $scope.currentHost)
+        }        
+        getRepoList.then(function (argument) {
+            $scope.gettingPGDGdata = false;
+            if(argument[0].state == 'error' || argument == 'error'){
+                $scope.errorMsg = argument[0].msg;
+                if(!$scope.errorMsg){
+                    $scope.errorMsg = "Selected Repository is not registered."
+                }
+                $scope.repoNotRegistered = true;
+            }else{
+                $scope.repoNotRegistered = false;
+                $scope.repoList = argument;
+                $scope.showRepoList = true;
+            }
+        })      
+    }
+
+    $scope.refreshRepoList = function (repo) {
+        if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
+            var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
+        }else{
+            var getRepoList = bamAjaxCall.getCmdData('pgdghost/'+ repo + '/list/' + $scope.currentHost)
+        }
+        getRepoList.then(function (argument) {
+            if(argument != 'error' || argument != 'error'){
+                $scope.repoList = argument;
+            }
+        }) 
+    }
+
+    $scope.selectPgDg = function (argument) {
+        $scope.noRepoFound = false;
+        $scope.gettingPGDGdata = true;
+        $scope.showRepoList = false;
+        $scope.repoNotRegistered = false;
+        if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
+            var pgdgComps = bamAjaxCall.getCmdData('repolist')
+        }else{
+            var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost)
+        }
+        pgdgComps.then(function (data) {
+            $scope.gettingPGDGdata = false;
+            $scope.showRepoList = true;
+            $scope.pgdgRepoList = [];
+            $scope.pgdgInstalledRepoList = [];
+            for (var i = data.length - 1; i >= 0; i--) {
+                if (data[i].status == 'Installed') {
+                    $scope.pgdgInstalledRepoList.push(data[i]);                    
+                }
+            }
+            $scope.pgdgRepoList = data;
+            if ($scope.pgdgInstalledRepoList.length < 1) {
+                $scope.noRepoFound = true;
+                $scope.availRepos = data;
+                $scope.selectAvailRepo = data[0].repo;
+                localStorage.setItem('cacheRepo', '');
+            }else{
+                $scope.noRepoFound = false;
+                var selectedRepo, cookieData;
+                cookieData = localStorage.getItem('cacheRepo');
+                if (cookieData){
+                    selectedRepo = cookieData;
+                }else{
+                    selectedRepo = $scope.pgdgRepoList[0].repo;
+                }
+                $scope.selectRepo = selectedRepo;
+                $scope.repoChange(selectedRepo);
+            }
+        })
+    }
+
+    $scope.registerRepo = function (argument) {
+        $scope.registeringRepo = true;
+        var registerRepository = bamAjaxCall.getCmdData('pgdg/' + argument + '/register' )
+        registerRepository.then(function (data) {
+            $scope.registeringRepo = false;
+            $scope.repoNotRegistered = false;
+            // localStorage.setItem('cacheRepo', '');
+           $scope.selectPgDg(); 
+        });
+    }
+
     $scope.compAction = function (action, compName) {
         var sessionKey = "com.bigsql." + action;
         $scope.disableShowInstalled = true;
@@ -279,6 +411,19 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             });
         } 
     };
+
+    $scope.pgdgAction = function (action, compName) {
+        var cur_comp = {};
+        for (var i = 0; i < $scope.repoList.length; i++) {
+            if ($scope.repoList[i].component == compName) {
+                $scope.repoList[i].showingSpinner = true;
+            }
+        }
+        var pgdgCompAction = bamAjaxCall.getCmdData('pgdg/' + $scope.selectRepo + '/'+ action + '/' + compName);
+        pgdgCompAction.then(function (argument) {
+            $scope.refreshRepoList($scope.selectRepo);
+        })
+    }
 
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);

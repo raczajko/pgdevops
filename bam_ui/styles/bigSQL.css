@@ -6844,7 +6844,7 @@ text-align: center;}
     display: block;
     padding: 15px 40px 1px 40px;
     margin-bottom: 20px;
-    background-color: #fff;
+    background-color: #f2f2f2;
     border-radius: 4px;
     height: 160px;
 }
@@ -6866,7 +6866,7 @@ text-align: center;}
 }
 
 .extension-area-comp{
-  background: #fff;
+  background: #f2f2f2;
   width: 100%;
   padding-top: 5px;
   height: 128px;
@@ -7022,4 +7022,18 @@ span.more-text.show {
  background-color: #fff;
  font-family: monospace;
  white-space: pre-line;
+}
+
+.oddRow{
+  background-color: #f3f3f3;
+}
+
+.lab_row {
+    padding-bottom: 5px;
+    margin: 0px;
+    border-bottom: 1px solid #f4f4f4;
+}
+
+.labDescription{
+  font-size: 1.2rem;
 }

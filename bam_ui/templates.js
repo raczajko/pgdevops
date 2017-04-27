@@ -13,21 +13,25 @@ $templateCache.put("../app/common/partials/hostInfo.html","<div class=\"componen
     "            <select class=\"form-control\" ng-change=\"hostChange(selecthost)\" ng-model=\"selecthost\">\n" +
     "            <option ng-repeat=\"host in hosts\" value=\"{{ host.host }}\">{{ host.host }}</option> </select>\n" +
     "        </form>\n" +
-    "    <h3>\n" +
-    "        <strong> OS </strong> : {{ data.os }} &nbsp;\n" +
-    "        <strong>HW </strong>: {{ data.mem }} GB, {{ data.cores }} x {{ data.cpu }} &nbsp;\n" +
+    "    <h3 class=\"pull-left\">\n" +
+    "        <strong> OS </strong> : {{ data.os }} \n" +
+    "        <strong>HW </strong>: {{ data.mem }} GB, {{ data.cores }} x {{ data.cpu }} \n" +
     "        <strong>PGC</strong> : {{ data.version }}\n" +
     "    </h3>\n" +
     "</div>\n" +
     "")
 
 $templateCache.put("../app/components/partials/addHostModal.html","<div class=\"modal-header\">\n" +
-    "    <h4 class=\"modal-title\"> {{type}} PGC SSH Server </h4>\n" +
+    "    <h4 ng-if=\"!thirdPhase\" class=\"modal-title\"> {{type}} PGC SSH Server (beta)</h4>\n" +
+    "    <h4 ng-if=\"thirdPhase\" class=\"modal-title\"> {{type}} PGC Server (beta)</h4>\n" +
     "</div>\n" +
     "<div class=\"modal-body\">\n" +
     "\n" +
     "    <div ng-if=\"tryToConnect\">\n" +
     "        <i class=\"fa fa-spinner fa-pulse fa-2x\"></i> &nbsp;<strong> Trying to connect {{hostName}} </strong>\n" +
+    "    </div>\n" +
+    "    <div ng-if=\"installingStatus\">\n" +
+    "        <i class=\"fa fa-spinner fa-pulse fa-2x\"></i> &nbsp;<strong> Installing {{selectedPgComp.component}} on {{hostName}} </strong>\n" +
     "    </div>\n" +
     "    <div ng-if=\"connectionStatus\">\n" +
     "        <i class=\"fa fa-spinner fa-pulse fa-2x\"></i> &nbsp;<strong>{{message}} </strong>\n" +
@@ -35,35 +39,65 @@ $templateCache.put("../app/components/partials/addHostModal.html","<div class=\"
     "    <div ng-if=\"connectionError\">\n" +
     "        <strong>{{message}}</strong>\n" +
     "    </div>\n" +
-    "    <div ng-hide=\"tryToConnect || connectionStatus\">\n" +
+    "    <div ng-hide=\"tryToConnect || connectionStatus || installingStatus\">\n" +
     "        <form>\n" +
-    "            <div class=\"form-group\">\n" +
+    "            <div class=\"form-group\" ng-show=\"firstPhase\">\n" +
     "                <div class=\"requiredSymbol\">*</div>\n" +
     "                <input type=\"text\" ng-model=\"hostName\" class=\"form-control\" placeholder=\"Host\">\n" +
     "            </div>\n" +
-    "            <div class=\"form-group\">\n" +
+    "            <div class=\"form-group\" ng-show=\"firstPhase\">\n" +
     "                <div class=\"requiredSymbol\">*</div>\n" +
-    "                <input type=\"text\" ng-model=\"pgcDir\" class=\"form-control\" placeholder=\"PGC_HOME Directory\">\n" +
+    "                <input type=\"text\" ng-model=\"connectionName\" class=\"form-control\" placeholder=\"Connection name\">\n" +
     "            </div>\n" +
-    "            <div class=\"form-group\">\n" +
+    "            <div class=\"form-group\" ng-show=\"firstPhase\">\n" +
     "                <div class=\"requiredSymbol\">*</div>\n" +
     "                <input type=\"text\" ng-model=\"userName\" class=\"form-control\" placeholder=\"Username\">\n" +
     "            </div>\n" +
-    "            <div class=\"form-group\">\n" +
-    "                <div class=\"requiredSymbol\">*</div>\n" +
+    "            <div class=\"form-group\" ng-show=\"firstPhase\">\n" +
     "                <input type=\"password\" ng-model=\"password\" class=\"form-control\" placeholder=\"password\">\n" +
     "            </div>\n" +
-    "            <div class=\"form-group\">\n" +
-    "                <div class=\"requiredSymbol\">*</div>\n" +
-    "                <input type=\"text\" ng-model=\"connectionName\" class=\"form-control\" placeholder=\"Name\">\n" +
+    "            <div class=\"form-group row\" ng-show=\"secondPhase\">\n" +
+    "                <label class=\"col-sm-4 col-form-label\">Service User</label>\n" +
+    "                <div class=\"col-sm-8\">\n" +
+    "                    <input type=\"text\" ng-model=\"serviceUser\" class=\"form-control\">\n" +
+    "                </div>\n" +
     "            </div>\n" +
-    "            <div class=\"text-left\">\n" +
+    "            <div class=\"form-group row\" ng-show=\"secondPhase\">\n" +
+    "                <label class=\"col-sm-4 col-form-label\">PGC_HOME Directory</label>\n" +
+    "                <div class=\"col-sm-8\">\n" +
+    "                    <input type=\"text\" ng-model=\"pgcDir\" class=\"form-control\">\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "            <br />\n" +
+    "            <div class=\"form-group row\" ng-show=\"thirdPhase\">\n" +
+    "                <label class=\"col-sm-4 col-form-label\">Install PG</label>\n" +
+    "                <div class=\"col-sm-8\">\n" +
+    "                    <input type=\"checkbox\" ng-model=\"pgInstall\">\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "            <div class=\"form-group row\" ng-show=\"thirdPhase\">\n" +
+    "                <label class=\"col-sm-4 col-form-label\">Select PG version</label>\n" +
+    "                <div class=\"col-sm-8\">\n" +
+    "                    <select class=\"form-control\" name=\"selectPg\" ng-disabled=\"!pgInstall\" ng-model=\"selectedPgComp\" ng-options=\"option.component for option in availablePgComps\">\n" +
+    "                    </select>\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "            <div class=\"form-group row\" ng-show=\"thirdPhase\">\n" +
+    "                <label class=\"col-sm-4 col-form-label\">Auto Start</label>\n" +
+    "                <div class=\"col-sm-8\">\n" +
+    "                    <input type=\"checkbox\" ng-model=\"autostart\" ng-disabled=\"!isSudo\" ng-change=\"autostartChange(autostart)\" />\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "            <div class=\"text-left\" ng-show=\"firstPhase\">\n" +
     "                <span style=\"color:red;\">*</span> Required Field\n" +
     "            </div>\n" +
     "            <div class=\"form-actions\">\n" +
     "                <div class=\"text-right\">\n" +
-    "                    <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
-    "                    <button type=\"submit\" class=\"btn btn-primary\" ng-disabled=\"!(hostName && pgcDir && userName && password && connectionName)\" ng-click=\"addHost(hostName, pgcDir, userName, password, connectionName)\">Save</button>\n" +
+    "                    <button class=\"btn btn-default\" type=\"button\" ng-click=\"cancel(); refreshHostManager()\">Cancel</button>\n" +
+    "                    <button class=\"btn btn-default\" type=\"button\" ng-show=\"secondPhase\" ng-click=\"back()\">Back</button>\n" +
+    "                    <button ng-show=\"!secondPhase\" class=\"btn btn-default\" type=\"button\" ng-click=\"next()\" ng-disabled=\"!(hostName && userName && connectionName && connectionName) || (!pgInstall && thirdPhase) \">Next</button>\n" +
+    "                    <button ng-show=\"secondPhase\" class=\"btn btn-default\" type=\"button\" ng-click=\"addHost(hostName, pgcDir, userName, password, connectionName)\">Create</button>\n" +
+    "                    <!-- <button type=\"submit\" ng-show=\"secondPhase\" class=\"btn btn-primary\" ng-disabled=\"!(hostName && pgcDir && userName && password && connectionName)\" ng-click=\"addHost(hostName, pgcDir, userName, password, connectionName)\">Save</button> -->\n" +
     "                </div>\n" +
     "            </div>\n" +
     "        </form>\n" +
@@ -71,7 +105,7 @@ $templateCache.put("../app/components/partials/addHostModal.html","<div class=\"
     "</div>")
 
 $templateCache.put("../app/components/partials/addServerGroupsModal.html","<div class=\"modal-header\">\n" +
-    "    <h4 class=\"modal-title\"> {{type}} Group </h4>\n" +
+    "    <h4 class=\"modal-title\"> {{type}} Group (beta)</h4>\n" +
     "</div>\n" +
     "<div class=\"modal-body\">\n" +
     "\n" +
@@ -141,12 +175,18 @@ $templateCache.put("../app/components/partials/badger.html","<section class=\"co
     "</section>\n" +
     "\n" +
     "<section class=\"content\">\n" +
+    "    <uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" close=\"closeAlert()\" class=\"uib-text\">\n" +
+    "        {{alert.msg}}  \n" +
+    "        <a ng-click=\"openDetailsModal()\" ng-if=\"!alert.pgComp\">Click here to install</a> \n" +
+    "        <a ui-sref=\"components.view\" ng-if=\"alert.pgComp\">Click here to install</a>\n" +
+    "    </uib-alert>\n" +
     "     <div class=\"row\">\n" +
     "    <div class=\"col-md-6 col-sm-6 col-xs-12\">\n" +
     "        <div class=\"box\">\n" +
     "            <div class=\"box-header with-border\">\n" +
     "                <div class=\"col-md-12\">\n" +
-    "                    <strong> Settings</strong>\n" +
+    "                    <strong class=\"pull-left\"> Settings</strong>\n" +
+    "                    <a class=\"pull-right\" ng-click=\"openDetailsModal()\">About pgBadger</a>\n" +
     "                </div>\n" +
     "            </div>\n" +
     "            <div class=\"box-body\">\n" +
@@ -160,10 +200,10 @@ $templateCache.put("../app/components/partials/badger.html","<section class=\"co
     "                            <span class=\"required-pgbadger-form\">*</span>\n" +
     "                        </div>\n" +
     "                        <div class=\"col-md-4 col-sm-4 col-xs-4\">\n" +
-    "                            <button class=\"btn btn-default pull-right\" ng-click=\"openSwitchlog()\" ng-disabled=\"disableLog\">Switch log file</button>\n" +
+    "                            <button class=\"btn btn-default pull-right\" ng-click=\"openSwitchlog()\" ng-disabled=\"disableLog || selectComp == 'pg93' || selectComp == 'pg92'\">Switch log file</button>\n" +
     "                        </div>\n" +
     "                        <div class=\"col-md-5 col-sm-5 col-xs-5\">\n" +
-    "                            <button class=\"btn btn-default pull-right\" ng-click=\"openLoggingParam()\" ng-disabled=\"disableLog\">\n" +
+    "                            <button class=\"btn btn-default pull-right\" ng-click=\"openLoggingParam()\" ng-disabled=\"disableLog || selectComp == 'pg93' || selectComp == 'pg92'\">\n" +
     "                            Change logging parameters\n" +
     "                            </button>\n" +
     "                        </div>\n" +
@@ -185,10 +225,9 @@ $templateCache.put("../app/components/partials/badger.html","<section class=\"co
     "                        <div class=\"form-group\">\n" +
     "                            <div class=\"pg-badger-select-log\" ng-model=\"selectLog\">\n" +
     "                                <div ng-if=\"refreshMsg\"><i class=\"fa fa-refresh fa-spin fa-fw\"></i>Refreshing..</div>\n" +
-    "                                <div ng-repeat=\"c in logfiles\" ng-if=\"!refreshMsg\">\n" +
+    "                                <div ng-repeat=\"c in logfiles\" ng-if=\"!refreshMsg && selectComp\">\n" +
     "                                    <label>\n" +
-    "                                        <input type=\"checkbox\" name=\"selectLog\" ng-if=\"$index == 0\" ng-checked=\"true\" value=\"{{c.log_file}}\">\n" +
-    "                                        <input type=\"checkbox\" name=\"selectLog\" ng-if=\"$index != 0\" ng-checked=\"logFileChecked()\" value=\"{{c.log_file}}\">\n" +
+    "                                        <input type=\"checkbox\" name=\"selectLog\" ng-model=\"c.selected\" ng-change=\"logFileChecked()\" value=\"{{c.log_file}}; {{c.file_size}}\">\n" +
     "                                        <span>&nbsp;{{c.file}}</span>\n" +
     "                                    </label>\n" +
     "                                    <span class=\"pull-right\">{{c.file_size}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{c.mtime}}</span>\n" +
@@ -221,7 +260,7 @@ $templateCache.put("../app/components/partials/badger.html","<section class=\"co
     "                        <div class=\"form-actions\">\n" +
     "                            <div class=\"text-right\">\n" +
     "                                <button type=\"submit\" class=\"btn btn-primary\"\n" +
-    "                                        ng-disabled=\"generatingReportSpinner\"\n" +
+    "                                        ng-disabled=\"generatingReportSpinner || disableGenrate || !selectComp || !selectedLog\"\n" +
     "                                        ng-click=\"openGenerateModal()\">Generate\n" +
     "                                </button>\n" +
     "                            </div>\n" +
@@ -233,57 +272,97 @@ $templateCache.put("../app/components/partials/badger.html","<section class=\"co
     "    </div>\n" +
     "    <div class=\"col-md-6 col-sm-6 col-xs-12\">\n" +
     "        <div class=\"box\" ng-if=\"showReports\">\n" +
-    "            <div class=\"box-header\">\n" +
-    "                <span><label>Report</label></span>\n" +
-    "                <span class=\"pull-right\"><label>Created on</label></span>                \n" +
+    "            <div class=\"box-header with-border\">\n" +
+    "                <span style=\"margin-left: 13px;\"><label>Reports</label> &nbsp; &nbsp;<input type=\"checkbox\" ng-click=\"toggleAll()\" ng-model=\"isAllSelected\">&nbsp;Select all </span>\n" +
+    "                <span class=\"pull-right\"><label>Created on</label></span>\n" +
     "            </div>\n" +
-    "            <div class=\"box-body\">\n" +
-    "                <div class=\"col-md-12 recent-report-list\">\n" +
-    "                    <div ng-repeat=\"c in files_list\">\n" +
-    "                        <label>\n" +
-    "                        <input type=\"checkbox\" name=\"\" ng-model=\"c.selected\"/>\n" +
-    "                            <span>&nbsp;{{ c.file }}</span>\n" +
-    "                        </label>&nbsp;&nbsp;<a target=\"_blank\" href=\"{{ c.file_link }}\"><i class=\"fa fa-external-link\"></i></a>\n" +
-    "                        <span class=\"pull-right\">{{ c.mtime }}</span>\n" +
-    "                    </div>\n" +
+    "            <div class=\"box-body\" style=\"padding-left: 20px; height: 404px; overflow: auto;\">\n" +
+    "                <div ng-repeat = \"option in files_list\">\n" +
+    "                    <label>\n" +
+    "                    <input type=\"checkbox\" ng-model=\"option.selected\" ng-change=\"optionToggled()\">\n" +
+    "                    <span>&nbsp;{{ option.file }}</span>\n" +
+    "                    </label>\n" +
+    "                    &nbsp;&nbsp;<a target=\"_blank\" href=\"{{ option.file_link }}\"><i class=\"fa fa-external-link\"></i></a>\n" +
+    "                    <span class=\"pull-right\">{{ option.mtime }}</span>\n" +
     "                </div>\n" +
     "            </div>\n" +
     "            <div class=\"box-footer\">\n" +
-    "            <button class=\"btn btn-default pull-left\" ng-click=\"deleteReports(files_list, true)\">Delete all</button>\n" +
-    "            <button class=\"btn btn-default pull-right\" ng-click=\"deleteReports(files_list, false)\">Delete</button>\n" +
+    "            <button class=\"btn btn-default pull-right\" ng-disabled=\"!isAllSelected && !checked\" ng-click=\"deleteReports(files_list, false)\">Delete</button>\n" +
     "            </div>\n" +
     "        </div>\n" +
     "    </div>\n" +
     " </div>\n" +
     "</section>")
 
-$templateCache.put("../app/components/partials/details.html","<!-- Content Header (Page header) -->\n" +
-    "<section class=\"content-header\">\n" +
-    "    <server-info-details title=\"Component Details\"></server-info-details>\n" +
-    "    <uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" dismiss-on-timeout=\"8000\" close=\"closeAlert()\" class=\"uib-text\">{{alert.msg}}</uib-alert>\n" +
-    "</section>\n" +
-    "\n" +
-    "<!-- Main content -->\n" +
-    "<section class=\"content\">\n" +
-    "    <div class=\"row\">\n" +
-    "        <div ng-if=\"loading\" style=\"position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;\">\n" +
+$templateCache.put("../app/components/partials/confirmDeletionModal.html","<div class=\"modal-header\">\n" +
+    "    <!-- <div ng-click=\"cancel()\" class=\"close-modal pull-right\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "        <i class=\"fa fa-lg fa-close\"></i>\n" +
+    "    </div> -->\n" +
+    "</div>\n" +
+    "<div class=\"modal-body\">\n" +
+    "<form class=\"form plProfiler-form\">\n" +
+    "    <div class=\"form-group\">\n" +
+    "        Are you sure want to delete selected {{deleteFilesLength}} file(s)?\n" +
+    "    </div>\n" +
+    "</form>\n" +
+    "</div>\n" +
+    "<div class=\"modal-footer\">\n" +
+    "    <button class=\"btn btn-danger\" type=\"button\" ng-click=\"cancel()\">No</button>\n" +
+    "    <button type=\"submit\" class=\"btn btn-success\" ng-click=\"removeReports()\">Yes</button>\n" +
+    "</div>")
+
+$templateCache.put("../app/components/partials/details.html","<!-- Main content -->\n" +
+    "<div class=\"modal-body\">\n" +
+    "    <div ng-click=\"cancel()\" class=\"close-modal pull-right\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "        <i class=\"fa fa-lg fa-close\"></i>\n" +
+    "    </div>\n" +
+    "    <div class=\"details-modal\" ng-if=\"!loading\">\n" +
+    "        <h4 ng-if=\"component.component != 'pgdevops'\">Component Details</h4>\n" +
+    "        <h4 ng-if=\"component.component == 'pgdevops'\">&nbsp;</h4>\n" +
+    "        <!-- <server-info-details title=\"Component Details\"></server-info-details> -->\n" +
+    "    </div>\n" +
+    "        <div class=\"uib-text\">\n" +
+    "            <div uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" close=\"closeAlert()\" dismiss-on-timeout=\"8000\">\n" +
+    "                {{alert.msg }} \n" +
+    "            </div>\n" +
+    "            <uib-alert ng-repeat=\"alert in startAlert\" type=\"{{startAlert.type}}\" close=\"closeAlert()\">\n" +
+    "                {{alert.msg }} <button class=\"btn btn-default btn-sm\" ng-click=\"compAction('install'); closeAlert()\" >Yes</button> <button class=\"btn btn-default btn-sm\" ng-click=\"closeAlert()\">No</button>\n" +
+    "            </uib-alert>\n" +
+    "        </div>    \n" +
+    "        <div ng-if=\"loading\" style=\"text-align: center;\">\n" +
     "            <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
-    "            <span><h3>Loading...</h3></span>\n" +
     "        </div>\n" +
-    "        <div class=\"col-md-3 col-xs-4 col-sm-12\" ng-if=\"!loading\">\n" +
+    "        <div class=\"row\">\n" +
+    "        <div class=\"col-md-4 col-xs-4 col-sm-12\">\n" +
     "            <!-- Profile Image -->\n" +
-    "            <div class=\"box box-primary\">\n" +
+    "            <div class=\"box box-primary\" ng-if=\"!loading\">\n" +
     "                <div class=\"box-body box-profile\">\n" +
-    "                    <img class=\"profile-user-img img-responsive\" id=\"component-logo\" ng-src=\"assets/img/component-logos/{{ component.component }}.png\"  err-src=\"assets/img/component-logos/no_img.png\" alt=\"\">\n" +
-    "                    <h3 class=\"profile-username text-center\" ng-bind=\"component.component\" id=\"comp_name\"></h3>\n" +
+    "                    <img class=\"comp-img ext-img img-responsive\" ng-if=\"component.category != '2'\" id=\"component-logo\" ng-src=\"assets/img/component-logos/{{ component.component }}.png\"  err-src=\"assets/img/component-logos/no_img.png\" alt=\"\">\n" +
+    "                    <img class=\"comp-img ext-img img-responsive\" ng-if=\"component.category == '2'\" id=\"component-logo\" ng-src=\"assets/img/component-logos/{{ component.componentImage }}.png\"  err-src=\"assets/img/component-logos/no_img.png\" alt=\"\">\n" +
+    "                    <!-- <h3 class=\"profile-username text-center\" ng-bind=\"component.disp_name\" id=\"comp_name\"></h3> -->\n" +
+    "                    <div class=\"description-style\">\n" +
+    "                            <h5 style=\"margin-bottom: 4px;\">\n" +
+    "                                <a>{{component.disp_name}}</a>\n" +
+    "                            </h5>\n" +
+    "                            <i style=\"font-size: small;\">{{component.release_desc}}</i>\n" +
+    "                        </div>\n" +
     "                    <ul class=\"list-group list-group-unbordered\" id=\"comp_details\">\n" +
-    "                        <li class=\"list-group-item\" ng-show=\"component.version != '' && component.version != undefined\">\n" +
+    "                        <li class=\"list-group-item\" ng-show=\"component.version != '' && component.version != undefined && component.component !='pgdevops'\">\n" +
     "                            <span class=\"pull-left\"><b>Version</b></span> <span class=\"pull-right\" ng-bind=\"component.version\" id=\"comp_version\"></span>\n" +
+    "                        </li>\n" +
+    "                        <li class=\"list-group-item\" ng-show=\"component.version != '' && component.version != undefined && component.component =='pgdevops'\">\n" +
+    "                            <span class=\"pull-left\"><b>Install Version</b></span> <span class=\"pull-right\" ng-bind=\"component.version\" id=\"comp_version\"></span>\n" +
     "                        </li>\n" +
     "                        <li class=\"list-group-item\" ng-show=\"component.home_url != '' && component.home_url != undefined || component.doc_url != '' && component.doc_url != undefined\">\n" +
     "                            <span class=\"pull-left\"><a ng-show=\"component.home_url != ''\" href=\"{{component.home_url}}\" target='_blank'> Homepage <i class=\"fa fa-external-link\"></i> </a></span> <span class=\"pull-right\"> <a ng-show=\"component.doc_url != ''\" href=\"{{component.doc_url}}\" target='_blank'> Documentation <i class=\"fa fa-external-link\"></i> </a> </span>\n" +
     "                        </li>\n" +
-    "                        <li class=\"list-group-item\" ng-show=\"component.port != '' && component.port != undefined && component.port != 0 && component.port != 1\">\n" +
+    "                        <li class=\"list-group-item\" id=\"li-pointer\" ng-show=\"component.release_date && component.is_installed != 1 \">\n" +
+    "                            <span class=\"pull-left\"><b>Release Date</b></span> <span class=\"pull-right\" ng-bind=\"component.release_date\" id=\"dt_added\"></span>\n" +
+    "                        </li>\n" +
+    "                        <li class=\"list-group-item\" id=\"li-pointer\" ng-show=\"component.install_date\">\n" +
+    "                            <span class=\"pull-left\"><b>Install Date</b></span> <span class=\"pull-right\" ng-bind=\"component.install_date\"></span>\n" +
+    "                        </li>\n" +
+    "                        <li class=\"list-group-item\" ng-show=\"component.port != '' && component.port != undefined && component.port != 0 && component.port != 1 && component.component != 'pgdevops'\">\n" +
     "                            <span class=\"pull-left\"><b>Port</b></span> <span class=\"pull-right\" ng-bind=\"component.port\"></span>\n" +
     "                        </li>\n" +
     "                        <li class=\"list-group-item\" ng-show=\"component.up_time != '' && component.up_time != undefined\">\n" +
@@ -293,7 +372,7 @@ $templateCache.put("../app/components/partials/details.html","<!-- Content Heade
     "                            <span class=\"pull-left\"><b>Connections</b></span>\n" +
     "                            <a class=\"pull-right\" ng-bind=\"component.connections\" id=\"home_url\"></a>\n" +
     "                        </li>\n" +
-    "                        <li class=\"list-group-item\" ng-show=\"component.datadir != '' && component.datadir != undefined\">\n" +
+    "                        <li class=\"list-group-item\" ng-show=\"component.datadir != '' && component.datadir != undefined && component.component != 'pgdevops'\">\n" +
     "                            <span class=\"pull-left\"><b>Data Dir</b></span>\n" +
     "                            <span class=\"pull-right\" ng-bind=\"component.datadir\" id=\"comp_doc\"></span>\n" +
     "                        </li>\n" +
@@ -305,16 +384,23 @@ $templateCache.put("../app/components/partials/details.html","<!-- Content Heade
     "                            <span class=\"pull-left\"><b>Data Size</b></span>\n" +
     "                            <a class=\"pull-right\" ng-bind=\"component.data_size\" id=\"dt_added\"></a>\n" +
     "                        </li>\n" +
-    "                        <li class=\"list-group-item\" id=\"li-pointer\" ng-show=\"component.status != '' && component.status != undefined && component.port != 1\">\n" +
+    "                        <li class=\"list-group-item\" id=\"li-pointer\" ng-show=\"component.release_date && component.component == 'pgdevops' && component.current_version \">\n" +
+    "                            <span class=\"pull-left\"><b>Upgrade Version</b></span> <span class=\"pull-right\" ng-bind=\"component.current_version\" id=\"dt_added\"></span>\n" +
+    "                        </li>\n" +
+    "                        <li class=\"list-group-item\" id=\"li-pointer\" ng-show=\"component.release_date && component.component == 'pgdevops' && component.current_version \">\n" +
+    "                            <span class=\"pull-left\"><b>Release Date</b></span> <span class=\"pull-right\" ng-bind=\"component.release_date\" id=\"dt_added\"></span>\n" +
+    "                        </li>\n" +
+    "                        <li class=\"list-group-item\" id=\"li-pointer\" ng-show=\"component.status != '' && component.status != undefined && component.port != 1 &&  component.component != 'pgdevops'\">\n" +
     "                            <span class=\"pull-left\"><b>State</b></span>\n" +
     "                            <span class=\"pull-right\" style=\"margin-top: -4px;\"><i ng-class=\"statusColors[component.status]\" class=\"fa fa-stop fa-2x\"></i>\n" +
     "                                <div style=\"margin-left: 30px; margin-top: -24px;\"> {{component.status}}</div>\n" +
     "                            </span>\n" +
     "                        </li>\n" +
     "                    </ul>\n" +
-    "                    <div id=\"button-act\" ng-click=\"action($event)\">\n" +
+    "                    <div id=\"button-act\" ng-click=\"action($event)\" ng-if=\"component.component != 'pgdevops'\">\n" +
     "                        <a ng-show=\"component.status == undefined && component.is_installed == 0\" action=\"install\" class=\"btn btn-default\" ng-disabled=\" component.installation != undefined\">Install</a>\n" +
     "                        <a ng-show=\"component.status == 'Stopped' && component.port != 1\" action=\"start\" class=\"btn btn-default\" ng-disabled=\" component.spinner != undefined\">Start</a>\n" +
+    "                        <a ng-if=\"component.current_version\" action=\"update\" class=\"btn btn-warning\" ng-disabled=\" component.spinner != undefined\">Update v{{component.current_version}}</a>\n" +
     "                        <a ng-show=\"(component.status == 'Stopped' && component.is_installed) || (component.is_installed == 1 && component.status == undefined)\" action=\"remove\" class=\"btn btn-default\" ng-disabled=\" component.spinner != undefined\">Remove</a>\n" +
     "                        <div ng-show=\"component.status == 'NotInitialized'\">\n" +
     "                            <a class=\"btn btn-danger\" action=\"init\" ng-disabled=\" component.spinner != undefined\">Initialize</a>\n" +
@@ -327,7 +413,7 @@ $templateCache.put("../app/components/partials/details.html","<!-- Content Heade
     "                    </div>\n" +
     "                    <br />\n" +
     "                    <div id=\"dep_stats\">\n" +
-    "                        <div ng-show=\"component.installation != undefined || component.spinner \" style=\"width:100%;height:auto\">\n" +
+    "                        <div ng-show=\"component.installation != undefined || component.spinner \" style=\"width:100%;height:auto;\">\n" +
     "                            <div>\n" +
     "                                <span ng-show=\"component.spinner\"><i class='fa fa-spinner fa-2x  fa-pulse'></i> <b>{{component.spinner}}</b></span>\n" +
     "                                <div style=\"margin-left:10px;margin-top:20px\" ng-show=\"component.installationDependents != undefined\"><i class=\"fa fa-refresh fa-spin\" style='margin-right:2px'></i><b> Installing dependencies...</b></div>\n" +
@@ -340,7 +426,7 @@ $templateCache.put("../app/components/partials/details.html","<!-- Content Heade
     "                                </div>\n" +
     "                                <div class=\"col-md-4 col-xs-4\" ng-show=\"component.installationRunning != undefined\">\n" +
     "                                    <progressbar value=\"component.progress\"></progressbar>\n" +
-    "                                    <button class=\"btn btn-default btn-xs center-block\" ng-click=\"cancelInstallation('cancelInstall') \">Cancel</button>\n" +
+    "                                    <button class=\"btn btn-default btn-xs center-block\" ng-click=\"cancelInstallation('cancelInstall') \" style=\"margin-top: 5px;\">Cancel</button>\n" +
     "                                </div>\n" +
     "                                <div class=\"col-md-2 col-xs-2\" ng-show=\"component.installationRunning != undefined\">\n" +
     "                                    {{component.installationRunning.pct}}%\n" +
@@ -358,19 +444,112 @@ $templateCache.put("../app/components/partials/details.html","<!-- Content Heade
     "                <!-- /.box-body -->\n" +
     "            </div>\n" +
     "        </div>\n" +
-    "        <div class=\"col-md-9 col-xs-8 col-sm-12\" ng-if=\"!loading\">\n" +
-    "            <div class=\"box\" ng-if=\"relnotes\">\n" +
-    "                <div class=\"box-header with-border\">\n" +
-    "                    <h3 class=\"box-title\">\n" +
-    "                        Release Notes \n" +
-    "                    </h3>         \n" +
-    "                </div>\n" +
-    "                <div class=\"box-body\">\n" +
-    "                   <span ng-bind-html=\"relnotes\"></span>\n" +
-    "                </div>\n" +
-    "            </div>\n" +
+    "        <div class=\"col-md-8 col-xs-8 col-sm-12\" ng-if=\"!loading\">\n" +
+    "            <uib-tabset>\n" +
+    "                <uib-tab heading=\"Release Notes\" class=\"details-page-tab\" select=\"tabClick($event)\">\n" +
+    "                    <div class=\"col-md-12 details-relnotes\">\n" +
+    "                        <span class=\"details-page-relnotes\" ng-bind-html=\"rel_notes\"></span>\n" +
+    "                    </div>\n" +
+    "                </uib-tab>\n" +
+    "                <uib-tab heading=\"Upgrade Instructions\" class=\"details-page-tab\" ng-if=\"component.component == 'pgdevops' && component.current_version\" active=\"true\">\n" +
+    "                    <div class=\"col-md-12 details-relnotes\">\n" +
+    "                        <div ng-if=\"os != 'Windows'\">\n" +
+    "                            <h3></h3>\n" +
+    "                            <ul>\n" +
+    "                                <li>\n" +
+    "                                    <p>Open a terminal window. </p>\n" +
+    "                                </li>\n" +
+    "                                <li>\n" +
+    "                                    <p>Go to the installation directory </p>\n" +
+    "                                    <p style=\"font-family: monospace;\">cd {{PGC_HOME}}</p>\n" +
+    "                                </li>\n" +
+    "                                <li>\n" +
+    "                                    <p>Get the latest update related information</p>\n" +
+    "                                    <p style=\"font-family: monospace;\">./pgc update</p>\n" +
+    "                                </li>\n" +
+    "                                <li>\n" +
+    "                                    <p>Upgrade pgDevOps using the following command </p>\n" +
+    "                                    <p style=\"font-family: monospace;\">./pgc upgrade pgdevops</p>\n" +
+    "                                    <p style=\"font-style: italic;\">The above command may take a couple of minutes based on the speed of the system and network. It shuts down the pgDevOps service, upgrades pgDevOps, and starts the service again.</p>\n" +
+    "                                </li>\n" +
+    "                                <li>\n" +
+    "                                    <p>Verify status of the pgDevOps service</p>\n" +
+    "                                    <p style=\"font-family: monospace;\">&nbsp; ./pgc status pgdevops</p>\n" +
+    "                                    <div class=\"well\">\n" +
+    "                                        <strong><i class=\"fa fa-lightbulb-o fa-lg\" aria-hidden=\"true\"> &nbsp;</i>Other commands you might find useful</strong>\n" +
+    "                                        <br />\n" +
+    "                                        <br />\n" +
+    "                                        <ul>\n" +
+    "                                            <li>\n" +
+    "                                            <p>Start pgDevOps</p>\n" +
+    "                                            <p style=\"font-family: monospace;\">&nbsp; ./pgc start pgdevops</p>\n" +
+    "                                            </li>\n" +
+    "                                            <li>\n" +
+    "                                            <p>Stop pgDevOps</p>\n" +
+    "                                            <p style=\"font-family: monospace;\">&nbsp; ./pgc stop pgdevops</p>\n" +
+    "                                            </li>\n" +
+    "                                            <li>\n" +
+    "                                            <p>Restart pgDevOps</p>\n" +
+    "                                            <p style=\"font-family: monospace;\">&nbsp; ./pgc restart pgdevops</p>\n" +
+    "                                            </li>\n" +
+    "                                        </ul>\n" +
+    "                                    </div>\n" +
+    "                                </li>\n" +
+    "                            </ul>\n" +
+    "                        </div>\n" +
+    "                        <div ng-if=\"os == 'Windows'\">\n" +
+    "                            <h3></h3>\n" +
+    "                            <ul>\n" +
+    "                                <li>\n" +
+    "                                    <p>Open a command prompt as administrator.</p>\n" +
+    "                                    <img src=\"assets/img/component-logos/runAsAdmin.png\">\n" +
+    "                                </li>\n" +
+    "                                <li>\n" +
+    "                                    <p>Go to the installation directory</p>\n" +
+    "                                    <p style=\"font-family: monospace;\">cd {{PGC_HOME}}</p>\n" +
+    "                                </li>\n" +
+    "                                <li>\n" +
+    "                                    <p>Get the latest update related information</p>\n" +
+    "                                    <p style=\"font-family: monospace;\">pgc update</p>\n" +
+    "                                </li>\n" +
+    "                                <li>\n" +
+    "                                    <p>Upgrade pgDevOps using the following command </p>\n" +
+    "                                    <p style=\"font-family: monospace;\">pgc upgrade pgdevops</p>\n" +
+    "                                    <p style=\"font-style: italic;\">The above command may take a couple of minutes based on the speed of the system and network. It shuts down the pgDevOps service, upgrades pgDevOps, and starts the service again.</p>\n" +
+    "                                </li>\n" +
+    "                                <li>\n" +
+    "                                    <p>Verify status of the pgDevOps service</p>\n" +
+    "                                    <p style=\"font-family: monospace;\">&nbsp; pgc status pgdevops</p>\n" +
+    "                                    <div class=\"well\">\n" +
+    "                                        <strong><i class=\"fa fa-lightbulb-o fa-lg\" aria-hidden=\"true\"> &nbsp;</i>Other commands you might find useful</strong>\n" +
+    "                                        <br />\n" +
+    "                                        <br />\n" +
+    "                                        <ul>\n" +
+    "                                            <li>\n" +
+    "                                            <p>Start pgDevOps</p>\n" +
+    "                                            <p style=\"font-family: monospace;\">&nbsp; pgc start pgdevops</p>\n" +
+    "                                            </li>\n" +
+    "                                            <li>\n" +
+    "                                            <p>Stop pgDevOps</p>\n" +
+    "                                            <p style=\"font-family: monospace;\">&nbsp; pgc stop pgdevops</p>\n" +
+    "                                            </li>\n" +
+    "                                            <li>\n" +
+    "                                            <p>Restart pgDevOps</p>\n" +
+    "                                            <p style=\"font-family: monospace;\">&nbsp; pgc restart pgdevops</p>\n" +
+    "                                            </li>\n" +
+    "                                        </ul>\n" +
+    "                                    </div>\n" +
+    "                                </li>\n" +
+    "                            </ul>\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                </uib-tab>\n" +
+    "            </uib-tabset>\n" +
     "        </div>\n" +
-    "</section>")
+    "        <!-- <div class=\"col-sm-offset-11 col-sm-11\" style=\"padding: 10px\">\n" +
+    "            <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
+    "        </div> -->\n" +
+    "</div>")
 
 $templateCache.put("../app/components/partials/detailspg95.html","<!-- Content Header (Page header) -->\n" +
     "<section class=\"content-header\">\n" +
@@ -515,7 +694,7 @@ $templateCache.put("../app/components/partials/detailspg95.html","<!-- Content H
     "       \n" +
     "            <div class=\"nav-tabs-custom\" id=\"comp-details-tabs-wrapper\" ng-controller=\"graphsTabController\">\n" +
     "                <uib-tabset>\n" +
-    "                    <uib-tab heading=\"Overview\" select=\"tabClick($event)\">\n" +
+    "                    <uib-tab heading=\"Overview\"  active=\"activeOverview\">\n" +
     "                        <div class=\"row tab-content graphsTab\" style=\"padding: 15px;\">\n" +
     "                        <div class=\"row\"> \n" +
     "                        <div class=\"col-md-12 col-xs-12\">\n" +
@@ -715,12 +894,12 @@ $templateCache.put("../app/components/partials/detailspg95.html","<!-- Content H
     "                                        </a>\n" +
     "\n" +
     "                                        <a style=\"margin-right: 10px;\" class=\"btn btn-lg btn-default\" ui-sref=\"components.profiler\">\n" +
-    "                                            <i class=\"bgs bgs-lg bgs-plprofiler pull-left\"></i> plProfiler\n" +
+    "                                            <i class=\"bgs bgs-lg bgs-plprofiler pull-left\"></i> plProfiler Console\n" +
     "                                        </a>\n" +
     "\n" +
     "                                        <a class=\"btn btn-lg btn-default\" ui-sref=\"components.badger\">\n" +
     "                                            <i class=\"bgs bgs-lg bgs-pgbadger pull-left\"></i> \n" +
-    "                                            pgBadger\n" +
+    "                                            pgBadger Console\n" +
     "                                        </a>\n" +
     "                                    </div>\n" +
     "                                </div>\n" +
@@ -728,11 +907,11 @@ $templateCache.put("../app/components/partials/detailspg95.html","<!-- Content H
     "                        </div>\n" +
     "                    </div>\n" +
     "                    </uib-tab>\n" +
-    "                    <uib-tab heading=\"Release Notes\" ng-click=\"releaseTabEvent()\">\n" +
+    "                    <uib-tab heading=\"Release Notes\" ng-click=\"releaseTabEvent()\" active=\"activeReleaseNotes\">\n" +
     "                        <div class=\"gridStyle\">\n" +
     "                            <div class=\"box box-primary\">\n" +
     "                                <div class=\"box-body\">\n" +
-    "                                    <div class=\"col-md-12 col-xs-12\">\n" +
+    "                                    <div class=\"col-md-12 col-xs-12\" style=\"height: 700px; overflow: scroll;\">\n" +
     "                                        <span ng-bind-html=\"relnotes\"></span>\n" +
     "                                    </div>\n" +
     "                                </div>\n" +
@@ -786,8 +965,14 @@ $templateCache.put("../app/components/partials/generateBadgerReport.html","<div 
     "</div>")
 
 $templateCache.put("../app/components/partials/globalProfilingModal.html","<div class=\"modal-header\">\n" +
+    "    <div ng-click=\"cancel()\" class=\"close-modal pull-right\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "        <i class=\"fa fa-lg fa-close\"></i>\n" +
+    "    </div>\n" +
     "    <h3 class=\"modal-title\">Global Profiling</h3>\n" +
     "</div>\n" +
+    "<uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" close=\"closeAlert()\" class=\"uib-text\" dismiss-on-timeout=\"8000\">\n" +
+    "        {{alert.msg}}  \n" +
+    "</uib-alert>\n" +
     "<div class=\"modal-body\">\n" +
     "<div ng-if=\"showStatus\">Global Profiling is {{status.status}}</div>\n" +
     "<br />\n" +
@@ -819,11 +1004,14 @@ $templateCache.put("../app/components/partials/globalProfilingModal.html","<div 
     "    </div>\n" +
     "</form>\n" +
     "</div>\n" +
-    "<div class=\"modal-footer\">\n" +
+    "<!-- <div class=\"modal-footer\">\n" +
     "    <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Close</button>\n" +
-    "</div>")
+    "</div> -->")
 
 $templateCache.put("../app/components/partials/hostGraphModal.html","<div class=\"modal-header\">\n" +
+    "	<div ng-click=\"cancel()\" class=\"close-modal pull-right\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "        <i class=\"fa fa-lg fa-close\"></i>\n" +
+    "    </div>\n" +
     "    <h2 class=\"modal-title\" id=\"updateModalLabel\"> {{chartName}} ({{hostName}})</h2>\n" +
     "</div>\n" +
     "<div ng-click=\"cancel()\" class=\"close-modal\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
@@ -838,12 +1026,12 @@ $templateCache.put("../app/components/partials/hostGraphModal.html","<div class=
     "</div>\n" +
     "\n" +
     "<div class=\"modal-footer\">\n" +
-    "    <button class=\"btn btn-danger\" type=\"button\" ng-click=\"cancel()\">Close</button>\n" +
+    "    <!-- <button class=\"btn btn-danger\" type=\"button\" ng-click=\"cancel()\">Close</button> -->\n" +
     "</div>")
 
 $templateCache.put("../app/components/partials/hosts.html","<section class=\"content-header\">\n" +
     "    <h1 class=\"components-update-title-wrapper\">\n" +
-    "        CLOUD HOST MANAGER\n" +
+    "        HOST MANAGER\n" +
     "    </h1>\n" +
     "    <div class=\"btn-group pull-right \" uib-dropdown >\n" +
     "        <button type=\"button\" class=\"btn btn-default\" uib-dropdown-toggle>\n" +
@@ -858,13 +1046,13 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "\n" +
     "<span id=\"components\"></span>\n" +
     "<section class=\"content\">\n" +
-    "    <div ng-if=\"loading\"\n" +
-    "         style=\"position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;\">\n" +
+    "    <div ng-if=\"loading\" style=\"position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;\">\n" +
     "        <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
     "        <span><h3>Loading...</h3></span>\n" +
     "    </div>\n" +
-    "    <span ng-if=\"retry\" style=\"text-align: center;\"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>\n" +
-    "\n" +
+    "    <div class=\"uib-text\" uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" close=\"closeAlert()\" dismiss-on-timeout=\"8000\">\n" +
+    "        This is a beta feature, you need to enable this in <a ui-sref=\"components.settingsView\">settings.</a> \n" +
+    "    </div>\n" +
     "    <div ng-if=\"nothingInstalled\" class=\"jumbotron\"\n" +
     "         style=\"background-color: #fff; margin-top: 15px; text-align: center;\"><h3> You haven't registered any\n" +
     "        hosts.</h3></div>\n" +
@@ -872,19 +1060,19 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "    <div class=\"hostmanager-accordian-wrapper\" ng-if=\"!loading\">\n" +
     "        <div class=\"box\">\n" +
     "            <uib-accordion close-others=\"true\">\n" +
-    "                <uib-accordion-group ng-repeat=\"group in groupsList\" is-open=\"groupOpen\"  ng-init=\"parentIndex = $index\" >\n" +
+    "                <uib-accordion-group ng-repeat=\"group in groupsList\" is-open=\"group.state\"  ng-init=\"parentIndex = $index\" >\n" +
     "                    <uib-accordion-heading>\n" +
-    "                        <span ng-if=\"group.group == 'default'\">\n" +
-    "                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !groupOpen, 'fa fa-minus': groupOpen}\"></i> &nbsp;All Hosts\n" +
+    "                        <span ng-click=\"loadGroup($index)\" ng-if=\"group.group == 'default'\">\n" +
+    "                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !group.state, 'fa fa-minus': group.state}\"></i> &nbsp;All Hosts\n" +
     "                        </span>\n" +
-    "                        <span ng-if=\"group.group != 'default'\">\n" +
-    "                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !groupOpen, 'fa fa-minus': groupOpen}\"></i>&nbsp; {{group.group}}\n" +
+    "                        <span ng-click=\"loadGroup($index)\" ng-if=\"group.group != 'default'\">\n" +
+    "                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !group.state, 'fa fa-minus': group.state}\"></i>&nbsp; {{group.group}}\n" +
     "                        </span>\n" +
     "                            <div class=\"pull-right\" style=\"margin-top: -10px\">\n" +
     "                                &nbsp;\n" +
     "                                <div class=\"btn-group\" uib-dropdown >\n" +
-    "                                    <button id=\"split-button \" type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); openGroupsModal($index)\" class=\"btn btn-default \" ng-disabled=\"group.group=='default'\" >Edit Group</button>\n" +
-    "                                    <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation()\" class=\"btn btn-default \" ng-disabled=\"group.group=='default'\"  uib-dropdown-toggle>\n" +
+    "                                    <button id=\"split-button \" type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); openGroupsModal($index)\" class=\"btn btn-default \" ng-if=\"group.group!='default'\" >Edit Group</button>\n" +
+    "                                    <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation()\" class=\"btn btn-default \" ng-if=\"group.group!='default'\"  uib-dropdown-toggle>\n" +
     "                                        <span class=\"caret \"></span>\n" +
     "                                        <span class=\"sr-only \">Split button!</span>\n" +
     "                                    </button>\n" +
@@ -897,26 +1085,26 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "                    <div class=\"col-md-12\">\n" +
     "                        <div ng-if=\"group.hosts.length == 0\">There are no servers added in this group.</div>\n" +
     "                        <uib-accordion close-others=\"true\" >\n" +
-    "                            <uib-accordion-group ng-repeat=\"host in group.hosts\" is-open=\"hostOpen\">\n" +
+    "                            <uib-accordion-group ng-repeat=\"host in group.hosts\" is-open=\"host.state\" ng-init=\"hostIndex = $index\">\n" +
     "                                <uib-accordion-heading>\n" +
-    "                                        <span ng-click=\"loadHost(parentIndex, $index, false)\" ng-if=\"host.host != 'localhost' && host.name != host.host\"> &nbsp; {{host.name}} &nbsp; ({{ host.host }})\n" +
+    "                                        <span ng-click=\"loadHost(parentIndex, $index, false); stopCalls()\" ng-if=\"host.host != 'localhost' && host.name != host.host\"> &nbsp; {{host.name}} &nbsp; ({{ host.host }})\n" +
     "                                            &nbsp; &nbsp; &nbsp;\n" +
     "                                            {{host.hostInfo.os}} {{ host.hostInfo.mem }} GB, {{ host.hostInfo.cores }} x {{host.hostInfo.cpu}}\n" +
-    "                                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !hostOpen, 'fa fa-minus': hostOpen}\"></i>\n" +
+    "                                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !host.state, 'fa fa-minus': host.state}\"></i>\n" +
     "                                        </span>\n" +
-    "                                        <span ng-click=\"loadHost(parentIndex, $index, false)\" ng-if=\"host.host == 'localhost' || host.name == host.host\"> &nbsp; {{host.host}}  \n" +
+    "                                        <span ng-click=\"loadHost(parentIndex, $index, false); stopCalls()\" ng-if=\"host.host == 'localhost' || host.name == host.host\"> &nbsp; {{host.host}}  \n" +
     "                                            &nbsp; &nbsp; &nbsp;\n" +
     "                                            {{host.hostInfo.os}} {{ host.hostInfo.mem }} GB, {{ host.hostInfo.cores }} x {{host.hostInfo.cpu}}\n" +
-    "                                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !hostOpen, 'fa fa-minus': hostOpen}\"></i>\n" +
+    "                                            <i class=\"pull-left glyphicon\" ng-class=\"{'fa fa-plus': !host.state, 'fa fa-minus': host.state}\"></i>\n" +
     "                                        </span>\n" +
     "                                        <div class=\"pull-right\" style=\"margin-top: -10px\">\n" +
     "                                            &nbsp;\n" +
-    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); loadHost(parentIndex,$index,true)\" class=\"btn btn-default\" ng-if=\"hostOpen\">Refresh</button>&nbsp;\n" +
-    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)\" class=\"btn btn-default\" ng-if=\"hostOpen\" class=\"ng-binding\" href=\"\" >Components</button>&nbsp;\n" +
-    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); showTop($index)\" class=\"btn btn-default\" ng-if=\"hostOpen\" class=\"ng-binding\" href=\"\">Top</button>&nbsp;\n" +
+    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); loadHost(parentIndex,$index,true)\" class=\"btn btn-default\" ng-if=\"host.state\">Refresh</button>&nbsp;\n" +
+    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)\" class=\"btn btn-default\" ng-if=\"host.state\" class=\"ng-binding\" href=\"\" >Package Manager</button>&nbsp;\n" +
+    "                                            <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); showTop($index)\" class=\"btn btn-default\" ng-if=\"host.state\" class=\"ng-binding\" href=\"\">Top</button>&nbsp;\n" +
     "                                            <div class=\"btn-group\" uib-dropdown >\n" +
-    "                                                <button id=\"split-button \" type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); open(parentIndex, $index)\" class=\"btn btn-default \" ng-disabled=\"host.host=='localhost'\" >Edit Host</button>\n" +
-    "                                                <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation()\" class=\"btn btn-default \" ng-disabled=\"host.host=='localhost'\"  uib-dropdown-toggle>\n" +
+    "                                                <button id=\"split-button \" type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation(); open(parentIndex, $index)\" class=\"btn btn-default \" ng-if=\"host.host!='localhost'\" >Edit Host</button>\n" +
+    "                                                <button type=\"button\" ng-click=\"$event.stopPropagation();$event.preventDefault();openNewLocation()\" class=\"btn btn-default \" ng-if=\"host.host!='localhost'\"  uib-dropdown-toggle>\n" +
     "                                                    <span class=\"caret \"></span>\n" +
     "                                                    <span class=\"sr-only \">Split button!</span>\n" +
     "                                                </button>\n" +
@@ -927,7 +1115,7 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "                                        </div>\n" +
     "                                </uib-accordion-heading>\n" +
     "\n" +
-    "                                <div class=\"col-md-6 col-sm-12 col-xs-12\" ng-if=\"host.hostInfo.home\">\n" +
+    "                                <div class=\"col-md-7 col-sm-12 col-xs-12\" ng-if=\"host.hostInfo.home\">\n" +
     "\n" +
     "                                    <!-- <span style=\"float: right;\" ng-click=\"loadHost(parentIndex, $index,true)\">\n" +
     "\n" +
@@ -958,16 +1146,16 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "                                    </p>\n" +
     "                                </div>\n" +
     "\n" +
-    "                                <div ng-if=\"!host.comps\">\n" +
+    "                                <div ng-if=\"hostStatus\">\n" +
     "                                    <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
     "                                    <span><h3>Loading...</h3></span>\n" +
     "                                </div> \n" +
+    "                                <span ng-if=\"retry\" style=\"text-align: center;\"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>\n" +
     "\n" +
-    "                                <div class=\"col-md-6 col-sm-12 col-xs-12\" ng-if=\"host.comps\">\n" +
+    "                                <div class=\"col-md-5 col-sm-12 col-xs-12\" ng-if=\"host.comps\">\n" +
     "                                    <div ng-if=\"host.showMsg\" class=\"jumbotron\"\n" +
     "                                         style=\"background-color: #fff; margin-top: 15px; text-align: center;\">\n" +
-    "                                        <h4> No PostgreSQL or server components installed.<br \\> Visit the <a ng-click=\"UpdateManager($index)\" href=\"\">Update\n" +
-    "                                            Manager</a> to install components.</h4>\n" +
+    "                                        <h4> No PostgreSQL or server components installed.<br \\> Visit the <a ng-click=\"UpdateManager($index)\" href=\"\">Package Manager</a> to install components.</h4>\n" +
     "                                    </div>\n" +
     "                                    <div class=\"box\" ng-if='host.showMsg == false'>\n" +
     "                                        <div class=\"box-header with-border\">\n" +
@@ -977,17 +1165,17 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "                                            <table class=\"table\" id=\"serversTable\">\n" +
     "                                                <thead>\n" +
     "                                                <tr>\n" +
-    "                                                    <th class=\"col-md-3 col-xs-3\">Component</th>\n" +
-    "                                                    <th class=\"col-md-5 col-xs-5\">Status</th>\n" +
-    "                                                    <th class=\"col-md-1 col-xs-1\"></th>\n" +
+    "                                                    <th class=\"col-md-2 col-xs-2\">Component</th>\n" +
+    "                                                    <th class=\"col-md-6 col-xs-6\">Status</th>\n" +
+    "                                                    <!-- <th class=\"col-md-1 col-xs-1\"></th> -->\n" +
     "                                                    <th class=\"col-md-3 col-xs-3\">Actions</th>\n" +
     "                                                </tr>\n" +
     "                                                </thead>\n" +
     "                                                <tbody id=\"serversTableBody\">\n" +
-    "                                                <tr ng-repeat=\"comp in host.comps\" ng-if=\"comp.component != 'devops'\">\n" +
-    "                                                    <td class=\"col-md-3 col-xs-3\">\n" +
+    "                                                <tr ng-repeat=\"comp in host.comps\" ng-if=\"comp.component != 'pgdevops'\">\n" +
+    "                                                    <td class=\"col-md-1 col-xs-2\">\n" +
     "                                                        <div ng-if=\"comp.category != 1\">\n" +
-    "                                                            <a ui-sref=\"components.detailsView({component:comp.component}) \" ng-click=\"changeHost(host.host)\">\n" +
+    "                                                            <a ng-click=\"changeHost(host.host); openDetailsModal(comp.component)\">\n" +
     "                                                                {{ comp.component }}\n" +
     "                                                            </a>\n" +
     "                                                        </div>\n" +
@@ -997,19 +1185,19 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "                                                            </a>\n" +
     "                                                        </div>\n" +
     "                                                    </td>\n" +
-    "                                                    <td class=\"col-md-5 col-xs-5\"><i ng-class=\"statusColors[comp.state]\"\n" +
-    "                                                                                     style=\"margin-top:2px;margin-right:10px\"\n" +
-    "                                                                                     class=\"fa fa-stop fa-2x pull-left\"></i>\n" +
-    "\n" +
-    "                                                        <div style=\"margin-top: 5px\" ng-show=\"comp.port\">{{ comp.state }} on\n" +
-    "                                                            port {{ comp.port }}</div>\n" +
+    "                                                    <td class=\"col-md-6 col-xs-6\" style=\"white-space: nowrap;\">\n" +
+    "                                                        <i ng-class=\"statusColors[comp.state]\" style=\"margin-top:2px;margin-right:10px\" class=\"fa fa-stop fa-2x pull-left\" ng-hide=\"comp.showingSpinner\"></i>\n" +
+    "                                                        <div style=\"margin-top: 5px\" ng-show=\"comp.port && !comp.showingSpinner\">{{ comp.state }} on port {{ comp.port }}</div>\n" +
     "                                                        <div style=\"margin-top: 5px\" ng-show=\"!comp.port\">{{ comp.state }}</div>\n" +
+    "                                                        <span ng-show=\"comp.showingSpinner\">\n" +
+    "                                                            <i class='fa fa-spinner fa-2x  fa-pulse'></i>\n" +
+    "                                                        </span>\n" +
     "                                                    </td>\n" +
-    "                                                    <td class=\"col-md-1 col-xs-1\">\n" +
+    "                                                    <!-- <td class=\"col-md-1 col-xs-1\">\n" +
     "                                                        <span ng-show=\"comp.showingSpinner\"><i\n" +
     "                                                                class='fa fa-spinner fa-2x  fa-pulse'></i></span>\n" +
-    "                                                    </td>\n" +
-    "                                                    <td class=\"col-md-3 col-xs-3\" value=\"{{ comp.component }}\" ng-click=\"action( $event, host.host)\">\n" +
+    "                                                    </td> -->\n" +
+    "                                                    <td class=\"col-md-5 col-xs-3\" value=\"{{ comp.component }}\" ng-click=\"action( $event, host.host)\">\n" +
     "                                                        <a class=\"btn btn-default\" ng-show=\"comp.state =='Not Initialized' \" ng-click=\"openInitPopup(comp.component)\"\n" +
     "                                                           ng-disabled=\" comp.showingSpinner != undefined\">Initialize</a>\n" +
     "                                                        <a class=\"btn btn-default\" id=\"install\" ng-show=\"comp.state =='Stopped'\"\n" +
@@ -1017,16 +1205,16 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "\n" +
     "                                                        <div class=\"btn-group\" uib-dropdown ng-show=\"comp.state =='Running'\">\n" +
     "                                                            <button id=\"split-button\" type=\"button\" class=\"btn btn-default\"\n" +
-    "                                                                    ng-disabled=\"{{ comp.component=='devops' }}\">Action\n" +
+    "                                                                    ng-disabled=\" comp.showingSpinner != undefined\">Action\n" +
     "                                                            </button>\n" +
     "                                                            <button type=\"button\" class=\"btn btn-default\" uib-dropdown-toggle\n" +
-    "                                                                    ng-disabled=\"{{ comp.component=='devops' }}\">\n" +
+    "                                                                    ng-disabled=\" comp.showingSpinner != undefined\" ng-click=\"stopServerCall()\">\n" +
     "                                                                <span class=\"caret\"></span>\n" +
     "                                                                <span class=\"sr-only\">Split button!</span>\n" +
     "                                                            </button>\n" +
     "                                                            <ul uib-dropdown-menu role=\"menu\" aria-labelledby=\"split-button\">\n" +
-    "                                                                <li role=\"menuitem\"><a>Stop</a></li>\n" +
-    "                                                                <li role=\"menuitem\"><a>Restart</a></li>\n" +
+    "                                                                <li role=\"menuitem\" ng-click=\"startServerCall(parentIndex, hostIndex )\"><a>Stop</a></li>\n" +
+    "                                                                <li role=\"menuitem\" ng-click=\"startServerCall(parentIndex, hostIndex )\"><a>Restart</a></li>\n" +
     "                                                            </ul>\n" +
     "                                                        </div>\n" +
     "                                                    </td>\n" +
@@ -1046,56 +1234,79 @@ $templateCache.put("../app/components/partials/hosts.html","<section class=\"con
     "\n" +
     "</section>")
 
-$templateCache.put("../app/components/partials/landingPage.html","<section class=\"content\">\n" +
+$templateCache.put("../app/components/partials/landingPage.html","<section class=\"content-header\">\n" +
+    "    <h1 class=\"components-update-title-wrapper\">\n" +
+    "        Dashboard\n" +
+    "    </h1>\n" +
+    "</section>\n" +
+    "<section class=\"content\">\n" +
     "    <div ng-if=\"bamLoading\" style=\"position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;\">\n" +
     "        <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
     "        <span><h3>Loading...</h3></span>\n" +
     "    </div>\n" +
     "    <div ng-if=\"!bamLoading\">\n" +
     "        <div class=\"row\">\n" +
-    "            <div class=\"col-md-2 col-sm-3 col-xs-6\" ng-if=\"pgComp\">\n" +
-    "                <a href=\"#/details-pg/{{pgComp}}\" class=\"thumbnail\">\n" +
-    "                    <img src=\"assets/img/pg-sloni.png\" alt=\"\">\n" +
+    "            <div class=\"col-md-2 col-sm-3 col-xs-6\" ng-if=\"pgComp\" ng-repeat=\"comp in pgComp\">\n" +
+    "                <a href=\"#/details-pg/{{comp.component}}\" class=\"thumbnail\">\n" +
+    "                    <img class=\"img-responsive\" src=\"assets/img/pgdevops-postgres.png\" alt=\"\">\n" +
     "                    <div class=\"caption\">\n" +
-    "                        <h4 style=\"text-align:center;\">{{pgComp}}</h4>\n" +
+    "                        <h4 class=\"home-page-tile-name\">{{comp.component}}</h4>\n" +
     "                    </div>\n" +
     "                </a>\n" +
     "            </div>\n" +
     "            <div class=\"col-md-2 col-sm-3 col-xs-6\">\n" +
     "                <a href=\"/admin\" class=\"thumbnail\">\n" +
-    "                    <img src=\"assets/img/pgadmin4-web.png\" alt=\"\">\n" +
+    "                    <img class=\"img-responsive\" src=\"assets/img/pgadmin4-web.png\" alt=\"\">\n" +
     "                    <div class=\"caption\">\n" +
-    "                        <h4 style=\"text-align:center;\">pgAdmin4 Web</h4>\n" +
+    "                        <h4 class=\"home-page-tile-name\">pgAdmin4 Web</h4>\n" +
     "                    </div>\n" +
     "                </a>\n" +
     "            </div>\n" +
     "            <div class=\"col-md-2 col-sm-3 col-xs-6\">\n" +
-    "                <a ui-sref=\"components.profiler\" class=\"thumbnail\">\n" +
-    "                    <img src=\"assets/img/pl-profiler-opt-1.png\" alt=\"\">\n" +
+    "                <a ui-sref=\"components.view\" class=\"thumbnail\">\n" +
+    "                    <img class=\"img-responsive\" src=\"assets/img/pgdevops-pkg-mgr.png\" alt=\"\">\n" +
     "                    <div class=\"caption\">\n" +
-    "                        <h4 style=\"text-align:center;\">plProfiler</h4>\n" +
+    "                        <h4 class=\"home-page-tile-name\">Package Manager</h4>\n" +
     "                    </div>\n" +
     "                </a>\n" +
     "            </div>\n" +
     "            <div class=\"col-md-2 col-sm-3 col-xs-6\">\n" +
     "                <a ui-sref=\"components.badger\" class=\"thumbnail\">\n" +
-    "                    <img src=\"assets/img/pg-badger-logo.png\" alt=\"\">\n" +
+    "                    <img class=\"img-responsive\" src=\"assets/img/pgbadger-lg.png\" alt=\"\">\n" +
     "                    <div class=\"caption\">\n" +
-    "                        <h4 style=\"text-align:center;\">pgBadger</h4>\n" +
+    "                        <h4 class=\"home-page-tile-name\">pgBadger Console</h4>\n" +
+    "                    </div>\n" +
+    "                </a>\n" +
+    "            </div>\n" +
+    "            <div class=\"col-md-2 col-sm-3 col-xs-6\">\n" +
+    "                <a ui-sref=\"components.profiler\" class=\"thumbnail\">\n" +
+    "                    <img class=\"img-responsive\" src=\"assets/img/pl-profiler-opt-1.png\" alt=\"\">\n" +
+    "                    <div class=\"caption\">\n" +
+    "                        <h4 class=\"home-page-tile-name\">plProfiler Console</h4>\n" +
+    "                    </div>\n" +
+    "                </a>\n" +
+    "            </div>\n" +
+    "            <div class=\"col-md-2 col-sm-3 col-xs-6\">\n" +
+    "                <a ui-sref=\"components.componentLog({component:'pgcli'})\" class=\"thumbnail\">\n" +
+    "                    <div style=\"text-align: center;\">\n" +
+    "                        <img class=\"img-responsive\" src=\"assets/img/pgdevops-logtailer.png\" alt=\"\">\n" +
+    "                    </div>\n" +
+    "                    <div class=\"caption\">\n" +
+    "                        <h4 class=\"home-page-tile-name\">Log Tailer</h4>\n" +
     "                    </div>\n" +
     "                </a>\n" +
     "            </div>\n" +
     "            <div class=\"col-md-2 col-sm-3 col-xs-6\">\n" +
     "                <a ui-sref=\"components.hosts\" class=\"thumbnail\">\n" +
-    "                    <img src=\"assets/img/cloud-mgr-2.png\" alt=\"\">\n" +
+    "                    <img class=\"img-responsive\" src=\"assets/img/cloud-mgr-lg.png\" alt=\"\">\n" +
     "                    <div class=\"caption\">\n" +
-    "                        <h4 style=\"text-align:center;\">Cloud Manager</h4>\n" +
+    "                        <h4 class=\"home-page-tile-name\">Host Manager</h4>\n" +
     "                    </div>\n" +
     "                </a>\n" +
     "            </div>\n" +
     "        </div>\n" +
     "\n" +
-    "    <hr style=\"background-color: #fff; border-top: 1px solid #8c8b8b; margin-top: 90px;\">\n" +
+    "    <!-- <hr style=\"background-color: #fff; border-top: 1px solid #8c8b8b; margin-top: 90px;\">\n" +
     "\n" +
     "\n" +
     "        <div class=\"row\">\n" +
@@ -1107,7 +1318,7 @@ $templateCache.put("../app/components/partials/landingPage.html","<section class
     "            </div>\n" +
     "        </div>\n" +
     "\n" +
-    "    </div>\n" +
+    "    </div> -->\n" +
     "</section>\n" +
     "")
 
@@ -1147,11 +1358,12 @@ $templateCache.put("../app/components/partials/log.html","<section class=\"conte
     "                            </div>\n" +
     "                        </div>\n" +
     "                        <div class=\"col-sm-2\">\n" +
-    "                            <input type=\"checkbox\" value=\"checked\" ng-model=\"checked\" ng-checked=\"true\" ng-click=\"stopScrolling($event)\"> Auto Scroll</input>\n" +
+    "                            <!-- <input type=\"checkbox\" value=\"checked\" ng-model=\"checked\" ng-checked=\"true\" ng-click=\"stopScrolling($event)\"> Auto Scroll</input> -->\n" +
+    "                            <div class=\"pull-right\" ng-click=\"action(tab)\"> <i class=\"fa fa-refresh fa-fw\"></i>Refresh</div>\n" +
     "                            </div>\n" +
     "                        </div>\n" +
     "                        <div class=\"form-group\">\n" +
-    "                            <div class=\"col-md-6\">\n" +
+    "                            <div class=\"col-md-12\">\n" +
     "                                <strong> Log File :</strong>&nbsp;&nbsp;<span>{{selectedLog}}</span>\n" +
     "                            </div>\n" +
     "                        </div>\n" +
@@ -1161,7 +1373,7 @@ $templateCache.put("../app/components/partials/log.html","<section class=\"conte
     "            </div>\n" +
     "            <div class=\"box\">\n" +
     "                <div class=\"box-body\" style=\"overflow: auto;\">\n" +
-    "                    <div style=\"background-color: #fff; height: 400px; overflow: auto;\" id=\"logviewer\">\n" +
+    "                    <div style=\"background-color: #fff; height: 400px; overflow: auto;\" ng-bind-html=\"logFile\" id=\"logviewer\">\n" +
     "                    </div>\n" +
     "                </div>\n" +
     "                <!-- /.box-body -->\n" +
@@ -1174,6 +1386,9 @@ $templateCache.put("../app/components/partials/log.html","<section class=\"conte
     "")
 
 $templateCache.put("../app/components/partials/loggingParam.html","<div class=\"modal-header\">\n" +
+    "    <div ng-click=\"cancel()\" class=\"close-modal pull-right\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "        <i class=\"fa fa-lg fa-close\"></i>\n" +
+    "    </div>\n" +
     "    <h3 class=\"modal-title\">Set Logging Parameters</h3>\n" +
     "</div>\n" +
     "<div class=\"modal-body\">\n" +
@@ -1233,7 +1448,7 @@ $templateCache.put("../app/components/partials/loggingParam.html","<div class=\"
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
     "    <button class=\"btn btn-primary\" type=\"button\" ng-click=\"save(changedVales, comp)\">Save & Reload</button>\n" +
-    "    <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
+    "    <!-- <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button> -->\n" +
     "</div>")
 
 $templateCache.put("../app/components/partials/pgInitialize.html","<div class=\"modal-header\">\n" +
@@ -1247,39 +1462,40 @@ $templateCache.put("../app/components/partials/pgInitialize.html","<div class=\"
     "	  <div class=\"form-group\">\n" +
     "	    <label for=\"password\" class=\"col-sm-4 control-label\">Password</label>\n" +
     "	    <div class=\"col-sm-6\">\n" +
-    "	      <input type=\"password\"  class=\"form-control\" id=\"password\" name=\"password\" ng-model=\"formData.password\" required />\n" +
+    "	      <input type=\"password\"  class=\"form-control\" id=\"password\" name=\"password\" ng-model=\"formData.password\" ng-disabled=\"initializing\" required />\n" +
     "	    </div>\n" +
     "	  </div>\n" +
     "	  <div class=\"form-group\">\n" +
     "	    <label for=\"password_c\" class=\"col-sm-4 control-label\">Retype Password</label>\n" +
     "	    <div class=\"col-sm-6\">\n" +
-    "	      <input type=\"password\" class=\"form-control\" id=\"password_c\" name=\"password_c\" ng-model=\"formData.password_c\" valid-password-c required  />\n" +
+    "	      <input type=\"password\" class=\"form-control\" id=\"password_c\" name=\"password_c\" ng-model=\"formData.password_c\"  ng-disabled=\"initializing\"valid-password-c required  />\n" +
     "	      <span ng-show=\"!initForm.password_c.$error.required && initForm.password_c.$error.noMatch && initForm.password.$dirty\">Passwords do not match.</span>\n" +
     "	    </div>\n" +
     "	  </div>\n" +
     "	  <div class=\"form-group\">\n" +
     "	  	<label for=\"dataDir\" class=\"col-sm-4 control-label\">Data Directory</label>\n" +
     "	  	<div class=\"col-sm-6\">\n" +
-    "	  		<input type=\"text\" class=\"form-control\" name=\"dataDir\" ng-disabled=\"true\" ng-model=\"dataDir\" value=\"{{dataDir}}\" />\n" +
+    "	  		<input type=\"text\" class=\"form-control\" name=\"dataDir\" ng-disabled=\"true\" ng-model=\"dataDir\" />\n" +
     "	  	</div>\n" +
     "	  </div>\n" +
     "	  <div class=\"form-group\">\n" +
     "	  		<label for=\"portNumber\" class=\"col-sm-4 control-label\">Port Number</label>\n" +
     "	  		<div class=\"col-sm-6\">\n" +
-    "	  			<input type=\"text\" class=\"form-control\" id=\"portNumber\" name=\"portNumber\" ng-model=\"portNumber\" value=\"{{initForm.portNumber.$viewValue}}\" valid-port />\n" +
+    "	  			<input type=\"text\" class=\"form-control\" id=\"portNumber\" ng-disabled=\"initializing\" name=\"portNumber\" ng-model=\"portNumber\" value=\"{{initForm.portNumber.$viewValue}}\" valid-port />\n" +
     "	  			<span ng-show=\"!!initForm.portNumber.$error.invalidLen\">Port must be between 1000 and 9999.</span>\n" +
     "	  		</div>\n" +
     "	  </div>\n" +
-    "	  <div class=\"form-group\">\n" +
+    "	  <div class=\"form-group\" ng-if=\"autoStartButton\">\n" +
     "	  		<label for=\"autoStart\" class=\"col-sm-4 control-label\">Auto Start</label>\n" +
     "	  		<div class=\"col-sm-6 autostart-input\">\n" +
-    "	  			<input type=\"checkbox\" ng-model=\"autostart\" ng-disabled=\"autostartDisable\" ng-change=\"autostartChange(autostart)\" />\n" +
+    "	  			<input type=\"checkbox\" ng-model=\"autostart\" ng-disabled=\"autostartDisable || initializing\" ng-change=\"autostartChange(autostart)\" />\n" +
     "	  		</div>\n" +
     "	  </div>\n" +
     "	  <div class=\"form-group\">\n" +
     "	    <div class=\"col-sm-offset-8 col-sm-10\">\n" +
-    "	    	<button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
-    "			<button type=\"submit\" class=\"btn btn-primary\" ng-disabled=\"!(initForm.password.$valid && initForm.password.$viewValue == initForm.password_c.$viewValue)\" ng-click=\"init() \">Start</button>\n" +
+    "	    	<button ng-if=\"!initializing\" class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
+    "			<button ng-if=\"!initializing\" type=\"submit\" class=\"btn btn-primary\" ng-disabled=\"!(initForm.password.$valid && initForm.password.$viewValue == initForm.password_c.$viewValue)\" ng-click=\"init() \">Start</button>\n" +
+    "			<span ng-if=\"initializing\"><i class='fa fa-spinner fa-2x  fa-pulse'></i>&nbsp;Starting..</span>\n" +
     "	    </div>\n" +
     "	  </div>\n" +
     "	</form>\n" +
@@ -1292,21 +1508,75 @@ $templateCache.put("../app/components/partials/profiler.html","<section class=\"
     "</section>\n" +
     "\n" +
     "<section class=\"content\">\n" +
+    "    <uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" close=\"closeAlert()\" class=\"uib-text\">\n" +
+    "        {{alert.msg}}  \n" +
+    "        <a ng-click=\"openDetailsModal()\" ng-if=\"!alert.pgComp\">Click here to install</a> \n" +
+    "        <a ui-sref=\"components.view\" ng-if=\"alert.pgComp\">Click here to install</a>\n" +
+    "    </uib-alert>\n" +
+    "    <uib-alert ng-repeat=\"alert in successAlerts\" type=\"{{alert.type}}\" close=\"closeAlert()\" class=\"uib-text\" dismiss-on-timeout=\"8000\">\n" +
+    "        {{alert.msg}}  \n" +
+    "    </uib-alert>\n" +
+    "    <uib-alert ng-repeat=\"alert in extensionAlerts\" type=\"{{startAlert.type}}\" close=\"closeAlert()\" class=\"uib-text\">\n" +
+    "            {{alert.msg }} <button ng-if=\"alert.showBtns\" class=\"btn btn-default btn-sm\" ng-click=\"createExtension(); closeAlert()\" >Yes</button> <button ng-if=\"alert.showBtns\" class=\"btn btn-default btn-sm\" ng-click=\"closeAlert()\">No</button>\n" +
+    "        </uib-alert>\n" +
     "    <div class=\"row\">\n" +
-    "    <div class=\"col-md-3 col-sm-6 col-xs-12\">\n" +
+    "    <div class=\"col-md-4 col-sm-6 col-xs-12\">\n" +
     "        <div class=\"box\">\n" +
+    "            <!-- <div class=\"box-header with-border\">\n" +
+    "                <div class=\"col-md-12\">\n" +
+    "                    <strong class=\"pull-left\"> Settings</strong>\n" +
+    "                    <a class=\"pull-right\" ng-click=\"openDetailsModal()\">About plProfiler</a>\n" +
+    "                </div>\n" +
+    "            </div> -->\n" +
+    "            <!-- <div class=\"box-body\">\n" +
+    "                <form class=\"form plProfiler-form\">\n" +
+    "                    <div class=\"form-group\">\n" +
+    "                        <div class=\"col-md-4 col-sm-3 col-xs-3\">\n" +
+    "                            <select class=\"form-control\" id=\"logComponents\" ng-model=\"selectComp\" ng-change=\"onSelectChange(selectComp)\">\n" +
+    "                                <option value=\"\">Select Instance</option>\n" +
+    "                                <option value=\"{{c.component}}\" ng-repeat=\"c in components\">{{c.component}}</option>\n" +
+    "                            </select>\n" +
+    "                            <span class=\"required-pgbadger-form\">*</span>\n" +
+    "                        </div>\n" +
+    "                        <br>\n" +
+    "                        <br>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"form-group\">\n" +
+    "                        <div class=\"col-md-4 col-sm-3 col-xs-3\">\n" +
+    "                            <select class=\"form-control\" id=\"logComponents\" ng-model=\"selectDatabase\" ng-change=\"onDatabaseChange(selectDatabase)\">\n" +
+    "                                <option value=\"\">Select Database</option>\n" +
+    "                                <option value=\"{{c.datname}}\" ng-repeat=\"c in databases\">{{c.datname}}</option>\n" +
+    "                            </select>\n" +
+    "                            <span class=\"required-pgbadger-form\">*</span>\n" +
+    "                            <br>\n" +
+    "                            <br>\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"form-group\">\n" +
+    "                        <div class=\"col-md-4 col-sm-3 col-xs-3\">\n" +
+    "                            <input type=\"text\" ng-model=\"pgPort\" required class=\"form-control\" placeholder=\"DB Port\">\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                </form>\n" +
+    "            </div>\n" +
+    "            </div> -->\n" +
     "            <div class=\"box-header with-border\">\n" +
-    "                <strong>Connection Information</strong>\n" +
+    "            <div class=\"pull-left\" ng-click=\"refreshFields(selectComp)\"><i class=\"fa fa-refresh fa-fw\">&nbsp;</i>Refresh</div>\n" +
+    "                <a class=\"pull-right\" ng-click=\"openDetailsModal()\">About plProfiler</a>\n" +
     "            </div>\n" +
     "            <div class=\"box-body\">\n" +
     "                <form class=\"form plProfiler-form\">\n" +
     "                    <div class=\"col-md-12\">\n" +
-    "                    <div class=\"form-group\">\n" +
-    "                        <input type=\"text\" ng-model=\"hostName\" required class=\"form-control\" placeholder=\"Hostname\">\n" +
-    "                        <span class=\"required-plprofiler-form\">*</span>\n" +
+    "                    <label class=\"col-md-7 col-sm-6 col-xs-6\">Cluster Instance</label>\n" +
+    "                    <div class=\"form-group col-md-5 col-sm-6 col-xs-6\">\n" +
+    "                        <select class=\"form-control\" id=\"logComponents\" ng-disabled=\"refreshingFields\" ng-model=\"selectComp\" ng-change=\"onSelectChange(selectComp)\">\n" +
+    "                            <option value=\"\">Select</option>\n" +
+    "                            <option value=\"{{c.component}}\" ng-repeat=\"c in components\">{{c.component}}</option>\n" +
+    "                        </select>\n" +
+    "                        <span class=\"required-plprofiler-form\" style=\"right: 0px !important\">*</span>\n" +
     "                    </div>\n" +
     "                    </div>\n" +
-    "                    <div class=\"col-md-12\">\n" +
+    "                    <!-- <div class=\"col-md-12\">\n" +
     "                    <div class=\"form-group\">\n" +
     "                        <input type=\"text\" ng-model=\"pgUser\" required class=\"form-control\" placeholder=\"DB User\">\n" +
     "                        <span class=\"required-plprofiler-form\">*</span>\n" +
@@ -1316,18 +1586,24 @@ $templateCache.put("../app/components/partials/profiler.html","<section class=\"
     "                    <div class=\"form-group\">\n" +
     "                        <input type=\"password\" ng-model=\"pgPass\" class=\"form-control\" placeholder=\"DB Password\">\n" +
     "                    </div>\n" +
+    "                    </div> -->\n" +
+    "                    <div class=\"col-md-12\">\n" +
+    "                    <label class=\"col-md-7 col-sm-6 col-xs-6\">Database</label>\n" +
+    "                    <div class=\"form-group col-md-5 col-sm-6 col-xs-6\">\n" +
+    "                        <select ng-disabled=\"!selectComp || refreshingFields\" class=\"form-control\" id=\"logComponents\" ng-model=\"selectDatabase\" ng-change=\"onDatabaseChange(selectDatabase)\">\n" +
+    "                            <option value=\"\">Select</option>\n" +
+    "                            <option value=\"{{c.datname}}\" ng-repeat=\"c in databases\">{{c.datname}}</option>\n" +
+    "                        </select>\n" +
+    "                        <span class=\"required-plprofiler-form\" style=\"right: 0px !important\">*</span>\n" +
+    "                    </div>\n" +
     "                    </div>\n" +
     "                    <div class=\"col-md-12\">\n" +
-    "                    <div class=\"form-group\">\n" +
-    "                        <input type=\"text\" ng-model=\"pgDB\" required class=\"form-control\" placeholder=\"DB Name\">\n" +
+    "                    <div class=\"form-group col-md-12\" ng-if=\"status && selectDatabase && !refreshingFields\">Global Profiling is {{status.status}}</div>\n" +
+    "                    <div class=\"form-group col-md-12\" ng-if=\"refreshingFields\"><i class='fa fa-spinner fa-2x  fa-pulse'></i> Refreshing fields...</div>\n" +
+    "                    <!-- <div class=\"form-group\">\n" +
+    "                        <input ng-disabled=\"!selectComp\" type=\"text\" ng-model=\"pgPort\" required class=\"form-control\" placeholder=\"DB Port\">\n" +
     "                        <span class=\"required-plprofiler-form\">*</span>\n" +
-    "                    </div>\n" +
-    "                    </div>\n" +
-    "                    <div class=\"col-md-12\">\n" +
-    "                    <div class=\"form-group\">\n" +
-    "                        <input type=\"text\" ng-model=\"pgPort\" required class=\"form-control\" placeholder=\"DB Port\">\n" +
-    "                        <span class=\"required-plprofiler-form\">*</span>\n" +
-    "                    </div>\n" +
+    "                    </div> -->\n" +
     "                    </div>\n" +
     "                </form>\n" +
     "                <div class=\"text-left col-md-12\">\n" +
@@ -1335,53 +1611,58 @@ $templateCache.put("../app/components/partials/profiler.html","<section class=\"
     "                </div>\n" +
     "            </div>\n" +
     "        </div>\n" +
-    "\n" +
-    "        <button class=\"btn btn-default pull-left\" ng-disabled=\"!(hostName && pgUser && pgDB && pgPort)\" ng-click=\"queryProfiler(hostName, pgUser, pgPass, pgDB, pgPort, pgTitle, pgDesc)\"> Statement Profiling </button>\n" +
-    "        <button class=\"btn btn-default pull-right\" ng-disabled=\"!(hostName && pgUser && pgDB && pgPort)\" ng-click=\"globalProfiling(hostName, pgUser, pgPass, pgDB, pgPort, pgTitle, pgDesc)\"> Global Profiling </button>\n" +
+    "        <button class=\"btn btn-default pull-left\" ng-disabled=\"!(selectComp && selectDatabase && pgPort && enableBtns)\" ng-click=\"queryProfiler(hostName, pgUser, pgPass, pgDB, pgPort, pgTitle, pgDesc)\"> Statement Profiling </button>\n" +
+    "        <button class=\"btn btn-default pull-right\" ng-disabled=\"!(selectDatabase && selectComp && pgPort && enableBtns)\" ng-click=\"globalProfiling(hostName, pgUser, pgPass, pgDB, pgPort, pgTitle, pgDesc)\"> Global Profiling </button>\n" +
     "    </div>\n" +
-    "    <div class=\"col-md-9 col-sm-6 col-xs-12\">\n" +
+    "    <div class=\"col-md-8 col-sm-6 col-xs-12\">\n" +
+    "        <div ng-if=\"errorMsg\">\n" +
+    "            {{errorMsg}}\n" +
+    "        </div>\n" +
     "        <div ng-if=\"generatingReportSpinner\">\n" +
     "            <span>\n" +
     "                <i class=\"fa fa-cog fa-spin fa-3x fa-fw margin-bottom\"></i>Generating...\n" +
     "            </span>\n" +
     "        </div>\n" +
-    "        <span ng-if=\"report_file\"><a href=\"/reports/{{ report_file }}\" target=\"_blank\">Click here to see the report in new tab</a>\n" +
+    "        <span ng-if=\"report_file\"><a href=\"/reports/{{ report_file }}\" target=\"_blank\">Click here to see the recent report in new tab</a>\n" +
     "        </span>\n" +
     "        <a class=\"btn btn-default pull-right\" ng-click=\"openRecentReports()\">\n" +
     "                            Recent Reports\n" +
     "                            </a>\n" +
     "        <iframe ng-if=\"report_file\" ng-src=\"{{ report_url }}\" width=\"100%\" height=\"500px\">\n" +
     "        </iframe>\n" +
-    "        <span ng-if=\"!report_file\" ng-bind=\"errorMsg\"></span>\n" +
     "    </div>\n" +
     " </div>\n" +
     "</section>")
 
 $templateCache.put("../app/components/partials/recentReports.html","<div class=\"modal-header\">\n" +
+    "    <div ng-click=\"cancel()\" class=\"close-modal pull-right\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "        <i class=\"fa fa-lg fa-close\"></i>\n" +
+    "    </div>\n" +
     "    <h3 class=\"modal-title\">Recent Reports</h3>\n" +
     "</div>\n" +
     "<div class=\"modal-body\">\n" +
-    "    <div class=\"form-group\">\n" +
     "        <div ng-if=\"!showError\">\n" +
-    "            <span><label>Report</label></span>\n" +
-    "            <span class=\"pull-right\"><label>Created on</label></span>\n" +
-    "            <div ng-repeat=\"c in files_list\">\n" +
-    "                <label>\n" +
-    "                    <input type=\"checkbox\" name=\"report_file\" ng-model=\"c.selected\" value=\"{{ c.file_link }}\">\n" +
-    "                    <span>&nbsp;{{ c.file }}</span>\n" +
-    "                </label>&nbsp;&nbsp;<a target=\"_blank\" href=\"{{ c.file_link }}\"><i class=\"fa fa-external-link\"></i></a>\n" +
-    "                <span class=\"pull-right\">{{ c.mtime }}</span>\n" +
+    "            <div style=\"border-bottom: 1px solid #f4f4f4;\">\n" +
+    "            <span style=\"padding-left: 15px;\"><label>Report</label>&nbsp; &nbsp;<input type=\"checkbox\" ng-click=\"toggleAll()\" ng-model=\"isAllSelected\">&nbsp;Select all </span>\n" +
+    "            <span class=\"pull-right\" style=\"padding-right: 15px;\"><label>Created on</label></span>\n" +
+    "            </div>\n" +
+    "            <div class=\"box-body\" style=\"padding-left: 20px; max-height: 300px; overflow: auto;\">\n" +
+    "                <div ng-repeat = \"option in files_list\">\n" +
+    "                    <label>\n" +
+    "                    <input type=\"checkbox\" ng-model=\"option.selected\" ng-change=\"optionToggled()\">\n" +
+    "                    <span>&nbsp;{{ option.file }}</span>\n" +
+    "                    </label>\n" +
+    "                    &nbsp;&nbsp;<a target=\"_blank\" href=\"{{ option.file_link }}\"><i class=\"fa fa-external-link\"></i></a>\n" +
+    "                    <span class=\"pull-right\">{{ option.mtime }}</span>\n" +
+    "                </div>\n" +
     "            </div>\n" +
     "        </div>\n" +
     "        <div ng-if=\"showError\">\n" +
-    "            You haven't generate any reports yet.\n" +
+    "            You haven't generated any reports.\n" +
     "        </div>\n" +
-    "    </div>\n" +
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
-    "    <button class=\"btn btn-default pull-left\" ng-click=\"removeFiles(files_list, true)\" ng-if=\"!showError\">Delete all</button>&nbsp;\n" +
-    "    <button class=\"btn btn-default pull-left\" ng-click=\"removeFiles(files_list, false)\" ng-if=\"!showError\">Delete</button>\n" +
-    "    <button class=\"btn btn-warning\" type=\"button\" ng-disabled=\"switchBtn\" ng-click=\"cancel()\">Close</button>\n" +
+    "    <button class=\"btn btn-default pull-right\" ng-click=\"removeFiles(files_list, false)\" ng-if=\"!showError\" ng-disabled=\"!isAllSelected && !checked\" ng-click=\"deleteReports(files_list, true)\">Delete</button>\n" +
     "</div>")
 
 $templateCache.put("../app/components/partials/settings.html","<script type=\"text/ng-template\" id=\"alert.html\">\n" +
@@ -1395,13 +1676,59 @@ $templateCache.put("../app/components/partials/settings.html","<script type=\"te
     "    <div id=\"pgcInfoText\" class=\"pull-left\"></div>\n" +
     "</section>\n" +
     "<section class=\"content\">\n" +
+    "    <div class=\"col-md-6 col-sm-6 col-xs-6\">\n" +
     "    <div class=\"box\">\n" +
     "        <div class=\"box-header with-border\">\n" +
-    "            <h4><strong> Check for updates </strong></h4>\n" +
-    "        </div>\n" +
+    "            <h4><strong> PGC Server Info </strong></h4></div>\n" +
     "        <div class=\"box-body\">\n" +
     "            <form class=\"form-horizontal\">\n" +
     "                <div class=\"form-group\">\n" +
+    "                    <div class=\"col-sm-12 col-md-12 col-xs-12\">\n" +
+    "                        <div class=\"col-md-3\"><strong>PGC:</strong></div>\n" +
+    "                        <div class=\"col-md-9\">{{pgcInfo.version}}</div>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
+    "                <div class=\"form-group\">\n" +
+    "                    <div class=\"col-sm-12 col-md-12 col-xs-12\">\n" +
+    "                        <div class=\"col-md-3\"><strong>User &amp; Host:</strong></div>\n" +
+    "                        <div class=\"col-md-9\">{{pgcInfo.user}} &nbsp; {{pgcInfo.host}}</div>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
+    "                <div class=\"form-group\">\n" +
+    "                    <div class=\"col-sm-12 col-md-12 col-xs-12\">\n" +
+    "                        <div class=\"col-md-3\"><strong>OS:</strong></div>\n" +
+    "                        <div class=\"col-md-9\">{{pgcInfo.os}}</div>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
+    "                <div class=\"form-group\">\n" +
+    "                    <div class=\"col-sm-12 col-md-12 col-xs-12\">\n" +
+    "                        <div class=\"col-md-3\"><strong>Hardware:</strong></div>\n" +
+    "                        <div class=\"col-md-9\">{{pgcInfo.mem}} GB, {{pgcInfo.cpu}}</div>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
+    "                <div class=\"form-group\">\n" +
+    "                    <div class=\"col-sm-12 col-md-12 col-xs-12\">\n" +
+    "                        <div class=\"col-md-3\"><strong>Repo URL::</strong></div>\n" +
+    "                        <div class=\"col-md-9\">{{pgcInfo.repo}}</div>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
+    "            </form>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "    </div>\n" +
+    "    <div class=\"col-md-6 col-sm-6 col-xs-6\">\n" +
+    "    <div class=\"box\">\n" +
+    "        <div class=\"box-header with-border\">\n" +
+    "            <div class=\"col-md-8\">\n" +
+    "                <h4><strong> Check for updates </strong></h4>\n" +
+    "            </div>\n" +
+    "            <div class=\"col-md-4\">\n" +
+    "                <button type=\"button\" class=\"btn btn-default pull-right\" id=\"checkNow\" ng-click=\"open('manual')\">Check now</button>\n" +
+    "            </div>\n" +
+    "        </div>\n" +
+    "        <div class=\"box-body\" ng-show=\"lastUpdateStatus\">\n" +
+    "            \n" +
+    "                <!-- <div class=\"form-group\">\n" +
     "                    <div class=\"col-sm-10\">\n" +
     "                        <div class=\"radio\">\n" +
     "                            <label>\n" +
@@ -1418,7 +1745,7 @@ $templateCache.put("../app/components/partials/settings.html","<script type=\"te
     "                            </label>\n" +
     "                        </div>\n" +
     "                    </div>\n" +
-    "                </div>\n" +
+    "                </div> \n" +
     "                <div class=\"form-group\">\n" +
     "                    <div class=\"col-sm-6\">\n" +
     "                        <label for=\"inputPassword3\" class=\"col-sm-4 control-label\">Check for Updates</label>\n" +
@@ -1427,80 +1754,55 @@ $templateCache.put("../app/components/partials/settings.html","<script type=\"te
     "                            </select>\n" +
     "                        </div>\n" +
     "                    </div>\n" +
-    "                </div>\n" +
+    "                </div> -->\n" +
+    "                \n" +
+    "                 <p class=\"col-md-12 col-xs-12 col-sm-12\">The last time you checked for updates was at {{lastUpdateStatus}}</p>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "    </div>\n" +
+    "    <div class=\"col-md-6 col-sm-6 col-xs-6\">\n" +
+    "    <div class=\"box\">\n" +
+    "        <div class=\"box-header with-border\">\n" +
+    "            <label>\n" +
+    "                <h4>\n" +
+    "                    <strong> Beta Features </strong>\n" +
+    "                </h4>\n" +
+    "            </label>\n" +
+    "        </div>\n" +
+    "        <div class=\"box-body\">\n" +
+    "            <form class=\"form-horizontal\">\n" +
     "                <div class=\"form-group\">\n" +
-    "\n" +
-    "                    <div class=\"col-sm-6 col-md-8 col-xs-8\">\n" +
-    "                    <p class=\"col-md-9 col-xs-9\" style=\"margin-top: 8px\" ng-show=\"lastUpdateStatus\">The last time you checked for updates was at {{lastUpdateStatus}}</p>\n" +
-    "                        <button type=\"button\" class=\"btn btn-default\" id=\"checkNow\" ng-click=\"open('manual')\">Check now</button>\n" +
+    "                    <div class=\"col-sm-6 col-md-6 col-xs-6\">\n" +
+    "                        <label>\n" +
+    "                            <input type=\"checkbox\" ng-model=\"hostManager\" ng-change=\"changeBetaFeature('hostManager', hostManager)\">&nbsp;Multi Host Manager\n" +
+    "                        </label>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"col-sm-6 col-md-6 col-xs-6\" ng-if=\"showPgDgFeature\">\n" +
+    "                        <label>\n" +
+    "                            <input type=\"checkbox\" ng-model=\"pgdg\" ng-change=\"changeBetaFeature('pgdg', pgdg)\">&nbsp;PGDG Linux Repositories\n" +
+    "                        </label>\n" +
     "                    </div>\n" +
     "                </div>\n" +
     "            </form>\n" +
     "        </div>\n" +
     "    </div>\n" +
-    "    <div class=\"box\">\n" +
-    "        <div class=\"box-header with-border\">\n" +
-    "            <h4><strong> PGC Server Info </strong></h4></div>\n" +
-    "        <div class=\"box-body\">\n" +
-    "            <div class=\"col-sm-12\">\n" +
-    "                <table class=\"table table-condensed settings-table-pgc-info\">\n" +
-    "                    <thead>\n" +
-    "                        <tr>\n" +
-    "                            <td class=\"col-md-1 col-xs-1\"></td>\n" +
-    "                            <td class=\"col-md-11 col-xs-11\"></td>\n" +
-    "                        </tr>\n" +
-    "                    </thead>\n" +
-    "                    <tbody>\n" +
-    "                        <tr>\n" +
-    "                            <td>\n" +
-    "                                <h5><strong>PGC:</strong></h5></td>\n" +
-    "                            <td>\n" +
-    "                                <p>{{pgcInfo.version}}</p>\n" +
-    "                            </td>\n" +
-    "                        </tr>\n" +
-    "                        <tr>\n" +
-    "                            <td>\n" +
-    "                                <h5><strong>User &amp; Host:</strong></h5></td>\n" +
-    "                            <td>\n" +
-    "                                <p>{{pgcInfo.user}} &nbsp; {{pgcInfo.host}} </p>\n" +
-    "                            </td>\n" +
-    "                        </tr>\n" +
-    "                        <tr>\n" +
-    "                            <td>\n" +
-    "                                <h5><strong>OS:</strong></h5></td>\n" +
-    "                            <td>\n" +
-    "                                <p>{{pgcInfo.os}}</p>\n" +
-    "                            </td>\n" +
-    "                        </tr>\n" +
-    "                        <tr>\n" +
-    "                            <td>\n" +
-    "                                <h5><strong>Hardware:</strong></h5></td>\n" +
-    "                            <td>\n" +
-    "                                <p>{{pgcInfo.mem}} GB, {{pgcInfo.cpu}}</p>\n" +
-    "                            </td>\n" +
-    "                        </tr>\n" +
-    "                        <tr>\n" +
-    "                            <td>\n" +
-    "                                <h5><strong>Repo URL:</strong></h5></td>\n" +
-    "                            <td>\n" +
-    "                                <p>{{pgcInfo.repo}}</p>\n" +
-    "                            </td>\n" +
-    "                        </tr>\n" +
-    "                    </tbody>\n" +
-    "                </table>\n" +
-    "            </div>\n" +
-    "        </div>\n" +
     "    </div>\n" +
     "</section>\n" +
     "")
 
 $templateCache.put("../app/components/partials/statementProfilingModal.html","<div class=\"modal-header\">\n" +
-    "    <h3 class=\"modal-title\">Statement Profiling</h3>\n" +
+    "    <div ng-click=\"cancel()\" class=\"close-modal pull-right\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "        <i class=\"fa fa-lg fa-close\"></i>\n" +
+    "    </div>\n" +
+    "    <h3 class=\"modal-title\">PL/pgSQL Statement Profiling</h3>\n" +
     "</div>\n" +
+    "<uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" close=\"closeAlert()\" class=\"uib-text\" dismiss-on-timeout=\"8000\">\n" +
+    "        {{alert.msg}}  \n" +
+    "</uib-alert>\n" +
     "<div class=\"modal-body\">\n" +
     "<form class=\"form plProfiler-form\">\n" +
     "    <div class=\"form-group\">\n" +
-    "        <textarea ng-model=\"pgQuery\" class=\"form-control\" placeholder=\"select statement_to_profile(param_1, param_2)\"></textarea>\n" +
+    "        <textarea ng-model=\"pgQuery\" class=\"form-control\" placeholder=\"select plpgsql_function_to_profile(param_1, param_2)\"></textarea>\n" +
     "        <span class=\"required-plprofiler-form\">*</span>\n" +
     "    </div>\n" +
     "    <div class=\"form-group\">\n" +
@@ -1512,7 +1814,7 @@ $templateCache.put("../app/components/partials/statementProfilingModal.html","<d
     "</form>\n" +
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
-    "    <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
+    "    <!-- <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button> -->\n" +
     "    <button type=\"submit\" class=\"btn btn-primary\" ng-disabled=\"!pgQuery\" ng-click=\"generateReport()\">Execute</button>\n" +
     "</div>")
 
@@ -1610,6 +1912,9 @@ $templateCache.put("../app/components/partials/status.html","<section class=\"co
     "</section>")
 
 $templateCache.put("../app/components/partials/switchLogfile.html","<div class=\"modal-header\">\n" +
+    "    <div ng-click=\"cancel()\" class=\"close-modal pull-right\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "        <i class=\"fa fa-lg fa-close\"></i>\n" +
+    "    </div>\n" +
     "    <h3 class=\"modal-title\">Switch log file</h3>\n" +
     "</div>\n" +
     "<div class=\"modal-body\">\n" +
@@ -1635,8 +1940,8 @@ $templateCache.put("../app/components/partials/switchLogfile.html","<div class=\
     "    </form>\n" +
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
-    "    <button class=\"btn btn-success pull-left\" ng-disabled=\"logAction\" type=\"button\" ng-click=\"switchFile('')\">Reset to default</button>\n" +
-    "    <button class=\"btn btn-warning\" type=\"button\" ng-disabled=\"switchBtn\" ng-click=\"cancel()\">Close</button> \n" +
+    "    <button class=\"btn btn-success pull-right\" ng-disabled=\"logAction\" type=\"button\" ng-click=\"switchFile('')\">Reset to default</button>\n" +
+    "    <!-- <button class=\"btn btn-warning\" type=\"button\" ng-disabled=\"switchBtn\" ng-click=\"cancel()\">Close</button>  -->\n" +
     "</div>")
 
 $templateCache.put("../app/components/partials/topModal.html","<div class=\"modal-header\">\n" +
@@ -1715,69 +2020,62 @@ $templateCache.put("../app/components/partials/topModal.html","<div class=\"moda
     "</div>")
 
 $templateCache.put("../app/components/partials/updateModal.html","<div class=\"updateModal\">\n" +
-    "<div class=\"modal-header\">\n" +
-    "    <form class=\"form-inline\">\n" +
-    "      <div class=\"form-group\">\n" +
-    "        <h2 class=\"col-sm-6 modal-title control-label\">Updates</h2>\n" +
-    "        <div class=\"col-sm-6\">\n" +
-    "            <select class=\"form-control\" ng-change=\"hostChange(selecthost)\" ng-model=\"selecthost\">\n" +
-    "                <option ng-repeat=\"host in hosts\" value=\"{{ host.host }}\">{{ host.host }}</option>\n" +
-    "            </select>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "      </form>\n" +
+    "<div ng-click=\"cancel()\" class=\"close-modal pull-right\" style=\"margin-right: -41px;\n" +
+    "    margin-top: 6px;\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "    <i class=\"fa fa-close fa-lg\"></i>\n" +
     "</div>\n" +
-    "<div ng-click=\"cancel()\" class=\"close-modal\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
-    "    <div class=\"lr\">\n" +
-    "        <div class=\"rl\">\n" +
-    "        </div>\n" +
-    "    </div>\n" +
-    "</div>\n" +
-    "<div class=\"container-fluid\" ng-show=\"loadingSpinner\">\n" +
-    "    <div class=\"row\">\n" +
-    "        <div class=\"col-md-12 col-xs-12\">\n" +
-    "            <div class=\"well\">\n" +
-    "                <i class=\"fa fa-spinner fa-2x  fa-pulse\"></i>&#160;&#160;&#160;Checking for updates..\n" +
-    "            </div>\n" +
-    "        </div>\n" +
-    "    </div>\n" +
-    "</div>\n" +
-    "<div class=\"modal-body\" ng-show=\"body\">\n" +
-    "    <p ng-hide=\"noUpdates\">Select the components you want to update. (Or All)</p>\n" +
+    "<div class=\"modal-body\">\n" +
+    "    <uib-alert ng-repeat=\"alert in alerts\" type=\"{{alert.type}}\" dismiss-on-timeout=\"8000\" close=\"closeAlert()\" class=\"uib-text\">{{alert.msg}}</uib-alert>\n" +
     "    <div class=\"container-fluid\">\n" +
-    "        <!-- /.box-header -->\n" +
     "        <div class=\"row\" id=\"updatesTable\" ng-hide=\"noUpdates\">\n" +
-    "            <div style=\"border-bottom: 2px solid #f4f4f4;width: 100%;height: 30px;vertical-align: middle;\">\n" +
-    "                <div class=\"col-md-2 col-xs-2\"></div>\n" +
-    "                <div class=\"col-md-4 col-xs-4\"><strong>Component</strong></div>\n" +
-    "                <div class=\"col-md-5 col-xs-5\"><strong>Description</strong></div>\n" +
+    "            <div ng-show=\"loadingSpinner\">\n" +
+    "                <h4 class=\"control-label\" ng-hide=\"noUpdates\"><i class=\"fa fa-spinner fa-2x  fa-pulse\"></i>&#160;&#160;&#160; Checking for updates..</h4>\n" +
     "            </div>\n" +
-    "            <div class=\"col-md-12 col-xs-12\" id=\"updatesTableTbody \" ng-repeat=\"(key, value) in components\" ng-if=\"value.updates>0 && value.component != 'bam2'\">\n" +
+    "            <h4 class=\"control-label\" ng-hide=\"noUpdates || loadingSpinner\">{{components.length}} Update(s) Available</h4>\n" +
+    "            <div class=\"pull-right\" style=\"margin-top: -35px;\">\n" +
+    "                <button class=\"btn btn-sm\" type=\"button\" ng-click=\"selectedUpdate()\" ng-hide=\"noUpdates || loadingSpinner\">Update All</button>\n" +
+    "            </div>\n" +
+    "            <div style=\"border-bottom: 2px solid #ddd;width: 100%;vertical-align: middle;\">\n" +
+    "            </div>\n" +
+    "            <div class=\"col-md-12 col-xs-12\" id=\"updatesTableTbody \" ng-repeat=\"(key, value) in components\" ng-if=\"value.updates>0 && value.component != 'bam2'\" style=\"border-bottom: 1px solid #ddd;\">\n" +
     "                <div class=\"component_box\" id=\"{{value.component}}\">\n" +
     "                    <div class=\"col-md-2 col-xs-2\">\n" +
-    "                        <input type=\"checkbox\" ng-model=\"value.selected\" ng-checked=\"selectedComp.component == value.component\">\n" +
+    "                        <img class=\"img-responsive\" style=\"width: 35%; padding: 6px; margin-left: 35px;\" ng-src=\"assets/img/component-logos/{{value.componentImage || value.component }}.png\"  err-src=\"assets/img/component-logos/no_img.png\" alt=\"\">\n" +
+    "                        <div style=\"text-align: center; white-space: nowrap;\">\n" +
+    "                            <a ng-if=\"value.category != 1\"  ng-click=\"cancel(); openDetailsModal(value.component)\">\n" +
+    "                                        <strong>{{value.component}}</strong>\n" +
+    "                                    </a>\n" +
+    "                            <a ng-if=\"value.category == 1\" ui-sref=\"components.detailspg95({component:value.component}) \" ng-click=\"cancel()\">\n" +
+    "                                        <strong>{{value.component}}</strong>\n" +
+    "                            </a>\n" +
+    "                            <br />\n" +
+    "                            <div>\n" +
+    "                                <i style=\"font-size: smaller; white-space: pre-wrap;\">{{value.short_desc}}</i>\n" +
+    "                                <div>Version {{value.current_version}}</div>\n" +
+    "                                <div>Released {{value.curr_release_date}}</div>\n" +
+    "                            </div>\n" +
+    "                        </div>\n" +
     "                    </div>\n" +
-    "                    <div class=\"col-md-4 col-xs-4\">\n" +
-    "                        <a ng-if=\"value.category != 1\" ui-sref=\"components.detailsView({component:value.component}) \" ng-click=\"cancel()\">\n" +
-    "                                    {{value.component}}\n" +
-    "                                </a>\n" +
-    "                        <a ng-if=\"value.category == 1\" ui-sref=\"components.detailspg95({component:value.component}) \" ng-click=\"cancel()\">\n" +
-    "                                    {{value.component}}\n" +
-    "                                </a>\n" +
-    "\n" +
+    "                    <div class=\"col-md-9 col-xs-9\">\n" +
+    "                        <div style=\"overflow: auto; height: 100px; margin-bottom: 5px;\" id=\"relnotesId_{{value.component}}\">\n" +
+    "                            <div class=\"update-comp-relnotes\" style=\"margin-top: -20px;\" ng-bind-html=\"value.rel_notes\"></div>\n" +
+    "                        </div>\n" +
+    "                        <a class=\"pull-right\" ng-if=\"value.rel_notes\" id=\"showText_{{value.component}}\" ng-click=\"changeHeight(value.component);\">More....</a>\n" +
     "                    </div>\n" +
-    "                    <div class=\"col-md-5 col-xs-5\">update {{value.version}} to {{value.current_version}}</div>\n" +
+    "                    <div class=\"col-md-1 col-xs-1\">\n" +
+    "                        <button class=\"btn btn-sm\" type=\"button\" style=\"margin-left: 25px;\" ng-click=\"selectedUpdate(value.component)\" ng-hide=\"noUpdates\">Update</button>\n" +
+    "                    </div>\n" +
     "                </div>\n" +
-    "                <div class=\"row\" ng-show=\"value.installation != undefined\" style=\"width:100%;height:50px\">\n" +
+    "                <div class=\"row\" ng-show=\"value.installation != undefined\" style=\"width:100%;height:50px; margin-top: 10px;\">\n" +
     "                    <div>\n" +
     "                        <div ng-show=\"value.installationRunning != undefined\" class=\"col-md-4 col-xs-4\">\n" +
     "                            {{value.installationStart.msg}}\n" +
     "                        </div>\n" +
-    "                        <div class=\"col-md-4 col-xs-4\" ng-show=\"value.installationRunning != undefined\">\n" +
+    "                        <div class=\"col-md-3 col-xs-3\" ng-show=\"value.installationRunning != undefined\">\n" +
     "                            <progressbar value=\"value.progress\"></progressbar>\n" +
     "                            <button class=\"btn btn-default btn-xs center-block\" ng-click=\"cancelInstallation('cancelInstall') \">Cancel</button>\n" +
     "                        </div>\n" +
-    "                        <div class=\"col-md-1 col-xs-1\" ng-show=\"value.installationRunning != undefined\">\n" +
+    "                        <div class=\"col-md-2 col-xs-1\" ng-show=\"value.installationRunning != undefined\">\n" +
     "                            {{value.installationRunning.pct}}%\n" +
     "                        </div>\n" +
     "                        <div class=\"col-md-3 col-xs-3\" ng-show=\"value.installationRunning != undefined\">\n" +
@@ -1787,13 +2085,11 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"u
     "                </div>\n" +
     "            </div>\n" +
     "        </div>\n" +
+    "        <br />\n" +
     "        <div class=\"row components-update-msg\" ng-show=\"noUpdates\">\n" +
     "        <div class=\"well\">\n" +
-    "            <p class=\"lead\">All installed components are up-to-date. </p>\n" +
+    "            <h4 style=\"padding: 8px;\">All installed components are up-to-date. </h4>\n" +
     "        </div>\n" +
-    "        </div>\n" +
-    "        <div class=\"modal-footer\">\n" +
-    "            <button class=\"btn btn-primary\" type=\"button\" ng-click=\"selectedUpdate()\" ng-hide=\"noUpdates\">Update</button>\n" +
     "        </div>\n" +
     "        <div class=\"row\" ng-hide=\"hideLatestInstalled\">\n" +
     "            <uib-accordion>\n" +
@@ -1803,37 +2099,40 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"u
     "                    <i class=\"pull-right glyphicon\" ng-class=\"{'fa fa-plus': !uibStatus.newComponents, 'fa fa-minus': uibStatus.newComponents}\"></i>\n" +
     "                    </span> \n" +
     "                  </uib-accordion-heading>\n" +
-    "            \n" +
-    "                <div class=\"box-body update-modal-table-header\">\n" +
-    "                    <div class=\"col-md-4 col-xs-4\"><strong>Installed/Updated Date</strong></div>\n" +
-    "                    <div class=\"col-md-4 col-xs-4\"><strong>Component Type</strong></div>\n" +
-    "                    <div class=\"col-md-4 col-xs-4\"><strong>Component</strong></div>\n" +
-    "                </div>\n" +
-    "                <div class=\"col-md-12 col-xs-12 update-modal-table\" id=\"updatesTableTbody \" ng-repeat=\" value in components | toArray:false | orderBy : 'install_date' : true\" ng-if=\"value.is_updated == 1  && value.component != 'bam2' \">\n" +
-    "                    <div class=\"component_box\" id=\"{{value.component}}\">\n" +
-    "                        <div class=\"col-md-4 col-xs-4\">\n" +
-    "                            <span>{{value.install_date}}</span>\n" +
-    "                        </div>\n" +
-    "                        <div class=\"col-md-4 col-xs-4\">\n" +
-    "                            <span>{{value.category_desc}}</span>\n" +
-    "                        </div>\n" +
-    "                        <div class=\"col-md-4 col-xs-4\">\n" +
-    "                            <a ng-if=\"value.category != 1\" ui-sref=\"components.detailsView({component:value.component}) \" ng-click=\"cancel()\">\n" +
-    "                                {{value.component}}-{{value.version}}\n" +
-    "                            </a>\n" +
+    "                <div class=\"col-md-12 col-xs-12\" id=\"updatesTableTbody \" ng-repeat=\" value in allComponents | toArray:false | orderBy : 'install_date' : true\" ng-if=\"value.is_updated == 1  && value.component != 'bam2' \" style=\"border-bottom: 1px solid #ddd;\">\n" +
+    "                <div class=\"component_box\" id=\"{{value.component}}\">\n" +
+    "                    <div class=\"col-md-2 col-xs-2\">\n" +
+    "                        <!-- <input type=\"checkbox\" ng-model=\"value.selected\" ng-checked=\"selectedComp.component == value.component\"> -->\n" +
+    "                        <img class=\"img-responsive\" style=\"width: 35%; padding: 5px; margin-left: 35px;\" ng-src=\"assets/img/component-logos/{{value.componentImage || value.component}}.png\"  err-src=\"assets/img/component-logos/no_img.png\" alt=\"\">\n" +
+    "                        <div style=\"text-align: center; white-space: nowrap;\">\n" +
+    "                            <a ng-if=\"value.category != 1\"  ng-click=\"cancel(); openDetailsModal(value.component)\">\n" +
+    "                                        <strong>{{value.component}}</strong>\n" +
+    "                                    </a>\n" +
     "                            <a ng-if=\"value.category == 1\" ui-sref=\"components.detailspg95({component:value.component}) \" ng-click=\"cancel()\">\n" +
-    "                                {{value.component}}-{{value.version}}\n" +
+    "                                        <strong>{{value.component}}</strong>\n" +
     "                            </a>\n" +
+    "                            <br />\n" +
+    "                            <i style=\"font-size: smaller;\">{{value.short_desc}}</i>\n" +
+    "                            <div>Version {{value.version}}</div>\n" +
+    "                            <div>Install Date {{value.install_date}}</div>\n" +
     "                        </div>\n" +
     "                    </div>\n" +
+    "                    <div class=\"col-md-1 col-xs-1\"></div>\n" +
+    "                    <div class=\"col-md-9 col-xs-9\">\n" +
+    "                        <div style=\"overflow: auto; height: 100px; margin-bottom: 5px;\" id=\"installedRelnotes_{{value.component}}\">\n" +
+    "                            <div class=\"update-comp-relnotes\" style=\"margin-top: -20px;\" ng-bind-html=\"value.rel_notes\"></div>\n" +
+    "                        </div>\n" +
+    "                        <a class=\"pull-right\" ng-if=\"value.rel_notes\" id=\"installedshowText_{{value.component}}\" ng-click=\"changeHeightInstalled(value.component);\">More....</a>\n" +
+    "                    </div>\n" +
     "                </div>\n" +
+    "            </div>\n" +
     "                </uib-accordion-group>    \n" +
     "            </uib-accordion>\n" +
     "\n" +
     "        </div>\n" +
     "        <div class=\"row components-update-msg\" ng-hide=\"!hideLatestInstalled\">\n" +
     "        <div class=\"well\">\n" +
-    "            <p class=\"lead\">No components installed/updated in the last 30 days </p>\n" +
+    "            <h4 style=\"padding: 8px;\">No components installed/updated in the last 30 days </h4>\n" +
     "        </div>\n" +
     "        </div>\n" +
     "\n" +
@@ -1845,12 +2144,12 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"u
     "                    <i class=\"pull-right glyphicon\" ng-class=\"{'fa fa-plus': !uibStatus.installedComponents, 'fa fa-minus': uibStatus.installedComponents}\"></i>\n" +
     "                    </span> \n" +
     "                  </uib-accordion-heading>\n" +
-    "                    <div class=\"box-body update-modal-table-header\">\n" +
+    "                    <!-- <div class=\"box-body update-modal-table-header\">\n" +
     "                        <div class=\"col-md-4 col-xs-4\"><strong>Release Date</strong></div>\n" +
     "                        <div class=\"col-md-4 col-xs-4\"><strong>Component Type</strong></div>\n" +
     "                        <div class=\"col-md-4 col-xs-4\"><strong>Component</strong></div>\n" +
     "                    </div>\n" +
-    "                    <div class=\"col-md-12 col-xs-12 update-modal-table\" id=\"updatesTableTbody \" ng-repeat=\"(key, value) in components | toArray:false | orderBy : 'release_date' : true\" ng-if=\"value.is_new == 1 && value.component != 'bam2' \">\n" +
+    "                    <div class=\"col-md-12 col-xs-12 update-modal-table\" id=\"updatesTableTbody \" ng-repeat=\"(key, value) in allComponents | toArray:false | orderBy : 'release_date' : true\" ng-if=\"value.is_new == 1 && value.component != 'bam2' \">\n" +
     "                        <div class=\"component_box\" id=\"{{value.component}}\">\n" +
     "                            <div class=\"col-md-4 col-xs-4\">\n" +
     "                                <span>{{value.release_date}}</span>\n" +
@@ -1859,15 +2158,42 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"u
     "                                <span>{{value.category_desc}}</span>\n" +
     "                            </div>\n" +
     "                            <div class=\"col-md-4 col-xs-4\">\n" +
-    "                                <a ng-if=\"value.category != 1\" ui-sref=\"components.detailsView({component:value.component}) \" ng-click=\"cancel()\">\n" +
-    "                                    {{value.component}}-{{value.version}}\n" +
+    "                                <a ng-if=\"value.category != 1\" ng-click=\"cancel(); openDetailsModal(value.component)\">\n" +
+    "                                    {{value.disp_name}}\n" +
     "                                </a> \n" +
     "                                <a ng-if=\"value.category == 1\" ui-sref=\"components.detailspg95({component:value.component}) \" ng-click=\"cancel()\">\n" +
-    "                                {{value.component}}-{{value.version}}\n" +
+    "                                {{value.disp_name}}\n" +
     "                                </a>                   \n" +
     "                            </div>\n" +
     "                        </div>\n" +
+    "                    </div> -->\n" +
+    "                    <div class=\"col-md-12 col-xs-12\" id=\"updatesTableTbody \" ng-repeat=\"(key, value) in allComponents | toArray:false | orderBy : 'release_date' : true\" ng-if=\"value.is_new == 1 && value.component != 'bam2' \" style=\"border-bottom: 1px solid #ddd;\">\n" +
+    "                <div class=\"component_box\" id=\"{{value.component}}\">\n" +
+    "                    <div class=\"col-md-2 col-xs-2\">\n" +
+    "                        <!-- <input type=\"checkbox\" ng-model=\"value.selected\" ng-checked=\"selectedComp.component == value.component\"> -->\n" +
+    "                        <img class=\"img-responsive\" style=\"width: 35%; padding: 5px;margin-left: 35px;\" ng-src=\"assets/img/component-logos/{{value.componentImage || value.component}}.png\"  err-src=\"assets/img/component-logos/no_img.png\" alt=\"\">\n" +
+    "                        <div style=\"text-align: center; white-space: nowrap;\">\n" +
+    "                            <a ng-if=\"value.category != 1\"  ng-click=\"cancel(); openDetailsModal(value.component)\">\n" +
+    "                                        <strong>{{value.component}}</strong>\n" +
+    "                                    </a>\n" +
+    "                            <a ng-if=\"value.category == 1\" ui-sref=\"components.detailspg95({component:value.component}) \" ng-click=\"cancel()\">\n" +
+    "                                        <strong>{{value.component}}</strong>\n" +
+    "                            </a>\n" +
+    "                            <br />\n" +
+    "                            <i style=\"font-size: smaller;\">{{value.short_desc}}</i>\n" +
+    "                            <div>Version {{value.version}}</div>\n" +
+    "                            <div>Released {{value.curr_release_date}}</div>\n" +
+    "                        </div>\n" +
     "                    </div>\n" +
+    "                    <div class=\"col-md-1 col-xs-1\"></div>\n" +
+    "                    <div class=\"col-md-9 col-xs-9\">\n" +
+    "                        <div style=\"overflow: auto; height: 100px; margin-bottom: 5px;\" id=\"releasedRelnotesId_{{value.component}}\">\n" +
+    "                            <div class=\"update-comp-relnotes\" style=\"margin-top: -20px;\" ng-bind-html=\"value.rel_notes\"></div>\n" +
+    "                        </div>\n" +
+    "                        <a class=\"pull-right\" ng-if=\"value.rel_notes\" id=\"releasedShowText_{{value.component}}\" ng-click=\"changeHeightReleased(value.component);\">More....</a>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
+    "            </div>\n" +
     "                </uib-accordion-group>    \n" +
     "             </uib-accordion>\n" +
     "\n" +
@@ -1876,12 +2202,11 @@ $templateCache.put("../app/components/partials/updateModal.html","<div class=\"u
     "    </div>\n" +
     "    <div class=\"row components-update-msg\" ng-if=\"!hideNewComponents\">\n" +
     "        <div class=\"well\">\n" +
-    "            <p class=\"lead\">No new components released in the last 30 days </p>\n" +
+    "            <h4 style=\"padding: 8px;\">No new components released in the last 30 days </h4>\n" +
     "        </div>\n" +
     "    </div>\n" +
-    "<div class=\"modal-footer\">\n" +
-    "    <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
-    "</div>\n" +
+    "        <div class=\"modal-footer\">\n" +
+    "        </div>\n" +
     "</div>")
 
 $templateCache.put("../app/components/partials/userForm.html","<form class=\"form\" name=\"userForm\">\n" +
@@ -1976,7 +2301,7 @@ $templateCache.put("../app/components/partials/usersModal.html","<div class=\"mo
     "</div>")
 
 $templateCache.put("../app/components/partials/view.html","<section class=\"content-header\">\n" +
-    "    <server-info-details title=\"Components\"></server-info-details>\n" +
+    "    <server-info-details title=\"Package Manager\"></server-info-details>\n" +
     "    <div class=\"components-update-button-wrapper\">\n" +
     "        <label>\n" +
     "            <input type=\"checkbox\" ng-model=\"isList\" ng-click=\"setTest()\">&nbsp; Show test components</input>\n" +
@@ -1995,123 +2320,191 @@ $templateCache.put("../app/components/partials/view.html","<section class=\"cont
     "\n" +
     "<span id=\"components\"></span>\n" +
     "<section class=\"content\">\n" +
-    "    <div ng-if=\"loading\" style=\"position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;\">\n" +
-    "        <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
-    "        <span><h3>Loading...</h3></span>\n" +
-    "    </div>\n" +
-    "    <span ng-if=\"retry\" style=\"text-align: center;\"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>\n" +
-    "    <div ng-if=\"nothingInstalled\" class=\"jumbotron\" style=\"background-color: #fff; margin-top: 15px; text-align: center;\"> <h3> You haven't installed anything yet</h3></div>\n" +
-    "    <div class=\"masonry\" ng-if=\"!loading && !retry\">\n" +
-    "        <div ng-repeat=\"(key, value) in components | groupBy: 'category_desc'\" class=\"item\">\n" +
-    "            <div class=\"box\">\n" +
-    "                <div class=\"box-header with-border\">\n" +
-    "                    <h3 class=\"box-title\" ng-bind=\"key\"></h3>\n" +
-    "                </div>\n" +
-    "                <!-- /.box-header -->\n" +
-    "                <div class=\"box-body\">\n" +
-    "                    <div id=\"serversTable\">\n" +
-    "                        <div class=\"row component_head_box\">\n" +
-    "                            <div class=\"col-md-6 col-sm-6 col-xs-6\"><strong>Component</strong></div>\n" +
-    "                            <div class=\"col-md-3 col-sm-3 col-xs-3\"><strong>Installed</strong></div>\n" +
-    "                            <div class=\"col-md-3 col-sm-3 col-xs-3\"><strong>Actions</strong></div>\n" +
-    "\n" +
-    "                        </div>\n" +
-    "                        <div id=\"serversTableTbody \" ng-repeat=\"c in value \">\n" +
-    "                            <div ng-if=\"c.component != 'devops'\" class= \"row component_box\">\n" +
-    "                                <div class=\"col-md-6 col-sm-6 col-xs-6\">\n" +
-    "                                    <div class=\"comp-name\" ng-if=\"c.category !=  1 \">\n" +
-    "                                        <a class=\"serversTableTbody-component--link\" tooltip-append-to-body=\"true\" uib-tooltip=\"{{ c.short_desc }}\" ui-sref=\"components.detailsView({component:c.component}) \" ng-bind = \"(c.component)+'-'+(c.version)\">    \n" +
-    "                                        </a>\n" +
-    "                                        <span class=\"badge new-comp-wrapper\" ng-if=\"c.is_new == 1 && c.status == 'NotInstalled'\" tooltip-append-to-body=\"true\" uib-tooltip=\"Release date: {{ c.release_date }}\">New</span>\n" +
-    "                                        <span class=\"update-component-arrow-wrapper\" tooltip-append-to-body=\"true\" uib-tooltip=\"New version available: {{c.current_version}}\" ng-if=\"c.updates>0\">\n" +
-    "                                            <i class=\"fa fa-arrow-circle-down\" id=\"updateIcon\" style=\"color: #FF8A21\"></i>\n" +
-    "                                        </span>\n" +
-    "                                        <span class=\"test-comp-icon\" ng-if=\"c.stage != 'prod'\" tooltip-append-to-body=\"true\" uib-tooltip=\"Test Component\"></span>\n" +
+    "    <uib-tabset>\n" +
+    "        <uib-tab  heading=\"PostgreSQL\">\n" +
+    "            <uib-tab-heading>\n" +
+    "              <div style=\"text-align: center;\">BigSQL Repository</div>\n" +
+    "            </uib-tab-heading>\n" +
+    "            <div class=\"box\" style=\"border-top: 0px;\">\n" +
+    "            <div class=\"box-body\">\n" +
+    "            <div ng-if=\"loading\"  style=\"height: 250px\">\n" +
+    "            <div ng-if=\"loading\" style=\"position: absolute;width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;\">\n" +
+    "                <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
+    "                <span><h3>Loading...</h3></span>\n" +
+    "            </div>\n" +
+    "            </div>\n" +
+    "            <span ng-if=\"retry\" style=\"text-align: center;\"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>\n" +
+    "            <div ng-if=\"nothingInstalled\" class=\"jumbotron\" style=\"background-color: #fff; margin-top: 15px; text-align: center;\"> <h3> You haven't installed anything yet</h3>\n" +
+    "            </div>\n" +
+    "            <div ng-if=\"!loading && !retry\">\n" +
+    "                <div ng-repeat=\"(key, value) in components | groupBy: 'category_desc'\">\n" +
+    "                    <div class=\"box-header\" ng-if=\"key != 'Extensions'\">\n" +
+    "                        <h3 class=\"box-title\" ng-bind=\"key\" ng-if=\"value.length\"></h3>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"row\">\n" +
+    "                        <div class=\"col-md-2 col-sm-3 col-xs-6\" ng-repeat=\"c in value\" ng-if=\"c.category_desc == 'PostgreSQL'\">\n" +
+    "                            <i class=\"fa fa-check-circle-o fa-2x pull-right installedSymbol\" ng-if=\"c.status == 'Installed'|| c.status == 'NotInitialized'\"></i>\n" +
+    "                            <span class=\"update-component-arrow-wrapper\" tooltip-append-to-body=\"true\" uib-tooltip=\"New version available: {{c.current_version}}\" ng-if=\"c.updates>0\">\n" +
+    "                                <i class=\"fa fa-arrow-circle-down fa-2x\" id=\"updateIcon\" style=\"color: #FF8A21\"></i>\n" +
+    "                            </span>\n" +
+    "                            <span class=\"test-comp-icon\" ng-if=\"c.stage != 'prod'\" tooltip-append-to-body=\"true\" uib-tooltip=\"Test Component\"></span>\n" +
+    "                            <div ng-class=\"c.extensionOpened && extensionsList.length ? 'select-comp-area' : 'comp-area'\" ng-click=\"getExtensions(c.component, $index)\">\n" +
+    "                                <img class=\"comp-img img-responsive\" ng-src=\"assets/img/component-logos/{{ c.component }}.png\"  err-src=\"assets/img/component-logos/no_img.png\" alt=\"\">\n" +
+    "                                <div class=\"caption\">\n" +
+    "                                    <div style=\"white-space: nowrap; text-align: center;\">\n" +
+    "                                        <h5>\n" +
+    "                                            <a href=\"#/details-pg/{{c.component}}\">{{c.disp_name}}</a>\n" +
+    "                                        </h5>\n" +
     "                                    </div>\n" +
-    "                                    <div class=\"comp-name\" ng-if=\"c.category ==  1\">\n" +
-    "                                        <a class=\"serversTableTbody-component--link\" tooltip-append-to-body=\"true\" uib-tooltip=\"{{ c.short_desc }}\" ui-sref=\"components.detailspg95({component:c.component}) \" ng-bind = \"(c.component)+'-'+(c.version)\">\n" +
-    "                                        </a>\n" +
-    "                                        <span class=\"badge new-comp-wrapper\" ng-if=\"c.is_new == 1 && c.status == 'NotInstalled'\" tooltip-append-to-body=\"true\" uib-tooltip=\"Release date: {{ c.release_date }}\">New</span>\n" +
-    "                                        <span class=\"update-component-arrow-wrapper\" tooltip-append-to-body=\"true\" uib-tooltip=\"New version available: {{c.current_version}}\" ng-if=\"c.updates>0\">\n" +
-    "                                            <i class=\"fa fa-arrow-circle-down\" id=\"updateIcon\" style=\"color: #FF8A21\"></i>\n" +
-    "                                        </span>\n" +
-    "                                        <span class=\"test-comp-icon\" ng-if=\"c.stage != 'prod'\" tooltip-append-to-body=\"true\" uib-tooltip=\"Test Component\"></span>\n" +
-    "                                    </div>\n" +
-    "                                    \n" +
-    "                                </div>\n" +
-    "                                <div class=\"col-md-3 col-sm-3 col-xs-3\">\n" +
-    "                                <i style=\"color:green; \" class=\"fa fa-check-circle-o fa-2x \" ng-if=\"c.status == 'Installed' && c.removing == undefined || c.status == 'NotInitialized' && c.removing == undefined && c.init == undefined \"></i><i class='fa fa-spinner fa-2x  fa-pulse' ng-if=\"c.removing || c.init\">\n" +
-    "                                </i>\n" +
-    "                                </div>\n" +
-    "                                <div class=\"col-md-3 col-sm-3 col-xs-3\" style=\"padding-left: 10px;\">\n" +
-    "                                    <a class=\"btn btn-default\" ng-click=\"compAction( 'install', c.component) \" id=\"install\" ng-if=\"c.status == 'NotInstalled'\" ng-disabled=\" c.installation != undefined\">Install</a>\n" +
-    "                                    <a class=\"btn btn-default\" ng-click=\"compAction( 'remove', c.component) \" id=\"install\" ng-if=\"c.status == 'Installed' && c.updates == 0 \" ng-disabled=\" c.removing != undefined\">Remove</a>\n" +
-    "                                    <div class=\"btn-group \" uib-dropdown id=\"install\" ng-if=\"c.status == 'NotInitialized'\">\n" +
-    "                                    <button id=\"split-button \" type=\"button\" ng-click=\"openInitPopup(c.component)\" ng-disabled=\"c.init != undefined || c.removing != undefined\" class=\"btn btn-default \">Initialize</button>\n" +
-    "                                        <button type=\"button \" class=\"btn btn-default \" uib-dropdown-toggle ng-disabled=\"c.init != undefined || c.removing != undefined\">\n" +
-    "                                            <span class=\"caret \"></span>\n" +
-    "                                            <span class=\"sr-only \">Split button!</span>\n" +
-    "                                        </button>\n" +
-    "                                        <ul uib-dropdown-menu role=\"menu \" aria-labelledby=\"split-button \">\n" +
-    "                                            <li ng-if=\"c.updates > 0\" role=\"menuitem \"><a  ng-click=\"compAction( 'update', c.component) \" href=\"\" ng-hide=\"{{c.component=='devops'}}\">Update</a></li>\n" +
-    "                                            <li role=\"menuitem \"><a ng-click=\"compAction( 'remove', c.component) \" href=\"\" ng-hide=\"{{c.component=='devops'}}\">Remove</a></li>\n" +
-    "                                        </ul>\n" +
-    "                                    </div>\n" +
-    "                                    <div class=\"btn-group\" uib-dropdown ng-if=\"c.updates > 0 && c.status != 'NotInitialized'\">\n" +
-    "                                            <button id=\"split-button \" type=\"button \" class=\"btn btn-default\" ng-click=\"compAction( 'update', c.component) \" ng-disabled=\"c.installation != undefined || c.removing != undefined\">Update</button>\n" +
-    "                                            <button type=\"button \" class=\"btn btn-default\" uib-dropdown-toggle ng-disabled=\"c.installation != undefined || c.removing != undefined\">\n" +
-    "                                                <span class=\"caret \"></span>\n" +
-    "                                                <span class=\"sr-only \">Split button!</span>\n" +
-    "                                            </button>\n" +
-    "                                            <ul uib-dropdown-menu role=\"menu \" aria-labelledby=\"split-button \">\n" +
-    "                                                <li role=\"menuitem \"><a ng-click=\"compAction( 'remove', c.component) \" href=\"\">Remove</a></li>\n" +
-    "                                            </ul>\n" +
-    "                                    </div>\n" +
-    "                                </div>\n" +
-    "                            </div>\n" +
-    "                            <div class=\"row\" ng-if=\"c.installation != undefined\" >\n" +
-    "                                <div>\n" +
-    "\n" +
-    "                                    <div style=\"margin-left:10px;margin-top:20px\" ng-if=\"c.installationDependents != undefined\"><i class=\"fa fa-refresh fa-spin\" style='margin-right:2px'></i><strong> Installing dependencies...</strong> &nbsp;<button class=\"btn btn-default btn-xs\" ng-click=\"cancelInstallation('cancelInstall') \" >Cancel</button></div>\n" +
-    "                                    <div style=\"margin-left:10px;margin-top:20px\" ng-if=\"c.installationStart.status =='start' && c.installationStart.state == 'unpack'\"><i class=\"fa fa-circle-o-notch fa-spin\" style='margin-right:2px'></i><strong> Unpacking </strong></div>\n" +
-    "                                    <div style=\"margin-left:10px;margin-top:20px\" ng-if=\"c.installationStart.status =='start' && c.installationStart.state == 'download'\"><i class=\"fa fa-circle-o-notch fa-spin\" style='margin-right:2px'></i><strong> Downloading </strong></div>\n" +
-    "\n" +
-    "                                    <br />\n" +
-    "                                    <div ng-if=\"c.installationRunning != undefined && c.installationStart.file\" class=\"col-md-4 col-xs-4\">\n" +
-    "                                        file:{{c.installationStart.file || c.installationStart.msg}}\n" +
-    "                                    </div>\n" +
-    "                                    <div ng-if=\"c.installationRunning != undefined && c.installationStart.msg && c.installationStart.state=='update'\" class=\"col-md-4 col-xs-4\">\n" +
-    "                                        {{c.installationStart.msg}}\n" +
-    "                                    </div>\n" +
-    "                                    <div class=\"col-md-4 col-xs-4\" ng-if=\"c.installationRunning != undefined\">\n" +
-    "                                        <progressbar value=\"c.progress\"></progressbar>\n" +
-    "                                        <button class=\"btn btn-default center-block btn-xs\" ng-click=\"cancelInstallation('cancelInstall') \">Cancel</button>\n" +
-    "                                    </div>\n" +
-    "                                    <div class=\"col-md-1 col-xs-1\" ng-if=\"c.installationRunning != undefined\">\n" +
-    "                                        {{c.installationRunning.pct}}%\n" +
-    "                                    </div>\n" +
-    "                                    <div class=\"col-md-3 col-xs-3\" ng-if=\"c.installationRunning != undefined\">\n" +
-    "                                        {{c.installationRunning.mb}}\n" +
+    "                                    <div ng-class=\"c.extensionOpened ? 'expandExt' : ''\" ng-if=\"extensionsList.length\">\n" +
+    "                                        <h5 ng-if=\"c.extensionOpened\">\n" +
+    "                                            <strong>Extensions</strong>\n" +
+    "                                        </h5>\n" +
     "                                    </div>\n" +
     "                                </div>\n" +
     "                            </div>\n" +
     "                        </div>\n" +
     "                    </div>\n" +
+    "                    <div class=\"row extensions-row\" ng-if=\"$index == 0 && extensionsList.length\">\n" +
+    "                        <div class=\"col-md-2 col-sm-3 col-xs-6 extensions-area\" ng-click=\"openDetailsModal(ext.component)\" style=\"width: 11.499999995% ; padding: 13px;\" ng-repeat=\"ext in extensionsList\">\n" +
+    "                            <span class=\"badge new-comp-wrapper\" ng-if=\"ext.is_new == 1 && ext.status == 'NotInstalled'\" style=\"position: absolute;\" tooltip-append-to-body=\"true\" uib-tooltip=\"Release date: {{ ext.release_date }}\">New</span>\n" +
+    "                            <i class=\"fa fa-check-circle-o pull-right installedSymbol\" ng-if=\"ext.status == 'Installed'|| ext.status == 'NotInitialized'\" style=\"position: absolute; margin-left: 95px\"></i>\n" +
+    "                            <span class=\"update-component-arrow-wrapper\" style=\"position: absolute;\" tooltip-append-to-body=\"true\" uib-tooltip=\"New version available: {{ext.current_version}}\" ng-if=\"ext.updates>0\">\n" +
+    "                                <i class=\"fa fa-arrow-circle-down\" id=\"updateIcon\" style=\"color: #FF8A21\"></i>\n" +
+    "                            </span>\n" +
+    "                            <span class=\"test-comp-icon\" ng-if=\"ext.stage != 'prod'\" tooltip-append-to-body=\"true\" uib-tooltip=\"Test Component\"></span>\n" +
+    "                            <div class=\"extension-area-comp\">\n" +
+    "                                <img class=\"comp-img img-responsive ext-img\" ng-src=\"assets/img/component-logos/{{ ext.modifiedName }}.png\"  err-src=\"assets/img/component-logos/no_img.png\" alt=\"\">\n" +
+    "                                <div class=\"description-style\">\n" +
+    "                                    <h5 style=\"margin-bottom: 4px;\">\n" +
+    "                                        <a>{{ext.disp_name}}</a>\n" +
+    "                                    </h5>\n" +
+    "                                    <i>{{ext.short_desc}}</i>\n" +
+    "                                </div>\n" +
+    "                            </div>\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                    <div class=\"row non-pg-comp-row\">\n" +
+    "                        <div class=\"col-md-2 col-sm-3 col-xs-6\" ng-click=\"openDetailsModal(c.component)\" style=\"width: 11.499999995% ; padding: 0px 13px 13px 13px;\" ng-repeat=\"c in value\" ng-if=\"c.category_desc != 'PostgreSQL' && c.category_desc != 'Extensions' && c.component != 'devops' && c.component != 'bam2'\">\n" +
+    "                            <span class=\"badge new-comp-wrapper\" ng-if=\"c.is_new == 1 && c.status == 'NotInstalled'\" tooltip-append-to-body=\"true\" uib-tooltip=\"Release date: {{ c.release_date }}\" style=\"position: absolute;\">New</span>\n" +
+    "                            <i class=\"fa fa-check-circle-o pull-right installedSymbol\" ng-if=\"c.status == 'Installed'|| c.status == 'NotInitialized'\" style=\"position: absolute; margin-left: 95px\"></i>\n" +
+    "                            <span class=\"update-component-arrow-wrapper\" style=\"position: absolute;\" tooltip-append-to-body=\"true\" uib-tooltip=\"New version available: {{c.current_version}}\" ng-if=\"c.updates>0\">\n" +
+    "                                <i class=\"fa fa-arrow-circle-down\" id=\"updateIcon\" style=\"color: #FF8A21\"></i>\n" +
+    "                            </span>\n" +
+    "                            <span class=\"test-comp-icon\" ng-if=\"c.stage != 'prod'\" tooltip-append-to-body=\"true\" uib-tooltip=\"Test Component\"></span>\n" +
+    "                            <div class=\"extension-area-comp\">\n" +
+    "                                <img class=\"comp-img ext-img img-responsive\" ng-src=\"assets/img/component-logos/{{ c.component }}.png\"  err-src=\"assets/img/component-logos/no_img.png\" alt=\"\">\n" +
+    "                                <div class=\"description-style\">\n" +
+    "                                    <h5 style=\"margin-bottom: 4px;\">\n" +
+    "                                        <a>{{c.disp_name}}</a>\n" +
+    "                                    </h5>\n" +
+    "                                    <i>{{c.short_desc}}</i>\n" +
+    "                                </div>\n" +
+    "                            </div>\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
     "                </div>\n" +
-    "                <!-- /.box -->\n" +
-    "                <!-- /.box -->\n" +
+    "            </div>\n" +
+    "            </div>\n" +
+    "            </div>\n" +
+    "    </uib-tab>\n" +
+    "    <uib-tab ng-if=\"showPgDgTab && checkpgdgSetting\" select=\"selectPgDg($event)\">\n" +
+    "        <uib-tab-heading>\n" +
+    "          <div style=\"text-align: center;\">PGDG Repositories</div>\n" +
+    "        </uib-tab-heading>\n" +
+    "        <div class=\"box\" style=\"border-top: 0px;\">\n" +
+    "        <div class=\"box-body\">\n" +
+    "        <div style=\"display: table;\" ng-if=\"showRepoList && !noRepoFound\">\n" +
+    "            <label style=\"display: table-cell;\">Repository:&nbsp;</label>\n" +
+    "            <select style=\"display: table-cell;\" class=\"form-control\" ng-model=\"selectRepo\" ng-change=\"repoChange(selectRepo)\" ng-options=\"repo.repo as repo.repo for repo in pgdgRepoList\">\n" +
+    "            </select>\n" +
+    "        </div>\n" +
+    "        <br>\n" +
+    "        <div ng-if=\"noRepoFound\">\n" +
+    "            <div class=\"alert alert-warning\" role=\"alert\">\n" +
+    "                    You haven't registered any pgdg repositories. Select a repository below to register it.\n" +
+    "            </div>\n" +
+    "            <br>\n" +
+    "            <div class=\"pull-left\" style=\"display: table;\">\n" +
+    "                <label style=\"display: table-cell;\">Available Repositories : &nbsp;</label>\n" +
+    "                <select style=\"display: table-cell;\" class=\"form-control\" ng-model=\"selectAvailRepo\" ng-options=\"rep.repo as rep.repo for rep in availRepos\">\n" +
+    "                </select>\n" +
+    "            </div>\n" +
+    "            <div> \n" +
+    "                &nbsp;<button class=\"btn btn-default\" ng-click=\"registerRepo(selectAvailRepo)\" ng-disabled=\"registeringRepo\">Register</button>                \n" +
+    "            </div>\n" +
+    "            <div ng-if=\"registeringRepo\"><i class='fa fa-spinner fa-2x  fa-pulse'></i> &nbsp;Registering {{selectAvailRepo}}.....</div>\n" +
+    "        </div>\n" +
+    "        <div ng-if=\"repoNotRegistered\">\n" +
+    "            <div class=\"alert alert-warning\" role=\"alert\">\n" +
+    "                    {{errorMsg}}\n" +
+    "            </div>\n" +
+    "            <br>\n" +
+    "            <div> \n" +
+    "                &nbsp;<button class=\"btn btn-default\" ng-click=\"registerRepo(selectRepo)\" ng-disabled=\"registeringRepo\">Register</button>                \n" +
+    "            </div>\n" +
+    "            <div ng-if=\"registeringRepo\"><i class='fa fa-spinner fa-2x  fa-pulse'></i> &nbsp;Registering {{selectAvailRepo}}.....</div>\n" +
+    "        </div>\n" +
+    "        <!-- <span ng-if=\"repoNotRegistered\"> Repo is not registerd.</span> -->\n" +
+    "        <div ng-if=\"gettingPGDGdata \"  style=\"height: 250px\">\n" +
+    "        <div style=\"position: absolute; width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;\">\n" +
+    "            <i class=\"fa fa-cog fa-spin fa-5x fa-fw margin-bottom\"></i>\n" +
+    "            <span><h3>Loading...</h3></span>\n" +
+    "        </div>\n" +
+    "        </div>\n" +
+    "        <div class=\"box\" ng-if=\"!gettingPGDGdata && !noRepoFound && !repoNotRegistered\">\n" +
+    "            <div class=\"box-body\">\n" +
+    "                <div id=\"serversTable\">\n" +
+    "                    <div class=\"component_head_box\">\n" +
+    "                        <div class=\"col-md-3 col-sm-3 col-xs-3\"><strong>Component</strong></div>\n" +
+    "                        <div class=\"col-md-3 col-sm-3 col-xs-3\"><strong>Version</strong></div>\n" +
+    "                        <div class=\"col-md-2 col-sm-2 col-xs-2\"><strong>Release Date</strong></div>\n" +
+    "                        <div class=\"col-md-1 col-sm-1 col-xs-1\"><strong>Installed</strong></div>\n" +
+    "                        <div class=\"col-md-3 col-sm-3 col-xs-3\"><strong>Actions</strong></div>\n" +
+    "                    </div>\n" +
+    "                    <div id=\"serversTableTbody\">\n" +
+    "                        <div ng-repeat=\"c in repoList\" class= \"component_box\" ng-class-odd=\"'oddRow'\" style=\"border-bottom: 1px solid #f4f4f4;\">\n" +
+    "                            <div class=\"col-md-3 col-sm-3 col-xs-3\">\n" +
+    "                                <div class=\"comp-name\">\n" +
+    "                                    <a class=\"serversTableTbody-component--link\" tooltip-append-to-body=\"true\" ng-bind = \"c.component\">\n" +
+    "                                    {{c.component}}\n" +
+    "                                    </a>\n" +
+    "                                </div>\n" +
+    "                            </div>\n" +
+    "                            <div class=\"col-md-3 col-sm-3 col-xs-3\">\n" +
+    "                                {{c.version}}\n" +
+    "                            </div>\n" +
+    "                            <div class=\"col-md-2 col-sm-2 col-xs-2\">{{c.release_date}}</div>\n" +
+    "                            <div class=\"col-md-1 col-sm-1 col-xs-1\">\n" +
+    "                            <i style=\"color:green; \" class=\"fa fa-check-circle-o fa-2x \" ng-if=\"c.status == 'Installed' && c.removing == undefined || c.status == 'NotInitialized' && c.removing == undefined && c.init == undefined \" ng-hide=\"c.showingSpinner\"></i>\n" +
+    "                            <i class='fa fa-spinner fa-2x  fa-pulse' ng-if=\"c.removing || c.init || c.showingSpinner\">\n" +
+    "                            </i>\n" +
+    "                            </div>\n" +
+    "                            <div class=\"col-md-3 col-sm-3 col-xs-3\" style=\"padding-left: 10px; margin-top: -7px;\">\n" +
+    "                                <a class=\"btn btn-default\" ng-click=\"pgdgAction( 'install', c.component) \" ng-if=\"c.status == 'NotInstalled' || c.status == ''\" ng-disabled=\" c.showingSpinner || true\">Install</a>\n" +
+    "                                <a class=\"btn btn-default\" ng-click=\"pgdgAction( 'remove', c.component) \" ng-if=\"c.status == 'Installed'\" ng-disabled=\" c.showingSpinner || true\">Remove</a>\n" +
+    "                            </div>\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
     "            </div>\n" +
     "        </div>\n" +
+    "        </div>\n" +
+    "        </div>\n" +
+    "        </uib-tab>\n" +
+    "    </uib-tabset>\n" +
     "</section>")
 
-$templateCache.put("../app/components/partials/whatsNew.html","<div class=\"modal-header\">\n" +
+$templateCache.put("../app/components/partials/whatsNew.html","<div ng-click=\"cancel()\" style=\"padding: 10px;\" class=\"close-modal pull-right\" data-dismiss=\"modal\" aria-hidden=\"true\">\n" +
+    "        <i class=\"fa fa-lg fa-close\"></i>\n" +
+    "    </div>\n" +
+    "<div class=\"modal-header\">\n" +
     "    <h3 class=\"modal-title\">What's New</h3>\n" +
     "</div>\n" +
     "<div class=\"modal-body\">\n" +
-    "    <span ng-bind-html=\"whatsNewText\"></span>\n" +
-    "</div>\n" +
-    "<div class=\"modal-footer\">\n" +
-    "    <button class=\"btn btn-warning\" type=\"button\" ng-click=\"cancel()\">Cancel</button>\n" +
+    "	<div style=\"height: 500px; overflow: auto;\">\n" +
+    "    	<span ng-bind-html=\"whatsNewText\"></span>\n" +
+    "    </div>\n" +
     "</div>")
 
 $templateCache.put("../app/menus/partials/bamHeaderUpdate.html","<div ng-show=\"bamUpdate\">\n" +
@@ -2139,19 +2532,13 @@ $templateCache.put("../app/menus/partials/leftMenu.html","<aside class=\"main-si
     "            <li class=\"header\">MAIN NAVIGATION</li>\n" +
     "            <li>\n" +
     "                <a href=\"/\">\n" +
-    "                    <i class=\"fa fa-home\"></i> <span>Home</span>\n" +
-    "                    <!-- <i class=\"fa fa-angle-left pull-right\"></i> -->\n" +
-    "                </a>\n" +
-    "            </li>\n" +
-    "            <li>\n" +
-    "                <a ui-sref=\"components.hosts\">\n" +
-    "                    <i class=\"fa fa-cloud\"></i> <span>Hosts</span>\n" +
-    "                    <!-- <i class=\"fa fa-angle-left pull-right\"></i> -->\n" +
+    "                    <i class=\"fa fa-home\"></i> <span>Dashboard</span>\n" +
+    "                    <i class=\"fa fa-angle-left pull-right\"></i>\n" +
     "                </a>\n" +
     "            </li>\n" +
     "            <li>\n" +
     "                <a ui-sref=\"components.view\">\n" +
-    "                    <i class=\"fa fa-th\"></i> <span>Components</span>\n" +
+    "                    <i class=\"bgs bgs-sm bgs-package-manager-menu\"></i> <span>Package Manager</span>\n" +
     "                </a>\n" +
     "            </li>\n" +
     "            <!--<li>\n" +
@@ -2159,19 +2546,25 @@ $templateCache.put("../app/menus/partials/leftMenu.html","<aside class=\"main-si
     "                    <i class=\"fa fa-dashboard\"></i> <span>Server Status</span>\n" +
     "                </a>\n" +
     "            </li> -->\n" +
-    "            <!--<li>\n" +
-    "                <a ui-sref=\"components.componentLog({component:'pgcli'})\">\n" +
-    "                    <i class=\"fa fa-file-text-o\"></i> <span>Log Tailer</span>\n" +
-    "                </a>\n" +
-    "            </li>-->\n" +
     "            <li>\n" +
     "                <a ui-sref=\"components.badger\">\n" +
-    "                    <i class=\"bgs bgs-sm bgs-pgbadger-menu\">&nbsp;&nbsp;&nbsp;&nbsp;</i> <span>pgBadger</span>\n" +
+    "                    <i class=\"bgs bgs-sm bgs-pgbadger-menu\">&nbsp;&nbsp;&nbsp;&nbsp;</i> <span>pgBadger Console</span>\n" +
     "                </a>\n" +
     "            </li>\n" +
     "            <li>\n" +
     "                <a ui-sref=\"components.profiler\">\n" +
-    "                    <i class=\"bgs bgs-sm bgs-plprofiler-menu\">&nbsp;&nbsp;&nbsp;&nbsp;</i> <span>plProfiler</span>\n" +
+    "                    <i class=\"bgs bgs-sm bgs-plprofiler-menu\">&nbsp;&nbsp;&nbsp;&nbsp;</i> <span>plProfiler Console</span>\n" +
+    "                </a>\n" +
+    "            </li>\n" +
+    "            <li>\n" +
+    "                <a ui-sref=\"components.componentLog({component:'pgcli'})\">\n" +
+    "                    <i class=\"fa fa-file-text-o\"></i> <span>Log Tailer</span>\n" +
+    "                </a>\n" +
+    "            </li>\n" +
+    "            <li>\n" +
+    "                <a ui-sref=\"components.hosts\">\n" +
+    "                    <i class=\"fa fa-cloud\"></i> <span>Host Manager</span>\n" +
+    "                    <!-- <i class=\"fa fa-angle-left pull-right\"></i> -->\n" +
     "                </a>\n" +
     "            </li>\n" +
     "            <!-- <li>\n" +
@@ -2198,7 +2591,7 @@ $templateCache.put("../app/menus/partials/topMenu.html","<header class=\"main-he
     "        </a>\n" +
     "        <ul uib-dropdown-menu role=\"menu\" style=\"margin-top: 0px\" \n" +
     "            aria-labelledby=\"btn-append-to-single-button\" >\n" +
-    "            <li role=\"menuitem\"><a href=\"/admin\">pgAdmin4</a></li>\n" +
+    "            <li role=\"menuitem\"><a href=\"/admin\">pgAdmin4 Web</a></li>\n" +
     "        </ul>\n" +
     "    </div>\n" +
     "    <!-- Logo -->\n" +
@@ -2216,13 +2609,22 @@ $templateCache.put("../app/menus/partials/topMenu.html","<header class=\"main-he
     "                </a> -->\n" +
     "        <!-- Navbar Right Menu -->\n" +
     "        <a href=\"/\" class=\"logo\"></a>\n" +
-    "        <h1 id=\"pgc-logo\">DevOps by BigSQL</h1>\n" +
+    "        <h1 id=\"pgc-logo\">pgDevOps by BigSQL</h1>\n" +
     "\n" +
     "        <div class=\"navbar-custom-menu\">\n" +
     "            <ul class=\"nav navbar-nav\">\n" +
     "                <!-- Notifications: style can be found in dropdown.less -->\n" +
     "                <li>\n" +
     "\n" +
+    "                </li>\n" +
+    "                <li ng-click=\"openDetailsModal()\" id=\"pgDevOpsUpdate\" ng-if=\"pgdevopsUpdate\">\n" +
+    "                    <!-- <button class=\"btn btn-default btn-sm btn-warning\" style=\"margin-top: 12px\">New version of pgDevOps available</button> -->\n" +
+    "                    <a href=\"\">\n" +
+    "                        <div>\n" +
+    "                            <small class=\"label bg-orange\">New version of pgDevOps available\n" +
+    "                            </small>\n" +
+    "                        </div>\n" +
+    "                    </a>\n" +
     "                </li>\n" +
     "                <li ng-click=\"open()\" id=\"updatesAvailable\" ng-if=\"updates\">\n" +
     "                    <a href=\"\">\n" +
@@ -2232,6 +2634,21 @@ $templateCache.put("../app/menus/partials/topMenu.html","<header class=\"main-he
     "                            </small>\n" +
     "                        </div>\n" +
     "                    </a>\n" +
+    "                </li>\n" +
+    "                <li>\n" +
+    "                    <div class=\"btn-group userinfo-btn\" uib-dropdown >\n" +
+    "                        <button id=\"btn-append-to-single-button\" type=\"button\" class=\"btn btn-dropdown\" uib-dropdown-toggle>\n" +
+    "                        Help  <span class=\"caret\"></span>\n" +
+    "                        </button>\n" +
+    "                        \n" +
+    "                         <ul class=\"dropdown-menu\" style=\"margin-left: -80px\" uib-dropdown-menu role=\"menu\" aria-labelledby=\"btn-append-to-single-button\">\n" +
+    "                           <li><a target=\"_blank\" href=\"https://www.bigsql.org/about.jsp\"><i class=\"fa fa-external-link\" aria-hidden=\"true\"></i>About BigSQL</a></li>\n" +
+    "                           <li><a target=\"_blank\" href=\"https://www.bigsql.org/forum.jsp\"><i class=\"fa fa-external-link\" aria-hidden=\"true\"></i>Feedback</a></li>\n" +
+    "                           <li><a target=\"_blank\" href=\"https://www.bigsql.org/docs/\"><i class=\"fa fa-external-link\" aria-hidden=\"true\"></i>Documentation</a></li>\n" +
+    "                           <li role=\"separator\" class=\"divider\"></li>\n" +
+    "                           <li><a ng-click=\"openDetailsModal()\"><i class=\"fa fa-info-circle\" aria-hidden=\"true\"></i>About pgDevOps</a></li>\n" +
+    "                         </ul>\n" +
+    "                     </div>\n" +
     "                </li>\n" +
     "                <li>\n" +
     "                    <div class=\"btn-group userinfo-btn\" uib-dropdown>\n" +

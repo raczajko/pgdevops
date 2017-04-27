@@ -5,7 +5,8 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     var subscriptions = [];
     $scope.updateSettings;
     $scope.components = {};
-    $scope.currentHost
+    $scope.currentHost;
+    $scope.showPgDgFeature = false;
     $scope.settingsOptions = [{name:'Weekly'},{name:'Daily'},{name:'Monthly'}]
 
     $scope.open = function (manual) {
@@ -43,13 +44,22 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         $rootScope.$emit('topMenuEvent');
         session = val;
 
-        session.call('com.bigsql.getBetaFeatureSetting');
+        session.call('com.bigsql.getBetaFeatureSetting', ['hostManager']);
+        session.call('com.bigsql.getBetaFeatureSetting', ['pgdg']);
 
         session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
-            if(settings[0] == '0' || !settings[0]){
-                $scope.betaFeature = false;
-            }else{
-                $scope.betaFeature = true;
+            if(settings[0].setting == 'hostManager'){
+                if (settings[0].value == '0' || !settings[0].value) {
+                    $scope.hostManager = false; 
+                }else{
+                    $scope.hostManager = true;
+                }
+            }else if(settings[0].setting == 'pgdg'){
+                if (settings[0].value == '0' || !settings[0].value) {
+                    $scope.pgdg = false; 
+                }else{
+                    $scope.pgdg = true;
+                }
             }
            $scope.$apply();
         }).then(function (subscription) {
@@ -90,18 +100,18 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             $scope.alerts.splice(index, 1);
         };
 
-        $scope.changeBetaFeature = function (argument) {
+        $scope.changeBetaFeature = function (name, setting) {
             var value, msg, type;
-            if($scope.betaFeature){
+            if(setting){
                 value = '1';
-                msg = "Beta features enabled.";
+                msg = name + " feature is enabled.";
                 type = 'success';
             }else{
                 value = '0';
-                msg = "Beta features disabled.";
+                msg = name + " feature is disabled.";
                 type = 'warning';
             }
-            session.call('com.bigsql.setBetaFeatureSetting', [value]);
+            session.call('com.bigsql.setBetaFeatureSetting', [name, value]);
             $scope.alerts.push({
                 msg : msg,
                 type : type
@@ -115,25 +125,43 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         $scope.currentHost = argument;
         if (argument=="" || argument == 'localhost'){
             var infoData = bamAjaxCall.getCmdData('info');
+            var checkpgdgSupport = bamAjaxCall.getCmdData('info');
+            var getLablist = bamAjaxCall.getCmdData('lablist');
         } else{
             var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
+            var checkpgdgSupport = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
+            var getLablist = bamAjaxCall.getCmdData('lablist/'+argument);
         }
 
         infoData.then(function(data) {
-        $scope.pgcInfo = data[0];
-        if (data[0].last_update_utc) {
-            var l_date = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
-            $scope.lastUpdateStatus = l_date.split(' ')[0] + ' ' + l_date.split(' ')[1].replace(/^0+/, '') + ', ' + l_date.split(' ')[2] + ' ' + l_date.split(' ')[3]
-        }
-        if (MachineInfo.getUpdationMode() == "manual") {
-            $scope.settingType = 'manual';
-        } else {
-            $scope.settingType = 'auto';
-            session.call('com.bigsql.get_host_settings');
-        }
+            $scope.pgcInfo = data[0];
+            if (data[0].last_update_utc) {
+                var l_date = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
+                $scope.lastUpdateStatus = l_date.split(' ')[0] + ' ' + l_date.split(' ')[1].replace(/^0+/, '') + ', ' + l_date.split(' ')[2] + ' ' + l_date.split(' ')[3]
+            }
+            if (MachineInfo.getUpdationMode() == "manual") {
+                $scope.settingType = 'manual';
+            } else {
+                $scope.settingType = 'auto';
+                session.call('com.bigsql.get_host_settings');
+            }
+        });
+        
+        checkpgdgSupport.then(function (argument) {
+            var data = argument[0];
+            if(data.os.split(' ')[0] == 'CentOS'){
+                $scope.showPgDgFeature = true;
+            }
+        })
 
-    });
+        getLablist.then(function function_name(argument) {
+            $scope.lablist = argument;
+        })
     };
+
+    $scope.changeSetting = function (settingName, value) {
+        session.call('com.bigsql.setLabSetting', [settingName, value])
+    }
 
     $rootScope.$on('refreshUpdateDate', function (argument) {
        $window.location.reload(); 

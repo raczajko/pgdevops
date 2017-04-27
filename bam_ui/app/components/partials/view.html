@@ -18,80 +18,177 @@
 
 <span id="components"></span>
 <section class="content">
-    <div ng-if="loading" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
-        <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
-        <span><h3>Loading...</h3></span>
-    </div>
-    <span ng-if="retry" style="text-align: center;"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>
-    <div ng-if="nothingInstalled" class="jumbotron" style="background-color: #fff; margin-top: 15px; text-align: center;"> <h3> You haven't installed anything yet</h3>
-    </div>
-    <div ng-if="!loading && !retry">
-        <div ng-repeat="(key, value) in components | groupBy: 'category_desc'">
-            <div class="box-header" ng-if="key != 'Extensions'">
-                <h3 class="box-title" ng-bind="key" ng-if="value.length"></h3>
+    <uib-tabset>
+        <uib-tab  heading="PostgreSQL">
+            <uib-tab-heading>
+              <div style="text-align: center;">BigSQL Repository</div>
+            </uib-tab-heading>
+            <div class="box" style="border-top: 0px;">
+            <div class="box-body">
+            <div ng-if="loading"  style="height: 250px">
+            <div ng-if="loading" style="position: absolute;width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+                <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+                <span><h3>Loading...</h3></span>
             </div>
-            <div class="row">
-                <div class="col-md-2 col-sm-3 col-xs-6" ng-repeat="c in value" ng-if="c.category_desc == 'PostgreSQL'">
-                    <i class="fa fa-check-circle-o fa-2x pull-right installedSymbol" ng-if="c.status == 'Installed'|| c.status == 'NotInitialized'"></i>
-                    <span class="update-component-arrow-wrapper" tooltip-append-to-body="true" uib-tooltip="New version available: {{c.current_version}}" ng-if="c.updates>0">
-                        <i class="fa fa-arrow-circle-down fa-2x" id="updateIcon" style="color: #FF8A21"></i>
-                    </span>
-                    <span class="test-comp-icon" ng-if="c.stage != 'prod'" tooltip-append-to-body="true" uib-tooltip="Test Component"></span>
-                    <div ng-class="c.extensionOpened && extensionsList.length ? 'select-comp-area' : 'comp-area'" ng-click="getExtensions(c.component, $index)">
-                        <img class="comp-img img-responsive" ng-src="assets/img/component-logos/{{ c.component }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
-                        <div class="caption">
-                            <div style="white-space: nowrap; text-align: center;">
-                                <h5>
-                                    <a href="#/details-pg/{{c.component}}">{{c.disp_name}}</a>
-                                </h5>
+            </div>
+            <span ng-if="retry" style="text-align: center;"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>
+            <div ng-if="nothingInstalled" class="jumbotron" style="background-color: #fff; margin-top: 15px; text-align: center;"> <h3> You haven't installed anything yet</h3>
+            </div>
+            <div ng-if="!loading && !retry">
+                <div ng-repeat="(key, value) in components | groupBy: 'category_desc'">
+                    <div class="box-header" ng-if="key != 'Extensions'">
+                        <h3 class="box-title" ng-bind="key" ng-if="value.length"></h3>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2 col-sm-3 col-xs-6" ng-repeat="c in value" ng-if="c.category_desc == 'PostgreSQL'">
+                            <i class="fa fa-check-circle-o fa-2x pull-right installedSymbol" ng-if="c.status == 'Installed'|| c.status == 'NotInitialized'"></i>
+                            <span class="update-component-arrow-wrapper" tooltip-append-to-body="true" uib-tooltip="New version available: {{c.current_version}}" ng-if="c.updates>0">
+                                <i class="fa fa-arrow-circle-down fa-2x" id="updateIcon" style="color: #FF8A21"></i>
+                            </span>
+                            <span class="test-comp-icon" ng-if="c.stage != 'prod'" tooltip-append-to-body="true" uib-tooltip="Test Component"></span>
+                            <div ng-class="c.extensionOpened && extensionsList.length ? 'select-comp-area' : 'comp-area'" ng-click="getExtensions(c.component, $index)">
+                                <img class="comp-img img-responsive" ng-src="assets/img/component-logos/{{ c.component }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
+                                <div class="caption">
+                                    <div style="white-space: nowrap; text-align: center;">
+                                        <h5>
+                                            <a href="#/details-pg/{{c.component}}">{{c.disp_name}}</a>
+                                        </h5>
+                                    </div>
+                                    <div ng-class="c.extensionOpened ? 'expandExt' : ''" ng-if="extensionsList.length">
+                                        <h5 ng-if="c.extensionOpened">
+                                            <strong>Extensions</strong>
+                                        </h5>
+                                    </div>
+                                </div>
                             </div>
-                            <div ng-class="c.extensionOpened ? 'expandExt' : ''" ng-if="extensionsList.length">
-                                <h5 ng-if="c.extensionOpened">
-                                    <strong>Extensions</strong>
-                                </h5>
+                        </div>
+                    </div>
+                    <div class="row extensions-row" ng-if="$index == 0 && extensionsList.length">
+                        <div class="col-md-2 col-sm-3 col-xs-6 extensions-area" ng-click="openDetailsModal(ext.component)" style="width: 11.499999995% ; padding: 13px;" ng-repeat="ext in extensionsList">
+                            <span class="badge new-comp-wrapper" ng-if="ext.is_new == 1 && ext.status == 'NotInstalled'" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="Release date: {{ ext.release_date }}">New</span>
+                            <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="ext.status == 'Installed'|| ext.status == 'NotInitialized'" style="position: absolute; margin-left: 95px"></i>
+                            <span class="update-component-arrow-wrapper" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="New version available: {{ext.current_version}}" ng-if="ext.updates>0">
+                                <i class="fa fa-arrow-circle-down" id="updateIcon" style="color: #FF8A21"></i>
+                            </span>
+                            <span class="test-comp-icon" ng-if="ext.stage != 'prod'" tooltip-append-to-body="true" uib-tooltip="Test Component"></span>
+                            <div class="extension-area-comp">
+                                <img class="comp-img img-responsive ext-img" ng-src="assets/img/component-logos/{{ ext.modifiedName }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
+                                <div class="description-style">
+                                    <h5 style="margin-bottom: 4px;">
+                                        <a>{{ext.disp_name}}</a>
+                                    </h5>
+                                    <i>{{ext.short_desc}}</i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row non-pg-comp-row">
+                        <div class="col-md-2 col-sm-3 col-xs-6" ng-click="openDetailsModal(c.component)" style="width: 11.499999995% ; padding: 0px 13px 13px 13px;" ng-repeat="c in value" ng-if="c.category_desc != 'PostgreSQL' && c.category_desc != 'Extensions' && c.component != 'devops' && c.component != 'bam2'">
+                            <span class="badge new-comp-wrapper" ng-if="c.is_new == 1 && c.status == 'NotInstalled'" tooltip-append-to-body="true" uib-tooltip="Release date: {{ c.release_date }}" style="position: absolute;">New</span>
+                            <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="c.status == 'Installed'|| c.status == 'NotInitialized'" style="position: absolute; margin-left: 95px"></i>
+                            <span class="update-component-arrow-wrapper" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="New version available: {{c.current_version}}" ng-if="c.updates>0">
+                                <i class="fa fa-arrow-circle-down" id="updateIcon" style="color: #FF8A21"></i>
+                            </span>
+                            <span class="test-comp-icon" ng-if="c.stage != 'prod'" tooltip-append-to-body="true" uib-tooltip="Test Component"></span>
+                            <div class="extension-area-comp">
+                                <img class="comp-img ext-img img-responsive" ng-src="assets/img/component-logos/{{ c.component }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
+                                <div class="description-style">
+                                    <h5 style="margin-bottom: 4px;">
+                                        <a>{{c.disp_name}}</a>
+                                    </h5>
+                                    <i>{{c.short_desc}}</i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="row extensions-row" ng-if="$index == 0 && extensionsList.length">
-                <div class="col-md-2 col-sm-3 col-xs-6 extensions-area" ng-click="openDetailsModal(ext.component)" style="width: 11.499999995% ; padding: 13px;" ng-repeat="ext in extensionsList">
-                    <span class="badge new-comp-wrapper" ng-if="ext.is_new == 1 && ext.status == 'NotInstalled'" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="Release date: {{ ext.release_date }}">New</span>
-                    <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="ext.status == 'Installed'|| ext.status == 'NotInitialized'" style="position: absolute; margin-left: 95px"></i>
-                    <span class="update-component-arrow-wrapper" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="New version available: {{ext.current_version}}" ng-if="ext.updates>0">
-                        <i class="fa fa-arrow-circle-down" id="updateIcon" style="color: #FF8A21"></i>
-                    </span>
-                    <span class="test-comp-icon" ng-if="ext.stage != 'prod'" tooltip-append-to-body="true" uib-tooltip="Test Component"></span>
-                    <div class="extension-area-comp">
-                        <img class="comp-img img-responsive ext-img" ng-src="assets/img/component-logos/{{ ext.modifiedName }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
-                        <div class="description-style">
-                            <h5 style="margin-bottom: 4px;">
-                                <a>{{ext.disp_name}}</a>
-                            </h5>
-                            <i>{{ext.short_desc}}</i>
-                        </div>
-                    </div>
-                </div>
             </div>
-            <div class="row non-pg-comp-row">
-                <div class="col-md-2 col-sm-3 col-xs-6" ng-click="openDetailsModal(c.component)" style="width: 11.499999995% ; padding: 0px 13px 13px 13px;" ng-repeat="c in value" ng-if="c.category_desc != 'PostgreSQL' && c.category_desc != 'Extensions' && c.component != 'devops' && c.component != 'bam2'">
-                    <span class="badge new-comp-wrapper" ng-if="c.is_new == 1 && c.status == 'NotInstalled'" tooltip-append-to-body="true" uib-tooltip="Release date: {{ c.release_date }}" style="position: absolute;">New</span>
-                    <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="c.status == 'Installed'|| c.status == 'NotInitialized'" style="position: absolute; margin-left: 95px"></i>
-                    <span class="update-component-arrow-wrapper" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="New version available: {{c.current_version}}" ng-if="c.updates>0">
-                        <i class="fa fa-arrow-circle-down" id="updateIcon" style="color: #FF8A21"></i>
-                    </span>
-                    <span class="test-comp-icon" ng-if="c.stage != 'prod'" tooltip-append-to-body="true" uib-tooltip="Test Component"></span>
-                    <div class="extension-area-comp">
-                        <img class="comp-img ext-img img-responsive" ng-src="assets/img/component-logos/{{ c.component }}.png"  err-src="assets/img/component-logos/no_img.png" alt="">
-                        <div class="description-style">
-                            <h5 style="margin-bottom: 4px;">
-                                <a>{{c.disp_name}}</a>
-                            </h5>
-                            <i>{{c.short_desc}}</i>
+            </div>
+    </uib-tab>
+    <uib-tab ng-if="showPgDgTab && checkpgdgSetting" select="selectPgDg($event)">
+        <uib-tab-heading>
+          <div style="text-align: center;">PGDG Repositories</div>
+        </uib-tab-heading>
+        <div class="box" style="border-top: 0px;">
+        <div class="box-body">
+        <div style="display: table;" ng-if="showRepoList && !noRepoFound">
+            <label style="display: table-cell;">Repository:&nbsp;</label>
+            <select style="display: table-cell;" class="form-control" ng-model="selectRepo" ng-change="repoChange(selectRepo)" ng-options="repo.repo as repo.repo for repo in pgdgRepoList">
+            </select>
+        </div>
+        <br>
+        <div ng-if="noRepoFound">
+            <div class="alert alert-warning" role="alert">
+                    You haven't registered any pgdg repositories. Select a repository below to register it.
+            </div>
+            <br>
+            <div class="pull-left" style="display: table;">
+                <label style="display: table-cell;">Available Repositories : &nbsp;</label>
+                <select style="display: table-cell;" class="form-control" ng-model="selectAvailRepo" ng-options="rep.repo as rep.repo for rep in availRepos">
+                </select>
+            </div>
+            <div> 
+                &nbsp;<button class="btn btn-default" ng-click="registerRepo(selectAvailRepo)" ng-disabled="registeringRepo">Register</button>                
+            </div>
+            <div ng-if="registeringRepo"><i class='fa fa-spinner fa-2x  fa-pulse'></i> &nbsp;Registering {{selectAvailRepo}}.....</div>
+        </div>
+        <div ng-if="repoNotRegistered">
+            <div class="alert alert-warning" role="alert">
+                    {{errorMsg}}
+            </div>
+            <br>
+            <div> 
+                &nbsp;<button class="btn btn-default" ng-click="registerRepo(selectRepo)" ng-disabled="registeringRepo">Register</button>                
+            </div>
+            <div ng-if="registeringRepo"><i class='fa fa-spinner fa-2x  fa-pulse'></i> &nbsp;Registering {{selectAvailRepo}}.....</div>
+        </div>
+        <!-- <span ng-if="repoNotRegistered"> Repo is not registerd.</span> -->
+        <div ng-if="gettingPGDGdata "  style="height: 250px">
+        <div style="position: absolute; width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+            <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+            <span><h3>Loading...</h3></span>
+        </div>
+        </div>
+        <div class="box" ng-if="!gettingPGDGdata && !noRepoFound && !repoNotRegistered">
+            <div class="box-body">
+                <div id="serversTable">
+                    <div class="component_head_box">
+                        <div class="col-md-3 col-sm-3 col-xs-3"><strong>Component</strong></div>
+                        <div class="col-md-3 col-sm-3 col-xs-3"><strong>Version</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Release Date</strong></div>
+                        <div class="col-md-1 col-sm-1 col-xs-1"><strong>Installed</strong></div>
+                        <div class="col-md-3 col-sm-3 col-xs-3"><strong>Actions</strong></div>
+                    </div>
+                    <div id="serversTableTbody">
+                        <div ng-repeat="c in repoList" class= "component_box" ng-class-odd="'oddRow'" style="border-bottom: 1px solid #f4f4f4;">
+                            <div class="col-md-3 col-sm-3 col-xs-3">
+                                <div class="comp-name">
+                                    <a class="serversTableTbody-component--link" tooltip-append-to-body="true" ng-bind = "c.component">
+                                    {{c.component}}
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-3 col-xs-3">
+                                {{c.version}}
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-2">{{c.release_date}}</div>
+                            <div class="col-md-1 col-sm-1 col-xs-1">
+                            <i style="color:green; " class="fa fa-check-circle-o fa-2x " ng-if="c.status == 'Installed' && c.removing == undefined || c.status == 'NotInitialized' && c.removing == undefined && c.init == undefined " ng-hide="c.showingSpinner"></i>
+                            <i class='fa fa-spinner fa-2x  fa-pulse' ng-if="c.removing || c.init || c.showingSpinner">
+                            </i>
+                            </div>
+                            <div class="col-md-3 col-sm-3 col-xs-3" style="padding-left: 10px; margin-top: -7px;">
+                                <a class="btn btn-default" ng-click="pgdgAction( 'install', c.component) " ng-if="c.status == 'NotInstalled' || c.status == ''" ng-disabled=" c.showingSpinner || true">Install</a>
+                                <a class="btn btn-default" ng-click="pgdgAction( 'remove', c.component) " ng-if="c.status == 'Installed'" ng-disabled=" c.showingSpinner || true">Remove</a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+        </div>
+        </div>
+        </uib-tab>
+    </uib-tabset>
 </section>

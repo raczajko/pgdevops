@@ -123,23 +123,35 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         color: '#006994'
     }];
 
+    var getLabList = bamAjaxCall.getCmdData('lablist');
+    $scope.betaFeature = false
+    getLabList.then(function (argument) {
+        for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "multi-host-mgr" && argument[i].enabled == "on"){
+                $scope.betaFeature = true;
+            }
+        }
+    })
+
     var sessionPromise = PubSubService.getSession();
 
     sessionPromise.then(function (val) {
         session = val;
 
-        session.call('com.bigsql.getBetaFeatureSetting');
+        // session.call('com.bigsql.getBetaFeatureSetting', ['hostManager']);
 
-        session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
-            if(settings[0] == '0' || !settings[0]){
-                $scope.betaFeature = false;
-            }else{
-                $scope.betaFeature = true;
-            }
-           $scope.$apply();
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
-        });
+        // session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
+        //     if(settings[0].setting == 'hostManager'){
+        //         if(settings[0].value == '0' || !settings[0].value){
+        //             $scope.betaFeature = false;
+        //         }else{
+        //             $scope.betaFeature = true;
+        //         }
+        //     }
+        //    $scope.$apply();
+        // }).then(function (subscription) {
+        //     subscriptions.push(subscription);
+        // });
     });
 
     var getCurrentComponent = function (name, host) {

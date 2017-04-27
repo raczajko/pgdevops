@@ -522,7 +522,7 @@ angular.module('bigSQL.common').factory('PubSubService', function ($window, $roo
     }
 
 });
-angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'bamAjaxCall', '$sce', '$cookies', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, bamAjaxCall, $sce, $cookies) {
+angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'bamAjaxCall', '$sce', '$cookies', '$uibModalInstance', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, bamAjaxCall, $sce, $cookies, $uibModalInstance) {
 
     var subscriptions = [];
     var session;
@@ -533,12 +533,23 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     var componentStatus = 0;
 
     $scope.alerts = [];
+    $scope.startAlert = [];
+    $scope.checkplProfiler = true;
 
     $scope.statusColors = {
         "Stopped": "orange",
         "NotInitialized": "yellow",
         "Running": "green"
     }
+
+    $scope.cancel = function () {
+        $interval.cancel(callStatus);
+        $rootScope.$emit('refreshPage');
+        $rootScope.$emit('updatePackageManager');
+        $uibModalInstance.dismiss('cancel');
+    };
+
+    $scope.currentComponent = $uibModalInstance.component;
 
     var getCurrentObject = function (list, name) {
         var currentObject;
@@ -550,7 +561,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
         }
     };
 
-    function compAction(action) {
+    $scope.compAction = function (action) {
+        var is_yes=false;
         if(action == 'start'){
             $scope.component.spinner = 'Starting..';
         }else if(action == 'stop'){
@@ -559,10 +571,28 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
             $scope.component.spinner = 'Removing..';
         }else if(action == 'restart'){
             $scope.component.spinner = 'Restarting..';
+        } else if(action == 'install'){
+            is_yes=true;
+            $scope.checkplProfiler = true;
         }
         var sessionKey = "com.bigsql." + action;
-        session.call(sessionKey, [$scope.component.component]);
+        session.call(sessionKey, [$scope.component.component, is_yes]);
     };
+
+    if ($scope.currentComponent == 'pgdevops') {
+        var remote_host = $cookies.get('remote_host');
+        $scope.currentHost = remote_host;
+        remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
+        if (remote_host == "" || remote_host == "localhost") {
+            var pgcInfo = bamAjaxCall.getCmdData('info')
+        }else{
+            var pgcInfo = bamAjaxCall.getCmdData('info/' + remote_host)
+        }
+
+        pgcInfo.then(function (data) {
+            $scope.PGC_HOME = data[0].home;
+        })
+    }
 
     function callInfo(argument) {
         var remote_host = $cookies.get('remote_host');
@@ -570,20 +600,31 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
         $scope.currentHost = remote_host;
         if (remote_host == "" || remote_host == "localhost") {
-            var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+            $scope.currentHost = "localhost";
+            // var infoData = bamAjaxCall.getCmdData('info/' + $scope.currentComponent);
+            var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $scope.currentComponent);
         } else {
-            var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component + "/" + remote_host);
+            var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $scope.currentComponent + "/" + remote_host);
         }
 
-        //var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+        //var infoData = bamAjaxCall.getCmdData('info/' + $scope.currentComponent);
         infoData.then(function(data) {
             $scope.loading = false;
-            if(window.location.href.split('/').pop(-1) == data[0].component){
+            if($scope.currentComponent == data[0].component){
                 $scope.component = data[0];
-                var relnotes = bamAjaxCall.getCmdData('relnotes/' + $stateParams.component + '/' +$scope.component.version)
-                relnotes.then(function (data) {
-                    $scope.relnotes = $sce.trustAsHtml(data);
-                });
+                $scope.component.componentImage = $scope.component.component.split('-')[0].replace(/[0-9]/g,'');
+                $scope.component.release_date = new Date($scope.component.release_date).toString().split(' ',[4]).splice(1).join(' ');
+                $scope.component.release_date = $scope.component.release_date.split(' ')[0] + ' ' + $scope.component.release_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.component.release_date.split(' ')[2];
+                if($scope.component.install_date){
+                    var ins_date = new Date($scope.component.install_date).toString().split(' ',[4]).splice(1).join(' ');
+                    $scope.component.install_date = ins_date.split(' ')[0] + ' ' + ins_date.split(' ')[1].replace(/^0+/, '') + ', ' + ins_date.split(' ')[2];
+                }
+                $scope.rel_notes = $sce.trustAsHtml($scope.component.rel_notes);
+                // var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $scope.currentComponent )
+                // relnotes.then(function (data) {
+                //     var data = JSON.parse(data)[0];
+                //     $scope.relnotes = $sce.trustAsHtml(data.text);
+                // });
             }
         });
     };
@@ -591,10 +632,12 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     function callStatus(argument) {
         var statusData = bamAjaxCall.getCmdData('status')
         statusData.then(function(data) {
-            componentStatus = getCurrentObject($stateParams.component);
-            $rootScope.$emit('componentStatus', componentStatus);
-            if (componentStatus.state != $scope.component.status) {
-                callInfo();
+            componentStatus = getCurrentObject(data, $scope.currentComponent);
+            if(componentStatus != undefined){
+                $rootScope.$emit('componentStatus', componentStatus);
+                if (componentStatus.state != $scope.component.status) {
+                    callInfo();
+                }
             }
         });
     }
@@ -602,12 +645,21 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     callInfo();
     callStatus();
 
-    $interval(callStatus, 5000);
+    if($scope.currentComponent != 'pgdevops'){
+          $interval(callStatus, 5000);  
+    }
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
         $scope.component = {};
+
+        if ($scope.currentComponent == 'pgdevops') {
+            session.call('com.bigsql.checkOS');
+            session.subscribe('com.bigsql.onCheckOS', function (args) {
+                $scope.os = args[0];
+            });  
+        }
 
         var onRemove = function (response) {
             var data = JSON.parse(response[0])[0];
@@ -620,7 +672,12 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 $scope.$apply();
             }
             if (data.status == "complete") {
-                // session.call('com.bigsql.infoComponent', [$stateParams.component]);
+                // session.call('com.bigsql.infoComponent', [$scope.currentComponent]);
+                var alertObj = {
+                    msg: data.msg,
+                    type: "danger"
+                }
+                $scope.alerts.push(alertObj);
                 callInfo();
             }
         };
@@ -638,28 +695,31 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                     $scope.component.spinner = 'Stopping..';
                 }else if(event.target.attributes.action.value == 'remove'){
                     $scope.component.spinner = 'Removing..';
-                }
-                // var sessionKey = "com.bigsql." + event.target.attributes.action.value;
-                // session.call(sessionKey, [$scope.component.component]);
-                if($scope.currentHost == 'localhost'){
-                    var sessionKey = "com.bigsql." + event.target.attributes.action.value;
-                    session.call(sessionKey, [$scope.component.component]);
-                }else {
-                    if(event.target.attributes.action.value == 'install'){
-                        $scope.component.spinner = 'installing..';
-                    }
-                    var event_url = event.target.attributes.action.value + '/' + $scope.component.component + '/' + $scope.currentHost ;
-                    var eventData = bamAjaxCall.getCmdData(event_url);
-                    eventData.then(function(data) {
-                        callInfo($scope.currentHost);
+                }else if($scope.component.component.includes("plprofiler") && event.target.attributes.action.value == 'install'){
+                    $scope.checkplProfiler = false;
+                    $scope.startAlert.push({
+                        msg: "After installation of plprofiler, " + $scope.component.component.split('-')[1] + " restart will be done. Continue?",
+                        type: 'warning'
                     });
+                }
+                var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+                if ($scope.checkplProfiler) {
+                    if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
+                        session.call(sessionKey, [$scope.component.component]);
+                    }else {
+                        if (event.target.attributes.action.value == 'install') {
+                            session.call(sessionKey, [$scope.component.component, false, $scope.currentHost]);
+                        }else{
+                            session.call(sessionKey, [$scope.component.component, $scope.currentHost]);
+                        }
+                    } 
                 }
             }
         };
 
         session.subscribe('com.bigsql.onInstall', function (response) {
             var data = JSON.parse(response[0])[0];
-
+            // if ($scope.currentComponent == data.component || $scope.currentComponent == data.component[0]) {
             if (data.state == "deplist") {
                 if (data.deps.length > 1) {
                     dependentCount = data.deps.length;
@@ -668,7 +728,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
             } else if (data.status == "start") {
                 $scope.component.installationStart = data;
                 $scope.component.installation = true;
-                if ($stateParams.component == data.component) {
+                if ($scope.currentComponent == data.component) {
                     delete $scope.component.installationDependents;
                 } else {
                     $scope.component.installationDependents = true;   
@@ -677,21 +737,22 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 $scope.component.installationRunning = data;
                 $scope.component.progress = data.pct;
             } else if (data.status == "complete" || data.status == "cancelled") {
-                
-                if (data.state == 'unpack') {
-                    // session.call('com.bigsql.infoComponent', [$stateParams.component])
-                    callInfo();
-                } 
                 if (data.status == "cancelled") {
                         $scope.alerts.push({
                             msg:  data.msg,
                             type: 'danger'
                         });
+                }else if (data.state == 'unpack' || data.state == 'update' || data.state == 'install'){
+                    $scope.alerts.push({
+                            msg:  data.msg,
+                            type: 'success'
+                        });
+                    callInfo();
                 }
 
                 delete $scope.component.installationStart;
                 delete $scope.component.installationRunning;
-                // delete $scope.component.installation;
+                delete $scope.component.installation;
 
             }
 
@@ -703,10 +764,10 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                 delete $scope.component.installation;
             }
             $scope.$apply();
+        // }
         }).then(function (sub) {
             subscriptions.push(sub);
         });
-
     });
 
     $rootScope.$on('refreshData', function (argument, host) {
@@ -715,11 +776,12 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     });
 
     $scope.cancelInstallation = function (action) {
-        session.call("com.bigsql.cancelInstall");
+        session.call("com.bigsql.cancelInstall", [$scope.currentHost]);
     }
 
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);
+        $scope.startAlert.splice(index, 1);
     };
 
     //need to destroy all the subscriptions on a template before exiting it
@@ -730,7 +792,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     });
 
 }]);
-angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'bamAjaxCall', '$uibModal', '$sce', '$cookies', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal, $sce, $cookies) {
+angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'bamAjaxCall', '$uibModal', '$sce', '$cookies', '$http', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal, $sce, $cookies, $http) {
 
     $scope.alerts = [];
     var subscriptions = [];
@@ -758,49 +820,79 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             $scope.component.spinner = 'Restarting..';
         }
         var sessionKey = "com.bigsql." + action;
-        session.call(sessionKey, [$scope.component.component]).then(function (argument) {
-            callInfo();
-        })
+        var currentHost = $cookies.get('remote_host');
+        if(currentHost == 'localhost' || currentHost == ''){
+            session.call(sessionKey, [$scope.component.component]).then(function (argument) {
+                callInfo();
+            })
+        }else{
+            session.call(sessionKey, [$scope.component.component, $cookies.get('remote_host')]).then(function (argument) {
+                callInfo();
+            })
+        }
     }
 
     function callInfo(argument) {
-        var remote_host = $cookies.get('remote_host');
+        if (argument) {
+            var remote_host = argument;
+        }else{
+            var remote_host = $cookies.get('remote_host');            
+        }
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
         $scope.currentHost = remote_host;
         if (remote_host == "" || remote_host == "localhost") {
-            var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
-        } else {
-            var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component + "/" + remote_host);
+            var checkStatus = bamAjaxCall.getCmdData('status/' + $stateParams.component);    
+        }else{
+            var checkStatus = bamAjaxCall.getCmdData('status/' + $stateParams.component + '/' + remote_host);
         }
+        
+        checkStatus.then(function (data) {
 
-        //var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
-        infoData.then(function (data) {
-            $scope.loading = false;
-            if (data[0]['autostart'] == "on") {
-                data[0]['autostart'] = true;
+            var infoUrl = 'info/'
+            if (data.state != 'Running') {
+                $scope.releaseTabEvent();
+            }
+            if (remote_host == "" || remote_host == "localhost") {
+                var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
             } else {
-                data[0]['autostart'] = false;
+                var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component + "/" + remote_host);
             }
-            if (window.location.href.split('/').pop(-1) == data[0].component) {
-                $scope.component = data[0];
-                if ($scope.component.status != "Running") {
-                    $scope.uibStatus = {
-                        tpsChartCollapsed: false,
-                        rpsChartCollapsed: false,
-                        diskChartCollapsed: true,
-                        cpuChartCollapsed: true,
-                        connectionsCollapsed: false
-                    };
-                } else {
-                    $scope.uibStatus = {
-                        tpsChartCollapsed: true,
-                        rpsChartCollapsed: true,
-                        diskChartCollapsed: false,
-                        cpuChartCollapsed: true,
-                        connectionsCollapsed: false
-                    };
+
+            infoData.then(function (data) {
+                // $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
+                if( typeof data !== 'string'){
+                    $scope.loading = false;
+                    if (data[0]['autostart'] == "on") {
+                        data[0]['autostart'] = true;
+                    } else {
+                        data[0]['autostart'] = false;
+                    }
+                    if (window.location.href.split('/').pop(-1) == data[0].component) {
+                        $scope.component = data[0];
+                        if ($scope.component.status != "Running") {
+                            $scope.activeReleaseNotes = true;
+                            $scope.activeOverview = false;
+                            $scope.uibStatus = {
+                                tpsChartCollapsed: false,
+                                rpsChartCollapsed: false,
+                                diskChartCollapsed: true,
+                                cpuChartCollapsed: true,
+                                connectionsCollapsed: false
+                            };
+                        } else {
+                            $scope.activeReleaseNotes = false;
+                            $scope.activeOverview = true;
+                            $scope.uibStatus = {
+                                tpsChartCollapsed: true,
+                                rpsChartCollapsed: true,
+                                diskChartCollapsed: false,
+                                cpuChartCollapsed: true,
+                                connectionsCollapsed: false
+                            };
+                        }
+                    }
                 }
-            }
+            });
         });
     };
 
@@ -819,12 +911,12 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             componentStatus = getCurrentObject(data, $stateParams.component);
             $rootScope.$emit('componentStatus', componentStatus);
             if (componentStatus != undefined && componentStatus.state != $scope.component.status) {
-                callInfo();
+                callInfo(remote_host);
             }
         });
     }
 
-    callInfo();
+    // callInfo();
     callStatus();
 
     $interval(callStatus, 5000);
@@ -868,7 +960,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
-        infoRefreshRate = $interval(callInfo, 60000);
+        infoRefreshRate = $interval(function(){ callInfo(); }, 60000);
         $scope.component = {};
         callInfo();
 
@@ -883,10 +975,18 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             } else {
                 autoStartVal = 'off';
             }
-            session.call('com.bigsql.autostart', [autoStartVal, $stateParams.component]).then(
-                function (sub) {
-                    callInfo();
-                });
+            var currentHost = $cookies.get('remote_host');
+            if(currentHost == 'localhost' || currentHost == ''){
+                session.call('com.bigsql.autostart', [autoStartVal, $stateParams.component]).then(
+                    function (sub) {
+                        callInfo();
+                    });
+            }else{
+                session.call('com.bigsql.autostart', [autoStartVal, $stateParams.component, currentHost]).then(
+                    function (sub) {
+                        // callInfo();
+                    });   
+            }
         }
 
         $scope.dataBaseTabEvent = function (args) {
@@ -896,7 +996,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         };
 
         $scope.cancelInstallation = function (action) {
-            session.call("com.bigsql.cancelInstall");
+            session.call("com.bigsql.cancelInstall", [$scope.currentHost]);
         }
 
         $scope.openInitPopup = function (comp) {
@@ -905,6 +1005,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 controller: 'pgInitializeController',
             });
             modalInstance.component = comp;
+            modalInstance.autoStartButton = $scope.component.autostart;
+            modalInstance.dataDir = '';
+            modalInstance.host = $scope.currentHost;
         };
 
         session.subscribe('com.bigsql.ondblist', function (data) {
@@ -1038,11 +1141,21 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             $scope.alerts.splice(index, 1);
         };
 
+        
         $scope.releaseTabEvent = function (argument) {
-            var relnotes = bamAjaxCall.getCmdData('relnotes/' + $stateParams.component + '/' +$scope.component.version)
-            relnotes.then(function (data) {
-                $scope.relnotes = $sce.trustAsHtml(data);
-            });
+            if($scope.relnotes == undefined || $scope.relnotes == ''){
+                var remote_host = $cookies.get('remote_host');
+                remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
+
+                if (remote_host == "" || remote_host == "localhost") {
+                    var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );
+                } else{
+                    var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component + '/' + remote_host );
+                }             
+                relnotes.then(function (data) {
+                    $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
+                });
+            }
         }
 
         session.subscribe('com.bigsql.onActivity', function (data) {
@@ -1093,17 +1206,16 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             }
 
             if (data.status == "complete" || data.status == "cancelled") {
-                if (data.state == 'unpack') {
-                    session.call('com.bigsql.infoComponent', [$stateParams.component]);
-                    $scope.component.status = 'NotInitialized';
-                    $scope.openInitPopup($stateParams.component);
-                }
 
                 if (data.status == "cancelled") {
                     $scope.alerts.push({
                         msg: data.msg,
                         type: 'danger'
                     });
+                } else if (data.state == 'unpack') {
+                    session.call('com.bigsql.infoComponent', [$stateParams.component]);
+                    $scope.component.status = 'NotInitialized';
+                    $scope.openInitPopup($stateParams.component);
                 }
 
                 if (dependentCount != 0) {
@@ -1115,7 +1227,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
                 delete $scope.component.installationStart;
                 delete $scope.component.installationRunning;
-                // delete $scope.component.installation;
+                delete $scope.component.installation;
 
             }
             if (data.state == "error") {
@@ -1135,6 +1247,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
     $rootScope.$on('refreshData', function (argument, host) {
         $scope.loading = true;
+        $scope.relnotes = '';
+        $interval.cancel(infoRefreshRate);
         callInfo(host);
     });
 
@@ -1151,16 +1265,19 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             } else if (event.target.attributes.action.value == 'restart') {
                 $scope.component.spinner = 'Restarting..';
             }
-            if($scope.currentHost == '' || $scope.currentHost == 'localhost'){
-                var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+            var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+            $scope.currentHost = $cookies.get('remote_host');
+            if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
                 session.call(sessionKey, [$scope.component.component]);
             }else {
-                var event_url = event.target.attributes.action.value + '/' + $scope.component.component + '/' + $scope.currentHost ;
-                var eventData = bamAjaxCall.getCmdData(event_url);
-                eventData.then(function(data) {
-                    callInfo($scope.currentHost);
-                });
-            }
+                if (event.target.attributes.action.value == 'install') {
+                    $scope.component.installation = true;
+                    session.call(sessionKey, [$scope.component.component, false, $scope.currentHost]);
+                }else{
+                    session.call(sessionKey, [$scope.component.component, $scope.currentHost]);
+                }
+            } 
+            
         }
     };
 
@@ -1254,7 +1371,7 @@ angular.module('bigSQL.components').controller('ComponentDevopsUpdateController'
     });
 
 }]);
-angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall) {
+angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$sce', '$timeout', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $sce, $timeout) {
 
     var subscriptions = [];
     var count = 1;
@@ -1279,16 +1396,23 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         $scope.pgcInfo = data[0];
     });
 
+    var cookieVal = $cookies.get('selectedLog');
+    if(cookieVal){
+        $window.location.href = cookieVal;
+        $scope.selectComp = cookieVal;
+    }else{
+        $scope.selectComp = "#"+$location.path();
+    }
+
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
         var logComponent = $location.path().split('log/').pop(-1);
-        $scope.selectComp = "#"+$location.path();
         if (logComponent != 'pgcli'){
             session.call('com.bigsql.infoComponent',[logComponent]);
         } else {
             $scope.logfile = 'pgcli';
-            $scope.intervalPromise;
+            // $scope.intervalPromise;
             session.call('com.bigsql.selectedLog',['pgcli']);  
         }
         
@@ -1300,7 +1424,7 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
                         $scope.logfile = jsonD[0].current_logfile;
                     } 
                     session.call('com.bigsql.selectedLog',[$scope.logfile]);
-                    $scope.intervalPromise;
+                    // $scope.intervalPromise;
                 }
                 count += 1;
             }
@@ -1325,7 +1449,12 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         });
 
         session.subscribe("com.bigsql.log", function (lg) {
-            on_log(lg);
+            $scope.logFile = $sce.trustAsHtml(lg[0]);
+            $timeout(function() {
+              var scroller = document.getElementById("logviewer");
+              scroller.scrollTop = scroller.scrollHeight;
+            }, 0, false)
+            $scope.$apply();
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -1337,20 +1466,20 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
             subscriptions.push(sub);
         });
 
-        $scope.intervalPromise = $interval(function(){
-                                    if($scope.logfile != undefined){
-                                        session.call('com.bigsql.liveLog',[$scope.logfile]);                                        
-                                    }
-                                 },5000);
+        // $scope.intervalPromise = $interval(function(){
+        //                             if($scope.logfile != undefined){
+        //                                 session.call('com.bigsql.liveLog',[$scope.logfile]);                                        
+        //                             }
+        //                          },5000);
 
-        var tab = 1000;
+        $scope.tab = 1000;
 
         $scope.setTab = function (tabId) {
-            tab = tabId;
+            $scope.tab = tabId;
         };
 
         $scope.isSet = function (tabId) {
-            return tab === tabId;
+            return $scope.tab === tabId;
         };
 
         $scope.selectedButton;
@@ -1393,13 +1522,17 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
 
 
     $scope.action = function (event) {
-        logviewer.empty();
+        $scope.logFile = '';
         session.call('com.bigsql.logIntLines',[event, $scope.logfile]);
     };
 
     $scope.onLogCompChange = function () {
-        $interval.cancel($scope.intervalPromise);
+        $cookies.put('selectedLog', $scope.selectComp);
+        // $interval.cancel($scope.intervalPromise);
         $window.location.href = $scope.selectComp;
+        for (var i = 0; i < subscriptions.length; i++) {
+            session.unsubscribe(subscriptions[i]);
+        }
     };
 
     /**
@@ -1420,7 +1553,8 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     var subscriptions = [];
     $scope.updateSettings;
     $scope.components = {};
-    $scope.currentHost
+    $scope.currentHost;
+    $scope.showPgDgFeature = false;
     $scope.settingsOptions = [{name:'Weekly'},{name:'Daily'},{name:'Monthly'}]
 
     $scope.open = function (manual) {
@@ -1433,7 +1567,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/updateModal.html',
-            windowClass: 'bam-update-modal modal',
+            windowClass: 'comp-details-modal',
             controller: 'ComponentsUpdateController',
         });
     };
@@ -1457,7 +1591,29 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     sessionPromise.then(function (val) {
         $rootScope.$emit('topMenuEvent');
         session = val;
-        
+
+        session.call('com.bigsql.getBetaFeatureSetting', ['hostManager']);
+        session.call('com.bigsql.getBetaFeatureSetting', ['pgdg']);
+
+        session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
+            if(settings[0].setting == 'hostManager'){
+                if (settings[0].value == '0' || !settings[0].value) {
+                    $scope.hostManager = false; 
+                }else{
+                    $scope.hostManager = true;
+                }
+            }else if(settings[0].setting == 'pgdg'){
+                if (settings[0].value == '0' || !settings[0].value) {
+                    $scope.pgdg = false; 
+                }else{
+                    $scope.pgdg = true;
+                }
+            }
+           $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
         $scope.updateManualSettings = function () {
             session.call('com.bigsql.update_host_settings', ['localhost', "None", '']).then(
                 function (subscription) {
@@ -1492,6 +1648,24 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             $scope.alerts.splice(index, 1);
         };
 
+        $scope.changeBetaFeature = function (name, setting) {
+            var value, msg, type;
+            if(setting){
+                value = '1';
+                msg = name + " feature is enabled.";
+                type = 'success';
+            }else{
+                value = '0';
+                msg = name + " feature is disabled.";
+                type = 'warning';
+            }
+            session.call('com.bigsql.setBetaFeatureSetting', [name, value]);
+            $scope.alerts.push({
+                msg : msg,
+                type : type
+            });
+        }
+
     });
 
     function getInfo(argument) {
@@ -1499,24 +1673,36 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         $scope.currentHost = argument;
         if (argument=="" || argument == 'localhost'){
             var infoData = bamAjaxCall.getCmdData('info');
+            var checkpgdgSupport = bamAjaxCall.getCmdData('info');
         } else{
             var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
+            var checkpgdgSupport = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
         }
 
         infoData.then(function(data) {
-        $scope.pgcInfo = data[0];
-        if (data[0].last_update_utc) {
-            $scope.lastUpdateStatus = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
-        }
-        if (MachineInfo.getUpdationMode() == "manual") {
-            $scope.settingType = 'manual';
-        } else {
-            $scope.settingType = 'auto';
-            session.call('com.bigsql.get_host_settings');
-        }
-
-    });
+            $scope.pgcInfo = data[0];
+            if (data[0].last_update_utc) {
+                var l_date = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
+                $scope.lastUpdateStatus = l_date.split(' ')[0] + ' ' + l_date.split(' ')[1].replace(/^0+/, '') + ', ' + l_date.split(' ')[2] + ' ' + l_date.split(' ')[3]
+            }
+            if (MachineInfo.getUpdationMode() == "manual") {
+                $scope.settingType = 'manual';
+            } else {
+                $scope.settingType = 'auto';
+                session.call('com.bigsql.get_host_settings');
+            }
+        });
+        checkpgdgSupport.then(function (argument) {
+            var data = argument[0];
+            if(data.os.split(' ')[0] == 'CentOS'){
+                $scope.showPgDgFeature = true;
+            }
+        })
     };
+
+    $rootScope.$on('refreshUpdateDate', function (argument) {
+       $window.location.reload(); 
+    });
 
     getInfo($cookies.get('remote_host'));
 
@@ -1795,7 +1981,7 @@ angular.module('bigSQL.components').controller('ComponentsStatusController', ['$
 
 
 }]);
-angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', '$rootScope', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall, $rootScope, $cookies) {
+angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', '$rootScope', '$cookies', '$uibModal', '$sce', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall, $rootScope, $cookies, $uibModal, $sce) {
 
     var session;
     var subscriptions = [];
@@ -1805,41 +1991,56 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
     var currentComponent = {};
     var checkUpdates;
     $scope.currentHost = $cookies.get('remote_host');
+    $scope.showText = "More";   
+    $scope.alerts = [];
+    $scope.updateAll = false;
+    $scope.hideNewComponents = true;
 
     function getList(argument) {
         argument = typeof argument !== 'undefined' ? argument : "";
         $scope.currentHost = argument;
         if (argument=="localhost" || argument == ''){
-            var listData = bamAjaxCall.getCmdData('list');
+            var listData = bamAjaxCall.getCmdData('relnotes/list');
         } else{
             var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
         }
+        $scope.loadingSpinner = true;
+        $scope.body = false;
         listData.then(function(data) {
+            data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops'  ;})
             $scope.loadingSpinner = false;
             $scope.body = true;
+            $scope.body = true;
             $scope.noUpdates = true;
-            $scope.components = data;
+
+            $scope.allComponents = data;
             $scope.hideLatestInstalled = true;
 
-
+            $scope.components = $(data).filter(function(i,n){ return n.updates>0 ;});
+            
             for (var i = 0; i < $scope.components.length; i++) {
                 if($scope.components[i].is_current == 0 && $scope.components[i].current_version){
                     $scope.noUpdates = false;
                 }
-                if($scope.components[i].is_new == 1){
+            }
+
+            for (var i = 0; i < $scope.allComponents.length; i++) {
+                if ($scope.allComponents[i].category_desc == "Extensions") {
+                    $scope.allComponents[i].componentImage = $scope.allComponents[i].component.split('-')[0].replace(/[0-9]/g,'')                    
+                }
+                $scope.allComponents[i].rel_notes = $sce.trustAsHtml($scope.allComponents[i].rel_notes);
+                $scope.allComponents[i].curr_release_date = new Date($scope.allComponents[i].curr_release_date).toString().split(' ',[4]).splice(1).join(' ');
+                $scope.allComponents[i].curr_release_date = $scope.allComponents[i].curr_release_date.split(' ')[0] + ' ' + $scope.allComponents[i].curr_release_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.allComponents[i].curr_release_date.split(' ')[2];
+                if ($scope.allComponents[i].install_date) {
+                    $scope.allComponents[i].install_date = new Date($scope.allComponents[i].install_date).toString().split(' ',[4]).splice(1).join(' ');
+                    $scope.allComponents[i].install_date = $scope.allComponents[i].install_date.split(' ')[0] + ' ' + $scope.allComponents[i].install_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.allComponents[i].install_date.split(' ')[2];
+                }
+                if($scope.allComponents[i].is_new == 1){
                     $scope.hideNewComponents = true;
                 }
-                if($scope.components[i].is_updated == 1){
+                if($scope.allComponents[i].is_updated == 1){
                     $scope.hideLatestInstalled = false;
                 }
-                try{
-                    if (UpdateComponentsService.get().component == $scope.components[i].component) {
-                        $scope.components[i]['selected'] = true;
-                    } else {
-                        $scope.components[i]['selected'] = false;
-                    }
-                } catch(err){}
-
                 if ($scope.noUpdates) {
                     $scope.uibStatus = {
                         newComponents : true,
@@ -1865,7 +2066,13 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         }
     });
 
-    $scope.selecthost = $cookies.get('remote_host');
+    var remote_host = $cookies.get('remote_host');
+    remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
+    if (remote_host == "" || remote_host == undefined) {
+        $scope.selecthost = 'localhost';    
+    } else {
+        $scope.selecthost = remote_host;
+    }
 
     if (UpdateComponentsService.get()) {
         $scope.selectedComp = UpdateComponentsService.get();
@@ -1901,6 +2108,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         };
 
         $scope.cancel = function () {
+            $rootScope.$emit('refreshUpdateDate');
             $uibModalInstance.dismiss('cancel');
         };
 
@@ -1928,18 +2136,32 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 delete currentComponent.installationStart;
                 delete currentComponent.installationRunning;
                 delete currentComponent.installation;
-            } else if (data.status == "complete" && data.state == "update") {
+            } else if (data.status == "complete" && data.state == "update" || data.status == "cancelled") {
                 delete currentComponent.installationStart;
                 delete currentComponent.installationRunning;
                 delete currentComponent.installation;
+                if (data.state == 'unpack' || data.state == 'update') {
+                    console.log("In complete");
+                    // session.call('com.bigsql.infoComponent', [$scope.currentComponent])
+                    $scope.alerts.push({
+                            msg:  data.msg,
+                            type: 'success'
+                        });
+                } 
+                if (data.status == "cancelled") {
+                        $scope.alerts.push({
+                            msg:  data.msg,
+                            type: 'danger'
+                        });
+                }
                 angular.element(document.querySelector('#' + currentComponent.component)).remove();
-                selUpdatedComp.splice(0,1);
-                if (selUpdatedComp.length > 0) {
-                    $scope.compAction('update', selUpdatedComp[0].component);
-                } else {
+                if ($scope.components.length == 1 ) {
                     // session.call("com.bigsql.getBamConfig");
                     $uibModalInstance.dismiss('cancel');
                     $rootScope.$emit('updatesCheck');
+                }
+                if($scope.updateAll){
+                    $scope.components.splice(0,1);
                 }
             }
             $scope.$apply();
@@ -1949,7 +2171,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
 
         $scope.compAction = function (action, compName) {
             var sessionKey = "com.bigsql." + action;
-            if($scope.currentHost == 'localhost'){
+            if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
                 session.call(sessionKey, [compName]);
             }else {
                 currentComponent = getCurrentComponent(compName);
@@ -1962,29 +2184,70 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
             }
         };
 
-        var selUpdatedComp = [];
+        // var selUpdatedComp = [];
 
-        $scope.selectedUpdate = function (val) {
-            for (var i = 0; i < $scope.components.length; i++) {
-                if ($scope.components[i].selected && $scope.components[i].current_version) {
-                    selUpdatedComp.push($scope.components[i]);
-                }
+        $scope.selectedUpdate = function (comp) {
+            if (comp) {
+                $scope.compAction('update', comp);
+            }else{
+                $scope.compAction('update', '');
+                $scope.updateAll = true;
             }
-            if (selUpdatedComp.length > 1) {
-                var popComp = selUpdatedComp[0].component;
-                $scope.compAction('update', popComp);
-            } else {
-                $scope.compAction('update', selUpdatedComp[0].component);
-                // session.call('com.bigsql.update', [selUpdatedComp[0].component]).then(function (sub) {
-                //     $uibModalInstance.dismiss('cancel');
-                // }, function (err) {
-                //     throw new Error('failed to update comp', err);
-                // });
-            }
-            console.log(selUpdatedComp.length);
         };
 
     });
+
+    $scope.changeHeight = function (argument) {
+       var myDiv = document.getElementById('relnotesId_'+argument);
+       var text = document.getElementById('showText_'+argument);
+       if(myDiv.style.height == '100px'){
+            myDiv.style.height = '300px';
+            text.innerHTML = "Less..."
+       }else{
+            myDiv.style.height = '100px';
+            text.innerHTML = "More..."
+       }
+       // $scope.showText = "Less";
+    }
+
+    $scope.changeHeightInstalled = function (argument) {
+       var myDiv = document.getElementById('installedRelnotes_'+argument);
+       var text = document.getElementById('installedshowText_'+argument);
+       if(myDiv.style.height == '100px'){
+            myDiv.style.height = '300px';
+            text.innerHTML = "Less..."
+       }else{
+            myDiv.style.height = '100px';
+            text.innerHTML = "More..."
+       }
+       // $scope.showText = "Less";
+    }
+
+    $scope.changeHeightReleased = function (argument) {
+       var myDiv = document.getElementById('releasedRelnotesId_'+argument);
+       var text = document.getElementById('releasedShowText_'+argument);
+       if(myDiv.style.height == '100px'){
+            myDiv.style.height = '300px';
+            text.innerHTML = "Less..."
+       }else{
+            myDiv.style.height = '100px';
+            text.innerHTML = "More..."
+       }
+       // $scope.showText = "Less";
+    }
+
+    $scope.openDetailsModal = function (comp) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/details.html',
+            // windowClass: 'comp-details-modal',
+            size : 'lg',
+            controller: 'ComponentDetailsController',
+            keyboard  : false,
+            backdrop  : 'static',
+        });
+        modalInstance.component = comp;
+        modalInstance.isExtension = true;
+    };
 
     $scope.hostChange = function (host) {
         $scope.loadingSpinner = true;
@@ -1993,13 +2256,20 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
     };
 
     $scope.cancelInstallation = function (action) {
-        session.call("com.bigsql.cancelInstall");
+        session.call("com.bigsql.cancelInstall", [$scope.currentComponent]);
+        getList($scope.currentHost);
     }
+
+    $scope.closeAlert = function (index) {
+        $scope.alerts.splice(index, 1);
+    };
+
 
     /**
      Unsubscribe to all the apis on the template and scope destroy
      **/
     $scope.$on('$destroy', function () {
+        $rootScope.$emit('refreshUpdateDate');
         $rootScope.$emit('topMenuEvent');
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);
@@ -2028,6 +2298,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     $scope.loading = true;
     $scope.retry = false;
     $scope.disableShowInstalled = false;
+    $scope.extensionsList = [];
+    $scope.showPgDgTab = false;
+    $scope.gettingPGDGdata = false;
 
     var getCurrentComponent = function (name) {
         for (var i = 0; i < $scope.components.length; i++) {
@@ -2053,25 +2326,57 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         return  pgComps.reverse().concat(nonPgComps);
     }
 
+    $scope.getExtensions = function( comp, idx) {
+        if ($scope.components[idx].extensionOpened) {
+            $window.location = '#/details-pg/' + comp
+        }
+        $cookies.putObject('openedExtensions', {'component': comp, 'index': idx});
+        for (var i = 0; i < $scope.components.length; i++) {
+            $scope.components[i].extensionOpened = false;           
+        }
+        $scope.components[idx].extensionOpened = true;
+        if ($scope.currentHost=="" || $scope.currentHost == 'localhost'){
+            var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
+        } else{
+            var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp + '/' + $scope.currentHost);
+        }
+        // var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
+        extensionsList.then(function (argument) {
+            if (argument[0].state != 'error') {
+                $scope.extensionsList = argument;
+                if ($scope.showInstalled) {
+                    $scope.extensionsList = $($scope.extensionsList).filter(function(i,n){ return n.status != "NotInstalled" ;})   
+                }
+                for (var i = $scope.extensionsList.length - 1; i >= 0; i--) {
+                    $scope.extensionsList[i].modifiedName = $scope.extensionsList[i].component.split('-')[0].replace(/[0-9]/g,'');
+                }
+            }
+        })   
+    }
+
     function getList(argument) {
         argument = typeof argument !== 'undefined' ? argument : "";
         $scope.currentHost = argument;
         if (argument=="" || argument == 'localhost'){
             var listData = bamAjaxCall.getCmdData('list');
+            var checkpgdgSupport = bamAjaxCall.getCmdData('info');
         } else{
             var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
+            var checkpgdgSupport = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
         }
 
         listData.then(function (data) {
             $rootScope.$emit('showUpdates');
-            if(data == "error"){
+            if(data == "error" || data[0].state == 'error'){
                 $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
+                $cookies.remove('remote_host');
             } else {
                 $scope.nothingInstalled = false;
+                data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops'});
                 if ($scope.showInstalled) {
-                    $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" && n.component != 'bam2' ;}));
+                    $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
                     if($scope.components.length == 0){
                         $scope.components = [];
                         $scope.nothingInstalled = true;
@@ -2081,54 +2386,39 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 }
                 $scope.loading = false;
                 for (var i = 0; i < $scope.components.length; i++) {
-                    $scope.components[i].progress = 0;
+                    $scope.components[i].extensionOpened = false;                    
                 }
                 var Checkupdates = 0;
                 for (var i = 0; i < $scope.components.length; i++) {
                     Checkupdates += $scope.components[i].updates;
                 } 
             }
+            if($cookies.get('openedExtensions')){
+                var extensionCookie = JSON.parse($cookies.get('openedExtensions'));
+                $scope.getExtensions( extensionCookie.component, extensionCookie.index);
+            }else{
+                $scope.getExtensions( $scope.components[0].component, 0);                
+            }
         });
-        
-        // $http.get($window.location.origin + '/api/list')
-        // .success(function(data) {
-        //     $scope.nothingInstalled = false;
-        //     if ($scope.showInstalled) {
-        //         $scope.components = changePostgresOrder($(data).filter(function(i,n){ return n.status != "NotInstalled" ;}));
-        //         if($scope.components.length == 0){
-        //             $scope.components = [];
-        //             $scope.nothingInstalled = true;
-        //         }
-        //     } else{
-        //             $scope.components = changePostgresOrder(data);
-        //     }
-        //     $scope.loading = false;
-        //     for (var i = 0; i < $scope.components.length; i++) {
-        //         $scope.components[i].progress = 0;
-        //     }
-        //     var Checkupdates = 0;
-        //     for (var i = 0; i < $scope.components.length; i++) {
-        //         Checkupdates += $scope.components[i].updates;
-        //     }
-        // })
-        // .error(function(error) {
-        //     $timeout(wait, 5000);
-        //     $scope.loading = false;
-        //     $scope.retry = true;
-        // });
+        checkpgdgSupport.then(function (argument) {
+            var data = argument[0];
+            if(data.os.split(' ')[0] == 'CentOS'){
+                $scope.showPgDgTab = true;
+            }
+        })
     };
-    
+
     getList($cookies.get('remote_host'));
+
+    $rootScope.$on('updatePackageManager', function (argument) {
+        getList($cookies.get('remote_host'));
+    });
 
     $rootScope.$on('refreshData', function (argument, host) {
         $scope.loading = true;
         $scope.currentHost = host;
         getList(host);
     });
-
-    // $scope.refreshData=function(hostArgument){
-        
-    // };
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -2143,6 +2433,21 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
 
         // session.call('com.bigsql.info');
 
+         session.call('com.bigsql.getBetaFeatureSetting', ['pgdg']);
+
+        session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
+            if(settings[0].setting == 'pgdg'){
+                if(settings[0].value == '0' || !settings[0].value){
+                    $scope.checkpgdgSetting = false;
+                }else{
+                    $scope.checkpgdgSetting = true;
+                }
+            }
+           $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
         $scope.open = function (manual) {
 
             try {
@@ -2156,7 +2461,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             }
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/updateModal.html',
-                windowClass: 'bam-update-modal modal',
+                windowClass: 'comp-details-modal',
                 controller: 'ComponentsUpdateController',
             });
         };
@@ -2167,6 +2472,23 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 controller: 'pgInitializeController',
             });
             modalInstance.component = comp;
+            modalInstance.autoStartButton = true;
+            modalInstance.dataDir = '';
+            modalInstance.host = $scope.currentHost;
+
+        };
+
+        $scope.openDetailsModal = function (comp) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/details.html',
+                // windowClass: 'comp-details-modal',
+                size: 'lg',
+                controller: 'ComponentDetailsController',
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+            modalInstance.component = comp;
+            modalInstance.isExtension = true;
         };
 
         session.call('com.bigsql.getBamConfig', ['showInstalled']);
@@ -2213,30 +2535,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.updateSettings = 'auto';
             }
         });
-
-        session.subscribe('com.bigsql.onInit', function (data) {
-            var res = JSON.parse(data[0])[0];
-            if(res['status'] == 'error'){
-                $scope.alerts.push({
-                    msg: res['msg'],
-                    type: "danger"
-                });
-                delete currentComponent.init;
-                $scope.disableShowInstalled = false;
-            } else {
-                $scope.alerts.push({
-                    msg: res['msg']
-                });
-                currentComponent = getCurrentComponent(res['component']);
-                currentComponent.status = "Installed";
-                currentComponent.init = false;
-                $scope.disableShowInstalled = false;
-                $scope.compAction('start', res['component']);
-            }
-            $scope.$apply();
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
-        });
     
         $scope.setTest = function (event) {
             var param;
@@ -2245,128 +2543,10 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             }else{
                 param = 'prod'
             }
-            session.call('com.bigsql.',[param]);
+            session.call('com.bigsql.setTestSetting',[param]);
             getList();
             // session.call('com.bigsql.list');
         };
-
-        session.subscribe("com.bigsql.onInstall", function (installStream) {
-
-            var data = JSON.parse(installStream[0])[0];
-            if (data.state == "deplist") {
-                if (data.deps.length > 1) {
-                    parentComponent = getCurrentComponent(data.component[0]);
-                    parentComponent.installationDependents = data;
-                    dependentCount = data.deps.length;
-                    depList = data.deps;
-                    currentComponent.installation = true;
-                    parentComponent.installation = true;
-                }
-            } else if (data.status == "start") {
-                currentComponent = getCurrentComponent(data.component);
-                currentComponent.installationStart = data;
-                currentComponent.installation = true;
-                if (depList[depList.length-1] == currentComponent.component) {
-                    delete parentComponent.installationDependents;
-                }
-            } else if (data.status == "wip") {
-                currentComponent.installationRunning = data;
-                currentComponent.progress = data.pct;
-            } else if (data.status == "complete" || data.status == "cancelled") {
-                if (data.state == 'unpack' && data.status == "complete") {
-                    if(["pg96","pg95","pg94","pg93","pg92"].indexOf(data.component) >= 0){
-                        currentComponent.status = 'NotInitialized';
-                        // getList();
-                        $scope.openInitPopup(data.component);
-                        // $scope.compAction('init', data.component);
-                        // session.call('com.bigsql.list');
-                    }else{
-                        currentComponent.status = 'Installed';
-                    }
-                } 
-                if(data.state == "install"){
-                    currentComponent = getCurrentComponent(data.component);
-                } 
-                if (data.status == "cancelled") {
-
-                    if (dependentCount == 0) {
-                         $scope.alerts.push({
-                            msg: data.component +" "+data.msg,
-                            type: "danger"
-                        });
-                    } else {
-                        delete parentComponent.installation;
-                        $scope.alerts.push({
-                            msg: parentComponent.component +" >>  "+data.msg,
-                            type: "danger"
-                        });
-                    }
-                    dependentCount = 0;
-                }
-                
-                delete currentComponent.installationStart;
-                delete currentComponent.installationRunning;
-                delete currentComponent.installation;
-                $scope.disableShowInstalled = false;
-                if (data.state == "update") {
-                    currentComponent.updates -= 1;
-                    // getList();
-                    $rootScope.$emit('updatesCheck');
-                    // session.call('com.bigsql.list');
-                };
-
-
-            } 
-            // Need to be status here
-            if (data.state == "error") {
-                $scope.alerts.push({
-                    msg: data.msg,
-                    type: 'danger'
-                });
-                delete parentComponent.installationDependents;
-                delete currentComponent.installationStart;
-                delete currentComponent.installationRunning;
-                delete currentComponent.installation;
-                delete parentComponent.installation;
-                $scope.disableShowInstalled = false;
-            }
-            else if (data.state == "locked") {
-                $scope.alerts.push({
-                    msg: data.msg,
-                    type: 'danger'
-                });
-            }
-            $scope.$apply();
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
-        });
-
-        var onRemove = function (response) {
-            var data = JSON.parse(response[0])[0];
-
-            if (data.status == "error" || data.state == "locked") {
-                delete currentComponent.removing;
-                $scope.disableShowInstalled = false;
-                $scope.alerts.push({
-                    msg: data.msg,
-                    type: "danger"
-                });
-            }
-            if (data.status == "complete") {
-                delete currentComponent.removing;
-                currentComponent.status = "NotInstalled";
-                $scope.disableShowInstalled = false;
-                getList();
-                // session.call('com.bigsql.list');
-            }
-            $scope.$apply();
-        };
-
-
-        session.subscribe('com.bigsql.onRemove', onRemove).then(
-            function (subscription){
-                subscriptions.push(subscription);
-            });
 
     });
 
@@ -2374,6 +2554,96 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         session.call('com.bigsql.setBamConfig',['showInstalled', $scope.showInstalled]);
         getList($scope.currentHost); 
         // session.call('com.bigsql.list');
+    }
+
+    $scope.repoChange = function (repo) {
+        $scope.gettingPGDGdata = true;
+        $scope.repoNotRegistered = false;
+        localStorage.setItem('cacheRepo', repo);
+        if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
+            var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
+        }else{
+            var getRepoList = bamAjaxCall.getCmdData('pgdghost/'+ repo + '/list/' + $scope.currentHost)
+        }        
+        getRepoList.then(function (argument) {
+            $scope.gettingPGDGdata = false;
+            if(argument[0].state == 'error' || argument == 'error'){
+                $scope.errorMsg = argument[0].msg;
+                if(!$scope.errorMsg){
+                    $scope.errorMsg = "Selected Repository is not registered."
+                }
+                $scope.repoNotRegistered = true;
+            }else{
+                $scope.repoNotRegistered = false;
+                $scope.repoList = argument;
+                $scope.showRepoList = true;
+            }
+        })      
+    }
+
+    $scope.refreshRepoList = function (repo) {
+        if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
+            var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
+        }else{
+            var getRepoList = bamAjaxCall.getCmdData('pgdghost/'+ repo + '/list/' + $scope.currentHost)
+        }
+        getRepoList.then(function (argument) {
+            if(argument != 'error' || argument != 'error'){
+                $scope.repoList = argument;
+            }
+        }) 
+    }
+
+    $scope.selectPgDg = function (argument) {
+        $scope.noRepoFound = false;
+        $scope.gettingPGDGdata = true;
+        $scope.showRepoList = false;
+        $scope.repoNotRegistered = false;
+        if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
+            var pgdgComps = bamAjaxCall.getCmdData('repolist')
+        }else{
+            var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost)
+        }
+        pgdgComps.then(function (data) {
+            $scope.gettingPGDGdata = false;
+            $scope.showRepoList = true;
+            $scope.pgdgRepoList = [];
+            $scope.pgdgInstalledRepoList = [];
+            for (var i = data.length - 1; i >= 0; i--) {
+                if (data[i].status == 'Installed') {
+                    $scope.pgdgInstalledRepoList.push(data[i]);                    
+                }
+            }
+            $scope.pgdgRepoList = data;
+            if ($scope.pgdgInstalledRepoList.length < 1) {
+                $scope.noRepoFound = true;
+                $scope.availRepos = data;
+                $scope.selectAvailRepo = data[0].repo;
+                localStorage.setItem('cacheRepo', '');
+            }else{
+                $scope.noRepoFound = false;
+                var selectedRepo, cookieData;
+                cookieData = localStorage.getItem('cacheRepo');
+                if (cookieData){
+                    selectedRepo = cookieData;
+                }else{
+                    selectedRepo = $scope.pgdgRepoList[0].repo;
+                }
+                $scope.selectRepo = selectedRepo;
+                $scope.repoChange(selectedRepo);
+            }
+        })
+    }
+
+    $scope.registerRepo = function (argument) {
+        $scope.registeringRepo = true;
+        var registerRepository = bamAjaxCall.getCmdData('pgdg/' + argument + '/register' )
+        registerRepository.then(function (data) {
+            $scope.registeringRepo = false;
+            $scope.repoNotRegistered = false;
+            // localStorage.setItem('cacheRepo', '');
+           $scope.selectPgDg(); 
+        });
     }
 
     $scope.compAction = function (action, compName) {
@@ -2406,8 +2676,17 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         } 
     };
 
-    $scope.cancelInstallation = function (action) {
-        session.call("com.bigsql.cancelInstall");
+    $scope.pgdgAction = function (action, compName) {
+        var cur_comp = {};
+        for (var i = 0; i < $scope.repoList.length; i++) {
+            if ($scope.repoList[i].component == compName) {
+                $scope.repoList[i].showingSpinner = true;
+            }
+        }
+        var pgdgCompAction = bamAjaxCall.getCmdData('pgdg/' + $scope.selectRepo + '/'+ action + '/' + compName);
+        pgdgCompAction.then(function (argument) {
+            $scope.refreshRepoList($scope.selectRepo);
+        })
     }
 
     $scope.closeAlert = function (index) {
@@ -2450,6 +2729,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var session;
     var pid;
     var stopStatusCall;
+    var stopPGCall;
     var getListCmd = false;
     $scope.updateSettings;
     $scope.loading = true;
@@ -2458,8 +2738,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var previousTopData = "";
     $scope.openedHostIndex = '';
     $scope.openedGroupIndex = '';
-    $scope.groupOpen = true;
-    $scope.hostOpen = true;
+    $scope.addedNewHost = false;
+    // $scope.groupOpen = true;
+    // $scope.hostOpen = true;
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -2563,6 +2844,21 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     sessionPromise.then(function (val) {
         session = val;
+
+        session.call('com.bigsql.getBetaFeatureSetting', ['hostManager']);
+
+        session.subscribe("com.bigsql.onGetBeataFeatureSetting", function (settings) {
+            if(settings[0].setting == 'hostManager'){
+                if(settings[0].value == '0' || !settings[0].value){
+                    $scope.betaFeature = false;
+                }else{
+                    $scope.betaFeature = true;
+                }
+            }
+           $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
     });
 
     var getCurrentComponent = function (name, host) {
@@ -2605,6 +2901,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
         var statusData = bamAjaxCall.getCmdData(status_url);
         statusData.then(function(data) {
+                data = $(data).filter(function(i,n){ return n.category == '1' });
                 $scope.groupsList[p_idx].hosts[idx].comps = data;
                 if ($scope.groupsList[p_idx].hosts[idx].comps.length == 0) {
                     $scope.groupsList[p_idx].hosts[idx].showMsg = true;
@@ -2620,7 +2917,17 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         } else {
             var infoData = bamAjaxCall.getCmdData('hostcmd/top/' + remote_host);
         }
+        if (previousTopData == "") {
+            var timeVal = new Date(Date.now());
+            $scope.cpuData[0].values.push({x: timeVal, y: 0});
+            $scope.cpuData[1].values.push({x: timeVal, y: 0});
 
+            $scope.diskIO[0].values.push({x: timeVal, y: 0});
+            $scope.diskIO[1].values.push({x: timeVal, y: 0});
+
+            $scope.NetworkIO[0].values.push({x: timeVal, y: 0});
+            $scope.NetworkIO[1].values.push({x: timeVal, y: 0});
+        }
         infoData.then(function (data) {
 
             if (previousTopData != "") {
@@ -2649,7 +2956,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 var timeVal = new Date(data[0].current_timestamp*1000) ;
                 var offset = new Date().getTimezoneOffset();
                 timeVal.setMinutes(timeVal.getMinutes() - offset);
-                if (read_bytes > 0 ) {
+                if (read_bytes >= 0 ) {
                     $scope.cpuData[0].values.push({x: timeVal, y: parseFloat(data[0].cpu_system)});
                     $scope.cpuData[1].values.push({x: timeVal, y: parseFloat(data[0].cpu_user)});
 
@@ -2677,13 +2984,30 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $scope.diskIO[1].values.splice(0, $scope.diskIO[1].values.length);
     }
 
+    // $scope.loadGroup = function (index) {
+
+        // if ($scope.groupsList[index]['state'] == undefined || $scope.groupsList[index]['state'] == false) {
+        //     $scope.groupsList[index]['state'] = true;
+        // } else{
+        //     $scope.groupsList[index]['state'] = false;
+        // }
+    // }
+
     $scope.loadHost = function (p_idx, idx, refresh) {
+        // if ($scope.groupsList[p_idx].hosts[idx]['state'] == undefined || $scope.groupsList[p_idx].hosts[idx]['state'] == false) {
+        //     $scope.groupsList[p_idx].hosts[idx]['state'] = true;
+        // } else{
+        //     $scope.groupsList[p_idx].hosts[idx]['state'] = false;   
+        // }
+        $interval.cancel(stopPGCall);
+        $interval.cancel(stopStatusCall);
         $scope.openedHostIndex = idx;
         $scope.openedGroupIndex = p_idx;
         $scope.hostsList = $scope.groupsList[p_idx].hosts;
         previousTopData = '';
-        $interval.cancel(stopStatusCall);
         $scope.hostsList[idx].comps = '';
+        $scope.hostStatus = true;
+        $scope.retry = false;
         var isOpened = false;
         if (typeof $scope.hostsList[idx].open == "undefined") {
             isOpened = true;
@@ -2713,17 +3037,39 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
             var statusData = bamAjaxCall.getCmdData(status_url);
             statusData.then(function(data) {
-                    $scope.groupsList[p_idx].hosts[idx].comps = data;
-                    if ($scope.groupsList[p_idx].hosts[idx].comps.length == 0) {
+                $scope.hostStatus = false;
+                data = $(data).filter(function(i,n){ return n.category == '1' });
+                    if(data.length <= 0){
+                        $scope.groupsList[p_idx].hosts[idx].comps = data;
                         $scope.groupsList[p_idx].hosts[idx].showMsg = true;
-                    } else {
+                    }else if(data == "error" || data[0].state == 'error' && $scope.hostsList[idx].state == true){
+                        $interval.cancel(stopPGCall);
+                        stopPGCall = $interval(function (argument) {
+                            $scope.loadHost(p_idx, idx, true);
+                        } , 3000);
+                        $scope.retry = true;
+                    }else{
+                        $scope.groupsList[p_idx].hosts[idx].comps = data;
                         $scope.groupsList[p_idx].hosts[idx].showMsg = false;
                     }
                 });
             $interval.cancel(stopStatusCall);
+
+            var timeVal = new Date(Date.now());
+            $scope.cpuData[0].values.push({x: timeVal, y: 0});
+            $scope.cpuData[1].values.push({x: timeVal, y: 0});
+
+            $scope.diskIO[0].values.push({x: timeVal, y: 0});
+            $scope.diskIO[1].values.push({x: timeVal, y: 0});
+
+            $scope.NetworkIO[0].values.push({x: timeVal, y: 0});
+            $scope.NetworkIO[1].values.push({x: timeVal, y: 0});
+
             stopStatusCall = $interval(function (){
-                $scope.updateComps(p_idx, idx);
-                $scope.getGraphValues(remote_host);
+                if ($scope.groupsList[p_idx].hosts[idx].comps) {
+                    $scope.updateComps(p_idx, idx);
+                    $scope.getGraphValues(remote_host);
+                }
             }, 5000);
         }
     };
@@ -2746,6 +3092,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             controller: 'pgInitializeController',
         });
         modalInstance.component = comp;
+        modalInstance.dataDir = '';
+        modalInstance.autoStartButton = true;
+        modalInstance.host = $scope.hostsList[$scope.openedHostIndex].host;
     };
 
     $scope.changeHost = function (host) {
@@ -2760,10 +3109,27 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
         session.call('com.bigsql.deleteHost', [hostToDelete]);
         session.subscribe("com.bigsql.onDeleteHost", function (data) {
-            getGroupsList();
+            getGroupsList(false);
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
+    }
+
+    $scope.stopServerCall = function (argument) {
+        $interval.cancel(stopStatusCall);
+    }
+
+    $scope.startServerCall = function (p_idx, idx) {
+        var remote_host = $scope.hostsList[idx].host;
+        if (remote_host == "localhost") {
+            remote_host = "";
+        }
+        stopStatusCall = $interval(function (){
+            if ($scope.groupsList[p_idx].hosts[idx].comps) {
+                $scope.updateComps(p_idx, idx);
+                $scope.getGraphValues(remote_host);
+            }
+        }, 5000);
     }
 
     $scope.deleteGroup = function (idx){
@@ -2771,7 +3137,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         var groupToDelete = $scope.groupsList[idx].group;
         session.call('com.bigsql.deleteGroup', [groupToDelete]);
         session.subscribe("com.bigsql.onDeleteGroup", function (data) {
-            getGroupsList();
+            getGroupsList(false);
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -2784,30 +3150,64 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     }
 
-    function getGroupsList(argument) {
+    $rootScope.$on('showAddedHost', function (argument) {
+        $scope.loadHost(0, $scope.groupsList[0].hosts.length - 1 , true);
+    });
+
+    function getGroupsList(checkStorage) {
         $http.get($window.location.origin + '/api/groups')
             .success(function (data) {
-                $scope.groupsList = data;
+                var storageData;
+                try{
+                    storageData = JSON.parse(localStorage.getItem('groupsListCookie'));
+                }catch(err){
+                    storageData = '';
+                }
+                if(storageData && checkStorage && data.length == storageData.length && data[0].hosts.length == storageData[0].hosts.length){
+                    $scope.groupsList = storageData;
+                    for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                        if ($scope.groupsList[i].state == true) {
+                            for (var j = $scope.groupsList[i].hosts.length - 1; j >= 0; j--) {
+                                if($scope.groupsList[i].hosts[j].state == true){
+                                    $scope.loadHost(i, j, false);
+                                }
+                            }
+                        };
+                    }   
+                } else{
+                    localStorage.clear();
+                    $scope.groupsList = data;
+                    for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                        $scope.groupsList[i].state = true;
+                    } 
+                    if($scope.addedNewHost){
+                        var hostNumber = $scope.groupsList[0].hosts.length - 1;
+                        $scope.loadHost(0, hostNumber, false);
+                        $scope.groupsList[0].hosts[hostNumber]['state'] = true;
+                    }else{
+                        $scope.loadHost(0, 0, false);  
+                        $scope.groupsList[0].hosts[0]['state'] = true;                      
+                    }
+                }
                 $rootScope.$emit('hideUpdates');
                 $scope.nothingInstalled = false;
                 $scope.loading = false;
-                $scope.loadHost(0, 0, false);
-            })
-            .error(function (error) {
+            }).error(function (error) {
                 $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
             });
     };
 
-    getGroupsList();
+    getGroupsList(true);
 
     $rootScope.$on('addedHost', function () {
-        getGroupsList();
+        getGroupsList(false);
+        $scope.addedNewHost = true;
     });
 
     $scope.action = function ( event, host) {
-        var showingSpinnerEvents = ['Initialize', 'Start', 'Stop'];
+        var showingSpinnerEvents = ['Initialize', 'Start', 'Stop', 'Restart'];
         if(showingSpinnerEvents.indexOf(event.target.innerText) >= 0 ){
             currentComponent = getCurrentComponent( event.currentTarget.getAttribute('value'), host);
             currentComponent.showingSpinner = true;
@@ -2818,12 +3218,11 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value')]); 
                 }
             }else{
-                var cmd = event.target.innerText.toLowerCase();
-                if( cmd == 'initialize'){
-                    cmd = 'init';
+                if(event.target.innerText.toLowerCase() != 'initialize'){
+                    session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value'), host]);
                 }
-                var event_url = cmd + '/' + event.currentTarget.getAttribute('value') + '/' + host;
-                var eventData = bamAjaxCall.getCmdData(event_url);
+                // var event_url = cmd + '/' + event.currentTarget.getAttribute('value') + '/' + host;
+                // var eventData = bamAjaxCall.getCmdData(event_url);
             }
         }
         ;
@@ -2850,35 +3249,46 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
 
     $scope.open = function (p_idx, idx) {
-            $scope.editHost = '';
-            if(idx >= 0){
-                $scope.editHost = $scope.groupsList[p_idx].hosts[idx];
-            }
+            if ($scope.betaFeature) {
+                $scope.editHost = '';
+                if(idx >= 0){
+                    $scope.editHost = $scope.groupsList[p_idx].hosts[idx];
+                }
 
-            var modalInstance = $uibModal.open({
-                templateUrl: '../app/components/partials/addHostModal.html',
-                windowClass: 'modal',
-                controller: 'addHostController',
-                scope: $scope,
-            });
+                var modalInstance = $uibModal.open({
+                    templateUrl: '../app/components/partials/addHostModal.html',
+                    windowClass: 'modal',
+                    controller: 'addHostController',
+                    scope: $scope,
+                });
+            }else{
+                $scope.alerts.push({
+                    type: 'warning'
+                });
+            }
         };
 
     $scope.openGroupsModal = function (idx) {
-
-            var modalInstance = $uibModal.open({
-                templateUrl: '../app/components/partials/addServerGroupsModal.html',
-                windowClass: 'modal',
-                controller: 'addServerGroupsController',
-                scope: $scope,
-            });
-            $scope.editGroup = '';
-            if(idx){
-                $scope.editGroup = $scope.groupsList[idx];
-                for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
-                    if($scope.groupsList[i].group == $scope.editGroup.group){
-                        modalInstance.groupServers = $scope.groupsList[i].hosts;
+            if($scope.betaFeature){
+                var modalInstance = $uibModal.open({
+                    templateUrl: '../app/components/partials/addServerGroupsModal.html',
+                    windowClass: 'modal',
+                    controller: 'addServerGroupsController',
+                    scope: $scope,
+                });
+                $scope.editGroup = '';
+                if(idx){
+                    $scope.editGroup = $scope.groupsList[idx];
+                    for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                        if($scope.groupsList[i].group == $scope.editGroup.group){
+                            modalInstance.groupServers = $scope.groupsList[i].hosts;
+                        }
                     }
                 }
+            }else{
+                $scope.alerts.push({
+                    type: 'warning'
+                });
             }
         };
 
@@ -2899,6 +3309,19 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             controller: 'topController',
             scope : $scope
         });
+    };
+
+    $scope.openDetailsModal = function (comp) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/details.html',
+            // windowClass: 'comp-details-modal',
+            size: 'lg',
+            controller: 'ComponentDetailsController',
+            keyboard  : false,
+            backdrop  : 'static',
+        });
+        modalInstance.component = comp;
+        modalInstance.isExtension = true;
     };
 
     $scope.openGraphModal = function (chartName) {
@@ -2942,6 +3365,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
+        localStorage.clear();
+        localStorage.setItem('groupsListCookie', JSON.stringify($scope.groupsList));
         $interval.cancel(stopStatusCall);
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i])
@@ -2950,13 +3375,14 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 }]);
 
 
-angular.module('bigSQL.components').controller('addHostController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', function ($scope, $uibModalInstance, PubSubService, $rootScope) {
+angular.module('bigSQL.components').controller('addHostController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', 'bamAjaxCall', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal, bamAjaxCall) {
 
     var session;
 	var sessPromise = PubSubService.getSession();
 	var subscriptions = [];
 	$scope.tryToConnect = false;
 	$scope.connectionStatus = false;
+	$scope.installingStatus = false;
 	$scope.registerResponse;
 	$scope.type = 'Add';
 
@@ -2972,6 +3398,13 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 		$scope.connectionName = $scope.editHost.name;
 	}
 
+	$scope.firstPhase = true;
+	$scope.secondPhase = false;
+
+	$scope.refreshHostManager = function (argument) {
+		$rootScope.$emit('addedHost');
+	}
+
     sessPromise.then(function (sessParam) {
         session = sessParam;
         $scope.addHost = function () {
@@ -2985,8 +3418,22 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	    		
 	    		var jsonData =  JSON.parse(data[0]);
 	    		if(jsonData[0].state == 'completed'){
-	    			$rootScope.$emit('addedHost'); 
-	    			$uibModalInstance.dismiss('cancel');
+	    			// $rootScope.$emit('addedHost'); 
+	    			// $uibModalInstance.dismiss('cancel');
+	    			var listData = bamAjaxCall.getCmdData('hostcmd/list/'+$scope.hostName);
+	    			listData.then(function(data) {
+	    				$scope.tryToConnect = false;
+	    				$scope.connectionStatus = false;
+	    				var comps = $(data).filter(function(i,n){ return n.category == 1 });
+	    				$scope.availablePgComps = [];
+	    				for (var i = comps.length - 1; i >= 0; i--) {
+	    					$scope.availablePgComps.push(comps[i]);
+	    				}
+	    				// $scope.availablePgComps = pgComps;
+	    				$scope.selectedPgComp = $scope.availablePgComps[0];
+	    				$scope.secondPhase = false;
+    					$scope.thirdPhase = true;
+	    			})
 	    		}else if (jsonData[0].state == 'progress') {
 	    			$scope.tryToConnect = false;
 	    			$scope.connectionStatus = true;
@@ -3003,6 +3450,66 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	        });
 	    }
     });
+
+    $scope.next = function (argument) {
+    	if($scope.firstPhase){
+    		$scope.tryToConnect = true;
+    		$scope.connectionError = false;
+    		var checkUser = bamAjaxCall.getCmdData('checkUser/'+ $scope.hostName + '/' + $scope.userName + '/' + $scope.password);
+    		checkUser.then(function (argument) {
+    			var jsonData = JSON.parse(argument)[0];
+    			if (jsonData.state == 'success') {
+    				$scope.isSudo =  jsonData.isSudo;
+    				if($scope.isSudo){
+    					$scope.serviceUser = 'Postgres';
+    					$scope.pgcDir = '/opt'
+    				}else{
+    					$scope.serviceUser = $scope.userName;
+    					$scope.pgcDir = '~/bigsql'
+    				}
+    				$scope.tryToConnect = false;
+    				$scope.firstPhase = false;
+    				$scope.secondPhase = true;
+    			} else{
+	    			$scope.connectionError = true;
+	    			$scope.tryToConnect = false;
+    				$scope.message = jsonData.msg;
+    			}
+    		})
+    	}else if($scope.secondPhase){
+    		$scope.secondPhase = false;
+    		$scope.thirdPhase = true;
+    	}else if($scope.thirdPhase){
+    			$scope.installingStatus = true;
+    			$scope.thirdPhase = false;
+    			var event_url =  'install/' + $scope.selectedPgComp.component + '/' + $scope.hostName ;
+	            var eventData = bamAjaxCall.getCmdData(event_url);
+	            eventData.then(function(data) {
+	            	$scope.installingStatus = false;
+	                $uibModalInstance.dismiss('cancel');
+			        var modalInstance = $uibModal.open({
+			            templateUrl: '../app/components/partials/pgInitialize.html',
+			            controller: 'pgInitializeController',
+			        });
+			        modalInstance.component = $scope.selectedPgComp.component;
+			        modalInstance.dataDir = $scope.pgcDir + '/data/' + $scope.selectedPgComp.component;
+			        modalInstance.autoStartButton = false;
+			        modalInstance.host = $scope.hostName;
+			        modalInstance.userName = $scope.userName;
+			        modalInstance.password = $scope.password;
+	            });
+    	}
+    }
+
+    $scope.back = function (argument) {
+    	if($scope.secondPhase){
+    		$scope.secondPhase = false;
+    		$scope.firstPhase = true;
+    	}else if($scope.thirdPhase){
+    		$scope.thirdPhase = false;
+    		$scope.secondPhase = true;
+    	}
+    }
 
 	$scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');
@@ -3129,13 +3636,15 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $scope.autoSelectLogFile;
     $scope.selectedCurrentLogfile;
     $scope.refreshMsg= false;
+    $scope.checked = false;
 
     var session;
     $scope.updateSettings;
     $scope.loading = true;
     $scope.retry = false;
     $scope.disableShowInstalled = false;
-
+    $scope.badgerInstalled = false;
+    $scope.disableGenrate = false;
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -3144,6 +3653,50 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         });
     });
 
+    $rootScope.$on('refreshPage',function (argument) {
+        $window.location.reload();
+    } );
+
+    var serverStatus = bamAjaxCall.getCmdData('status');
+        serverStatus.then(function (data) {
+            var noPostgresRunning = false;
+            for (var i = data.length - 1; i >= 0; i--) {
+                if (data[i].state == "Running") {
+                    noPostgresRunning = true;
+                }
+            }
+            if(!noPostgresRunning){
+                $scope.disableGenrate = true;
+                $scope.alerts.push({
+                    msg:  "No Postgres component Installed/ Initialized.",
+                    type: 'danger',
+                    pgComp: true
+                });
+            }else{
+                var compStatus = bamAjaxCall.getCmdData('status/pgbadger');
+                compStatus.then(function (data) {
+                    if (data.state == "Installed") {
+                        $scope.badgerInstalled = true;
+                    }else{
+                        $scope.disableGenrate = true;
+                        $scope.alerts.push({
+                            msg:  'pgBadger is not Installed. ',
+                            type: 'danger',
+                            pgComp: false
+                        });
+                    }
+                });
+            }
+        });    
+
+    $scope.logFileChecked = function () {
+        $scope.selectedLog = false;
+        angular.forEach($scope.logfiles, function (item) {
+            if(item.selected){
+                $scope.selectedLog = true;
+            }
+        });
+    }
 
     $scope.onSelectChange = function (comp) {
         if(comp){
@@ -3152,16 +3705,19 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             session.subscribe('com.bigsql.onInfoComponent', function (args) {
                 $scope.logDir = JSON.parse(args[0][0])[0].logdir;
                 $scope.$apply();
-            });    
+            });
+            localStorage.setItem('selectedDB', comp);  
         }else{
+            $scope.disableLog = true;
             $scope.logfiles = [];
             $scope.logDir = '';
+            localStorage.setItem('selectedDB', '');
         }
         
     };
 
     function getReports(argument) {
-        
+
         var infoData = bamAjaxCall.getCmdData('getrecentreports/badger');
         infoData.then(function (data) {
             var files_list = data.data;
@@ -3169,7 +3725,10 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                 $scope.showReports = false;
             }else{
                 $scope.files_list=files_list; 
-                $scope.showReports = true;               
+                $scope.showReports = true; 
+                for (var i = $scope.files_list.length - 1; i >= 0; i--) {
+                    $scope.files_list[i].selected = false;
+                }              
             }
         });
 
@@ -3185,9 +3744,13 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 
         session.subscribe("com.bigsql.onCheckLogdir", function (components) {
             $scope.components = JSON.parse(components[0]);
+            var selectedDB = localStorage.getItem('selectedDB');
             if($scope.components.length == 1){
                 $scope.selectComp = $scope.components[0].component;
                 $scope.onSelectChange($scope.selectComp);
+            }else if (selectedDB) {
+                $scope.selectComp = selectedDB;
+                $scope.onSelectChange(selectedDB);
             }
             $scope.$apply();
         }).then(function (subscription) {
@@ -3196,10 +3759,14 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 
         session.subscribe("com.bigsql.log_files_list", function (data) {
             $scope.logfiles = JSON.parse(data[0]);
-            if($scope.autoSelectLogFile){
-                $scope.checkedFirst = true;
-            }
             $scope.disableLog = false;
+            for (var i = 0; i <= $scope.logfiles.length; i++) {
+                $scope.logfiles[i]['selected'] = false;
+                if(i==0){
+                    $scope.logfiles[i]['selected'] = true;
+                    $scope.selectedLog = true;  
+                }
+            }
             $scope.apply();
 
         });
@@ -3229,10 +3796,17 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         $scope.report_file = "";
         $scope.report_url = "";
         var selectedFiles = [];
+        var totalSize = 0;
+        var smallFiles = [];
         var selectLog = document.getElementsByName("selectLog");
         for (var i=0;i<selectLog.length; i++){
             if(selectLog[i].checked){
-                selectedFiles.push(selectLog[i].value);
+                var units = selectLog[i].value.split('; ')[1].split(' ')[1];
+                totalSize += parseInt(selectLog[i].value.split('; ')[1].split(' ')[0]);
+                if (units == 'B' || (units == 'KB' && totalSize<=2)) {
+                    smallFiles.push(selectLog[i].value.split('; ')[0])
+                } 
+                selectedFiles.push(selectLog[i].value.split('; ')[0]);
             }
         }
         var modalInstance = $uibModal.open({
@@ -3247,7 +3821,26 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         modalInstance.pgDB = $scope.pgDB;
         modalInstance.pgJobs = $scope.pgJobs;
         modalInstance.pgLogPrefix = $scope.pgLogPrefix;
+        modalInstance.smallFiles = smallFiles;
     };
+
+    $scope.toggleAll = function() { 
+        if($scope.isAllSelected){
+            $scope.isAllSelected = false;
+        }else{
+            $scope.isAllSelected = true;
+        }
+        angular.forEach($scope.files_list, function(itm){ itm.selected = $scope.isAllSelected; });
+    }
+      
+    $scope.optionToggled = function(){
+        $scope.checked = false;
+        angular.forEach($scope.files_list, function (item) {
+            if(item.selected){
+                $scope.checked = true;
+            }
+        });
+    }
 
     $scope.deleteReports = function (files, selectAll) {
         var deleteFiles = [];
@@ -3262,13 +3855,17 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                 }
             }            
         }
-        var removeFiles = $http.post($window.location.origin + '/api/remove_reports/badger', deleteFiles);
-        removeFiles.then(function (data) {
-            if(data.data.error == 0){
-                getReports();
-            }
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/confirmDeletionModal.html',
+            controller: 'confirmDeletionModalController',
         });
+        modalInstance.deleteFiles = deleteFiles;
+        modalInstance.comp = 'pgbadger';
     }
+
+    $rootScope.$on('updateReports', function (argument) {
+        getReports();
+    })
 
     $scope.refreshLogfiles = function (comp) {
         $scope.refreshMsg = true;
@@ -3291,6 +3888,24 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         $scope.badgerError = error.status;
     });
 
+    $scope.openDetailsModal = function (comp) {
+        $scope.alerts.splice(0, 1);
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/details.html',
+            // windowClass: 'comp-details-modal',
+            size : 'lg',
+            controller: 'ComponentDetailsController',
+            keyboard  : false,
+            backdrop  : 'static',
+        });
+        modalInstance.component = 'pgbadger';
+        modalInstance.isExtension = true;
+    };
+
+    $scope.closeAlert = function (index) {
+        $scope.alerts.splice(index, 1);
+    };
+
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
         for (var i = 0; i < subscriptions.length; i++) {
@@ -3300,6 +3915,45 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
 }]);
 
 
+angular.module('bigSQL.components').controller('confirmDeletionModalController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', '$window', '$http', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, $window, $http) {
+
+	var session;
+
+    var sessionPromise = PubSubService.getSession();
+    sessionPromise.then(function (val) {
+    	session = val;
+    });
+
+    var deleteFiles = $uibModalInstance.deleteFiles;
+    $scope.comp = $uibModalInstance.comp;
+
+    $scope.removeReports = function (argument) {
+        if($scope.comp == 'pgbadger'){
+            var removeFiles = $http.post($window.location.origin + '/api/remove_reports/badger', deleteFiles);
+            removeFiles.then(function (data) {
+                if(data.data.error == 0){
+                    $rootScope.$emit("updateReports");
+                    $uibModalInstance.dismiss('cancel');
+                }
+            });    
+        }else{
+            var removeFiles = $http.post($window.location.origin + '/api/remove_reports/profiler', deleteFiles);
+            removeFiles.then(function (data) {
+                if(data.data.error == 0){
+                    $rootScope.$emit('refreshPage');
+                    $uibModalInstance.dismiss('cancel');
+                }
+            });
+        }
+    }
+
+    $scope.deleteFilesLength = deleteFiles.length;
+
+    $scope.cancel = function () {
+        $uibModalInstance.dismiss('cancel');
+    };
+
+}]);
 angular.module('bigSQL.components').controller('generateBadgerReportController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', 'bamAjaxCall', '$sce', function ($scope, $rootScope, $uibModalInstance, PubSubService, bamAjaxCall, $sce) {
 
 	var session;
@@ -3326,7 +3980,9 @@ angular.module('bigSQL.components').controller('generateBadgerReportController',
             subscriptions.push(subscription);
         });
 
-        if ($uibModalInstance.selectedFiles.length > 0) {
+        if($uibModalInstance.smallFiles.length > 0){
+            $scope.badgerError = $uibModalInstance.smallFiles + '. There is insufficient number of entries in the file(s) to deduce line format.'
+        }else if ($uibModalInstance.selectedFiles.length > 0) {
             $scope.generatingReportSpinner = true;
             session.call('com.bigsql.pgbadger', [
                 $uibModalInstance.selectedFiles, $uibModalInstance.pgDB,
@@ -3354,6 +4010,14 @@ angular.module('bigSQL.components').controller('generateBadgerReportController',
 angular.module('bigSQL.components').controller('globalProfilingController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', '$window', '$location', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, $window, $location) {
 
 	var session;
+    $scope.alerts = [];
+    $scope.hostName = $uibModalInstance.hostName;
+    $scope.pgUser = $uibModalInstance.pgUser;
+    $scope.pgPass = $uibModalInstance.pgPass;
+    $scope.pgDB = $uibModalInstance.pgDB;
+    $scope.pgPort = $uibModalInstance.pgPort;
+    $scope.enableProfiler = false;
+    $scope.comp = $uibModalInstance.comp;
 
     $scope.showResult = false;
     $scope.showStatus =  true;
@@ -3367,7 +4031,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            "check"
+            "check", $scope.comp
         ]);
 
         session.subscribe("com.bigsql.profilerReports", function (data) {
@@ -3379,6 +4043,18 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
                 $scope.result=data[0];
             }
             $scope.showResult = true;
+            
+            var result=data[0];
+            if (result.error != 0 && result.action =="generate") {
+                $scope.alerts.push({
+                            msg:  result.msg,
+                            type: 'danger',
+                        });
+                $scope.showResult = false;
+            }else if (result.error == 0 && result.action =="generate"){
+                $uibModalInstance.dismiss('cancel');   
+            }
+
             $scope.$apply();
 
         }).then(function (sub) {
@@ -3387,13 +4063,6 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
 
     });
 
-    $scope.hostName = $uibModalInstance.hostName;
-    $scope.pgUser = $uibModalInstance.pgUser;
-    $scope.pgPass = $uibModalInstance.pgPass;
-    $scope.pgDB = $uibModalInstance.pgDB;
-    $scope.pgPort = $uibModalInstance.pgPort;
-    $scope.enableProfiler = false;
-
     $scope.enableProfiler = function (argument) {
         $scope.showStatus = false;
     	session.call('com.bigsql.plprofiler', [
@@ -3401,7 +4070,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            "enable"
+            "enable", $scope.comp
 
         ]).then(function (argument) {
             session.call('com.bigsql.plprofiler', [
@@ -3409,7 +4078,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
                 $scope.pgPort, $scope.pgDB,
                 $scope.pgPass, $scope.pgQuery,
                 $scope.pgTitle, $scope.pgDesc,
-                "check"
+                "check", $scope.comp
             ]);
         }) ;
     };
@@ -3423,7 +4092,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            "disable"
+            "disable", $scope.comp
 
         ]).then(function (argument) {
             session.call('com.bigsql.plprofiler', [
@@ -3431,7 +4100,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
                 $scope.pgPort, $scope.pgDB,
                 $scope.pgPass, $scope.pgQuery,
                 $scope.pgTitle, $scope.pgDesc,
-                "check"
+                "check", $scope.comp
             ]);
         });
     };
@@ -3442,7 +4111,7 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            "reset"
+            "reset", $scope.comp
         ]);
     };
 
@@ -3452,15 +4121,20 @@ angular.module('bigSQL.components').controller('globalProfilingController', ['$s
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            "generate"
+            "generate", $scope.comp
         ]).then(function (sub) {
-            $uibModalInstance.dismiss('cancel');
+            // $uibModalInstance.dismiss('cancel');
         });
     };
 
 
     $scope.cancel = function () {
+        $rootScope.$emit('refreshPage');
         $uibModalInstance.dismiss('cancel');
+    };
+
+    $scope.closeAlert = function (index) {
+        $scope.alerts.splice(index, 1);
     };
 
     //need to destroy all the subscriptions on a template before exiting it
@@ -3822,31 +4496,28 @@ angular.module('bigSQL.components').controller('hostGraphModalController', ['$sc
     
 }]);
 
-angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubService', '$rootScope', '$window', '$timeout',function ($scope, PubSubService, $rootScope, $window, $timeout) {
+angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubService', '$rootScope', '$window', '$timeout', 'bamAjaxCall', function ($scope, PubSubService, $rootScope, $window, $timeout, bamAjaxCall) {
 
 	$scope.bamLoading = true;
 	var subscriptions = [];
 	var session;
 
-        var sessPromise = PubSubService.getSession();
-        sessPromise.then(function (sessPram) {
-        	session = sessPram;
-        	session.call('com.bigsql.serverStatus');
-            session.subscribe("com.bigsql.onServerStatus", function (args) {
-            	$scope.bamLoading = false;
-              $scope.$apply();
-         			var components = $(JSON.parse(args[0])).filter(function(i,n){ return n.category === 1;});
-          		if(components.length != 0){
-          			$scope.pgComp = components[0].component;
-                // $window.location.href = "#/details-pg/" + components[0].component;
-          			// $rootScope.$emit('topMenuEvent');
-          		} else {
-          			// $window.location.href = "#/components/view";	
-          		}
-	        }).then(function (subscription) {
-	            subscriptions.push(subscription);
-	        });
-        });
+  var sessPromise = PubSubService.getSession();
+  sessPromise.then(function (sessPram) {
+  	session = sessPram;
+  	session.call('com.bigsql.serverStatus');
+      session.subscribe("com.bigsql.onServerStatus", function (args) {
+      	$scope.bamLoading = false;
+        $window.location.href = "#/"
+        $scope.$apply();
+   			var components = $(JSON.parse(args[0])).filter(function(i,n){ return n.category === 1;});
+    		if(components.length != 0){
+    			$scope.pgComp = components;
+    		}
+    }).then(function (subscription) {
+        subscriptions.push(subscription);
+    });
+  });
 
 	$timeout(function() {
         if ($scope.bamLoading) {
@@ -3935,7 +4606,7 @@ angular.module('bigSQL.components').controller('loggingParamController', ['$scop
 
     
 }]);
-angular.module('bigSQL.components').controller('pgInitializeController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', 'bamAjaxCall', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, bamAjaxCall) {
+angular.module('bigSQL.components').controller('pgInitializeController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', 'bamAjaxCall', '$http', '$window', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, bamAjaxCall, $http, $window) {
 
 	var session;
     var subscriptions = [];
@@ -3945,6 +4616,12 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
     };
 
     $scope.comp = $uibModalInstance.component;
+    $scope.autoStartButton = $uibModalInstance.autoStartButton;
+    $scope.dataDir = $uibModalInstance.dataDir;
+    $scope.host = $uibModalInstance.host;
+    $scope.userName = $uibModalInstance.userName;
+    $scope.userPassword = $uibModalInstance.password;
+    $scope.initializing = false;
 
     function getInfoComp(argument) {
         var infoData = bamAjaxCall.getCmdData('info/' + $scope.comp)
@@ -3966,20 +4643,31 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
         session.call('com.bigsql.checkOS');
         session.subscribe('com.bigsql.onCheckOS', function (args) {
             if(args[0] != 'Linux'){
-                
-                session.call('com.bigsql.autostart',['on',$scope.comp]).then(function (argument) {
+                if (!$scope.autoStartButton) {
+                    $scope.autostartChange(true);
+                    $scope.autoStartButton = true;
+                }else{
                     getInfoComp();
-                });
-                
+                }
             }else{
                 $scope.autostartDisable = true;
             }
         });
         session.call('com.bigsql.getAvailPort',[$scope.comp,'']);
-
-        var promise = MachineInfo.get(val);
-        promise.then(function (data) {
-            $scope.dataDir = data.home + '/data/' + $scope.comp;
+        if($scope.host == 'localhost' || $scope.host == '' || !$scope.host ){
+            var hostInfo = bamAjaxCall.getCmdData('info');
+        } else{
+            var hostInfo = bamAjaxCall.getCmdData('hostcmd/info/' + $scope.host);
+        }
+        hostInfo.then(function (argument) {
+            var data = argument[0];
+            if(!$scope.dataDir){
+                $scope.dataDir = data.home + '/data/' + $scope.comp;      
+            }
+            if($scope.dataDir.length > 40){
+                $scope.dataDir = "..." + $scope.dataDir.substring(17, $scope.dataDir.length)
+            }
+            $scope.dataDirVal = data.home + '/data/' + $scope.comp;
         });
 
         $scope.portNumber = '';
@@ -3991,7 +4679,15 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             } else {
                 autoStartVal = 'off';       
             }
-            session.call('com.bigsql.autostart',[autoStartVal,$scope.comp]);
+            if($scope.host == 'localhost' || $scope.host == '' || !$scope.host ){
+                session.call('com.bigsql.autostart',[autoStartVal,$scope.comp]).then(function (argument) {
+                getInfoComp();
+            });
+            } else{
+                session.call('com.bigsql.autostart',[autoStartVal,$scope.comp, $scope.host]).then(function (argument) {
+                    getInfoComp();
+                });
+            }
         }
 
 
@@ -4002,15 +4698,54 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             function (subscription){
                 subscriptions.push(subscription);
             });
+
+        session.subscribe('com.bigsql.onInit',
+        function (data) {
+                var compStatus = JSON.parse(data[0]);
+                if(compStatus[0].status == 'complete'){
+                    $scope.addToMetaData();
+                }else{
+                    $uibModalInstance.dismiss('cancel');
+                }
+            }).then(function (subscription){
+                subscriptions.push(subscription);
+            });
     });
 
-    $scope.init = function() {
-    	if(!$scope.portNumber){
-            $scope.portNumber = document.getElementById('portNumber').value;
+    $scope.addToMetaData = function (comp, remote_host) {
+        if($scope.host == 'localhost' || $scope.host == '' || !$scope.host){
+            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp)
+        }else{
+            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp + '/' + $scope.host)
         }
-        session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDir, $scope.portNumber ] );
-	    $rootScope.$emit('initComp', [$scope.comp]);    		
-		$uibModalInstance.dismiss('cancel');
+        infoComp.then(function(args) { 
+            args[0]['host'] = $scope.host;
+            var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', args[0]);
+            addToMetaData.then(function (argument) {
+                $uibModalInstance.dismiss('cancel');                        
+            });
+        });
+    }
+
+    $scope.init = function() {
+        $scope.initializing = true;
+        if($scope.host == 'localhost' || $scope.host == '' || !$scope.host){
+        	if(!$scope.portNumber){
+                $scope.portNumber = document.getElementById('portNumber').value;
+            }
+            session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDirVal, $scope.portNumber ] );
+        } else {
+            if ($scope.userName == undefined || $scope.password == undefined) {
+                var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password ;
+            }else{
+                var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password + '/' + $scope.userName +'/' + $scope.userPassword;
+            }
+            var eventData = bamAjaxCall.getCmdData(event_url);
+            eventData.then(function(data) {
+                $scope.addToMetaData();                     
+            });
+        }
+
     }
 
     $scope.$on('$destroy', function () {
@@ -4023,6 +4758,8 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
 angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall) {
 
     $scope.alerts = [];
+    $scope.successAlerts = [];
+    $scope.extensionAlerts = [];
 
     var subscriptions = [];
     $scope.components = {};
@@ -4032,6 +4769,10 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     $scope.loading = true;
     $scope.retry = false;
     $scope.disableShowInstalled = false;
+    $scope.component;
+    $scope.enableBtns = false;
+    $scope.disableAbout = false;
+    $scope.refreshingFields = false;
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -4040,45 +4781,194 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         });
     });
 
-    var statusData = bamAjaxCall.getCmdData('status');
-    statusData.then(function(info) {
-        if(info.length > 0 && localStorage.length == 0){
-            var infoData = bamAjaxCall.getCmdData('read/env/' + info[0].component)
-            infoData.then(function(info) {
-                $scope.hostName = 'localhost';
-                $scope.pgUser = info.PGUSER;
-                $scope.pgDB = info.PGDATABASE;
-                $scope.pgPort = info.PGPORT; 
-            });
-        } 
+    var infoData = bamAjaxCall.getCmdData('getrecentreports/profiler');
+    infoData.then(function (data) {
+        var files_list = data.data;
+        if(files_list.length > 0){
+            $scope.report_file = files_list[0].file_link.replace('reports/','');
+            $scope.report_url = files_list[0].file_link;
+        }
     });
+
+    function getInstanceInfo(comp) {
+    
+        var instanceInfo = bamAjaxCall.getCmdData('status/'+ comp);
+        instanceInfo.then(function (argument) {
+            $scope.pgPort = argument.port;
+        })
+    }
+
+    function checkplProfilerStatus(argument) {
+        var compStatus = bamAjaxCall.getCmdData('status/'+ $scope.component);
+            compStatus.then(function (data) {
+                if (data.state != "Installed") {
+                    $scope.alerts.push({
+                        msg:  $scope.component + ' is not Installed yet. ',
+                        type: 'danger',
+                        pgComp: false
+                    });
+                }else{
+                    $scope.enableBtns = true;
+                    session.call('com.bigsql.db_list', [$scope.selectComp]);
+                }
+            });
+    }
+
+    $scope.onSelectChange = function (argument) {
+        $scope.extensionAlerts.splice(0,1);
+        $scope.successAlerts.splice(0,1);
+        localStorage.setItem('selectedCluster', argument);
+        $scope.alerts.splice(0, 1);
+        $scope.selectDatabase = '';
+        if(argument){
+            $scope.component = 'plprofiler3-'+argument;
+            checkplProfilerStatus();
+            getInstanceInfo(argument);
+        }
+    }
+
+    $scope.onDatabaseChange = function (argument) {
+        $scope.extensionAlerts.splice(0,1);
+        if (argument) {
+            localStorage.setItem('selectedDatabase', JSON.stringify({'database': argument, 'component': $scope.selectComp}));   
+            session.call('com.bigsql.checkExtension', [
+                argument, $scope.selectComp, 'plprofiler'
+            ]);
+            session.call('com.bigsql.plprofiler', [
+                $scope.hostName, '',
+                $scope.pgPort, argument,
+                '', $scope.pgQuery,
+                $scope.pgTitle, $scope.pgDesc,
+                "check", $scope.selectComp
+            ]);
+        }
+    }
+
+    $scope.createExtension = function (argument) {
+        $scope.extensionAlerts.splice(0,1);
+        session.call('com.bigsql.createExtension', [
+                $scope.selectDatabase, $scope.selectComp, 'plprofiler'
+            ]);
+    }
+
+    $rootScope.$on('refreshPage',function (argument) {
+        $window.location.reload();
+    } );
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
 
+        session.call('com.bigsql.checkLogdir');
+
+
+        session.subscribe("com.bigsql.onCheckLogdir", function (components) {
+            var selectedCluster = localStorage.getItem('selectedCluster');
+            $scope.components = JSON.parse(components[0]);
+            if($scope.components.length == 1){
+                $scope.selectComp = $scope.components[0].component;
+                $scope.onSelectChange($scope.selectComp);
+                $scope.component = 'plprofiler3-'+ $scope.selectComp;
+                session.call('com.bigsql.db_list', [$scope.selectComp]);
+                getInstanceInfo($scope.selectComp);
+                // localStorage.setItem('runningPostgres');
+            }else if($scope.components.length > 1 && selectedCluster){
+                $scope.selectComp = selectedCluster;
+                $scope.onSelectChange(selectedCluster);
+            }else if($scope.components.length <= 0){
+                $scope.disableAbout = true;
+                $scope.alerts.push({
+                    msg:  "No Postgres component Installed/ Initialized.",
+                    type: 'danger',
+                    pgComp: true
+                });
+            }
+            $scope.refreshingFields = false;
+            $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
+        session.subscribe("com.bigsql.onCheckExtension", function (data) {
+            if (!data[0].status) {
+                $scope.extensionAlerts.push({
+                        msg:  'plprofiler extension is not enabled on ' + $scope.selectDatabase + ' database. Do you want to enable?',
+                        type: 'warning',
+                        showBtns : true,
+                    });
+                $scope.$apply();
+            }
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
+        session.subscribe("com.bigsql.onCreateExtension", function (data) {
+            if (data[0].status) {
+                $scope.extensionAlerts.push({
+                        msg:  'Successfully created plprofiler extension.',
+                        type: 'success',
+                        showBtns: false,
+                    });
+                $scope.$apply();
+            }
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
+        session.subscribe('com.bigsql.ondblist', function (data) {
+            try{
+                var selectedDatabase = JSON.parse(localStorage.getItem('selectedDatabase'));
+            }catch(e){
+                var selectedDatabase = '';
+            }
+            if (data[0].error) {
+                $scope.successAlerts.push({
+                    msg: data[0].error,
+                    type: 'danger',
+                });
+            }
+            for (var i = data.length - 1; i >= 0; i--) {
+                if ($scope.selectComp == data[i].component) {
+                    $scope.databases = data[i].list;
+                    if (selectedDatabase.database && data[i].component == selectedDatabase.component) {
+                        for (var i = $scope.databases.length - 1; i >= 0; i--) {
+                            if (selectedDatabase.database == $scope.databases[i].datname) {
+                                $scope.onDatabaseChange(selectedDatabase.database);
+                                $scope.selectDatabase = selectedDatabase.database;
+                            }
+                        }
+                    }
+                }
+            }
+            $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
         session.subscribe("com.bigsql.profilerReports", function (data) {
             $scope.generatingReportSpinner=false;
+            $scope.errorMsg = '';
             var result=data[0];
+            if(data[0].action == 'check'){
+                $scope.status = data[0];
+            }
             if (result.error == 0) {
 
                 if(result.action == "profile_query" || result.action == "generate"){
                     $scope.report_file = result.report_file;
                     $scope.report_url = "/reports/" + result.report_file;
+                    $scope.successAlerts.push({
+                        msg:  'Your report has been generated, please see below.',
+                        type: 'success',
+                        pgComp: false
+                    });
                 }
                 else{
-                    $scope.errorMsg = result.msg;
-                    $scope.report_file = '';
-                }
+                    // $scope.errorMsg = result.msg;
 
-                //$scope.report_file = result.report_file;
-                //$scope.report_url = "/reports/" + result.report_file;
-                // $window.open("http://localhost:8050/reports/" + result.report_file);
-                //$scope.$apply();
-                //$scope.message = data;
+                }
             } else {
-                $scope.errorMsg = result.msg;
-                $scope.report_file = '';
+                // $scope.errorMsg = result.msg;
             }
             $scope.$apply();
 
@@ -4087,12 +4977,15 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         });
     });
 
-    $scope.hostName = localStorage.getItem('hostName');
-    $scope.pgUser = localStorage.getItem('pgUser');
-    $scope.pgDB = localStorage.getItem('pgDB');
-    $scope.pgPort = localStorage.getItem('pgPort');
+    $scope.refreshFields = function (argument) {
+        $scope.refreshingFields = true;
+        $timeout( refreshFields, 1000);
+    }
 
-
+    function refreshFields(argument) {
+        session.call('com.bigsql.checkLogdir');
+    }
+    $scope.hostName = 'localhost';
 
     $scope.generateReport = function () {
         $scope.report_file = "";
@@ -4118,43 +5011,60 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
             windowClass: 'switch-modal-window'
         });
         modalInstance.reportsType="profiler";
+        modalInstance.comp = $scope.selectComp;
     };
 
     $scope.queryProfiler = function (hostName, pgUser, pgPass, pgDB, pgPort) {
-
-        localStorage.setItem('hostName',hostName);
-        localStorage.setItem('pgUser',pgUser);
-        localStorage.setItem('pgDB',pgDB);
-        localStorage.setItem('pgPort',pgPort);
-
-
+        $scope.alerts.splice(0, 1);
+        $scope.extensionAlerts.splice(0,1);
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/statementProfilingModal.html',
             controller: 'statementProfilingController',
         });
         modalInstance.hostName = hostName;
-        modalInstance.pgUser = pgUser;
-        modalInstance.pgPass = pgPass;
-        modalInstance.pgDB = pgDB;
+        modalInstance.pgUser = '';
+        modalInstance.pgPass = '';
+        modalInstance.pgDB = $scope.selectDatabase;
         modalInstance.pgPort = pgPort;
+        modalInstance.comp = $scope.selectComp;
     };
 
     $scope.globalProfiling = function (hostName, pgUser, pgPass, pgDB, pgPort) {
-
-        localStorage.setItem('hostName',hostName);
-        localStorage.setItem('pgUser',pgUser);
-        localStorage.setItem('pgDB',pgDB);
-        localStorage.setItem('pgPort',pgPort);
-
+        $scope.alerts.splice(0, 1);
+        $scope.extensionAlerts.splice(0,1);
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/globalProfilingModal.html',
             controller: 'globalProfilingController',
         });
         modalInstance.hostName = hostName;
-        modalInstance.pgUser = pgUser;
-        modalInstance.pgPass = pgPass;
-        modalInstance.pgDB = pgDB;
+        modalInstance.pgUser = '';
+        modalInstance.pgPass = '';
+        modalInstance.pgDB = $scope.selectDatabase;
         modalInstance.pgPort = pgPort;
+        modalInstance.comp = $scope.selectComp;
+    };
+
+    $scope.openDetailsModal = function (comp) {
+        if(!$scope.disableAbout){
+            $scope.alerts.splice(0, 1);
+            $scope.extensionAlerts.splice(0,1);
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/details.html',
+                // windowClass: 'comp-details-modal',
+                size: 'lg',
+                controller: 'ComponentDetailsController',
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+            modalInstance.component = $scope.component;
+            modalInstance.isExtension = true;
+        }
+    };
+
+    $scope.closeAlert = function (index) {
+        $scope.successAlerts.splice(index, 1);
+        $scope.alerts.splice(index, 1);
+        $scope.extensionAlerts.splice(index,1);
     };
 
     //need to destroy all the subscriptions on a template before exiting it
@@ -4166,21 +5076,17 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
 }]);
 
 
-angular.module('bigSQL.components').controller('recentReportsController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', 'bamAjaxCall', '$sce', '$http', '$window', function ($scope, $rootScope, $uibModalInstance, PubSubService, bamAjaxCall, $sce, $http, $window) {
-
-	var session;
+angular.module('bigSQL.components').controller('recentReportsController', ['$scope','$rootScope', '$uibModalInstance', 'PubSubService', 'bamAjaxCall', '$sce', '$http', '$window', '$uibModal', function ($scope, $rootScope, $uibModalInstance, PubSubService, bamAjaxCall, $sce, $http, $window, $uibModal) {
 
     $scope.showResult = false;
     $scope.showStatus =  true;
     $scope.autoSelect = false;
     $scope.logAction = false;
     $scope.showError = false;
-    $scope.logFile = 'pgbadger-%Y%m%d_%H.log';
-    var subscriptions = [];
-    var sessionPromise = PubSubService.getSession();
-    sessionPromise.then(function (val) {
-    	session = val;
+    $scope.comp = $uibModalInstance.comp;
+    $scope.reportsType = $uibModalInstance.reportsType;
 
+    function getReports(argument) {
         var reportsType = $scope.reportsType;
         var infoData = bamAjaxCall.getCmdData('getrecentreports/' + reportsType);
         infoData.then(function (data) {
@@ -4191,12 +5097,32 @@ angular.module('bigSQL.components').controller('recentReportsController', ['$sco
                 $scope.files_list=files_list;                
             }
         });
+    }
 
+    getReports();
 
+    $rootScope.$on('refreshReports', function (argument) {
+        $uibModalInstance.dismiss('cancel');
+        // getReports();
+    })
 
-    });
-
-    $scope.reportsType = $uibModalInstance.reportsType;
+    $scope.toggleAll = function() { 
+        if($scope.isAllSelected){
+            $scope.isAllSelected = false;
+        }else{
+            $scope.isAllSelected = true;
+        }
+        angular.forEach($scope.files_list, function(itm){ itm.selected = $scope.isAllSelected; });
+    }
+      
+    $scope.optionToggled = function(){
+        $scope.checked = false;
+        angular.forEach($scope.files_list, function (item) {
+            if(item.selected){
+                $scope.checked = true;
+            }
+        });
+    }
 
     $scope.removeFiles = function (files, selectAll) {
         var deleteFiles = [];
@@ -4211,23 +5137,22 @@ angular.module('bigSQL.components').controller('recentReportsController', ['$sco
                 }
             }            
         }
-        var removeFiles = $http.post($window.location.origin + '/api/remove_reports/profiler', deleteFiles);
-        removeFiles.then(function (data) {
-            if(data.data.error == 0){
-                $uibModalInstance.dismiss('cancel');
-            }
-        });   
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/confirmDeletionModal.html',
+            controller: 'confirmDeletionModalController',
+        });
+        modalInstance.deleteFiles = deleteFiles;
+        modalInstance.comp = $scope.comp;
     }
 
     $scope.cancel = function () {
+        $rootScope.$emit('refreshPage');
         $uibModalInstance.dismiss('cancel');
     };
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
-        for (var i = 0; i < subscriptions.length; i++) {
-            session.unsubscribe(subscriptions[i])
-        }
+        
     });
 
 
@@ -4242,26 +5167,71 @@ angular.module('bigSQL.components').controller('statementProfilingController', [
     	session = val;
     });
 
+    var subscriptions = [];
+
     $scope.hostName = $uibModalInstance.hostName;
     $scope.pgUser = $uibModalInstance.pgUser;
     $scope.pgPass = $uibModalInstance.pgPass;
     $scope.pgDB = $uibModalInstance.pgDB;
     $scope.pgPort = $uibModalInstance.pgPort;
     $scope.enableProfiler = false;
+    $scope.comp = $uibModalInstance.comp;
+    $scope.alerts = [];
 
     $scope.generateReport = function (argument) {
+
+        if(!$scope.pgTitle){
+            $scope.pgTitle = $scope.comp+':'+$scope.pgDB;
+        }
     	session.call('com.bigsql.plprofiler', [
             $scope.hostName, $scope.pgUser,
             $scope.pgPort, $scope.pgDB,
             $scope.pgPass, $scope.pgQuery,
             $scope.pgTitle, $scope.pgDesc,
-            'profile_query'
+            'profile_query', $scope.comp
         ]).then(function (sub) {
-        	$uibModalInstance.dismiss('cancel');
+            // $rootScope.$emit('refreshPage');
+        	// $uibModalInstance.dismiss('cancel');
+        });
+
+        session.subscribe("com.bigsql.profilerReports", function (data) {
+            $scope.generatingReportSpinner=false;
+            $scope.errorMsg = '';
+            var result=data[0];
+            if (result.error == 0) {
+
+                if(result.action == "profile_query" || result.action == "generate"){
+                    $uibModalInstance.dismiss('cancel');
+                }
+                else{
+                    $scope.alerts.push({
+                            msg:  result.msg,
+                            type: 'danger',
+                        });
+                    
+                }
+            } else {
+                $scope.alerts.push({
+                            msg:  result.msg,
+                            type: 'danger',
+                        });
+            }
+            $scope.$apply();
+
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
         });
     };
 
+    $scope.closeAlert = function (index) {
+        $scope.alerts.splice(index, 1);
+    };
+
     $scope.cancel = function () {
+        for (var i = 0; i < subscriptions.length; i++) {
+            session.unsubscribe(subscriptions[i])
+        }
+        $rootScope.$emit('refreshPage');
         $uibModalInstance.dismiss('cancel');
     };
 
@@ -4286,16 +5256,18 @@ angular.module('bigSQL.components').controller('switchLogfileController', ['$sco
     $scope.currentLogfile = $uibModalInstance.currentLogfile;
 
     $scope.switchFile = function (fileName) {
+        $scope.logAction = true;
         session.call('com.bigsql.switch_log_file', [
             $scope.comp, fileName
         ]);
 
         session.subscribe("com.bigsql.onSwitchLogfile", function (data) {
             var result = data[0];
-            
+
             if(result.error == 0){
                 $scope.logAction = true;
-                $scope.$apply()
+                $scope.$apply();
+
                 window.setTimeout(function() {
                     $rootScope.$emit('switchLogfile', fileName, $scope.comp);
                 }, 2000);
@@ -4311,7 +5283,7 @@ angular.module('bigSQL.components').controller('switchLogfileController', ['$sco
         session.subscribe("com.bigsql.log_files_list", function (data) {
             $uibModalInstance.dismiss('cancel');
         });       
-    }
+    };
 
     $scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');
@@ -4592,9 +5564,10 @@ angular.module('bigSQL.components').controller('whatsNewController', ['$scope','
         $uibModalInstance.dismiss('cancel');
     };
 
-    var whatNew = bamAjaxCall.getCmdData('relnotes/' + $uibModalInstance.component )
+    var whatNew = bamAjaxCall.getCmdData('utilRelnotes/' + $uibModalInstance.component )
     whatNew.then(function (data) {
-        $scope.whatsNewText = $sce.trustAsHtml(data);
+    	var data = JSON.parse(data)
+        $scope.whatsNewText = $sce.trustAsHtml(data[0].relnotes);
     });
 
 }]);
@@ -4769,9 +5742,13 @@ angular.module('bigSQL.menus').component('topMenu', {
             listData.then(function(data) {
                 var Checkupdates = 0;
                 $scope.components = data;
+                $scope.pgdevopsUpdate = false;
                 for (var i = 0; i < $scope.components.length; i++) {
-                    if ($scope.components[i].component != 'devops') {
+                    if ($scope.components[i].component != 'pgdevops') {
                         Checkupdates += $scope.components[i].updates;
+                    }
+                    if ($scope.components[i].component == 'pgdevops' && $scope.components[i].updates == 1) {
+                        $scope.pgdevopsUpdate = true;
                     }
                 }
                 if(!$scope.hideUpdates){
@@ -4818,9 +5795,23 @@ angular.module('bigSQL.menus').component('topMenu', {
 
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/updateModal.html',
-                windowClass: 'bam-update-modal modal',
+                // windowClass: 'bam-update-modal modal',
+                windowClass: 'comp-details-modal',
                 controller: 'ComponentsUpdateController',
             });
+        };
+
+        $scope.openDetailsModal = function (comp) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/details.html',
+                // windowClass: 'comp-details-modal',
+                size: 'lg',
+                controller: 'ComponentDetailsController',
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+            modalInstance.component = 'pgdevops';
+            modalInstance.isExtension = true;
         };
 
         $scope.usersPopup = function () {

@@ -257,7 +257,6 @@ class ComponentAction(object):
         Method to register server group
         """
         import util
-        print group_id
         util.register_group( name, p_parent_group=0, p_group_id = group_id, isJson=False, printMsg=False)
         util.map_group_hosts( name, hosts, p_group_id = group_id, isJson=False, printMsg=False)
 
@@ -324,20 +323,34 @@ class Components(ComponentAction):
         util.set_value("GLOBAL", "STAGE", val)
 
     @inlineCallbacks
-    def getBetaFeatureSetting(self):
+    def getBetaFeatureSetting(self, settingName):
         """
         Method to get test list setting of bam.
         :return: It yields json string.
         """
-        yield self.session.publish('com.bigsql.onGetBeataFeatureSetting', util.get_value ("GLOBAL", "BETA", ""))
+        yield self.session.publish('com.bigsql.onGetBeataFeatureSetting', {'setting': settingName, 'value': util.get_value ("BETA", settingName)})
 
 
-    def setBetaFeatureSetting(self, val):
+    def setBetaFeatureSetting(self, settingName, val):
         """
         Method to set the test list setting of bam.
         :return: It yields json string.
         """
-        util.set_value("GLOBAL", "BETA", val)
+        util.set_value( "BETA", settingName, val)
+
+    def setLabSetting(self, setting, value, host=None):
+        """
+        Method to set the lab setting of pgdevops.
+        """
+        if value=='on':
+            pgcCmd = PGC_HOME + os.sep + "pgc set labs " + setting + " " + value
+        else:
+            pgcCmd = PGC_HOME + os.sep + "pgc unset labs " + setting 
+        if host:
+            pgcCmd = pgcCmd + " --host " + host  
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        data = pgcProcess.communicate()     
+
 
     @inlineCallbacks
     def selectedLog(self,logdir):
@@ -510,5 +523,24 @@ class Components(ComponentAction):
             else:
                 pgcCmd = pgcCmd + " --host " + pgc_host
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
-        pgcInfo = pgcProcess.communicate()       
+        pgcInfo = pgcProcess.communicate()
+        return json.loads(pgcInfo[0])
+
+    @staticmethod
+    def get_pgdg_data(repo_id, command, component=None, pgc_host=None):
+        """
+        Method to get the host settings.
+        :param p_host: Name of the host to retrieve the settings.
+        :return: It returns dict of settings.
+        """
+
+        pgcCmd = PGC_HOME + os.sep + "pgc --json repo-pkgs " + repo_id + " " + command + " -y"
+        if command == 'register':
+            pgcCmd = PGC_HOME + os.sep + "pgc --json register REPO " + repo_id + " -y"
+        if component:
+            pgcCmd = pgcCmd + " " + component
+        if pgc_host:
+            pgcCmd = pgcCmd + " --host " + pgc_host
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        pgcInfo = pgcProcess.communicate()
         return json.loads(pgcInfo[0])
