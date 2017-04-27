@@ -149,19 +149,19 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         });
     });
 
-    // var getLabList = bamAjaxCall.getCmdData('lablist');
-    // $scope.showPG10 = false;
-    // $scope.checkpgdgSetting = false;
-    // getLabList.then(function (argument) {
-    //     for (var i = argument.length - 1; i >= 0; i--) {
-    //         if(argument[i].lab == "pg10-beta" && argument[i].enabled == "on"){
-    //             $scope.showPG10 = true;
-    //         }
-    //         if(argument[i].lab == "pgdg-repos" && argument[i].enabled == "on"){
-    //             $scope.checkpgdgSetting = true;
-    //         }
-    //     }
-    // })
+    var getLabList = bamAjaxCall.getCmdData('lablist');
+    $scope.showPG10 = false;
+    $scope.checkpgdgSetting = false;
+    getLabList.then(function (argument) {
+        for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "pg10-beta" && argument[i].enabled == "on"){
+                $scope.showPG10 = true;
+            }
+            if(argument[i].lab == "pgdg-repos" && argument[i].enabled == "on"){
+                $scope.checkpgdgSetting = true;
+            }
+        }
+    })
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
