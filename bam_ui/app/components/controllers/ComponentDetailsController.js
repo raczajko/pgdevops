@@ -89,10 +89,10 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
             if($scope.currentComponent == data[0].component){
                 $scope.component = data[0];
                 $scope.component.componentImage = $scope.component.component.split('-')[0].replace(/[0-9]/g,'');
-                $scope.component.release_date = new Date($scope.component.release_date).toString().split(' ',[4]).splice(1).join(' ');
+                $scope.component.release_date = new Date($scope.component.release_date.replace(/-/g,'/')).toString().split(' ',[4]).splice(1).join(' ');
                 $scope.component.release_date = $scope.component.release_date.split(' ')[0] + ' ' + $scope.component.release_date.split(' ')[1].replace(/^0+/, '') + ', ' + $scope.component.release_date.split(' ')[2];
                 if($scope.component.install_date){
-                    var ins_date = new Date($scope.component.install_date).toString().split(' ',[4]).splice(1).join(' ');
+                    var ins_date = new Date($scope.component.install_date.replace(/-/g,'/')).toString().split(' ',[4]).splice(1).join(' ');
                     $scope.component.install_date = ins_date.split(' ')[0] + ' ' + ins_date.split(' ')[1].replace(/^0+/, '') + ', ' + ins_date.split(' ')[2];
                 }
                 $scope.rel_notes = $sce.trustAsHtml($scope.component.rel_notes);
@@ -218,6 +218,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                             msg:  data.msg,
                             type: 'danger'
                         });
+                    delete $scope.component.installationStart;
+                    delete $scope.component.installationRunning;
+                    delete $scope.component.installation;
                 }else if (data.state == 'unpack' || data.state == 'update' || data.state == 'install'){
                     $scope.alerts.push({
                             msg:  data.msg,
@@ -225,10 +228,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                         });
                     callInfo();
                 }
-
-                delete $scope.component.installationStart;
-                delete $scope.component.installationRunning;
-                delete $scope.component.installation;
 
             }
 

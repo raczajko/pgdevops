@@ -87,8 +87,8 @@
                     <div id="button-act" ng-click="action($event)" ng-if="component.component != 'pgdevops'">
                         <a ng-show="component.status == undefined && component.is_installed == 0" action="install" class="btn btn-default" ng-disabled=" component.installation != undefined">Install</a>
                         <a ng-show="component.status == 'Stopped' && component.port != 1" action="start" class="btn btn-default" ng-disabled=" component.spinner != undefined">Start</a>
-                        <a ng-if="component.current_version" action="update" class="btn btn-warning" ng-disabled=" component.spinner != undefined">Update v{{component.current_version}}</a>
-                        <a ng-show="(component.status == 'Stopped' && component.is_installed) || (component.is_installed == 1 && component.status == undefined)" action="remove" class="btn btn-default" ng-disabled=" component.spinner != undefined">Remove</a>
+                        <a ng-if="component.current_version" action="update" class="btn btn-warning" ng-disabled=" component.spinner != undefined || component.installation != undefined">Update v{{component.current_version}}</a>
+                        <a ng-show="(component.status == 'Stopped' && component.is_installed) || (component.is_installed == 1 && component.status == undefined)" action="remove" class="btn btn-default" ng-disabled=" component.spinner != undefined || component.installation != undefined">Remove</a>
                         <div ng-show="component.status == 'NotInitialized'">
                             <a class="btn btn-danger" action="init" ng-disabled=" component.spinner != undefined">Initialize</a>
                             <a class="btn btn-warning" action="remove" ng-disabled=" component.spinner != undefined">Remove</a>

@@ -6,6 +6,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     $scope.loading = true;
 
     var infoRefreshRate;
+    var statusRefreshRate;
     var dependentCount = 0;
     $scope.currentHost;
 
@@ -125,7 +126,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
     // callInfo();
     callStatus();
 
-    $interval(callStatus, 5000);
+    statusRefreshRate = $interval(function(){ callStatus(); }, 5000);
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -418,10 +419,17 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                         msg: data.msg,
                         type: 'danger'
                     });
+                    delete $scope.component.installationStart;
+                    delete $scope.component.installationRunning;
+                    delete $scope.component.installation;
                 } else if (data.state == 'unpack') {
                     session.call('com.bigsql.infoComponent', [$stateParams.component]);
                     $scope.component.status = 'NotInitialized';
                     $scope.openInitPopup($stateParams.component);
+                } else if (data.state == 'update'){
+                    callInfo();
+                    statusRefreshRate = $interval(function(){ callStatus(); }, 5000);
+                    $rootScope.$emit('updatesCheck');
                 }
 
                 if (dependentCount != 0) {
@@ -430,10 +438,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                         delete $scope.component.installationDependents;
                     }
                 }
-
-                delete $scope.component.installationStart;
-                delete $scope.component.installationRunning;
-                delete $scope.component.installation;
 
             }
             if (data.state == "error") {
@@ -470,10 +474,13 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 $scope.component.spinner = 'Removing..';
             } else if (event.target.attributes.action.value == 'restart') {
                 $scope.component.spinner = 'Restarting..';
+            } else if(event.target.attributes.action.value == 'update'){
+                $interval.cancel(infoRefreshRate);
+                $interval.cancel(statusRefreshRate);
             }
             var sessionKey = "com.bigsql." + event.target.attributes.action.value;
             $scope.currentHost = $cookies.get('remote_host');
-            if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
+            if($scope.currentHost == 'localhost' || $scope.currentHost == '' || !$scope.currentHost){
                 session.call(sessionKey, [$scope.component.component]);
             }else {
                 if (event.target.attributes.action.value == 'install') {

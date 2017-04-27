@@ -62,16 +62,19 @@
                     </div>
                     <div class="clearfix"></div>
                     <div id="button-act" ng-click="action($event)">
+                        <div ng-if="component.current_version">
+                            <a style="margin-bottom: 10px;" action="update" class="btn btn-warning" ng-disabled=" component.spinner != undefined || component.installation != undefined">Update v{{component.current_version}}</a>
+                        </div>
                         <a ng-show="component.status == undefined" action="install" class="btn btn-default" ng-disabled=" component.installation != undefined">Install</a>
-                        <a ng-show="component.status == 'Stopped'" action="start" class="btn btn-success" ng-disabled=" component.spinner != undefined">Start</a>
-                        <a ng-show="component.status == 'Stopped'" action="remove" class="btn btn-warning" ng-disabled=" component.spinner != undefined">Remove</a>
+                        <a ng-show="component.status == 'Stopped'" action="start" class="btn btn-success" ng-disabled=" component.spinner != undefined || component.installation != undefined">Start</a>
+                        <a ng-show="component.status == 'Stopped'" action="remove" class="btn btn-default" ng-disabled=" component.spinner != undefined || component.installation != undefined">Remove</a>
                         <div ng-show="component.status == 'NotInitialized'">
-                            <a class="btn btn-danger" ng-click="openInitPopup(component.component)" ng-disabled=" component.spinner != undefined">Initialize</a>
-                            <a class="btn btn-warning" action="remove" ng-disabled=" component.spinner != undefined">Remove</a>
+                            <a class="btn btn-danger" ng-click="openInitPopup(component.component)" ng-disabled=" component.spinner != undefined || component.installation != undefined">Initialize</a>
+                            <a class="btn btn-default" action="remove" ng-disabled=" component.spinner != undefined || component.installation != undefined">Remove</a>
                         </div>
                         <div ng-show="component.status == 'Running'">
-                            <a class="btn btn-danger" action="stop" ng-disabled=" component.spinner != undefined">Stop</a>
-                            <a class="btn btn-warning" action="restart" ng-disabled=" component.spinner != undefined">Restart</a>
+                            <a class="btn btn-danger" action="stop" ng-disabled=" component.spinner != undefined || component.installation != undefined">Stop</a>
+                            <a class="btn btn-warning" action="restart" ng-disabled=" component.spinner != undefined || component.installation != undefined">Restart</a>
                         </div>
                     </div>
                     <br />
