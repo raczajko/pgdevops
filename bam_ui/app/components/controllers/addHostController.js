@@ -84,10 +84,10 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     			if (jsonData.state == 'success') {
     				$scope.isSudo =  jsonData.isSudo;
     				if($scope.isSudo){
-    					$scope.serviceUser = 'Postgres';
+    					//$scope.serviceUser = 'Postgres';
     					$scope.pgcDir = '/opt'
     				}else{
-    					$scope.serviceUser = $scope.userName;
+    					//$scope.serviceUser = $scope.userName;
     					$scope.pgcDir = '~/bigsql'
     				}
     				$scope.tryToConnect = false;
