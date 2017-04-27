@@ -132,10 +132,9 @@
                 <div class="col-md-9">
                     <div class="">
                         <div><strong>{{lab.lab}}</strong></div>
-                        <div style="font-size: 1.2rem;">{{lab.credit_to}}</div>
+                        <div class="labDescription">{{lab.credit_to}}</div>
                     </div>
-                    <br />
-                    <div class="" style="font-size: 1.2rem;">{{lab.short_desc}}</div>
+                    <div class="labDescription">{{lab.short_desc}}</div>
                 </div>
                 <div class="col-md-3">
                     <label><input type="radio" ng-model="lab.enabled" value="on" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on')"> Enable</label>

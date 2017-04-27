@@ -6981,3 +6981,7 @@ span.more-text.show {
     margin: 0px;
     border-bottom: 1px solid #f4f4f4;
 }
+
+.labDescription{
+  font-size: 1.2rem;
+}
