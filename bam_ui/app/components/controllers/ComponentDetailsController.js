@@ -171,7 +171,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                     $scope.component.spinner = 'Stopping..';
                 }else if(event.target.attributes.action.value == 'remove'){
                     $scope.component.spinner = 'Removing..';
-                }else if($scope.component.component.includes("plprofiler") && event.target.attributes.action.value == 'install'){
+                }else if($scope.component.component.indexOf("plprofiler") > -1 && event.target.attributes.action.value == 'install'){
                     $scope.checkplProfiler = false;
                     $scope.startAlert.push({
                         msg: "After installation of plprofiler, " + $scope.component.component.split('-')[1] + " restart will be done. Continue?",
