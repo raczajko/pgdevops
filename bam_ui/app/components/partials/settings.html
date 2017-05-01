@@ -123,15 +123,15 @@
        <div class="box-header with-border">
             <label>
                 <h4>
-                    <strong> Enabled Labs </strong>
+                    <strong> BigSQL Labs </strong>
                 </h4>
             </label>
         </div> 
         <div id="serversTableTbody">
             <div ng-repeat="lab in lablist" class="row lab_row">
                 <div class="col-md-9">
-                    <div class="">
-                        <div><strong>{{lab.lab}}</strong></div>
+                    <div style="margin-bottom: 7px;">
+                        <div><strong>{{lab.disp_name}}</strong></div>
                         <div class="labDescription">{{lab.credit_to}}</div>
                     </div>
                     <div class="labDescription">{{lab.short_desc}}</div>
@@ -139,6 +139,9 @@
                 <div class="col-md-3">
                     <label><input type="radio" ng-model="lab.enabled" value="on" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on')"> Enable</label>
                     <label><input type="radio" ng-model="lab.enabled" value="" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'off')"> Disable</label>
+                    <div>
+                        <a href="">Send feedback</a>
+                    </div>
                 </div>
             </div>
         </div>
