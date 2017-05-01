@@ -199,11 +199,15 @@ api.add_resource(pgdgHostCommand, '/api/pgdghost/<string:repo_id>/<string:pgc_cm
 
 
 class checkUser(Resource):
-    def get(self, host, username, password):
+    def get(self):
+        host = request.args.get('hostname')
+        username = request.args.get('username')
+        password = request.args.get('password')
+        ssh_key = request.args.get('ssh_key')
         from PgcRemote import PgcRemote
         json_dict = {}
         try:
-            remote = PgcRemote(host, username, password)
+            remote = PgcRemote(host, username, password=password, ssh_key=ssh_key)
             remote.connect()
             is_sudo = remote.has_sudo()
             remote.disconnect()
@@ -217,7 +221,7 @@ class checkUser(Resource):
             data = json.dumps([json_dict])
         return data
 
-api.add_resource(checkUser, '/api/checkUser/<string:host>/<string:username>/<string:password>')
+api.add_resource(checkUser, '/api/checkUser')
 
 
 class initPGComp(Resource):

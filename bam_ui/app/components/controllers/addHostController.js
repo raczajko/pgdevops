@@ -78,7 +78,21 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     	if($scope.firstPhase){
     		$scope.tryToConnect = true;
     		$scope.connectionError = false;
-    		var checkUser = bamAjaxCall.getCmdData('checkUser/'+ $scope.hostName + '/' + $scope.userName + '/' + $scope.password);
+    		var data = {
+             hostname:$scope.hostName,
+             username:$scope.userName
+            };
+            if ($scope.password){
+             data.password=$scope.password;
+            }
+
+            if ($scope.ssh_key){
+             data.ssh_key=$scope.ssh_key;
+            }
+
+
+
+    		var checkUser = bamAjaxCall.getCmdData('checkUser', data);
     		checkUser.then(function (argument) {
     			var jsonData = JSON.parse(argument)[0];
     			if (jsonData.state == 'success') {
