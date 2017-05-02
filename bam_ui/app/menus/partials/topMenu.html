@@ -36,7 +36,7 @@
                 <li ng-click="openDetailsModal()" id="pgDevOpsUpdate" ng-if="pgdevopsUpdate">
                     <!-- <button class="btn btn-default btn-sm btn-warning" style="margin-top: 12px">New version of pgDevOps available</button> -->
                     <a href="">
-                        <div>
+                        <div id="pgdevops-update">
                             <small class="label bg-orange">New version of pgDevOps available
                             </small>
                         </div>
@@ -44,7 +44,7 @@
                 </li>
                 <li ng-click="open()" id="updatesAvailable" ng-if="updates">
                     <a href="">
-                        <div>
+                        <div id="updates-available">
                             <small class="label bg-orange"><i class="fa fa-arrow-circle-down"></i> {{ updates }} Updates
                                 Available
                             </small>
@@ -53,23 +53,24 @@
                 </li>
                 <li>
                     <div class="btn-group userinfo-btn" uib-dropdown >
-                        <button id="btn-append-to-single-button" type="button" class="btn btn-dropdown" uib-dropdown-toggle>
+                        <button id="btn-append-to-single-button help_dropdown" type="button" class="btn btn-dropdown" uib-dropdown-toggle>
                         Help  <span class="caret"></span>
                         </button>
                         
                          <ul class="dropdown-menu" style="margin-left: -80px" uib-dropdown-menu role="menu" aria-labelledby="btn-append-to-single-button">
-                           <li><a target="_blank" href="https://www.bigsql.org/about.jsp"><i class="fa fa-external-link" aria-hidden="true"></i>About BigSQL</a></li>
-                           <li><a target="_blank" href="https://www.bigsql.org/forum.jsp"><i class="fa fa-external-link" aria-hidden="true"></i>Feedback</a></li>
-                           <li><a target="_blank" href="https://www.bigsql.org/docs/"><i class="fa fa-external-link" aria-hidden="true"></i>Documentation</a></li>
+                           <li id="about-bigsql"><a target="_blank" href="https://www.bigsql.org/about.jsp"><i class="fa fa-external-link" aria-hidden="true"></i>About BigSQL</a></li>
+                           <li id="discussion-forum"><a target="_blank" href="https://www.bigsql.org/forum.jsp"><i class="fa fa-external-link" aria-hidden="true"></i>Discussion Forum</a></li>
+                           <li id="documentation"><a target="_blank" href="https://www.bigsql.org/docs/"><i class="fa fa-external-link" aria-hidden="true"></i>Documentation</a></li>
+                           <li id="email-feedback"><a target="_blank" ng-click="openFeedbackForm()"><i class="fa fa-external-link" aria-hidden="true"></i>Email Feedback</a></li>
                            <li role="separator" class="divider"></li>
-                           <li><a ng-click="openDetailsModal()"><i class="fa fa-info-circle" aria-hidden="true"></i>About pgDevOps</a></li>
+                           <li id="about-pgdevops"><a ng-click="openDetailsModal()"><i class="fa fa-info-circle" aria-hidden="true"></i>About pgDevOps</a></li>
                          </ul>
                      </div>
                 </li>
                 <li>
                     <div class="btn-group userinfo-btn" uib-dropdown>
 
-                        <button id="btn-append-to-single-button" type="button" class="btn btn-dropdown"
+                        <button id="btn-append-to-single-button email-dropdown" type="button" class="btn btn-dropdown"
                                 uib-dropdown-toggle>
                             <img
                             src="{{ userInfo.gravatarImage }}" width="18" height="18"
@@ -78,11 +79,11 @@
                         </button>
                         <ul class="dropdown-menu" uib-dropdown-menu role="menu"
                             aria-labelledby="btn-append-to-single-button">
-                            <li role="menuitem"><a href="/change">Change Password</a></li>
-                            <li role="menuitem" ng-if="userInfo.isAdmin" ng-click="usersPopup('lg')">
+                            <li role="menuitem" id="change_password"><a href="/change">Change Password</a></li>
+                            <li role="menuitem" ng-if="userInfo.isAdmin" id="create_users" ng-click="usersPopup('lg')">
                                 <a href="">Users</a>
                             </li>
-                            <li role="menuitem"><a href="/logout">Logout</a></li>
+                            <li role="menuitem" id="logout_app"><a href="/logout">Logout</a></li>
                         </ul>
                     </div>
 

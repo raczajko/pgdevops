@@ -39,6 +39,13 @@ angular.module('bigSQL.menus').component('topMenu', {
         
         callList($scope.currentHost);
 
+        $scope.openFeedbackForm = function () {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/feedbackForm.html',
+                controller: 'feedbackFormController',
+            });
+        };
+        
         $rootScope.$on('refreshData', function (argument, host) {
             callList(host);
         });

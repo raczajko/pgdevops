@@ -1,0 +1,34 @@
+<div class="modal-header">
+    <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <i class="fa fa-lg fa-close"></i>
+    </div>
+</div>
+<div class="modal-body">
+    <div>
+        <form class="form-horizontal">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Email:</label>
+                <div class="col-sm-10">
+                    <input type="text" id="feedback_email" class="form-control" ng-model="email" placeholder="Email">
+                </div>
+            </div>
+            <div class="form-group" ng-if="lab">
+                <label class="col-sm-2 control-label">Lab:</label>
+                <div class="col-sm-10">
+                    <input type="text" id="lab_name" class="form-control" ng-model="disp_name" name="" placeholder="Lab">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Feedback:</label>
+                <div class="col-sm-10">
+                    <textarea id="feedback_text" class="form-control"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                  <button type="submit" id="submit_email" class="btn btn-default pull-right">Email</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

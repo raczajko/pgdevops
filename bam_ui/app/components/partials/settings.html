@@ -56,69 +56,15 @@
                 <h4><strong> Check for updates </strong></h4>
             </div>
             <div class="col-md-4">
-                <button type="button" class="btn btn-default pull-right" id="checkNow" ng-click="open('manual')">Check now</button>
+                <button type="button" id="check-updates" class="btn btn-default pull-right" id="checkNow" ng-click="open('manual')">Check now</button>
             </div>
         </div>
         <div class="box-body" ng-show="lastUpdateStatus">
-            
-                <!-- <div class="form-group">
-                    <div class="col-sm-10">
-                        <div class="radio">
-                            <label>
-                                <input type="radio" ng-checked="settingType == 'manual'" ng-model="settingType" value="manual" ng-change="updateManualSettings()" /> Manually
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="col-sm-10">
-                        <div class="radio">
-                            <label>
-                                <input type="radio" ng-checked="settingType == 'auto'" ng-model="settingType" ng-change="onAutomaticOptionSelection()"  value="auto" /> Automatically
-                            </label>
-                        </div>
-                    </div>
-                </div> 
-                <div class="form-group">
-                    <div class="col-sm-6">
-                        <label for="inputPassword3" class="col-sm-4 control-label">Check for Updates</label>
-                        <div class="col-sm-4">
-                            <select class="form-control" name="singleSelect" id="automaticSettings" ng-change="onAutomaticOptionSelection()" ng-model="automaticSettings" ng-init="automaticSettings = settingsOptions[0]"  ng-disabled="settingType=='manual' || settingType==undefined && settingType != 'auto'" disabled="disable" ng-options="option.name for option in settingsOptions">
-                            </select>
-                        </div>
-                    </div>
-                </div> -->
-                
-                 <p class="col-md-12 col-xs-12 col-sm-12">The last time you checked for updates was at {{lastUpdateStatus}}</p>
+            <p class="col-md-12 col-xs-12 col-sm-12" id="last-update-status">The last time you checked for updates was at {{lastUpdateStatus}}</p>
         </div>
     </div>
     </div>
     <div class="col-md-6 col-sm-6 col-xs-6">
-    <!-- <div class="box">
-        <div class="box-header with-border">
-            <label>
-                <h4>
-                    <strong> Beta Features </strong>
-                </h4>
-            </label>
-        </div>
-        <div class="box-body">
-            <form class="form-horizontal">
-                <div class="form-group">
-                    <div class="col-sm-6 col-md-6 col-xs-6">
-                        <label>
-                            <input type="checkbox" ng-model="hostManager" ng-change="changeBetaFeature('hostManager', hostManager)">&nbsp;Multi Host Manager
-                        </label>
-                    </div>
-                    <div class="col-sm-6 col-md-6 col-xs-6" ng-if="showPgDgFeature">
-                        <label>
-                            <input type="checkbox" ng-model="pgdg" ng-change="changeBetaFeature('pgdg', pgdg)">&nbsp;PGDG Linux Repositories
-                        </label>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div> -->
     <div class="box">
        <div class="box-header with-border">
             <label>
@@ -137,10 +83,10 @@
                     <div class="labDescription">{{lab.short_desc}}</div>
                 </div>
                 <div class="col-md-3">
-                    <label><input type="radio" ng-model="lab.enabled" value="on" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on')"> Enable</label>
-                    <label><input type="radio" ng-model="lab.enabled" value="" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'off')"> Disable</label>
-                    <div>
-                        <a href="">Send feedback</a>
+                    <label><input type="radio" id="{{lab.lab}}-enable" ng-model="lab.enabled" value="on" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on')"> Enable</label>
+                    <label><input type="radio" id="{{lab.lab}}-disable" ng-model="lab.enabled" value="" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'off')"> Disable</label>
+                    <div id="email-feedback">
+                        <a href="" ng-click="openFeedbackForm(lab.lab, lab.disp_name)">Email feedback</a>
                     </div>
                 </div>
             </div>
