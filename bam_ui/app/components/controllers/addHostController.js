@@ -41,22 +41,22 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	    		
 	    		var jsonData =  JSON.parse(data[0]);
 	    		if(jsonData[0].state == 'completed'){
-	    			// $rootScope.$emit('addedHost'); 
-	    			// $uibModalInstance.dismiss('cancel');
-	    			var listData = bamAjaxCall.getCmdData('hostcmd/list/'+$scope.hostName);
-	    			listData.then(function(data) {
-	    				$scope.tryToConnect = false;
-	    				$scope.connectionStatus = false;
-	    				var comps = $(data).filter(function(i,n){ return n.category == 1 });
-	    				$scope.availablePgComps = [];
-	    				for (var i = comps.length - 1; i >= 0; i--) {
-	    					$scope.availablePgComps.push(comps[i]);
-	    				}
-	    				// $scope.availablePgComps = pgComps;
-	    				$scope.selectedPgComp = $scope.availablePgComps[0];
-	    				$scope.secondPhase = false;
-    					$scope.thirdPhase = true;
-	    			})
+	    			$rootScope.$emit('addedHost'); 
+	    			$uibModalInstance.dismiss('cancel');
+	    			// var listData = bamAjaxCall.getCmdData('hostcmd/list/'+$scope.hostName);
+	    			// listData.then(function(data) {
+	    			// 	$scope.tryToConnect = false;
+	    			// 	$scope.connectionStatus = false;
+	    			// 	var comps = $(data).filter(function(i,n){ return n.category == 1 });
+	    			// 	$scope.availablePgComps = [];
+	    			// 	for (var i = comps.length - 1; i >= 0; i--) {
+	    			// 		$scope.availablePgComps.push(comps[i]);
+	    			// 	}
+	    			// 	// $scope.availablePgComps = pgComps;
+	    			// 	$scope.selectedPgComp = $scope.availablePgComps[0];
+	    			// 	$scope.secondPhase = false;
+    				// 	$scope.thirdPhase = true;
+	    			// })
 	    		}else if (jsonData[0].state == 'progress') {
 	    			$scope.tryToConnect = false;
 	    			$scope.connectionStatus = true;

@@ -140,6 +140,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.loading = true;
         $scope.currentHost = host;
         getList(host);
+        $scope.selectPgDg();
     });
 
     $rootScope.$on('sessionCreated', function () {
@@ -299,7 +300,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
             var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
         }else{
-            var getRepoList = bamAjaxCall.getCmdData('pgdghost/'+ repo + '/list/' + $scope.currentHost)
+            var getRepoList = bamAjaxCall.getCmdData('pgdg/'+ repo + '/list/' + $scope.currentHost)
         }        
         getRepoList.then(function (argument) {
             $scope.gettingPGDGdata = false;
@@ -321,7 +322,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
             var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
         }else{
-            var getRepoList = bamAjaxCall.getCmdData('pgdghost/'+ repo + '/list/' + $scope.currentHost)
+            var getRepoList = bamAjaxCall.getCmdData('pgdg/'+ repo + '/list/' + $scope.currentHost)
         }
         getRepoList.then(function (argument) {
             if(argument != 'error' || argument != 'error'){
@@ -419,7 +420,11 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.repoList[i].showingSpinner = true;
             }
         }
-        var pgdgCompAction = bamAjaxCall.getCmdData('pgdg/' + $scope.selectRepo + '/'+ action + '/' + compName);
+        if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
+            var pgdgCompAction = bamAjaxCall.getCmdData('pgdghost/' + $scope.selectRepo + '/'+ action + '/' + compName);
+        } else{
+            var pgdgCompAction = bamAjaxCall.getCmdData('pgdghost/' + $scope.selectRepo + '/'+ action + '/' + compName + '/' + $scope.currentHost);
+        }
         pgdgCompAction.then(function (argument) {
             $scope.refreshRepoList($scope.selectRepo);
         })
