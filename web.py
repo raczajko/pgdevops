@@ -388,8 +388,8 @@ class AddtoMetadata(Resource):
                             comment=component_proj,
                             discovery_id="BigSQL PostgreSQL")
 
-                db.session.add(svr)
-                db.session.commit()
+                db_sessionn.add(svr)
+                db_session.commit()
         except Exception as e:
             result = {}
             result['error'] = 1
