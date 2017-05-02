@@ -177,21 +177,15 @@ api.add_resource(pgcApiHostCmd, '/api/hostcmd/<string:pgc_cmd>/<string:host_name
 
 class pgdgCommand(Resource):
     def get(self, repo_id, pgc_cmd, host=None): 
-        if host:
-            data = pgc.get_pgdg_data(repo_id, pgc_cmd, host)
-        else:
-            data = pgc.get_pgdg_data(repo_id, pgc_cmd)
+        data = pgc.get_pgdg_data(repo_id, pgc_cmd, pgc_host=host)
         return data
 
 
 api.add_resource(pgdgCommand, '/api/pgdg/<string:repo_id>/<string:pgc_cmd>','/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>')
 
 class pgdgHostCommand(Resource):
-    def get(self, repo_id, pgc_cmd, comp=None, host=None):
-        if host:
-            data = pgc.get_pgdg_data(repo_id, pgc_cmd, comp, host)
-        else:
-            data = pgc.get_pgdg_data(repo_id, comp, pgc_cmd)
+    def get(self, repo_id, pgc_cmd, comp, host=None):
+        data = pgc.get_pgdg_data(repo_id, pgc_cmd, component=comp, pgc_host=host)
         return data
 
 
