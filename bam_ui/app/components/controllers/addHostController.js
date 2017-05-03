@@ -33,7 +33,14 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
         $scope.addHost = function () {
         	$scope.connectionError = false;
         	$scope.registerResponse = '';
-	        session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.password, $scope.connectionName]);
+        	if ($scope.pgcDir.indexOf('~/') > -1) {
+        		$scope.pgcDir = $scope.pgcDir.split('~/')[1];
+        	}
+	        if(!$scope.editHost){
+	        	session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.connectionName, $scope.password, $scope.ssh_key]);
+	    	}else{
+	    		session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.connectionName, $scope.password, $scope.ssh_key, $scope.editHost.host_id]);
+	    	}
 	    	$scope.tryToConnect = true;
 	    	
 	    	session.subscribe("com.bigsql.onRegisterHost", function (data) {
@@ -97,13 +104,15 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     			var jsonData = JSON.parse(argument)[0];
     			if (jsonData.state == 'success') {
     				$scope.isSudo =  jsonData.isSudo;
-    				if($scope.isSudo){
-    					//$scope.serviceUser = 'Postgres';
-    					$scope.pgcDir = '/opt'
-    				}else{
-    					//$scope.serviceUser = $scope.userName;
-    					$scope.pgcDir = '~/bigsql'
-    				}
+    				if(!$scope.pgcDir){
+	    				if($scope.isSudo){
+	    					//$scope.serviceUser = 'Postgres';
+	    					$scope.pgcDir = '/opt'
+	    				}else{
+	    					//$scope.serviceUser = $scope.userName;
+	    					$scope.pgcDir = '~/bigsql'
+	    				}
+	    			}
     				$scope.tryToConnect = false;
     				$scope.firstPhase = false;
     				$scope.secondPhase = true;

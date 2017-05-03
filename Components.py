@@ -213,13 +213,17 @@ class ComponentAction(object):
             yield sleep(0.001)
 
     @inlineCallbacks
-    def registerHost(self, hostName, pgcDir, userName, password, name):
+    def registerHost(self, hostName, pgcDir, userName, name, password=None, key=None, update=None):
         """
         Method to Register remote host
         """
         if this_uname!="Windows":
             os.environ["PYTHONPATH"] = devops_lib_path
-        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + " '" + pgcDir + "' " + userName + " " +password + " '" + name + "'"
+        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + " " + pgcDir + " " + userName + " " + name  + " --pwd=" +password 
+        if key:
+            pgcCmd = pgcCmd + " --key=" + key
+        if update:
+            pgcCmd = pgcCmd + " --update=" + str(update)
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         for line in iter(pgcProcess.stdout.readline, ''):
             try:
