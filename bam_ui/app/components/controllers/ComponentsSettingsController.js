@@ -24,6 +24,15 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         });
     };
 
+    $scope.openFeedbackForm = function (lab, disp_name) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/feedbackForm.html',
+            controller: 'feedbackFormController',
+        });
+        modalInstance.lab = lab;
+        modalInstance.disp_name = disp_name;
+    };
+
     // var infoData = bamAjaxCall.getCmdData('info')
     // infoData.then(function(data) {
     //     $scope.pgcInfo = data[0];
