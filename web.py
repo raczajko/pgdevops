@@ -35,7 +35,7 @@ parser = reqparse.RequestParser()
 
 
 
-config.APP_NAME = "pgDevOps by BigSQL"
+config.APP_NAME = "pgDevOps"
 config.LOGIN_NAME = "pgDevOps"
 application = Flask(__name__)
 
