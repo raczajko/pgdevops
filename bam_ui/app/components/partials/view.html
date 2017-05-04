@@ -114,7 +114,9 @@
         <div class="box-body">
         <div style="display: table;" ng-if="showRepoList && !noRepoFound">
             <label style="display: table-cell;">Repository:&nbsp;</label>
-            <select style="display: table-cell;" class="form-control" ng-model="selectRepo" ng-change="repoChange(selectRepo)" ng-options="repo.repo as repo.repo for repo in pgdgRepoList">
+            <select style="display: table-cell;" class="form-control" ng-model="selectRepo" ng-change="repoChange(selectRepo)" ng-disabled="gettingPGDGdata">
+            <option value="">--select--</option>
+            <option ng-repeat="repo in pgdgRepoList" value="{{repo.repo}}-{{repo.status}}">{{repo.repo}}</option>
             </select>
         </div>
         <br>
@@ -133,15 +135,7 @@
             </div>
             <div ng-if="registeringRepo"><i class='fa fa-spinner fa-2x  fa-pulse'></i> &nbsp;Registering {{selectAvailRepo}}.....</div>
         </div>
-        <div ng-if="repoNotRegistered">
-            <div class="alert alert-warning" role="alert">
-                    {{errorMsg}}
-            </div>
-            <br>
-            <div> 
-                &nbsp;<button class="btn btn-default" ng-click="registerRepo(selectRepo)" ng-disabled="registeringRepo">Register</button>                
-            </div>
-            <div ng-if="registeringRepo"><i class='fa fa-spinner fa-2x  fa-pulse'></i> &nbsp;Registering {{selectAvailRepo}}.....</div>
+        <div ng-if="repoNotRegistered"> 
         </div>
         <!-- <span ng-if="repoNotRegistered"> Repo is not registerd.</span> -->
         <div ng-if="gettingPGDGdata "  style="height: 250px">
@@ -150,6 +144,7 @@
             <span><h3>Loading...</h3></span>
         </div>
         </div>
+        <div ng-if="!noRepoSelected">
         <div class="box" ng-if="!gettingPGDGdata && !noRepoFound && !repoNotRegistered">
             <div class="box-body">
                 <div id="serversTable">
@@ -179,13 +174,14 @@
                             </i>
                             </div>
                             <div class="col-md-3 col-sm-3 col-xs-3" style="padding-left: 10px; margin-top: -7px;">
-                                <a class="btn btn-default" ng-click="pgdgAction( 'install', c.component) " ng-if="c.status == 'NotInstalled' || c.status == ''" ng-disabled=" c.showingSpinner">Install</a>
-                                <a class="btn btn-default" ng-click="pgdgAction( 'remove', c.component) " ng-if="c.status == 'Installed'" ng-disabled=" c.showingSpinner">Remove</a>
+                                <a class="btn btn-default" ng-click="pgdgAction( 'install', c.component, c.repo) " ng-if="c.status == 'NotInstalled' || c.status == ''" ng-disabled=" c.showingSpinner">Install</a>
+                                <a class="btn btn-default" ng-click="pgdgAction( 'remove', c.component, c.repo) " ng-if="c.status == 'Installed'" ng-disabled=" c.showingSpinner">Remove</a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
         </div>
         </div>
         </div>

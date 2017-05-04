@@ -439,6 +439,33 @@ def get_current_time(format='%Y-%m-%d %H:%M:%S.%f %z'):
     ).strftime(format)
 
 
+class pgdgAction(Resource):
+    def post(self):
+        result = {}
+        args = request.json
+        component_name = args.get("component")
+        component_host = args.get("host","localhost")
+        repo = args.get("repo")
+        action = args.get("action")
+        from detached_process import detached_process
+        ctime = get_current_time(format='%y%m%d%H%M%S%f')
+        if action=="register" or action=="unregister":
+            report_cmd = PGC_HOME + os.sep + "pgc " + action + " REPO " + repo + " -y"
+        else:
+            report_cmd = PGC_HOME + os.sep + "pgc repo-pkgs " + repo + " " + action + " " + component_name
+        if component_host and component_host != "localhost":
+            report_cmd = report_cmd + " --host " + component_host
+        process_status = detached_process(report_cmd, ctime)
+        result['error']=None
+        result['status'] =process_status['status']
+        result['log_dir'] = process_status['log_dir']
+        result['process_log_id'] = process_status['process_log_id']
+        result['cmd'] = report_cmd
+        return result
+        
+api.add_resource(pgdgAction, '/api/pgdgAction')
+
+
 class GenerateBadgerReports(Resource):
     def post(self):
         result = {}
@@ -553,16 +580,19 @@ class GetBgProcessStatus(Resource):
         p = Process.query.filter_by(
             pid=process_log_id, user_id=current_user.id
         ).first()
-        if p.start_time is None or p.end_time is None:
-            p.start_time = proc_status['start_time']
-            if 'exit_code' in proc_status and \
-                            proc_status['exit_code'] is not None:
-                p.exit_code = proc_status['exit_code']
+        try:
+            if p.start_time is None or p.end_time is None:
+                p.start_time = proc_status['start_time']
+                if 'exit_code' in proc_status and \
+                                proc_status['exit_code'] is not None:
+                    p.exit_code = proc_status['exit_code']
 
-                # We can't have 'end_time' without the 'exit_code'.
-                if 'end_time' in proc_status and proc_status['end_time']:
-                    p.end_time = proc_status['end_time']
-            db_session.commit()
+                    # We can't have 'end_time' without the 'exit_code'.
+                    if 'end_time' in proc_status and proc_status['end_time']:
+                        p.end_time = proc_status['end_time']
+                db_session.commit()
+        except Exception as e:
+            pass
 
         stime = dateutil.parser.parse(proc_status.get("start_time"))
         etime = dateutil.parser.parse(proc_status.get("end_time") or get_current_time())

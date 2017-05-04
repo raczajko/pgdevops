@@ -7037,6 +7037,15 @@ span.more-text.show {
 .labDescription{
   font-size: 1.2rem;
 }
+
+.feedback-console{
+  height: 200px; 
+  font-family: monospace; 
+  white-space: pre-line; 
+  overflow: auto; 
+  font-size: 1.2rem;
+}
+
 fieldset
 {
   border: 1px solid #ddd !important;
