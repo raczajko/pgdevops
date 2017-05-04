@@ -26,8 +26,8 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
 
             var remote_host = $cookies.get('remote_host');
             remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
-            if (remote_host == "" || remote_host == undefined) {
-                $scope.selecthost = 'localhost';    
+            if (remote_host == "" || remote_host == "localhost" || remote_host == undefined) {
+                $scope.selecthost = '';
             } else {
                 $scope.selecthost = remote_host;
             }
@@ -46,11 +46,15 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
             gethostInfo($cookies.get('remote_host'));
 
             $scope.hostChange = function (host) {
-                $rootScope.$emit('refreshData', host);
+            var shost= host;
+            if (shost == "" || shost == 'localhost') {
+            shost="localhost";
+            }
+                $rootScope.$emit('refreshData', shost);
                 // $rootScope.$emit('topMenuEvent', host);
-                $rootScope.remote_host = host;
-                $cookies.put('remote_host', host);
-                gethostInfo(host);
+                $rootScope.remote_host = shost;
+                $cookies.put('remote_host', shost);
+                gethostInfo(shost);
                 // $scope.$parent.refreshData(host);
             }
         }]

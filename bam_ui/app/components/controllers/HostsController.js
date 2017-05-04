@@ -190,6 +190,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         if (remote_host == "localhost") {
             status_url = 'status';
             remote_host = "";
+        } else {
+            remote_host = $scope.groupsList[p_idx].hosts[idx].name;
+            status_url = 'hostcmd/status/' + remote_host;
         }
 
         var statusData = bamAjaxCall.getCmdData(status_url);
@@ -326,6 +329,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             if (remote_host == "localhost") {
                 status_url = 'status';
                 remote_host = "";
+            } else {
+                remote_host = $scope.hostsList[idx].name;
+                status_url = 'hostcmd/status/' + remote_host;
             }
 
             var statusData = bamAjaxCall.getCmdData(status_url);
@@ -371,6 +377,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         var remote_host = $scope.hostsList[idx].host;
         if (remote_host == "localhost") {
             remote_host = "";
+        } else {
+            remote_host = $scope.hostsList[idx].name;
         }
         $cookies.put('remote_host', remote_host);
         $rootScope.remote_host = remote_host;
@@ -388,6 +396,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         modalInstance.dataDir = '';
         modalInstance.autoStartButton = true;
         modalInstance.host = $scope.hostsList[$scope.openedHostIndex].host;
+        modalInstance.host_name = $scope.hostsList[$scope.openedHostIndex].name;
     };
 
     $scope.changeHost = function (host) {
@@ -399,6 +408,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         var hostToDelete = $scope.hostsList[idx].host;
         if($cookies.get('remote_host') == hostToDelete){
             $cookies.put('remote_host', 'localhost');
+        } else {
+            hostToDelete = $scope.hostsList[idx].name;
         }
         session.call('com.bigsql.deleteHost', [hostToDelete]);
         session.subscribe("com.bigsql.onDeleteHost", function (data) {
@@ -416,6 +427,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         var remote_host = $scope.hostsList[idx].host;
         if (remote_host == "localhost") {
             remote_host = "";
+        } else {
+            remote_host = $scope.hostsList[idx].name;
         }
         stopStatusCall = $interval(function (){
             if ($scope.groupsList[p_idx].hosts[idx].comps) {
@@ -589,9 +602,15 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         var remote_host = $scope.hostsList[idx].host;
         if (remote_host == "localhost") {
             remote_host = "";
+            $scope.top_host = "";
+
+        } else {
+            remote_host = $scope.hostsList[idx].host;
+
+            $scope.top_host = remote_host;
+            $scope.host_name = $scope.hostsList[idx].name;
         }
 
-        $scope.top_host = remote_host;
         $scope.host_info = $scope.hostsList[idx].hostInfo;
 
 
@@ -636,7 +655,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             modalInstance.chart = angular.copy($scope.networkChart);
         }
         modalInstance.chartName = chartName;
-        modalInstance.hostName = $scope.hostsList[$scope.openedHostIndex].host;
+        modalInstance.hostName = $scope.hostsList[$scope.openedHostIndex].name;
+        modalInstance.host = $scope.hostsList[$scope.openedHostIndex].host;
     }
 
     $rootScope.$on('updateGroups', function (argument) {

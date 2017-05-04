@@ -28,13 +28,14 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
             var infoData = bamAjaxCall.getCmdData('top');
         } else {
             $scope.host = selectedHost;
-            var infoData = bamAjaxCall.getCmdData('hostcmd/top/' + selectedHost);
+            var infoData = bamAjaxCall.getCmdData('hostcmd/top/' + $scope.host_name);
         }
 
         infoData.then(function (data) {
             $scope.topProcess = data[0];
             $scope.topProcess.kb_read_sec = 0;
             $scope.topProcess.kb_write_sec = 0;
+
         });
 
 
