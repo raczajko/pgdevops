@@ -104,7 +104,9 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     			var jsonData = JSON.parse(argument)[0];
     			if (jsonData.state == 'success') {
     				$scope.isSudo =  jsonData.isSudo;
-    				if(!$scope.pgcDir){
+    				$scope.pgcDir = jsonData.pgc_home_path;
+    				$scope.pgcVersion = jsonData.pgc_version;
+    				/*if(!$scope.pgcDir){
 	    				if($scope.isSudo){
 	    					//$scope.serviceUser = 'Postgres';
 	    					$scope.pgcDir = '/opt'
@@ -112,7 +114,7 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	    					//$scope.serviceUser = $scope.userName;
 	    					$scope.pgcDir = '~/bigsql'
 	    				}
-	    			}
+	    			}*/
     				$scope.tryToConnect = false;
     				$scope.firstPhase = false;
     				$scope.secondPhase = true;

@@ -1,6 +1,6 @@
 <div class="modal-header">
-    <h4 ng-if="!thirdPhase" class="modal-title"> {{type}} PGC SSH Server (beta)</h4>
-    <h4 ng-if="thirdPhase" class="modal-title"> {{type}} PGC Server (beta)</h4>
+    <h4 ng-if="!thirdPhase" class="modal-title"> {{type}} PGC SSH Server</h4>
+    <h4 ng-if="thirdPhase" class="modal-title"> {{type}} PGC Server</h4>
 </div>
 <div class="modal-body">
 
@@ -30,12 +30,14 @@
                 <div class="requiredSymbol">*</div>
                 <input type="text" ng-model="userName" class="form-control" placeholder="Username">
             </div>
+            <fieldset>
             <div class="form-group" ng-show="firstPhase">
                 <input type="password" ng-model="password" class="form-control" placeholder="password">
             </div>
             <div class="form-group" ng-show="firstPhase">
                 <input type="text" ng-model="ssh_key" class="form-control" placeholder="PATH to ssh-key">
             </div>
+                </fieldset>
             <!--<div class="form-group row" ng-show="secondPhase">
                 <label class="col-sm-4 col-form-label">Service User</label>
                 <div class="col-sm-8">
@@ -46,7 +48,9 @@
                 <label class="col-sm-4 col-form-label">PGC_HOME Directory</label>
                 <div class="col-sm-8">
                     <input type="text" ng-model="pgcDir" class="form-control">
+                    <p ng-if="pgcVersion">Detected the PGC version : {{ pgcVersion }} in the directory.</p>
                 </div>
+
             </div>
             <br />
             <div class="form-group row" ng-show="thirdPhase">
@@ -75,7 +79,7 @@
                 <div class="text-right">
                     <button class="btn btn-default" type="button" ng-click="cancel(); refreshHostManager()">Cancel</button>
                     <button class="btn btn-default" type="button" ng-show="secondPhase" ng-click="back()">Back</button>
-                    <button ng-show="!secondPhase" class="btn btn-default" type="button" ng-click="next()" ng-disabled="!(hostName && userName && connectionName && connectionName) || (!pgInstall && thirdPhase) ">Next</button>
+                    <button ng-show="!secondPhase" class="btn btn-default" type="button" ng-click="next()" ng-disabled="!(hostName && userName && connectionName && connectionName) || (!pgInstall && thirdPhase) ">Connect</button>
                     <button ng-show="secondPhase" class="btn btn-default" type="button" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Create</button>
                     <!-- <button type="submit" ng-show="secondPhase" class="btn btn-primary" ng-disabled="!(hostName && pgcDir && userName && password && connectionName)" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Save</button> -->
                 </div>

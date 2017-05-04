@@ -2,7 +2,7 @@
     <h1 style="float:left; display: inline; padding-right: 10px;"><strong>{{ title }}</strong></h1>
     <form class="form form-inline ">
             <select class="form-control" ng-change="hostChange(selecthost)" ng-model="selecthost">
-            <option ng-repeat="host in hosts" value="{{ host.host }}">{{ host.host }}</option> </select>
+            <option ng-repeat="host in hosts" value="{{ host.name }}">{{ host.host }}</option> </select>
         </form>
     <h3 class="pull-left">
         <strong> OS </strong> : {{ data.os }} 

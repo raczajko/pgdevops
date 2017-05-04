@@ -27,6 +27,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
+                <p ng-if="topProcess.state=='error'" class="text-danger">Error while running top command : {{ topProcess.msg }}</p>
                 <h5>
                     <strong> OS </strong> : {{ hostinfo.os }} &nbsp;
                     <strong>HW </strong>: {{ hostinfo.mem }} GB, {{ hostinfo.cores }} x {{ hostinfo.cpu }} &nbsp;

@@ -219,7 +219,9 @@ class ComponentAction(object):
         """
         if this_uname!="Windows":
             os.environ["PYTHONPATH"] = devops_lib_path
-        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + " " + pgcDir + " " + userName + " " + name  + " --pwd=" +password 
+        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + " " + pgcDir + " " + userName + " " + name
+        if password:
+            pgcCmd = pgcCmd + " --pwd=" + password
         if key:
             pgcCmd = pgcCmd + " --key=" + key
         if update:

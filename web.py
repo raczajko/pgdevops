@@ -207,6 +207,10 @@ class checkUser(Resource):
             remote.disconnect()
             json_dict['state'] = "success"
             json_dict['isSudo'] = is_sudo
+            remote_pgc_path = remote.get_exixting_pgc_path()
+            json_dict['pgc_home_path'] = remote_pgc_path['pgc_path']
+            if remote_pgc_path.get('pgc_path_exists'):
+                json_dict['pgc_version'] = remote_pgc_path['pgc_version']
             data = json.dumps([json_dict])
         except Exception as e:
             errmsg = "ERROR: Cannot connect to " + host + "@" + username + " - " + str(e.args[0])
@@ -222,17 +226,17 @@ class initPGComp(Resource):
     def get(self, host, comp, pgpasswd, username=None, password=None):
         from PgcRemote import PgcRemote
         json_dict = {}
+        if password == None or username == None:
+            import util
+            [pgc_home, ssh_username, ssh_password, ssh_host, ssh_host_name, ssh_key] = util.get_pgc_host(host)
         try:
-            if password == None or username == None:
-                import util
-                [home, username, password] = util.get_pgc_host(host)
-            remote = PgcRemote(host, username, password)
+            remote = PgcRemote(ssh_host, ssh_username, password=ssh_password, ssh_key=ssh_key)
             remote.connect()
             is_file_added = remote.add_file('/tmp/.pgpass', pgpasswd)
             remote.disconnect()
-            data = pgc.get_data("init", comp, host, '/tmp/.pgpass')
+            data = pgc.get_data("init", comp, ssh_host_name, '/tmp/.pgpass')
         except Exception as e:
-            errmsg = "ERROR: Cannot connect to " + host + "@" + username + " - " + str(e.args[0])
+            errmsg = "ERROR: Cannot connect to " + ssh_username + "@" + ssh_host + " - " + str(e.args[0])
             json_dict['state'] = "error"
             json_dict['msg'] = errmsg
             data = json.dumps([json_dict])

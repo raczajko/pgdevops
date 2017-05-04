@@ -11,6 +11,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
     $scope.autoStartButton = $uibModalInstance.autoStartButton;
     $scope.dataDir = $uibModalInstance.dataDir;
     $scope.host = $uibModalInstance.host;
+    $scope.host_name = $uibModalInstance.host_name;
     $scope.userName = $uibModalInstance.userName;
     $scope.userPassword = $uibModalInstance.password;
     $scope.initializing = false;
@@ -49,7 +50,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
         if($scope.host == 'localhost' || $scope.host == '' || !$scope.host ){
             var hostInfo = bamAjaxCall.getCmdData('info');
         } else{
-            var hostInfo = bamAjaxCall.getCmdData('hostcmd/info/' + $scope.host);
+            var hostInfo = bamAjaxCall.getCmdData('hostcmd/info/' + $scope.host_name);
         }
         hostInfo.then(function (argument) {
             var data = argument[0];
@@ -76,7 +77,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
                 getInfoComp();
             });
             } else{
-                session.call('com.bigsql.autostart',[autoStartVal,$scope.comp, $scope.host]).then(function (argument) {
+                session.call('com.bigsql.autostart',[autoStartVal,$scope.comp, $scope.host_name]).then(function (argument) {
                     getInfoComp();
                 });
             }
@@ -108,7 +109,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
         if($scope.host == 'localhost' || $scope.host == '' || !$scope.host){
             var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp)
         }else{
-            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp + '/' + $scope.host)
+            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp + '/' + $scope.host_name)
         }
         infoComp.then(function(args) { 
             args[0]['host'] = $scope.host;
@@ -128,9 +129,9 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDirVal, $scope.portNumber ] );
         } else {
             if ($scope.userName == undefined || $scope.password == undefined) {
-                var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password ;
+                var event_url =  'initpg/'  + $scope.host_name + '/' + $scope.comp + '/' +$scope.formData.password ;
             }else{
-                var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password + '/' + $scope.userName +'/' + $scope.userPassword;
+                var event_url =  'initpg/'  + $scope.host_name + '/' + $scope.comp + '/' +$scope.formData.password + '/' + $scope.userName +'/' + $scope.userPassword;
             }
             var eventData = bamAjaxCall.getCmdData(event_url);
             eventData.then(function(data) {
