@@ -1,7 +1,9 @@
 angular.module('bigSQL.components').controller('feedbackFormController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', 'bamAjaxCall', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal, bamAjaxCall) {
 
 	$scope.lab = $uibModalInstance.lab;
-	$scope.subject = $uibModalInstance.disp_name;  
+	if($uibModalInstance.disp_name){
+		$scope.subject = $uibModalInstance.disp_name + ' Lab';
+	}
 
 	var userInfoData = bamAjaxCall.getCmdData('userinfo');
         userInfoData.then(function(data) {
