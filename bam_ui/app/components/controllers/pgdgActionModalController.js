@@ -1,8 +1,10 @@
 angular.module('bigSQL.components').controller('pgdgActionModalController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', 'bamAjaxCall', '$http', '$window', '$interval', '$timeout', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal, bamAjaxCall, $http, $window, $interval, $timeout) {
 
-	$scope.pgdgComp = $uibModalInstance.pgdgComp;
+    $scope.pgdgComp = $uibModalInstance.pgdgComp;
     $scope.pgdgRepo = $uibModalInstance.pgdgRepo;
     $scope.procDone = false;
+    $scope.removing = false;
+    $scope.installing = false;
     $scope.registering = false;
     $scope.action = $uibModalInstance.action;
 
@@ -20,6 +22,11 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
             "host" : $scope.currentHost,
             "repo" : $scope.pgdgRepo,
             "action" : $scope.action
+        }
+        if ($scope.action == 'install') {
+            $scope.installing = true;
+        }else if($scope.action == 'remove'){
+            $scope.removing = true;
         }
         var pgdgCmd = $http.post($window.location.origin + '/api/pgdgAction', args);
         pgdgCmd.then(function (argument) {
@@ -62,6 +69,8 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
                 }else{
                     $scope.procDone = true;
                     $scope.registering = false;
+                    $scope.installing = false;
+                    $scope.removing = false;
                 }
             } else{
                 setTimeout(function() {getBGStatus(process_log_id) },5000);
