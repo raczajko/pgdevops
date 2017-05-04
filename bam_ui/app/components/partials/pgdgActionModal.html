@@ -9,18 +9,18 @@
         <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
     </div>
     <div ng-if=!loading>
-        <div class="form-group" ng-if="!registering && !procDone && !pgdgComp">{{pgdgRepo}} is not registerd, do you want to register? &nbsp; <button class="btn btn-default" ng-click="register()">Register</button></div>
+        <div class="form-group" ng-if="!registering && !procDone && !pgdgComp">{{pgdgRepo}} is not currently registered. Do you want to register? &nbsp; <button class="btn btn-default" ng-click="register()">Register</button></div>
         <div class="form-group" ng-if="registering">
-            <i class='fa fa-spinner fa-2x  fa-pulse'> </i>&nbsp;Registering {{pgdgRepo}}...
+            <i class='fa fa-spinner fa-2x  fa-pulse'> </i>&nbsp;Registering {{pgdgRepo}}
         </div>
         <div class="form-group" ng-if="installing">
-            <i class='fa fa-spinner fa-2x  fa-pulse'> </i>&nbsp;Installing {{pgdgComp}}...
+            <i class='fa fa-spinner fa-2x  fa-pulse'> </i>&nbsp;Installing {{pgdgComp}}
         </div>
         <div class="form-group" ng-if="removing">
-            <i class='fa fa-spinner fa-2x  fa-pulse'> </i>&nbsp;Removing {{pgdgComp}}...
+            <i class='fa fa-spinner fa-2x  fa-pulse'> </i>&nbsp;Removing {{pgdgComp}}
         </div>
         <!-- <div class="form-group" ng-if="procDone && !pgdgComp">{{pgdgRepo}} has been registered.</div> -->
-        <div class="form-group" ng-if="procCmd">Command : {{procCmd}}</div>
+        <div class="form-group" ng-if="procCmd"><strong> Command</strong> : {{procCmd}}</div>
         <form>
             <div class="form-group">
                 <div id="console" class="form-control feedback-console">{{out_data}}</div>
