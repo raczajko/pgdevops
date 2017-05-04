@@ -7046,6 +7046,15 @@ span.more-text.show {
   font-size: 1.2rem;
 }
 
+.feedback-header-img{
+    background-image: url(../assets/img/bigsql-icon.png);
+    background-repeat: no-repeat;
+    -o-transition: width 0.3s ease-in-out;
+    float: left;
+    height: 32px;
+    width: 50px;
+ }
+
 fieldset
 {
   border: 1px solid #ddd !important;
