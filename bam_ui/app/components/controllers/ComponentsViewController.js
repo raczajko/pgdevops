@@ -299,6 +299,10 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         // session.call('com.bigsql.list');
     }
 
+    $scope.selectedBigsqlRepo = function (argument) {
+        getList($scope.currentHost);
+    }
+
     $scope.repoChange = function (repo, status) {
         if (repo && repo != "undefined") {
             localStorage.setItem('cacheRepo', repo);
