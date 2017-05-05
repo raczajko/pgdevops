@@ -17,25 +17,41 @@
         <strong>{{message}}</strong>
     </div>
     <div ng-hide="tryToConnect || connectionStatus || installingStatus">
-        <form>
+        <form class="form-horizontal" id="hostForm">
             <div class="form-group" ng-show="firstPhase">
-                <div class="requiredSymbol">*</div>
-                <input type="text" ng-model="hostName" class="form-control" placeholder="Host">
-            </div>
-            <div class="form-group" ng-show="firstPhase">
-                <div class="requiredSymbol">*</div>
-                <input type="text" ng-model="connectionName" class="form-control" placeholder="Connection name">
-            </div>
-            <div class="form-group" ng-show="firstPhase">
-                <div class="requiredSymbol">*</div>
-                <input type="text" ng-model="userName" class="form-control" placeholder="Username">
-            </div>
-            <fieldset>
-                <div class="form-group" ng-show="firstPhase">
-                    <input type="password" ng-model="password" class="form-control" placeholder="password">
+                <label class="col-sm-3 control-label">Host IP:<span class="requiredSymbol">*</span></label>
+                <div class="col-sm-9">
+                    <input type="text" ng-model="hostName" class="form-control" placeholder="Host" data-fv-field="ip" data-fv-ip-message="Please enter a valid IP address">
                 </div>
-                <div class="form-group" ng-show="firstPhase">
-                    <input type="text" ng-model="ssh_key" class="form-control" placeholder="PATH to ssh-key">
+            </div>
+            <div class="form-group" ng-show="firstPhase">
+                <label class="col-sm-3 control-label">Conn Name:<span class="requiredSymbol">*</span></label>
+                <div class="col-sm-9">
+                    <input type="text" ng-model="connectionName" class="form-control" placeholder="Connection name">
+                </div>
+            </div>
+            <div class="form-group" ng-show="firstPhase">
+                <label class="col-sm-3 control-label">User Name:<span class="requiredSymbol">*</span></label>
+                <div class="col-sm-9">
+                    <input type="text" ng-model="userName" class="form-control" placeholder="Username">
+                </div>
+            </div>
+            <fieldset ng-show="firstPhase">
+
+                <div class="form-group form-group-custom">
+                    <label class="col-sm-3 control-label">Password:<span class="requiredSymbol">*</span></label>
+                    <div class="col-sm-9">
+                        <input type="password" ng-model="password" class="form-control" placeholder="password">
+                    </div>
+                </div>
+                <div class="col-sm-12 text-center">
+                    <strong>or</strong>
+                </div>
+                <div class="form-group form-group-custom">
+                    <label class="col-sm-3 control-label">SSH Key:<span class="requiredSymbol">*</span></label>
+                    <div class="col-sm-9">
+                        <input type="text" ng-model="ssh_key" id="ssh_key" value="/Users/naveen/" class="form-control file-loading" placeholder="PATH to ssh-key" webkitdirectory>
+                    </div>
                 </div>
             </fieldset>
             <!--<div class="form-group row" ng-show="secondPhase">
