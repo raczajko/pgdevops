@@ -116,7 +116,7 @@
             <label style="display: table-cell;">Repository:&nbsp;</label>
             <select style="display: table-cell;" class="form-control" ng-model="selectRepo" ng-change="repoChange(selectRepo)" ng-disabled="gettingPGDGdata">
             <option value="">--select--</option>
-            <option ng-repeat="repo in pgdgRepoList" value="{{repo.repo}}-{{repo.status}}">{{repo.repo}}</option>
+            <option ng-repeat="repo in pgdgRepoList" value="{{repo.repo}}">{{repo.repo}}</option>
             </select>
         </div>
         <br>

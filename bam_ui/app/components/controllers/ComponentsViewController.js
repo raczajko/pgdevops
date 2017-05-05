@@ -293,12 +293,18 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         // session.call('com.bigsql.list');
     }
 
-    $scope.repoChange = function (argument) {
-        if (argument && argument != "undefined") {
-            localStorage.setItem('cacheRepo', argument);
-            var repo = argument.split('-')[0];
-            var status = argument.split('-')[1]; 
-            if (status == "Installed") {
+    $scope.repoChange = function (repo, status) {
+        if (repo && repo != "undefined") {
+            localStorage.setItem('cacheRepo', repo);
+            var isInstalled = false;
+            for (var i = $scope.pgdgRepoList.length - 1; i >= 0; i--) {
+                if($scope.pgdgRepoList[i].repo == repo && $scope.pgdgRepoList[i].status=="Installed"){
+                    isInstalled = true;
+                }
+            }
+            
+            $scope.selectRepo = repo;
+            if (status == "Installed" || isInstalled) {
                 $scope.noRepoSelected = false;
                 $scope.gettingPGDGdata = true;
                 $scope.repoNotRegistered = false;
@@ -316,6 +322,11 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                         }
                         $scope.repoNotRegistered = true;
                     }else{
+                        for (var i = $scope.pgdgRepoList.length - 1; i >= 0; i--) {
+                            if($scope.pgdgRepoList[i].repo == $scope.selectRepo){
+                                $scope.pgdgRepoList[i].status = "Installed";
+                            }
+                        }
                         $scope.repoNotRegistered = false;
                         $scope.repoList = argument;
                         $scope.showRepoList = true;
@@ -323,7 +334,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 }) 
             }else{
                 $scope.repoNotRegistered = true;
-                var repo = argument.split('-')[0];
                 $scope.registerRepo(repo);
             }
         }else{
@@ -487,8 +497,8 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         currentComponent.init = true;
     });
 
-    $rootScope.$on('refreshRepo', function (event, repo) {
-        $scope.repoChange(repo);
+    $rootScope.$on('refreshRepo', function (event, repo, status) {
+        $scope.repoChange(repo, status);
     })
 
     function wait() {

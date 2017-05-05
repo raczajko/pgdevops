@@ -73,12 +73,11 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
                     $scope.removing = false;
                 }
             } else{
-                setTimeout(function() {getBGStatus(process_log_id) },5000);
+                setTimeout(function() {getBGStatus(process_log_id) },2000);
             }
 
             $timeout(function() {
                 var scroller = document.getElementById("console");
-                console.log(scroller);
                 scroller.scrollTop = scroller.scrollHeight;
             }, 0, false);
         });
@@ -86,7 +85,7 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
 
 
     $scope.cancel = function () {
-        $rootScope.$emit('refreshRepo', $scope.pgdgRepo+'-Installed');
+        $rootScope.$emit('refreshRepo', $scope.pgdgRepo ,'Installed');
         $uibModalInstance.dismiss('cancel');
     };
 
