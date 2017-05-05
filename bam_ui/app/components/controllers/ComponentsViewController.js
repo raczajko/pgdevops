@@ -89,6 +89,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
 
         listData.then(function (data) {
             // $rootScope.$emit('showUpdates');
+            session.call('com.bigsql.getTestSetting');
             if(data == "error" || data[0].state == 'error'){
                 $timeout(wait, 5000);
                 $scope.loading = false;
@@ -276,9 +277,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.setTest = function (event) {
             var param;
             if($scope.isList){
-                param = 'test';
+                param = 'prod';
             }else{
-                param = 'prod'
+                param = 'test'
             }
             session.call('com.bigsql.setTestSetting',[param]);
             getList();
@@ -339,6 +340,11 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         }else{
             $scope.noRepoSelected = true;
         }    
+    }
+
+
+    $scope.showPGDGExtraComps = function (argument) {
+        $scope.repoChange(argument);
     }
 
     $scope.refreshRepoList = function (repo) {
