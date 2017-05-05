@@ -300,6 +300,8 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     }
 
     $scope.selectedBigsqlRepo = function (argument) {
+        $scope.loading = true;
+        $scope.components = '';
         getList($scope.currentHost);
     }
 
