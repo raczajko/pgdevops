@@ -42,7 +42,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 nonPgComps.push(comps[i]);
             };
         }
-        if(comps[0]['component'] == 'pg10' && comps[0]['stage'] == 'test'){
+        if(comps.length > 0 && comps[0]['component'] == 'pg10' && comps[0]['stage'] == 'test'){
             pgComps.push(comps[0]);
         }
         return  pgComps.reverse().concat(nonPgComps);
@@ -289,6 +289,11 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     });
 
     $scope.installedComps = function (event) {
+        if ($scope.showInstalled) {
+            $scope.showInstalled = false;
+        }else{
+            $scope.showInstalled = true;
+        }
         session.call('com.bigsql.setBamConfig',['showInstalled', $scope.showInstalled]);
         getList($scope.currentHost); 
         // session.call('com.bigsql.list');
