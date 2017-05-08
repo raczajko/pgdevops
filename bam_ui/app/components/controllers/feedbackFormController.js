@@ -12,14 +12,15 @@ angular.module('bigSQL.components').controller('feedbackFormController', ['$scop
         }); 
 
     $scope.sendEmail = function (argument) {
+
     	var args = {
-    		'text' : $scope.subject,
-    		'subject' : $scope.feedback,
+    		'text' : $scope.feedback,
+    		'subject' : $scope.subject,
     		'from_email' : $scope.from_email,
     		'to' : $scope.to_email
     	}
     	
-    	var sendFeedback = $http.post('https://bigsql.org/email-feedback',args)
+    	var sendFeedback = $http.post('https://bigsql.org/email-feedback/',args)
     	sendFeedback.then(function (argument) {	
     	})
     	$uibModalInstance.dismiss('cancel');
