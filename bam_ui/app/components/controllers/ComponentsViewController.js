@@ -432,6 +432,8 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/pgdgActionModal.html',
             controller: 'pgdgActionModalController',
+            keyboard  : false,
+            backdrop  : 'static',
             size: 'lg'
         });
         modalInstance.pgdgRepo = repo;
