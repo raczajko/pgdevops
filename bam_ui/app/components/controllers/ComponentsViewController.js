@@ -482,7 +482,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     };
 
 
-    $scope.pgdgAction = function (action, compName, repo) {
+    $scope.pgdgAction = function (action, compName) {
         var cur_comp = {};
         for (var i = 0; i < $scope.repoList.length; i++) {
             if ($scope.repoList[i].component == compName) {
@@ -503,7 +503,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             controller: 'pgdgActionModalController',
             size: 'lg'
         });
-        modalInstance.pgdgRepo = repo;
+        modalInstance.pgdgRepo = $scope.selectRepo;
         modalInstance.pgdgComp = compName;
         modalInstance.action = action;
         modalInstance.host = $cookies.get('remote_host');
