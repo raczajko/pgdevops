@@ -176,9 +176,9 @@
                             </div>
                             <!-- <div class="col-md-2 col-sm-2 col-xs-2">{{c.release_date}}</div> -->
                             <div class="col-md-2 col-sm-2 col-xs-2">
-                            <i style="color:green; margin-left: 20px;" class="fa fa-check-circle-o fa-2x " ng-if="c.status == 'Installed' && c.removing == undefined || c.status == 'NotInitialized' && c.removing == undefined && c.init == undefined " ng-hide="c.showingSpinner"></i>
-                            <i class='fa fa-spinner fa-2x  fa-pulse' ng-if="c.removing || c.init || c.showingSpinner">
-                            </i>
+                                <i style="color:green; margin-left: 20px;" class="fa fa-check-circle-o fa-2x " ng-if="c.status == 'Installed' && c.removing == undefined || c.status == 'NotInitialized' && c.removing == undefined && c.init == undefined " ng-hide="c.showingSpinner"></i>
+                                <i style="margin-left: 20px;" class='fa fa-spinner fa-2x  fa-pulse' ng-if="c.removing || c.init || c.showingSpinner">
+                                </i>
                             </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="padding-left: 10px; margin-top: -7px;">
                                 <a class="btn btn-default" style="width: 75px;" ng-click="pgdgAction( 'install', c.component) " ng-if="c.status == 'NotInstalled' || c.status == ''" ng-disabled=" c.showingSpinner">Install</a>
