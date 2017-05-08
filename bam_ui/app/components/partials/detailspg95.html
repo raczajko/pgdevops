@@ -92,7 +92,7 @@
                                 </div>
                                 <div class="col-md-4 col-xs-4" ng-show="component.installationRunning != undefined">
                                     <progressbar value="component.progress"></progressbar>
-                                    <button class="btn btn-default btn-xs center-block" ng-click="cancelInstallation('cancelInstall') ">Cancel</button>
+                                    <button class="btn btn-default btn-xs center-block" ng-click="cancelInstallation('cancelInstall') " style="margin-top: 5px;">Cancel</button>
                                 </div>
                                 <div class="col-md-2 col-xs-2" ng-show="component.installationRunning != undefined">
                                     {{component.installationRunning.pct}}%
