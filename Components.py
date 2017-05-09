@@ -223,7 +223,7 @@ class ComponentAction(object):
         if password:
             pgcCmd = pgcCmd + " --pwd=" + password
         if key:
-            pgcCmd = pgcCmd + " --key=" + key
+            pgcCmd = pgcCmd + " --key='" + key +"'"
         if update:
             pgcCmd = pgcCmd + " --update=" + str(update)
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
