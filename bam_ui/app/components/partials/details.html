@@ -102,6 +102,7 @@
                     <div id="dep_stats">
                         <div ng-show="component.installation != undefined || component.spinner " style="width:100%;height:auto;">
                             <div>
+                                <div ng-show="component.installation"><i class='fa fa-spinner fa-2x  fa-pulse'></i> <b>Installing..</b></div>
                                 <span ng-show="component.spinner"><i class='fa fa-spinner fa-2x  fa-pulse'></i> <b>{{component.spinner}}</b></span>
                                 <div style="margin-left:10px;margin-top:20px" ng-show="component.installationDependents != undefined"><i class="fa fa-refresh fa-spin" style='margin-right:2px'></i><b> Installing dependencies...</b></div>
                                 <br />

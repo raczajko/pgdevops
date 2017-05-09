@@ -48,6 +48,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
         }else if(action == 'restart'){
             $scope.component.spinner = 'Restarting..';
         } else if(action == 'install'){
+            $scope.component.installation = true;
             is_yes=true;
             $scope.checkplProfiler = true;
         }
@@ -171,6 +172,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                     $scope.component.spinner = 'Stopping..';
                 }else if(event.target.attributes.action.value == 'remove'){
                     $scope.component.spinner = 'Removing..';
+                }else if (event.target.attributes.action.value == 'install') {
+                    $scope.component.installation = true;
                 }else if($scope.component.component.indexOf("plprofiler") > -1 && event.target.attributes.action.value == 'install'){
                     $scope.checkplProfiler = false;
                     $scope.startAlert.push({
@@ -195,6 +198,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
 
         session.subscribe('com.bigsql.onInstall', function (response) {
             var data = JSON.parse(response[0])[0];
+            $scope.component.installation = true;
             // if ($scope.currentComponent == data.component || $scope.currentComponent == data.component[0]) {
             if (data.state == "deplist") {
                 if (data.deps.length > 1) {

@@ -397,6 +397,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
 
         session.subscribe('com.bigsql.onInstall', function (response) {
             var data = JSON.parse(response[0])[0];
+            $scope.component.installation = true;
             if (data.state == "deplist") {
                 if (data.deps.length > 1) {
                     dependentCount = data.deps.length;
@@ -474,6 +475,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 $scope.component.spinner = 'Removing..';
             } else if (event.target.attributes.action.value == 'restart') {
                 $scope.component.spinner = 'Restarting..';
+            }else if (event.target.attributes.action.value == 'install') {
+                $scope.component.installation = true;
             } else if(event.target.attributes.action.value == 'update'){
                 $interval.cancel(infoRefreshRate);
                 $interval.cancel(statusRefreshRate);
