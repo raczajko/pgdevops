@@ -31,7 +31,7 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
         var pgdgCmd = $http.post($window.location.origin + '/api/pgdgAction', args);
         pgdgCmd.then(function (argument) {
             $scope.loading = false;
-            getBGStatus(argument.data.process_log_id);
+            setTimeout(function() {getBGStatus(argument.data.process_log_id)},3000);
         });
     }
 

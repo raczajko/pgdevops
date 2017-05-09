@@ -20,6 +20,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     $scope.extensionsList = [];
     $scope.showPgDgTab = false;
     $scope.gettingPGDGdata = false;
+    $scope.ExtensionsLoading = false;
 
     var getCurrentComponent = function (name) {
         for (var i = 0; i < $scope.components.length; i++) {
@@ -49,6 +50,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     }
 
     $scope.getExtensions = function( comp, idx) {
+        $scope.ExtensionsLoading = true;
         if ($scope.components[idx].extensionOpened) {
             $window.location = '#/details-pg/' + comp
         }
@@ -65,6 +67,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         // var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
         extensionsList.then(function (argument) {
             if (argument[0].state != 'error') {
+                $scope.ExtensionsLoading = false;
                 $scope.extensionsList = argument;
                 if ($scope.showInstalled) {
                     $scope.extensionsList = $($scope.extensionsList).filter(function(i,n){ return n.status != "NotInstalled" ;})   
@@ -275,6 +278,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         });
     
         $scope.setTest = function (event) {
+            $cookies.remove('openedExtensions');
             var param;
             if($scope.isList){
                 param = 'prod';
@@ -300,6 +304,8 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     }
 
     $scope.selectedBigsqlRepo = function (argument) {
+        $scope.loading = true;
+        $scope.components = '';
         getList($scope.currentHost);
     }
 
@@ -476,7 +482,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     };
 
 
-    $scope.pgdgAction = function (action, compName, repo) {
+    $scope.pgdgAction = function (action, compName) {
         var cur_comp = {};
         for (var i = 0; i < $scope.repoList.length; i++) {
             if ($scope.repoList[i].component == compName) {
@@ -497,7 +503,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             controller: 'pgdgActionModalController',
             size: 'lg'
         });
-        modalInstance.pgdgRepo = repo;
+        modalInstance.pgdgRepo = $scope.selectRepo;
         modalInstance.pgdgComp = compName;
         modalInstance.action = action;
         modalInstance.host = $cookies.get('remote_host');
