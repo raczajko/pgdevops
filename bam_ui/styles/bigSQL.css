@@ -7076,3 +7076,7 @@ fieldset
   text-align: center; 
   margin: 20px;
 }
+
+.host-uib-tab-heading{
+  font-size: 1.5rem
+}

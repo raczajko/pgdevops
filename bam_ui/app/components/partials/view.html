@@ -154,32 +154,32 @@
             <span><h3>Loading...</h3></span>
         </div>
         </div>
-        <div ng-if="!noRepoSelected" style="margin-left: 200px; margin-right: 200px;">
+        <div ng-if="!noRepoSelected" class="col-md-8 col-sm-12 col-xs-12">
         <div class="box" ng-if="!gettingPGDGdata && !noRepoFound && !repoNotRegistered">
             <div class="box-body">
                 <div id="serversTable">
                     <div class="component_head_box">
-                        <div class="col-md-4 col-sm-4 col-xs-4"><strong>Component</strong></div>
-                        <div class="col-md-4 col-sm-4 col-xs-4"><strong>Version</strong></div>
+                        <div class="col-md-6 col-sm-6 col-xs-6"><strong>Component</strong></div>
+                        <div class="col-md-3 col-sm-3 col-xs-3"><strong>Version</strong></div>
                         <!-- <div class="col-md-2 col-sm-2 col-xs-2"><strong>Release Date</strong></div> -->
-                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Installed</strong></div>
+                        <div class="col-md-1 col-sm-1 col-xs-1"><strong style="margin-left: -25px;">Installed</strong></div>
                         <div class="col-md-2 col-sm-2 col-xs-2"><strong>Actions</strong></div>
                     </div>
                     <div id="serversTableTbody">
                         <div ng-repeat="c in repoList" class= "component_box" ng-class-odd="'oddRow'" style="border-bottom: 1px solid #f4f4f4;">
-                            <div class="col-md-4 col-sm-4 col-xs-4">
-                                <div class="comp-name">
+                            <div class="col-md-6 col-sm-6 col-xs-6">
+                                <div class="comp-name" style="white-space: nowrap;">
                                     <a class="serversTableTbody-component--link" tooltip-append-to-body="true" ng-bind = "c.component">
                                     {{c.component}}
                                     </a>
                                 </div>
                             </div>
-                            <div class="col-md-4 col-sm-4 col-xs-4">
+                            <div class="col-md-3 col-sm-3 col-xs-3" style="white-space: nowrap;">
                                 {{c.version}}
                             </div>
                             <!-- <div class="col-md-2 col-sm-2 col-xs-2">{{c.release_date}}</div> -->
-                            <div class="col-md-2 col-sm-2 col-xs-2">
-                                <i style="color:green; margin-left: 20px;" class="fa fa-check-circle-o fa-2x " ng-if="c.status == 'Installed' && c.removing == undefined || c.status == 'NotInitialized' && c.removing == undefined && c.init == undefined " ng-hide="c.showingSpinner"></i>
+                            <div class="col-md-1 col-sm-1 col-xs-1">
+                                <i style="color:green;" class="fa fa-check-circle-o fa-2x " ng-if="c.status == 'Installed' && c.removing == undefined || c.status == 'NotInitialized' && c.removing == undefined && c.init == undefined " ng-hide="c.showingSpinner"></i>
                                 <i style="margin-left: 20px;" class='fa fa-spinner fa-2x  fa-pulse' ng-if="c.removing || c.init || c.showingSpinner">
                                 </i>
                             </div>
@@ -192,6 +192,7 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-4 col-sm-0 col-xs-0"></div>
         </div>
         </div>
         </div>

@@ -84,10 +84,8 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.currentHost = argument;
         if (argument=="" || argument == 'localhost'){
             var listData = bamAjaxCall.getCmdData('list');
-            var getLabList = bamAjaxCall.getCmdData('lablist');
         } else{
             var listData = bamAjaxCall.getCmdData('hostcmd/list/' + argument);
-            var getLabList = bamAjaxCall.getCmdData('hostcmd/lablist/'+ argument);
         }
 
         listData.then(function (data) {
@@ -126,22 +124,30 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $scope.getExtensions( $scope.components[0].component, 0);                
             }
         });
-        
-        $scope.showPG10 = false;
-        $scope.checkpgdgSetting = false;
-        getLabList.then(function (argument) {
-            for (var i = argument.length - 1; i >= 0; i--) {
-                if(argument[i].lab == "pg10-beta" && argument[i].enabled == "on"){
-                    $scope.showPG10 = true;
-                }
-                if(argument[i].lab == "pgdg-repos" && argument[i].enabled == "on"){
-                    $scope.checkpgdgSetting = true;
-                }
-            }
-        })
     };
 
     getList($cookies.get('remote_host'));
+
+    $scope.currentHost = $cookies.get('remote_host');
+    if ($scope.currentHost=="" || $scope.currentHost == 'localhost'){
+        var getLabList = bamAjaxCall.getCmdData('lablist');
+    } else{
+        var getLabList = bamAjaxCall.getCmdData('hostcmd/lablist/'+ $scope.currentHost);
+    }
+
+    $scope.showPG10 = false;
+    $scope.checkpgdgSetting = false;
+    getLabList.then(function (argument) {
+        for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "pg10-beta" && argument[i].enabled == "on"){
+                $scope.showPG10 = true;
+            }
+            if(argument[i].lab == "pgdg-repos" && argument[i].enabled == "on"){
+                $scope.checkpgdgSetting = true;
+            }
+        }
+    })
+
 
     $rootScope.$on('updatePackageManager', function (argument) {
         getList($cookies.get('remote_host'));
@@ -279,7 +285,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 param = 'test'
             }
             session.call('com.bigsql.setTestSetting',[param]);
-            getList();
+            getList($scope.currentHost);
             // session.call('com.bigsql.list');
         };
 

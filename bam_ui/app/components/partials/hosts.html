@@ -31,10 +31,10 @@
             <uib-accordion close-others="true">
                 <uib-accordion-group ng-repeat="group in groupsList" is-open="group.state"  ng-init="parentIndex = $index" >
                     <uib-accordion-heading>
-                        <span ng-click="loadGroup($index)" ng-if="group.group == 'default'">
+                        <span ng-click="loadGroup($index)" ng-if="group.group == 'default'" class="host-uib-tab-heading">
                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i> &nbsp;All Hosts
                         </span>
-                        <span ng-click="loadGroup($index)" ng-if="group.group != 'default'">
+                        <span ng-click="loadGroup($index)" ng-if="group.group != 'default'" class="host-uib-tab-heading">
                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i>&nbsp; {{group.group}}
                         </span>
                             <div class="pull-right" style="margin-top: -10px">
@@ -56,11 +56,11 @@
                         <uib-accordion close-others="true" >
                             <uib-accordion-group ng-repeat="host in group.hosts" is-open="host.state" ng-init="hostIndex = $index">
                                 <uib-accordion-heading>
-                                        <span ng-click="loadHost(parentIndex, $index, false); stopCalls()" ng-if="host.host != 'localhost'"> &nbsp; {{host.name}} &nbsp; ({{host.host}})
+                                        <span ng-click="loadHost(parentIndex, $index, false); stopCalls()" ng-if="host.host != 'localhost'" class="host-uib-tab-heading"> &nbsp; {{host.name}} &nbsp; ({{host.host}})
                                             {{host.hostInfo.os}}, {{ host.hostInfo.mem }} GB, {{ host.hostInfo.cores }} Core(s)
                                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !host.state, 'fa fa-minus': host.state}"></i>
                                         </span>
-                                        <span ng-click="loadHost(parentIndex, $index, false); stopCalls()" ng-if="host.host == 'localhost'"> &nbsp; {{host.host}}  
+                                        <span ng-click="loadHost(parentIndex, $index, false); stopCalls()" ng-if="host.host == 'localhost'" class="host-uib-tab-heading"> &nbsp; {{host.host}}  
                                             &nbsp; &nbsp; &nbsp;
                                             {{host.hostInfo.os}}, {{ host.hostInfo.mem }} GB, {{ host.hostInfo.cores }} Core(s)
                                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !host.state, 'fa fa-minus': host.state}"></i>
