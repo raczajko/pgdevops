@@ -90,7 +90,6 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
 
         listData.then(function (data) {
             // $rootScope.$emit('showUpdates');
-            session.call('com.bigsql.getTestSetting');
             if(data == "error" || data[0].state == 'error'){
                 $timeout(wait, 5000);
                 $scope.loading = false;
@@ -239,7 +238,11 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             subscriptions.push(subscription);
         });
 
-        session.call('com.bigsql.getTestSetting');
+        if ($scope.currentHost=='' || $scope.currentHost=='localhost') {
+            session.call('com.bigsql.getTestSetting');
+        }else{
+            session.call('com.bigsql.getTestSetting', [$scope.currentHost]);
+        }
         session.subscribe("com.bigsql.onGetTestSetting", function (settings) {
             if(settings[0] == "test"){
                $scope.isList = true;
@@ -276,17 +279,26 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             }
         });
     
-        $scope.setTest = function (event) {
+        $scope.setTest = function (pgdg) {
             $cookies.remove('openedExtensions');
             var param;
             if($scope.isList){
                 param = 'prod';
+                $scope.isList = false;
             }else{
-                param = 'test'
+                param = 'test';
+                $scope.isList = true;
             }
-            session.call('com.bigsql.setTestSetting',[param]);
-            getList($scope.currentHost);
-            // session.call('com.bigsql.list');
+            $scope.currentHost = typeof $scope.currentHost !== 'undefined' ? $scope.currentHost : "";
+            if (pgdg) {
+                session.call('com.bigsql.setTestSetting',[param,  $scope.currentHost]).then(function (argument) {
+                    $scope.repoChange($scope.selectRepo);       
+                })
+            }else{
+                session.call('com.bigsql.setTestSetting',[param, $scope.currentHost]).then(function (argument) {
+                    getList($scope.currentHost);
+                })
+            }
         };
 
     });

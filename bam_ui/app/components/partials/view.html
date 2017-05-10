@@ -14,7 +14,7 @@
             <div class="box-body">
                 <div class="components-update-button-wrapper" ng-if="components">
                     <label>
-                        <input type="checkbox" ng-model="isList" ng-click="setTest()">&nbsp; Show test packages</input>
+                        <input type="checkbox" ng-model="isList" ng-click="setTest(false)">&nbsp; Show test packages</input>
                     </label>
                     &nbsp;
                     &nbsp;
@@ -126,7 +126,7 @@
             <option ng-repeat="repo in pgdgRepoList" value="{{repo.repo}}">{{repo.repo}}</option>
             </select> &nbsp; &nbsp;
             <label>
-                <input type="checkbox" ng-model="isList" ng-click="showPGDGExtraComps(selectRepo); setTest()">&nbsp; Show extra packages</input>
+                <input type="checkbox" ng-model="isList" ng-click="setTest(true)">&nbsp; Show extra packages</input>
             </label>         
         </form>
         <br>

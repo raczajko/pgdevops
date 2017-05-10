@@ -313,20 +313,30 @@ class Components(ComponentAction):
 
 
     @inlineCallbacks
-    def getTestSetting(self):
+    def getTestSetting(self, host):
         """
         Method to get test list setting of bam.
         :return: It yields json string.
         """
-        yield self.session.publish('com.bigsql.onGetTestSetting', util.get_value ("GLOBAL", "STAGE", ""))
+        pgcCmd = PGC_HOME + os.sep + "pgc get GLOBAL STAGE "
+        if host!='' and host!='localhost':
+            pgcCmd = pgcCmd + " --host '" + host  +"'"
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        data = pgcProcess.communicate()
+        yield self.session.publish('com.bigsql.onGetTestSetting', data[0].strip('\n'))
 
 
-    def setTestSetting(self, val):
+    def setTestSetting(self, val, host=None):
         """
         Method to set the test list setting of bam.
         :return: It yields json string.
         """
-        util.set_value("GLOBAL", "STAGE", val)
+        # util.set_value("GLOBAL", "STAGE", val)
+        pgcCmd = PGC_HOME + os.sep + "pgc set GLOBAL STAGE " + val
+        if host:
+            pgcCmd = pgcCmd + " --host '" + host  +"'"
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        data = pgcProcess.communicate()
 
     @inlineCallbacks
     def getBetaFeatureSetting(self, settingName):
