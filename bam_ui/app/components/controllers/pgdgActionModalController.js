@@ -7,12 +7,11 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
     $scope.installing = false;
     $scope.registering = false;
     $scope.action = $uibModalInstance.action;
-
     
-    if($uibModalInstance.currentHost == 'localhost' || $uibModalInstance.currentHost == '' ){
+    if($uibModalInstance.host == 'localhost' || $uibModalInstance.host == '' ){
         $scope.currentHost = '';
     }else{
-        $scope.currentHost = $uibModalInstance.currentHost;
+        $scope.currentHost = $uibModalInstance.host;
     }
 
     if ($scope.pgdgComp && $scope.action) {

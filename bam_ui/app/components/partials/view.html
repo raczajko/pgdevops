@@ -110,12 +110,15 @@
             </div>
             </div>
     </uib-tab>
-    <uib-tab ng-if="showPgDgTab && checkpgdgSetting" select="selectPgDg($event)">
+    <uib-tab ng-if="checkpgdgSetting" select="selectPgDg($event)">
         <uib-tab-heading>
           <div style="text-align: center;">PGDG Repository</div>
         </uib-tab-heading>
         <div class="box" style="border-top: 0px;">
-        <div class="box-body">
+        <div class="box-body" ng-if="pgdgNotAvailable">
+            {{pgdgNotAvailableMsg}}
+        </div>
+        <div class="box-body" ng-if="!pgdgNotAvailable">
         <form class="form-inline" ng-if="showRepoList && !noRepoFound">
             <label>Repository:&nbsp;</label>
             <select class="form-control" ng-model="selectRepo" ng-change="repoChange(selectRepo)" ng-disabled="gettingPGDGdata">

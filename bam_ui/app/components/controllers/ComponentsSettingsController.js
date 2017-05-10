@@ -164,7 +164,11 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     };
 
     $scope.changeSetting = function (settingName, value) {
-        session.call('com.bigsql.setLabSetting', [settingName, value])
+        if ($scope.currentHost == "" || $scope.currentHost == 'localhost'){
+            session.call('com.bigsql.setLabSetting', [settingName, value]);
+        }else{
+            session.call('com.bigsql.setLabSetting', [settingName, value, $scope.currentHost]);
+        }
     }
 
     $rootScope.$on('refreshUpdateDate', function (argument) {
