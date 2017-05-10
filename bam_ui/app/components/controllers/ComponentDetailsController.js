@@ -172,8 +172,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                     $scope.component.spinner = 'Stopping..';
                 }else if(event.target.attributes.action.value == 'remove'){
                     $scope.component.spinner = 'Removing..';
-                }else if (event.target.attributes.action.value == 'install') {
-                    $scope.component.installation = true;
                 }else if($scope.component.component.indexOf("plprofiler") > -1 && event.target.attributes.action.value == 'install'){
                     $scope.checkplProfiler = false;
                     $scope.startAlert.push({
@@ -186,6 +184,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                     if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
                         session.call(sessionKey, [$scope.component.component]);
                     }else {
+                        $scope.component.installation = true;
                         if (event.target.attributes.action.value == 'install') {
                             session.call(sessionKey, [$scope.component.component, false, $scope.currentHost]);
                         }else{
