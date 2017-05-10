@@ -166,11 +166,11 @@ class AppSession(ApplicationSession):
             monitoring.save_graphs_data()
             monitoring.save_dbstats_data()
 
-            pgcCmd = PGC_HOME + os.sep + "pgc --json status"
-            pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
-            pgcInfo = pgcProcess.communicate()
-            components = pgcInfo[0]
-            pgcStatusData = re.sub("\n", "", components)
+            #pgcCmd = PGC_HOME + os.sep + "pgc --json status"
+            ##pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
+            ##pgcInfo = pgcProcess.communicate()
+            #components = pgcInfo[0]
+            #pgcStatusData = re.sub("\n", "", components)
             # yield self.publish('com.bigsql.status', pgcStatusData)
 
             yield sleep(5)

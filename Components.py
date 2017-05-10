@@ -59,7 +59,7 @@ class ComponentAction(object):
         if p_yes:
             command_line = command_line + " -y"
         if host:
-            command_line = command_line + " --host " + host
+            command_line = command_line + " --host '" + host + "'"
         process = subprocess.Popen(command_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell= True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
@@ -80,7 +80,7 @@ class ComponentAction(object):
             os.remove(pid_file)
         pgcCmd = PGC_HOME + os.sep + "pgc cancel"
         if host:
-            pgcCmd = pgcCmd + " --host " + host
+            pgcCmd = pgcCmd + " --host '" + host + "'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
         pgcData = pgcProcess.communicate()
                 
@@ -94,7 +94,7 @@ class ComponentAction(object):
         """
         pgcCmd = PGC_HOME + os.sep + "pgc --json remove " + comp_name
         if host:
-            pgcCmd = pgcCmd + " --host " + host
+            pgcCmd = pgcCmd + " --host '" + host + "'"
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         for line in iter(process.stdout.readline, ''):
             ln = (line).rstrip('\n')
@@ -109,7 +109,7 @@ class ComponentAction(object):
         """
         pgcCmd = PGC_HOME + os.sep + "pgc start " + name
         if host:
-            pgcCmd = pgcCmd + " --host " + host
+            pgcCmd = pgcCmd + " --host '" + host + "'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
 
     def restart(self, name, host=None):
@@ -119,7 +119,7 @@ class ComponentAction(object):
         """
         pgcCmd = PGC_HOME + os.sep + "pgc restart " + name
         if host:
-            pgcCmd = pgcCmd + " --host " + host
+            pgcCmd = pgcCmd + " --host '" + host + "'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
 
     def stop(self, name, host=None):
@@ -129,7 +129,7 @@ class ComponentAction(object):
         """
         pgcCmd = PGC_HOME + os.sep + "pgc stop " + name
         if host:
-            pgcCmd = pgcCmd + " --host " + host
+            pgcCmd = pgcCmd + " --host '" + host + "'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
 
     @inlineCallbacks
@@ -164,7 +164,7 @@ class ComponentAction(object):
         if dataDir == '':
             pgcCmd = pgcCmd.split(' --datadir')[0]
         if host:
-            pgcCmd = pgcCmd + ' --host ' + host
+            pgcCmd = pgcCmd + " --host '" + host + "'"
         if (name > 'pg90') and (name < 'pg99'):
             pgpass_file = PGC_HOME + os.sep + name + os.sep + ".pgpass"
             if not os.path.isfile(pgpass_file):
@@ -219,9 +219,9 @@ class ComponentAction(object):
         """
         if this_uname!="Windows":
             os.environ["PYTHONPATH"] = devops_lib_path
-        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST " + hostName + " " + pgcDir + " " + userName + " " + name
+        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST '" + hostName + "' '" + pgcDir + "' '" + userName + "' '" + name +"'"
         if password:
-            pgcCmd = pgcCmd + " --pwd=" + password
+            pgcCmd = pgcCmd + " --pwd='" + password + "'"
         if key:
             pgcCmd = pgcCmd + " --key='" + key +"'"
         if update:
@@ -353,7 +353,7 @@ class Components(ComponentAction):
         else:
             pgcCmd = PGC_HOME + os.sep + "pgc unset labs " + setting 
         if host:
-            pgcCmd = pgcCmd + " --host " + host  
+            pgcCmd = pgcCmd + " --host '" + host  +"'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         data = pgcProcess.communicate()     
 
@@ -386,7 +386,7 @@ class Components(ComponentAction):
         """
         pgcCmd = PGC_HOME + os.sep + "pgc --json config " + name + " --autostart=" + val
         if host:
-            pgcCmd = pgcCmd + " --host " + host
+            pgcCmd = pgcCmd + " --host '" + host+"'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         for line in iter(pgcProcess.stdout.readline, ''):
             try:
@@ -525,9 +525,9 @@ class Components(ComponentAction):
             pgcCmd = pgcCmd + " " + component 
         if pgc_host:
             if pwfile:
-                pgcCmd = pgcCmd + " --pwfile " + pwfile + " --host " + pgc_host
+                pgcCmd = pgcCmd + " --pwfile " + pwfile + " --host '" + pgc_host +"'"
             else:
-                pgcCmd = pgcCmd + " --host " + pgc_host
+                pgcCmd = pgcCmd + " --host '" + pgc_host + "'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         pgcInfo = pgcProcess.communicate()
         return json.loads(pgcInfo[0])
@@ -546,7 +546,7 @@ class Components(ComponentAction):
         if component:
             pgcCmd = pgcCmd + " " + component
         if pgc_host:
-            pgcCmd = pgcCmd + " --host " + pgc_host
+            pgcCmd = pgcCmd + " --host '" + pgc_host +"'"
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         pgcInfo = pgcProcess.communicate()
         return json.loads(pgcInfo[0])

@@ -168,7 +168,7 @@ api.add_resource(pgcUtilRelnotes, '/api/utilRelnotes/<string:comp>','/api/utilRe
 
 class pgcApiHostCmd(Resource):
     def get(self, pgc_cmd, host_name):
-        data = pgc.get_data(pgc_cmd + ' --host '+ host_name)
+        data = pgc.get_data(pgc_cmd + ' --host "'+ host_name +'"')
         return data
 
 
@@ -213,6 +213,7 @@ class checkUser(Resource):
                 json_dict['pgc_version'] = remote_pgc_path['pgc_version']
             data = json.dumps([json_dict])
         except Exception as e:
+            print e
             errmsg = "ERROR: Cannot connect to " + username + "@" + host + " - " + str(e.args[0])
             json_dict['state'] = "error"
             json_dict['msg'] = errmsg
@@ -454,7 +455,7 @@ class pgdgAction(Resource):
         else:
             report_cmd = PGC_HOME + os.sep + "pgc repo-pkgs " + repo + " " + action + " " + component_name
         if component_host and component_host != "localhost":
-            report_cmd = report_cmd + " --host " + component_host
+            report_cmd = report_cmd + " --host '" + component_host + "'"
         process_status = detached_process(report_cmd, ctime)
         result['error']=None
         result['status'] =process_status['status']
