@@ -13,8 +13,10 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	$scope.pgcDir = '';
 	$scope.userName = '';
 
+    $scope.create_btn = "Create";
 	if($scope.editHost){
 		$scope.type = 'Edit';
+		$scope.create_btn = "Update";
 		$scope.hostName = $scope.editHost.host;
 		$scope.pgcDir = $scope.editHost.pgc_home;
 		$scope.userName = $scope.editHost.user;
