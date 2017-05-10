@@ -130,6 +130,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     });
 
     function getInfo(argument) {
+        $scope.loading = true;
         argument = typeof argument !== 'undefined' ? argument : "";
         $scope.currentHost = argument;
         if (argument=="" || argument == 'localhost'){
@@ -143,6 +144,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         }
 
         infoData.then(function(data) {
+            $scope.loading = false;
             $scope.pgcInfo = data[0];
             if (data[0].last_update_utc) {
                 var l_date = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
@@ -155,14 +157,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
                 session.call('com.bigsql.get_host_settings');
             }
         });
-        
-        checkpgdgSupport.then(function (argument) {
-            var data = argument[0];
-            if(data.os.split(' ')[0] == 'CentOS'){
-                $scope.showPgDgFeature = true;
-            }
-        })
-
+       
         getLablist.then(function function_name(argument) {
             $scope.lablist = argument;
         })
@@ -177,6 +172,11 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     });
 
     getInfo($cookies.get('remote_host'));
+
+     $rootScope.$on('refreshData', function (argument, host) {
+        $scope.currentHost = host;
+        getInfo(host);
+    });
 
     $scope.refreshData=function(hostArgument){
         $scope.currentHost = hostArgument;

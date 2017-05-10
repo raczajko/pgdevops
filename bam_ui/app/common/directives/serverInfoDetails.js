@@ -11,6 +11,7 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
         controller: ['$scope', '$http', '$window', '$cookies', function serverInfoDetailsController($scope, $http, $window, $cookies) {
 
             function gethostInfo(selectedHost) {
+                $scope.data = '';
                 selectedHost = typeof selectedHost !== 'undefined' ? selectedHost : "";
 
                 if (selectedHost == "" || selectedHost == 'localhost') {
@@ -46,15 +47,16 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
             gethostInfo($cookies.get('remote_host'));
 
             $scope.hostChange = function (host) {
-            var shost= host;
-            if (shost == "" || shost == 'localhost') {
-            shost="localhost";
-            }
+
+                var shost= host;
+                if (shost == "" || shost == 'localhost') {
+                    shost="localhost";
+                }
+                gethostInfo(shost);
                 $rootScope.$emit('refreshData', shost);
                 // $rootScope.$emit('topMenuEvent', host);
                 $rootScope.remote_host = shost;
                 $cookies.put('remote_host', shost);
-                gethostInfo(shost);
                 // $scope.$parent.refreshData(host);
             }
         }]
