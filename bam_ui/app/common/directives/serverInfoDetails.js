@@ -14,7 +14,7 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
                 $scope.data = '';
                 selectedHost = typeof selectedHost !== 'undefined' ? selectedHost : "";
 
-                if (selectedHost == "" || selectedHost == 'localhost') {
+                if (selectedHost == "" || selectedHost == 'localhost' || $scope.title=="Log Tailer") {
                     var infoData = bamAjaxCall.getCmdData('info');
                 } else {
                     var infoData = bamAjaxCall.getCmdData('hostcmd/info/' + selectedHost);
@@ -27,7 +27,7 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
 
             var remote_host = $cookies.get('remote_host');
             remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
-            if (remote_host == "" || remote_host == "localhost" || remote_host == undefined) {
+            if (remote_host == "" || remote_host == "localhost" || remote_host == undefined || $scope.title=="Log Tailer") {
                 $scope.selecthost = '';
             } else {
                 $scope.selecthost = remote_host;
