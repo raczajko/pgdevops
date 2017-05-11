@@ -59,6 +59,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             $scope.components[i].extensionOpened = false;           
         }
         $scope.components[idx].extensionOpened = true;
+        $scope.currentHost = typeof $scope.currentHost !== 'undefined' ? $scope.currentHost : "";
         if ($scope.currentHost=="" || $scope.currentHost == 'localhost'){
             var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
         } else{
@@ -128,11 +129,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     getList($cookies.get('remote_host'));
 
     $scope.currentHost = $cookies.get('remote_host');
-    if ($scope.currentHost=="" || $scope.currentHost == 'localhost'){
-        var getLabList = bamAjaxCall.getCmdData('lablist');
-    } else{
-        var getLabList = bamAjaxCall.getCmdData('hostcmd/lablist/'+ $scope.currentHost);
-    }
+    $scope.currentHost = typeof $scope.currentHost !== 'undefined' ? $scope.currentHost : "";
+
+    var getLabList = bamAjaxCall.getCmdData('lablist');
 
     $scope.showPG10 = false;
     $scope.checkpgdgSetting = false;
@@ -153,10 +152,20 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     });
 
     $rootScope.$on('refreshData', function (argument, host) {
+        $scope.gettingPGDGdata = true;
+        $scope.pgdgNotAvailable = false;
+        $cookies.remove('openedExtensions');
+        localStorage.removeItem('cacheRepo');
+        $scope.isList = undefined;
         $scope.loading = true;
         $scope.currentHost = host;
         getList(host);
         $scope.selectPgDg();
+        if ($scope.currentHost=='' || $scope.currentHost=='localhost') {
+            session.call('com.bigsql.getTestSetting');
+        }else{
+            session.call('com.bigsql.getTestSetting', [$scope.currentHost]);
+        }
     });
 
     $rootScope.$on('sessionCreated', function () {
@@ -281,6 +290,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     
         $scope.setTest = function (pgdg) {
             $cookies.remove('openedExtensions');
+            $scope.loading = true;
             var param;
             if($scope.isList){
                 param = 'prod';
@@ -315,6 +325,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     }
 
     $scope.selectedBigsqlRepo = function (argument) {
+        $scope.pgdgSelected = false;
         $scope.loading = true;
         $scope.components = '';
         getList($scope.currentHost);
@@ -387,6 +398,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     }
 
     $scope.selectPgDg = function (argument) {
+        $scope.pgdgSelected = true;
         $scope.noRepoFound = false;
         $scope.gettingPGDGdata = true;
         $scope.showRepoList = false;
@@ -397,7 +409,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost)
         }
         pgdgComps.then(function (data) {
-            if (data[0].status == 'error') {
+            if (data[0].state == 'error') {
                 $scope.pgdgNotAvailable = true;
                 $scope.pgdgNotAvailableMsg = data[0].msg;
             }else{
@@ -416,23 +428,25 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                     $scope.noRepoSelected = false;
                 }else{
                     $scope.noRepoSelected = true;
+                    $scope.selectRepo = '';
                 }
             }
         })
     }
 
     $scope.registerRepo = function (repo) {
-        
-        var modalInstance = $uibModal.open({
-            templateUrl: '../app/components/partials/pgdgActionModal.html',
-            controller: 'pgdgActionModalController',
-            keyboard  : false,
-            backdrop  : 'static',
-            size: 'lg'
-        });
-        modalInstance.pgdgRepo = repo;
-        modalInstance.pgdgComp = '';
-        modalInstance.host = $cookies.get('remote_host');
+        if($scope.pgdgSelected){
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/pgdgActionModal.html',
+                controller: 'pgdgActionModalController',
+                keyboard  : false,
+                backdrop  : 'static',
+                size: 'lg'
+            });
+            modalInstance.pgdgRepo = repo;
+            modalInstance.pgdgComp = '';
+            modalInstance.host = $cookies.get('remote_host');
+        }
     };
 
 

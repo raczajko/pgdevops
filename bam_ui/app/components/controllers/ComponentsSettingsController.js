@@ -136,12 +136,13 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         if (argument=="" || argument == 'localhost'){
             var infoData = bamAjaxCall.getCmdData('info');
             var checkpgdgSupport = bamAjaxCall.getCmdData('info');
-            var getLablist = bamAjaxCall.getCmdData('lablist');
+            // var getLablist = bamAjaxCall.getCmdData('lablist');
         } else{
             var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
             var checkpgdgSupport = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
-            var getLablist = bamAjaxCall.getCmdData('hostcmd/lablist/'+argument);
+            // var getLablist = bamAjaxCall.getCmdData('hostcmd/lablist/'+argument);
         }
+        var getLablist = bamAjaxCall.getCmdData('lablist');
 
         infoData.then(function(data) {
             $scope.loading = false;
@@ -164,11 +165,12 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     };
 
     $scope.changeSetting = function (settingName, value) {
-        if ($scope.currentHost == "" || $scope.currentHost == 'localhost'){
-            session.call('com.bigsql.setLabSetting', [settingName, value]);
-        }else{
-            session.call('com.bigsql.setLabSetting', [settingName, value, $scope.currentHost]);
-        }
+        session.call('com.bigsql.setLabSetting', [settingName, value]);
+        // if ($scope.currentHost == "" || $scope.currentHost == 'localhost'){
+        //     session.call('com.bigsql.setLabSetting', [settingName, value]);
+        // }else{
+        //     session.call('com.bigsql.setLabSetting', [settingName, value, $scope.currentHost]);
+        // }
     }
 
     $rootScope.$on('refreshUpdateDate', function (argument) {
