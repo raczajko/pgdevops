@@ -88,8 +88,8 @@
                     <div class="labDescription">{{lab.short_desc}}</div>
                 </div>
                 <div class="col-md-3">
-                    <label><input type="radio" id="{{lab.lab}}-enable" ng-model="lab.enabled" value="on" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on')"> Enable</label>
-                    <label><input type="radio" id="{{lab.lab}}-disable" ng-model="lab.enabled" value="" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'off')"> Disable</label>
+                    <label><input type="radio" id="{{lab.lab}}-enable" ng-model="lab.enabled" value="on" ng-disabled="currentHost!='localhost' && lab.lab=='multi-host-mgr'" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on')"> Enable</label>
+                    <label><input type="radio" id="{{lab.lab}}-disable" ng-model="lab.enabled" value="" name="{{lab.lab}}" ng-disabled="currentHost!='localhost' && lab.lab=='multi-host-mgr'" ng-click="changeSetting(lab.lab, 'off')"> Disable</label>
                     <div id="email-feedback">
                         <a href="" ng-click="openFeedbackForm(lab.lab, lab.disp_name)">Email Feedback</a>
                     </div>
