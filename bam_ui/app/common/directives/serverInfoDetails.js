@@ -42,6 +42,11 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
                 } else {
                     $scope.hosts = data;
                 }
+                if($scope.title=="Log Tailer"){
+                    var localhost = [];
+                    localhost.push($scope.hosts[0]);
+                    $scope.hosts = localhost;
+                }
             });
 
             gethostInfo($cookies.get('remote_host'));
