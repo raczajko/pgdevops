@@ -13,7 +13,8 @@
         <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
         <span><h3>Loading...</h3></span>
     </div>
-    <div ng-if="!loading">
+    <span ng-if="pgcNotAvailable && !loading" style="text-align: center;"> <h4>{{errorData.msg}}</h4> </span>
+    <div ng-if="!loading && !pgcNotAvailable">
     <div class="col-md-6 col-sm-6 col-xs-6">
     <div class="box">
         <div class="box-header with-border">

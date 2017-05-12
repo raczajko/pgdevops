@@ -12,7 +12,7 @@
             </uib-tab-heading>
             <div class="box" style="border-top: 0px;">
             <div class="box-body">
-                <div class="components-update-button-wrapper" ng-if="components">
+                <div class="components-update-button-wrapper" ng-if="components && !pgcNotAvailable">
                     <label>
                         <input type="checkbox" ng-model="isList" ng-click="setTest(false)">&nbsp; Show test packages</input>
                     </label>
@@ -32,7 +32,7 @@
             </div>
             </div>
             <span ng-if="retry" style="text-align: center;"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>
-            <span ng-if="pgcNotAvailable" style="text-align: center;"> <h4>{{errorData.msg}}</h4> </span>
+            <span ng-if="pgcNotAvailable && !loading" style="text-align: center;"> <h4>{{errorData.msg}}</h4> </span>
             <div ng-if="nothingInstalled" class="jumbotron" style="background-color: #fff; margin-top: 15px; text-align: center;"> <h3> You haven't installed anything yet</h3>
             </div>
             <div ng-if="!loading && !retry">

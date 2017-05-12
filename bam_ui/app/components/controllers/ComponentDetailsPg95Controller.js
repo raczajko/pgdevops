@@ -66,37 +66,46 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             }
 
             infoData.then(function (data) {
+                
+                $scope.showErrormsg = false;
                 // $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);
                 if( typeof data !== 'string'){
-                    $scope.loading = false;
-                    if (data[0]['autostart'] == "on") {
-                        data[0]['autostart'] = true;
-                    } else {
-                        data[0]['autostart'] = false;
-                    }
-                    if (window.location.href.split('/').pop(-1) == data[0].component) {
-                        $scope.component = data[0];
-                        if ($scope.component.status != "Running") {
-                            $scope.activeReleaseNotes = true;
-                            $scope.activeOverview = false;
-                            $scope.uibStatus = {
-                                tpsChartCollapsed: false,
-                                rpsChartCollapsed: false,
-                                diskChartCollapsed: true,
-                                cpuChartCollapsed: true,
-                                connectionsCollapsed: false
-                            };
+                    if (data[0].state!='error') {
+                        $scope.loading = false;
+                        $scope.showErrormsg = false;
+                        if (data[0]['autostart'] == "on") {
+                            data[0]['autostart'] = true;
                         } else {
-                            $scope.activeReleaseNotes = false;
-                            $scope.activeOverview = true;
-                            $scope.uibStatus = {
-                                tpsChartCollapsed: true,
-                                rpsChartCollapsed: true,
-                                diskChartCollapsed: false,
-                                cpuChartCollapsed: true,
-                                connectionsCollapsed: false
-                            };
+                            data[0]['autostart'] = false;
                         }
+                        if (window.location.href.split('/').pop(-1) == data[0].component) {
+                            $scope.component = data[0];
+                            if ($scope.component.status != "Running") {
+                                $scope.activeReleaseNotes = true;
+                                $scope.activeOverview = false;
+                                $scope.uibStatus = {
+                                    tpsChartCollapsed: false,
+                                    rpsChartCollapsed: false,
+                                    diskChartCollapsed: true,
+                                    cpuChartCollapsed: true,
+                                    connectionsCollapsed: false
+                                };
+                            } else {
+                                $scope.activeReleaseNotes = false;
+                                $scope.activeOverview = true;
+                                $scope.uibStatus = {
+                                    tpsChartCollapsed: true,
+                                    rpsChartCollapsed: true,
+                                    diskChartCollapsed: false,
+                                    cpuChartCollapsed: true,
+                                    connectionsCollapsed: false
+                                };
+                            }
+                        }
+                    }else{
+                        $scope.errorData = data[0];
+                        $scope.showErrormsg = true;
+                        $scope.loading = false;
                     }
                 }
             });

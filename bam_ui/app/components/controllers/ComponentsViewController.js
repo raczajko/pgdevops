@@ -98,12 +98,14 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
-                $cookies.remove('remote_host');
+                // $cookies.remove('remote_host');
             }else if (data[0].state == 'error') {
                 $scope.loading = false;
                 $scope.pgcNotAvailable = true;
                 $scope.errorData = data[0];
+                $scope.components = [];
             } else {
+                $scope.pgcNotAvailable = false;
                 $scope.nothingInstalled = false;
                 data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops'});
                 if ($scope.showInstalled) {
@@ -133,7 +135,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         });
 
         pgcInfo.then(function(data){
-            if (data!="error") {
+            if (data!="error" && data[0].state != 'error') {
                 $scope.pgdgUbuMsg = false;
                 var os = data[0].os;
                 if(os.indexOf("Mac") > -1 || os.indexOf("Windows") > -1){
@@ -565,7 +567,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         if ($scope.loading) {
             $window.location.reload();
         };
-    }, 10000);
+    }, 15000);
 
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {

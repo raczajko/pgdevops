@@ -145,17 +145,27 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         var getLablist = bamAjaxCall.getCmdData('lablist');
 
         infoData.then(function(data) {
-            $scope.loading = false;
-            $scope.pgcInfo = data[0];
-            if (data[0].last_update_utc) {
-                var l_date = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
-                $scope.lastUpdateStatus = l_date.split(' ')[0] + ' ' + l_date.split(' ')[1].replace(/^0+/, '') + ', ' + l_date.split(' ')[2] + ' ' + l_date.split(' ')[3]
-            }
-            if (MachineInfo.getUpdationMode() == "manual") {
-                $scope.settingType = 'manual';
+            if(data == "error"){
+                $timeout(wait, 5000);
+                $scope.loading = false;
+            }else if (data[0].state == 'error') {
+                $scope.loading = false;
+                $scope.pgcNotAvailable = true;
+                $scope.errorData = data[0];
             } else {
-                $scope.settingType = 'auto';
-                session.call('com.bigsql.get_host_settings');
+                $scope.pgcNotAvailable = false;
+                $scope.loading = false;
+                $scope.pgcInfo = data[0];
+                if (data[0].last_update_utc) {
+                    var l_date = new Date(data[0].last_update_utc.replace(/-/g, '/') + " UTC").toString().split(' ',[5]).splice(1).join(' ');
+                    $scope.lastUpdateStatus = l_date.split(' ')[0] + ' ' + l_date.split(' ')[1].replace(/^0+/, '') + ', ' + l_date.split(' ')[2] + ' ' + l_date.split(' ')[3]
+                }
+                if (MachineInfo.getUpdationMode() == "manual") {
+                    $scope.settingType = 'manual';
+                } else {
+                    $scope.settingType = 'auto';
+                    session.call('com.bigsql.get_host_settings');
+                }
             }
         });
        
@@ -188,6 +198,10 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         $scope.currentHost = hostArgument;
         getInfo(hostArgument);
     };
+
+    function wait() {
+            $window.location.reload();
+        };
 
     /**
      Unsubscribe to all the apis on the template and scope destroy
