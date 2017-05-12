@@ -144,6 +144,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                     $scope.pgdgUbuMsg = true;
                     $scope.osSupport = true;
                 }else{
+                    $scope.pgdgUbuMsg = false;
                     $scope.osSupport = true;
                 }
             }
@@ -178,7 +179,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     $rootScope.$on('refreshData', function (argument, host) {
         $scope.gettingPGDGdata = true;
         $scope.pgdgNotAvailable = false;
-        $scope.pgdgUbuMsg = true;
+        $scope.pgdgUbuMsg = false;
         $cookies.remove('openedExtensions');
         localStorage.removeItem('cacheRepo');
         $scope.isList = undefined;
@@ -292,26 +293,26 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             $window.location.reload();
         };
 
-        var infoData = bamAjaxCall.getCmdData('info');
-        infoData.then(function (data) {
-            $scope.machineInfo =  data[0];
-            var myDate = new Date();
-            var previousDay = new Date(myDate);
-            previousDay.setDate(myDate.getDate() - 7);
-            $scope.prevWeek = $filter('date')(previousDay, 'yyyy-MM-dd');
-            for (var i = 0; i < $scope.machineInfo.length; i++) {
-                if ($scope.machineInfo[i].interval == null) {
-                    if ($scope.machineInfo[i].last_update_utc == null || $scope.machineInfo[i].last_update_utc < $scope.prevWeek) {
-                        $scope.updateBtn = true;
-                    }
-                }
-            }
-            if ($scope.machineInfo.interval == null || !$scope.machineInfo.interval) {
-                $scope.updateSettings = 'manual'; 
-            } else {
-                $scope.updateSettings = 'auto';
-            }
-        });
+        // var infoData = bamAjaxCall.getCmdData('info');
+        // infoData.then(function (data) {
+        //     $scope.machineInfo =  data[0];
+        //     var myDate = new Date();
+        //     var previousDay = new Date(myDate);
+        //     previousDay.setDate(myDate.getDate() - 7);
+        //     $scope.prevWeek = $filter('date')(previousDay, 'yyyy-MM-dd');
+        //     for (var i = 0; i < $scope.machineInfo.length; i++) {
+        //         if ($scope.machineInfo[i].interval == null) {
+        //             if ($scope.machineInfo[i].last_update_utc == null || $scope.machineInfo[i].last_update_utc < $scope.prevWeek) {
+        //                 $scope.updateBtn = true;
+        //             }
+        //         }
+        //     }
+        //     if ($scope.machineInfo.interval == null || !$scope.machineInfo.interval) {
+        //         $scope.updateSettings = 'manual'; 
+        //     } else {
+        //         $scope.updateSettings = 'auto';
+        //     }
+        // });
     
         $scope.setTest = function (pgdg) {
             $cookies.remove('openedExtensions');
@@ -437,6 +438,10 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             if (data[0].state == 'error') {
                 $scope.pgdgNotAvailable = true;
                 $scope.pgdgNotAvailableMsg = data[0].msg;
+                $scope.gettingPGDGdata = false;
+            }else if(data[0].status==''){
+                $scope.pgdgUbuMsg = true;
+                $scope.gettingPGDGdata = false;
             }else{
                 $scope.pgdgNotAvailable = false;
                 $scope.gettingPGDGdata = false;

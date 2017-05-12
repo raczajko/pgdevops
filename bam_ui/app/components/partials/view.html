@@ -23,7 +23,7 @@
                     </label>
                     &nbsp;
                     &nbsp;
-                    <button ng-click="open('manual')" class="btn btn-default" type="button" ng-if="updateSettings == 'manual'"> Check for updates now</button>         
+                    <button ng-click="open('manual')" class="btn btn-default" type="button"> Check for updates now</button>         
                 </div>
             <div ng-if="loading"  style="height: 250px">
             <div ng-if="loading" style="position: absolute;width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
@@ -116,9 +116,9 @@
           <div style="text-align: center;">PGDG Repository</div>
         </uib-tab-heading>
         <div class="box" style="border-top: 0px;">
-        <!-- <div class="box-body" ng-if="pgdgNotAvailable">
+        <div class="box-body" ng-if="pgdgNotAvailable && !gettingPGDGdata">
             <div style="text-align: center;"><h4>{{pgdgNotAvailableMsg}}</h4></div>
-        </div> -->
+        </div>
         <div class="box-body" ng-if="pgdgUbuMsg && !gettingPGDGdata">
             <div style="text-align: center;"><h4>"PGDG is not available for this OS platform."</h4></div>
         </div>
