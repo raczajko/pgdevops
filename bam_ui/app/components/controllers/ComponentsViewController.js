@@ -85,17 +85,24 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.currentHost = argument;
         if (argument=="" || argument == 'localhost'){
             var listData = bamAjaxCall.getCmdData('list');
+            var pgcInfo = bamAjaxCall.getCmdData('info');
         } else{
             var listData = bamAjaxCall.getCmdData('hostcmd/list/' + argument);
+            var pgcInfo = bamAjaxCall.getCmdData('hostcmd/info/' + argument);
         }
 
         listData.then(function (data) {
             // $rootScope.$emit('showUpdates');
-            if(data == "error" || data[0].state == 'error'){
+            $scope.pgcNotAvailable = false;
+            if(data == "error"){
                 $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
                 $cookies.remove('remote_host');
+            }else if (data[0].state == 'error') {
+                $scope.loading = false;
+                $scope.pgcNotAvailable = true;
+                $scope.errorData = data[0];
             } else {
                 $scope.nothingInstalled = false;
                 data = $(data).filter(function(i,n){ return n.component != 'bam2' && n.component != 'pgdevops'});
@@ -116,12 +123,27 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 for (var i = 0; i < $scope.components.length; i++) {
                     Checkupdates += $scope.components[i].updates;
                 } 
-            }
-            if($cookies.get('openedExtensions')){
-                var extensionCookie = JSON.parse($cookies.get('openedExtensions'));
-                $scope.getExtensions( extensionCookie.component, extensionCookie.index);
-            }else{
-                $scope.getExtensions( $scope.components[0].component, 0);                
+                if($cookies.get('openedExtensions')){
+                    var extensionCookie = JSON.parse($cookies.get('openedExtensions'));
+                    $scope.getExtensions( extensionCookie.component, extensionCookie.index);
+                }else{
+                    $scope.getExtensions( $scope.components[0].component, 0);                
+                }
+            } 
+        });
+
+        pgcInfo.then(function(data){
+            if (data!="error") {
+                $scope.pgdgUbuMsg = false;
+                var os = data[0].os;
+                if(os.indexOf("Mac") > -1 || os.indexOf("Windows") > -1){
+                    $scope.osSupport = false;
+                }else if (os.indexOf("Ubuntu") > -1) {
+                    $scope.pgdgUbuMsg = true;
+                    $scope.osSupport = true;
+                }else{
+                    $scope.osSupport = true;
+                }
             }
         });
     };
@@ -154,6 +176,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     $rootScope.$on('refreshData', function (argument, host) {
         $scope.gettingPGDGdata = true;
         $scope.pgdgNotAvailable = false;
+        $scope.pgdgUbuMsg = true;
         $cookies.remove('openedExtensions');
         localStorage.removeItem('cacheRepo');
         $scope.isList = undefined;

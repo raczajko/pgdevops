@@ -32,6 +32,7 @@
             </div>
             </div>
             <span ng-if="retry" style="text-align: center;"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>
+            <span ng-if="pgcNotAvailable" style="text-align: center;"> <h4>{{errorData.msg}}</h4> </span>
             <div ng-if="nothingInstalled" class="jumbotron" style="background-color: #fff; margin-top: 15px; text-align: center;"> <h3> You haven't installed anything yet</h3>
             </div>
             <div ng-if="!loading && !retry">
@@ -110,15 +111,24 @@
             </div>
             </div>
     </uib-tab>
-    <uib-tab ng-if="checkpgdgSetting" select="selectPgDg($event)">
+    <uib-tab ng-if="checkpgdgSetting && osSupport" select="selectPgDg($event)">
         <uib-tab-heading>
           <div style="text-align: center;">PGDG Repository</div>
         </uib-tab-heading>
         <div class="box" style="border-top: 0px;">
-        <div class="box-body" ng-if="pgdgNotAvailable">
+        <!-- <div class="box-body" ng-if="pgdgNotAvailable">
             <div style="text-align: center;"><h4>{{pgdgNotAvailableMsg}}</h4></div>
+        </div> -->
+        <div class="box-body" ng-if="pgdgUbuMsg && !gettingPGDGdata">
+            <div style="text-align: center;"><h4>"PGDG is not available for this OS platform."</h4></div>
         </div>
-        <div class="box-body" ng-if="!pgdgNotAvailable">
+        <div ng-if="gettingPGDGdata" class="box-body" style="height: 250px">
+            <div style="position: absolute; width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+                <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+                <span><h3>Loading...</h3></span>
+            </div>
+        </div>
+        <div class="box-body" ng-if="!pgdgNotAvailable && !pgdgUbuMsg">
         <form class="form-inline" ng-if="showRepoList && !noRepoFound">
             <label>Repository:&nbsp;</label>
             <select class="form-control" ng-model="selectRepo" ng-change="repoChange(selectRepo)" ng-disabled="gettingPGDGdata">
@@ -148,12 +158,6 @@
         <div ng-if="repoNotRegistered"> 
         </div>
         <!-- <span ng-if="repoNotRegistered"> Repo is not registerd.</span> -->
-        <div ng-if="gettingPGDGdata "  style="height: 250px">
-        <div style="position: absolute; width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
-            <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
-            <span><h3>Loading...</h3></span>
-        </div>
-        </div>
         <div ng-if="!noRepoSelected" class="col-md-8 col-sm-12 col-xs-12">
         <div class="box" ng-if="!gettingPGDGdata && !noRepoFound && !repoNotRegistered">
             <div class="box-body">
