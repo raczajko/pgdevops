@@ -12,8 +12,8 @@
                             <label class="comp-select" for="select-component-log">Component:</label>
                             <div class="col-sm-8">
                             <select class="form-control" id="logComponents" ng-change="onLogCompChange()" ng-model="selectComp">
-                                 <option value="#/log/pgcli">pgcli</option>
-                                 <option value="#/log/{{c.component}}" ng-repeat="c in components">{{c.component}}</option>
+                                 <option value="pgcli">pgcli</option>
+                                 <option value="{{c.component}}" ng-repeat="c in components">{{c.component}}</option>
                             </select>
                             </div>
                             </div>

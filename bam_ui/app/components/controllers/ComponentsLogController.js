@@ -25,36 +25,34 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
 
     var cookieVal = $cookies.get('selectedLog');
     if(cookieVal){
-        $window.location.href = cookieVal;
         $scope.selectComp = cookieVal;
     }else{
-        $scope.selectComp = "#"+$location.path();
+        $scope.selectComp = 'pgcli';
     }
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
-        var logComponent = $location.path().split('log/').pop(-1);
-        if (logComponent != 'pgcli'){
-            session.call('com.bigsql.infoComponent',[logComponent]);
-        } else {
-            $scope.logfile = 'pgcli';
-            // $scope.intervalPromise;
-            session.call('com.bigsql.selectedLog',['pgcli']);  
+
+        $scope.getLogfiles = function(){
+            if ($scope.selectComp != 'pgcli'){
+                session.call('com.bigsql.infoComponent',[$scope.selectComp]);
+            } else {
+                session.call('com.bigsql.selectedLog',[$scope.selectComp]);  
+            }
         }
+
+        $scope.getLogfiles();
+        
         
         session.subscribe('com.bigsql.onInfoComponent', function (args) {
-            if (count == 1) {
                 var jsonD = JSON.parse(args[0][0]);
-                if(window.location.href.split('/').pop(-1) == jsonD[0].component){
+                if($scope.selectComp == jsonD[0].component){
                     if(jsonD[0].current_logfile){
                         $scope.logfile = jsonD[0].current_logfile;
                     } 
                     session.call('com.bigsql.selectedLog',[$scope.logfile]);
-                    // $scope.intervalPromise;
                 }
-                count += 1;
-            }
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -92,12 +90,6 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         }).then(function (sub) {
             subscriptions.push(sub);
         });
-
-        // $scope.intervalPromise = $interval(function(){
-        //                             if($scope.logfile != undefined){
-        //                                 session.call('com.bigsql.liveLog',[$scope.logfile]);                                        
-        //                             }
-        //                          },5000);
 
         $scope.tab = 1000;
 
@@ -149,17 +141,12 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
 
 
     $scope.action = function (event) {
-        $scope.logFile = '';
-        session.call('com.bigsql.logIntLines',[event, $scope.logfile]);
+        session.call('com.bigsql.logIntLines',[event, $scope.selectedLog]);
     };
 
     $scope.onLogCompChange = function () {
         $cookies.put('selectedLog', $scope.selectComp);
-        // $interval.cancel($scope.intervalPromise);
-        $window.location.href = $scope.selectComp;
-        for (var i = 0; i < subscriptions.length; i++) {
-            session.unsubscribe(subscriptions[i]);
-        }
+        $scope.getLogfiles();
     };
 
     /**
