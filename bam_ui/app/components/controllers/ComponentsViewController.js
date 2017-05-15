@@ -314,7 +314,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.setTest = function (pgdg) {
             $cookies.remove('openedExtensions');
             $scope.loading = true;
-            $scope.gettingPGDGdata = true;
+            if ($scope.selectRepo.value) {
+                $scope.gettingPGDGdata = true;                
+            }
             var param;
             if($scope.showComps.test){
                 param = 'test';
@@ -324,7 +326,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             $scope.currentHost = typeof $scope.currentHost !== 'undefined' ? $scope.currentHost : "";
             if (pgdg) {
                 session.call('com.bigsql.setTestSetting',[param,  $scope.currentHost]).then(function (argument) {
-                    $scope.repoChange($scope.selectRepo.value);       
+                    if ($scope.selectRepo.value) {
+                        $scope.repoChange($scope.selectRepo.value);  
+                    }     
                 })
             }else{
                 session.call('com.bigsql.setTestSetting',[param, $scope.currentHost]).then(function (argument) {
