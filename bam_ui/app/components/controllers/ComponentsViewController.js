@@ -141,9 +141,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 var os = data[0].os;
                 if(os.indexOf("Mac") > -1 || os.indexOf("Windows") > -1){
                     $scope.osSupport = false;
-                }else if (os.indexOf("Ubuntu") > -1) {
-                    $scope.osSupport = true;
-                }else{
+                }else {
                     $scope.osSupport = true;
                 }
             }
