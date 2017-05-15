@@ -21,6 +21,7 @@ angular.module('bigSQL.components').controller('feedbackFormController', ['$scop
     	}
     	
     	var sendFeedback = $http.post('https://bigsql.org/email-feedback/',args)
+    	var sendFeedback = $http.post('https://www.bigsql.org/email-feedback/',args)
     	sendFeedback.then(function (argument) {	
     	})
     	$uibModalInstance.dismiss('cancel');
