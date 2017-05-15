@@ -14,7 +14,7 @@
             <div class="box-body">
                 <div class="components-update-button-wrapper" ng-if="components && !pgcNotAvailable">
                     <label>
-                        <input type="checkbox" ng-model="isList" ng-click="setTest(false)">&nbsp; Show test packages</input>
+                        <input type="checkbox" ng-model="showComps.test" ng-click="setTest(false)">&nbsp; Show test packages</input>
                     </label>
                     &nbsp;
                     &nbsp;
@@ -116,89 +116,68 @@
           <div style="text-align: center;">PGDG Repository</div>
         </uib-tab-heading>
         <div class="box" style="border-top: 0px;">
-        <div class="box-body" ng-if="pgdgNotAvailable && !gettingPGDGdata">
-            <div style="text-align: center;"><h4>{{pgdgNotAvailableMsg}}</h4></div>
-        </div>
-        <div class="box-body" ng-if="pgdgUbuMsg && !gettingPGDGdata">
-            <div style="text-align: center;"><h4>"PGDG is not available for this OS platform."</h4></div>
-        </div>
-        <div ng-if="gettingPGDGdata" class="box-body" style="height: 250px">
-            <div style="position: absolute; width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
-                <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
-                <span><h3>Loading...</h3></span>
+            <div class="box-body" ng-if="pgdgNotAvailable && !gettingPGDGdata">
+                <div style="text-align: center;"><h4>{{pgdgNotAvailableMsg}}</h4></div>
             </div>
-        </div>
-        <div class="box-body" ng-if="!pgdgNotAvailable && !pgdgUbuMsg">
-        <form class="form-inline" ng-if="showRepoList && !noRepoFound">
-            <label>Repository:&nbsp;</label>
-            <select class="form-control" ng-model="selectRepo" ng-change="repoChange(selectRepo)" ng-disabled="gettingPGDGdata">
-            <option value="">--select--</option>
-            <option ng-repeat="repo in pgdgRepoList" value="{{repo.repo}}">{{repo.repo}}</option>
-            </select> &nbsp; &nbsp;
-            <label>
-                <input type="checkbox" ng-model="isList" ng-click="setTest(true)">&nbsp; Show extra packages</input>
-            </label>         
-        </form>
-        <br>
-        <div ng-if="noRepoFound">
-            <div class="alert alert-warning" role="alert">
-                    You haven't registered any pgdg repositories. Select a repository below to register it.
-            </div>
-            <br>
-            <div class="pull-left" style="display: table;">
-                <label style="display: table-cell;">Available Repositories : &nbsp;</label>
-                <select style="display: table-cell;" class="form-control" ng-model="selectAvailRepo" ng-options="rep.repo as rep.repo for rep in availRepos">
-                </select>
-            </div>
-            <div> 
-                &nbsp;<button class="btn btn-default" ng-click="registerRepo(selectAvailRepo)" ng-disabled="registeringRepo">Register</button>                
-            </div>
-            <div ng-if="registeringRepo"><i class='fa fa-spinner fa-2x  fa-pulse'></i> &nbsp;Registering {{selectAvailRepo}}.....</div>
-        </div>
-        <div ng-if="repoNotRegistered"> 
-        </div>
-        <!-- <span ng-if="repoNotRegistered"> Repo is not registerd.</span> -->
-        <div ng-if="!noRepoSelected" class="col-md-8 col-sm-12 col-xs-12">
-        <div class="box" ng-if="!gettingPGDGdata && !noRepoFound && !repoNotRegistered">
             <div class="box-body">
-                <div id="serversTable">
-                    <div class="component_head_box">
-                        <div class="col-md-6 col-sm-6 col-xs-6"><strong>Component</strong></div>
-                        <div class="col-md-3 col-sm-3 col-xs-3"><strong>Version</strong></div>
-                        <!-- <div class="col-md-2 col-sm-2 col-xs-2"><strong>Release Date</strong></div> -->
-                        <div class="col-md-1 col-sm-1 col-xs-1"><strong style="margin-left: -25px;">Installed</strong></div>
-                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Actions</strong></div>
+                <form class="form-inline" ng-if="showRepoList && !pgdgNotAvailable">
+                    <label>Repository:&nbsp;</label>
+                    <select class="form-control" ng-model="selectRepo.value" ng-change="repoChange(selectRepo.value)" ng-disabled="gettingPGDGdata">
+                    <option value="">--select--</option>
+                    <option ng-repeat="repo in pgdgRepoList" value="{{repo.repo}}">{{repo.repo}}</option>
+                    </select> &nbsp; &nbsp;
+                    <label>
+                        <input type="checkbox" ng-model="showComps.test" ng-click="setTest(true)">&nbsp; Show extra packages</input>
+                    </label>         
+                </form>
+                <br>
+                <div ng-if="gettingPGDGdata" style="height: 250px">
+                    <div style="position: absolute; width: 100px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+                        <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+                        <span><h3>Loading...</h3></span>
                     </div>
-                    <div id="serversTableTbody">
-                        <div ng-repeat="c in repoList" class= "component_box" ng-class-odd="'oddRow'" style="border-bottom: 1px solid #f4f4f4;">
-                            <div class="col-md-6 col-sm-6 col-xs-6">
-                                <div class="comp-name" style="white-space: nowrap;">
-                                    <a class="serversTableTbody-component--link" tooltip-append-to-body="true" ng-bind = "c.component">
-                                    {{c.component}}
-                                    </a>
+                </div>
+                <div ng-if="!noRepoSelected" class="col-md-8 col-sm-12 col-xs-12">
+                <div class="box" ng-if="!gettingPGDGdata && !pgdgNotAvailable && repoList.length>0">
+                    <div class="box-body">
+                        <div id="serversTable">
+                            <div class="component_head_box">
+                                <div class="col-md-6 col-sm-6 col-xs-6"><strong>Component</strong></div>
+                                <div class="col-md-3 col-sm-3 col-xs-3"><strong>Version</strong></div>
+                                <!-- <div class="col-md-2 col-sm-2 col-xs-2"><strong>Release Date</strong></div> -->
+                                <div class="col-md-1 col-sm-1 col-xs-1"><strong style="margin-left: -25px;">Installed</strong></div>
+                                <div class="col-md-2 col-sm-2 col-xs-2"><strong>Actions</strong></div>
+                            </div>
+                            <div id="serversTableTbody">
+                                <div ng-repeat="c in repoList" class= "component_box" ng-class-odd="'oddRow'" style="border-bottom: 1px solid #f4f4f4;">
+                                    <div class="col-md-6 col-sm-6 col-xs-6">
+                                        <div class="comp-name" style="white-space: nowrap;">
+                                            <a class="serversTableTbody-component--link" tooltip-append-to-body="true" ng-bind = "c.component">
+                                            {{c.component}}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-sm-3 col-xs-3" style="white-space: nowrap;">
+                                        {{c.version}}
+                                    </div>
+                                    <!-- <div class="col-md-2 col-sm-2 col-xs-2">{{c.release_date}}</div> -->
+                                    <div class="col-md-1 col-sm-1 col-xs-1">
+                                        <i style="color:green;" class="fa fa-check-circle-o fa-2x " ng-if="c.status == 'Installed' && c.removing == undefined || c.status == 'NotInitialized' && c.removing == undefined && c.init == undefined " ng-hide="c.showingSpinner"></i>
+                                        <i style="margin-left: 20px;" class='fa fa-spinner fa-2x  fa-pulse' ng-if="c.removing || c.init || c.showingSpinner">
+                                        </i>
+                                    </div>
+                                    <div class="col-md-2 col-sm-2 col-xs-2" style="padding-left: 10px; margin-top: -7px;">
+                                        <a class="btn btn-default" style="width: 75px;" ng-click="pgdgAction( 'install', c.component) " ng-if="c.status == 'NotInstalled' || c.status == ''" ng-disabled=" c.showingSpinner">Install</a>
+                                        <a class="btn btn-default" style="width: 75px;" ng-click="pgdgAction( 'remove', c.component) " ng-if="c.status == 'Installed'" ng-disabled=" c.showingSpinner">Remove</a>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-3 col-sm-3 col-xs-3" style="white-space: nowrap;">
-                                {{c.version}}
-                            </div>
-                            <!-- <div class="col-md-2 col-sm-2 col-xs-2">{{c.release_date}}</div> -->
-                            <div class="col-md-1 col-sm-1 col-xs-1">
-                                <i style="color:green;" class="fa fa-check-circle-o fa-2x " ng-if="c.status == 'Installed' && c.removing == undefined || c.status == 'NotInitialized' && c.removing == undefined && c.init == undefined " ng-hide="c.showingSpinner"></i>
-                                <i style="margin-left: 20px;" class='fa fa-spinner fa-2x  fa-pulse' ng-if="c.removing || c.init || c.showingSpinner">
-                                </i>
-                            </div>
-                            <div class="col-md-2 col-sm-2 col-xs-2" style="padding-left: 10px; margin-top: -7px;">
-                                <a class="btn btn-default" style="width: 75px;" ng-click="pgdgAction( 'install', c.component) " ng-if="c.status == 'NotInstalled' || c.status == ''" ng-disabled=" c.showingSpinner">Install</a>
-                                <a class="btn btn-default" style="width: 75px;" ng-click="pgdgAction( 'remove', c.component) " ng-if="c.status == 'Installed'" ng-disabled=" c.showingSpinner">Remove</a>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="col-md-4 col-sm-0 col-xs-0"></div>
+                </div>
             </div>
-        </div>
-        <div class="col-md-4 col-sm-0 col-xs-0"></div>
-        </div>
-        </div>
         </div>
         </uib-tab>
     </uib-tabset>
