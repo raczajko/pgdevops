@@ -184,8 +184,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                     if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
                         session.call(sessionKey, [$scope.component.component]);
                     }else {
-                        $scope.component.installation = true;
                         if (event.target.attributes.action.value == 'install') {
+                            $scope.component.installation = true;
                             session.call(sessionKey, [$scope.component.component, false, $scope.currentHost]);
                         }else{
                             session.call(sessionKey, [$scope.component.component, $scope.currentHost]);
