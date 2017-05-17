@@ -461,7 +461,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     });
 
     function getGroupsList(checkStorage) {
-        $http.get($window.location.origin + '/api/groups')
+        $http.get($window.location.origin + '/api/groups?q='+ Math.floor(Date.now() / 1000).toString())
             .success(function (data) {
                 var storageData;
                 try{
