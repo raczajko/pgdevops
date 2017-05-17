@@ -7,6 +7,9 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
     $scope.installing = false;
     $scope.registering = false;
     $scope.action = $uibModalInstance.action;
+    $scope.pwd = {text: ''};
+    $scope.btnAction = $scope.action;
+
     
     if($uibModalInstance.host == 'localhost' || $uibModalInstance.host == '' ){
         $scope.currentHost = '';
@@ -14,40 +17,44 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
         $scope.currentHost = $uibModalInstance.host;
     }
 
-    if ($scope.pgdgComp && $scope.action) {
-        $scope.loading = true;
+    function pgdgBtnAction(argument){
+
+
         var args = {
             "component" : $scope.pgdgComp,
             "host" : $scope.currentHost,
             "repo" : $scope.pgdgRepo,
-            "action" : $scope.action
+            "action" : argument,
+            "pwd" : $scope.pwd.text
         }
         if ($scope.action == 'install') {
+            $scope.loading = true;
             $scope.installing = true;
         }else if($scope.action == 'remove'){
             $scope.removing = true;
+            $scope.loading = true;
+        } else{
+            $scope.registering = true;
         }
         var pgdgCmd = $http.post($window.location.origin + '/api/pgdgAction', args);
         pgdgCmd.then(function (argument) {
             $scope.loading = false;
             setTimeout(function() {getBGStatus(argument.data.process_log_id)},3000);
         });
+
+    }
+    if ($scope.pgdgComp && $scope.action) {
+        pgdgBtnAction($scope.action);
     }
 
+    $scope.continueAction = function(argument){
+        pgdgBtnAction(argument);
+    };
     $scope.register = function (argument) {
-        $scope.registering = true;
-        var args = {
-            "component" : $scope.pgdgComp,
-            "host" : $scope.currentHost,
-            "repo" : $scope.pgdgRepo,
-            "action" : 'register'
-        }
-        var pgdgCmd = $http.post($window.location.origin + '/api/pgdgAction', args);
-        pgdgCmd.then(function (argument) {
-            setTimeout(function() {getBGStatus(argument.data.process_log_id)},3000);
-        });
+        $scope.btnAction = "register";
+        pgdgBtnAction("register");
 
-    }
+    };
 
 
     function getBGStatus(process_log_id){
@@ -55,12 +62,21 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
         var bgReportStatus = $http.get($window.location.origin + '/api/bgprocess_status/'+ process_log_id);
 
         bgReportStatus.then(function (ret_data){
+            $scope.sudo_pwd = false;
             $scope.procId = ret_data.data.pid;
             $scope.error_msg = ''; 
             $scope.taskID = process_log_id;
             $scope.out_data = ret_data.data.out_data;
             $scope.procCmd = ret_data.data.cmd;
-            if (ret_data.data.process_completed){ 
+
+            if (ret_data.data.process_completed){
+                var n = ret_data.data.out_data.search("sudo: no tty present and no askpass program specified");
+            if (n>=0){
+            $scope.sudo_pwd = true;
+            var res = ret_data.data.out_data.replace("sudo: no tty present and no askpass program specified", "Password required ...");
+            $scope.out_data = res;
+            }
+
                 $scope.procDone = false;
                 if(ret_data.data.process_failed){
                     $scope.procStatus = "Failed."

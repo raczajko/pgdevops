@@ -204,7 +204,6 @@ class checkUser(Resource):
             remote = PgcRemote(host, username, password=password, ssh_key=ssh_key)
             remote.connect()
             is_sudo = remote.has_sudo()
-            remote.disconnect()
             json_dict['state'] = "success"
             json_dict['isSudo'] = is_sudo
             remote_pgc_path = remote.get_exixting_pgc_path()
@@ -212,15 +211,40 @@ class checkUser(Resource):
             if remote_pgc_path.get('pgc_path_exists'):
                 json_dict['pgc_version'] = remote_pgc_path['pgc_version']
             data = json.dumps([json_dict])
+            remote.disconnect()
         except Exception as e:
-            print e
-            errmsg = "ERROR: Cannot connect to " + username + "@" + host + " - " + str(e.args[0])
+            errmsg = "ERROR: Cannot connect to " + username + "@" + host + " - " + str(e)
             json_dict['state'] = "error"
             json_dict['msg'] = errmsg
             data = json.dumps([json_dict])
         return data
 
 api.add_resource(checkUser, '/api/checkUser')
+
+
+class checkHostAccess(Resource):
+    def get(self):
+        host = request.args.get('hostname')
+        check_sudo_password = request.args.get('pwd')
+        [pgc_home, pgc_user, pgc_passwd, pgc_host, pgc_host_name, pgc_ssh_key, pgc_host_info] = get_pgc_host(host)
+        from PgcRemote import PgcRemote
+        json_dict = {}
+        try:
+            remote = PgcRemote(host, pgc_user, password=pgc_passwd, ssh_key=pgc_ssh_key, sudo_pwd=check_sudo_password)
+            remote.connect()
+            is_sudo = remote.has_root_access()
+            json_dict['state'] = "success"
+            json_dict['isSudo'] = is_sudo
+            data = json.dumps([json_dict])
+            remote.disconnect()
+        except Exception as e:
+            errmsg = "ERROR: Cannot connect to " + username + "@" + host + " - " + str(e)
+            json_dict['state'] = "error"
+            json_dict['msg'] = errmsg
+            data = json.dumps([json_dict])
+        return data
+
+api.add_resource(checkHostAccess, '/api/checkUserAccess')
 
 
 class initPGComp(Resource):
@@ -446,6 +470,7 @@ class pgdgAction(Resource):
         args = request.json
         component_name = args.get("component")
         component_host = args.get("host","localhost")
+        pwd=args.get("pwd")
         repo = args.get("repo")
         action = args.get("action")
         from detached_process import detached_process
@@ -454,9 +479,11 @@ class pgdgAction(Resource):
             report_cmd = PGC_HOME + os.sep + "pgc " + action + " REPO " + repo + " -y"
         else:
             report_cmd = PGC_HOME + os.sep + "pgc repo-pkgs " + repo + " " + action + " " + component_name
+        if not pwd:
+            report_cmd = report_cmd + " --no-tty"
         if component_host and component_host != "localhost":
             report_cmd = report_cmd + " --host '" + component_host + "'"
-        process_status = detached_process(report_cmd, ctime)
+        process_status = detached_process(report_cmd, ctime, stdin_str=pwd)
         result['error']=None
         result['status'] =process_status['status']
         result['log_dir'] = process_status['log_dir']
