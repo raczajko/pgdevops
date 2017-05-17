@@ -33,7 +33,9 @@ import csv
 parser = reqparse.RequestParser()
 #parser.add_argument('data')
 
+import platform
 
+this_uname = str(platform.system())
 
 config.APP_NAME = "pgDevOps"
 config.LOGIN_NAME = "pgDevOps"
@@ -168,7 +170,7 @@ api.add_resource(pgcUtilRelnotes, '/api/utilRelnotes/<string:comp>','/api/utilRe
 
 class pgcApiHostCmd(Resource):
     def get(self, pgc_cmd, host_name):
-        data = pgc.get_data(pgc_cmd + ' --host "'+ host_name +'"')
+        data = pgc.get_data(pgc_cmd + " --host \""+ host_name + "\"")
         return data
 
 
@@ -482,7 +484,9 @@ class pgdgAction(Resource):
         if not pwd:
             report_cmd = report_cmd + " --no-tty"
         if component_host and component_host != "localhost":
-            report_cmd = report_cmd + " --host '" + component_host + "'"
+            report_cmd = report_cmd + " --host \"" + component_host + "\""
+        if this_uname == "Windows":
+            report_cmd = report_cmd.replace("\\", "\\\\")
         process_status = detached_process(report_cmd, ctime, stdin_str=pwd)
         result['error']=None
         result['status'] =process_status['status']

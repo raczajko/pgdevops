@@ -23,6 +23,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     $scope.ExtensionsLoading = false;
     $scope.showComps = {test:false};
     $scope.selectRepo = {value:''};
+    $scope.os = {ubuntu: false};
 
     var getCurrentComponent = function (name) {
         for (var i = 0; i < $scope.components.length; i++) {
@@ -141,8 +142,13 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 var os = data[0].os;
                 if(os.indexOf("Mac") > -1 || os.indexOf("Windows") > -1){
                     $scope.osSupport = false;
-                }else {
+                    $scope.os.ubuntu = false;
+                }else if (os.indexOf("Ubuntu") > -1) {
                     $scope.osSupport = true;
+                    $scope.os.ubuntu = true;
+                }else{
+                    $scope.osSupport = true;
+                    $scope.os.ubuntu = false;
                 }
             }
         });

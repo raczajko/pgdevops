@@ -86,7 +86,8 @@
                         <div><strong>{{lab.disp_name}}</strong></div>
                         <div class="labDescription">{{lab.credit_to}}</div>
                     </div>
-                    <div class="labDescription">{{lab.short_desc}}</div>
+                    <div class="labDescription" ng-if="lab.lab!='pgdg-repos'" ng-bind="lab.short_desc"></div>
+                    <div class="labDescription" ng-if="lab.lab=='pgdg-repos'" ng-bind-html="pgdgDesc"></div>
                 </div>
                 <div class="col-md-3">
                     <label><input type="radio" id="{{lab.lab}}-enable" ng-model="lab.enabled" value="on" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on')"> Enable</label>
