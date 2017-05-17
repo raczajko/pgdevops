@@ -24,6 +24,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     $scope.showComps = {test:false};
     $scope.selectRepo = {value:''};
     $scope.os = {ubuntu: false};
+    $scope.noExtension = {found: false};
 
     var getCurrentComponent = function (name) {
         for (var i = 0; i < $scope.components.length; i++) {
@@ -70,15 +71,21 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         }
         // var extensionsList = bamAjaxCall.getCmdData('extensions/' + comp);
         extensionsList.then(function (argument) {
-            if (argument[0].state != 'error') {
+            if (argument.length > 0) {
+                if ( argument[0].state != 'error' ) {
+                    $scope.ExtensionsLoading = false;
+                    $scope.noExtension.found = false;
+                    $scope.extensionsList = argument;
+                    if ($scope.showInstalled) {
+                        $scope.extensionsList = $($scope.extensionsList).filter(function(i,n){ return n.status != "NotInstalled" ;})   
+                    }
+                    for (var i = $scope.extensionsList.length - 1; i >= 0; i--) {
+                        $scope.extensionsList[i].modifiedName = $scope.extensionsList[i].component.split('-')[0].replace(/[0-9]/g,'');
+                    }
+                }
+            }else{
+                $scope.noExtension.found = true;
                 $scope.ExtensionsLoading = false;
-                $scope.extensionsList = argument;
-                if ($scope.showInstalled) {
-                    $scope.extensionsList = $($scope.extensionsList).filter(function(i,n){ return n.status != "NotInstalled" ;})   
-                }
-                for (var i = $scope.extensionsList.length - 1; i >= 0; i--) {
-                    $scope.extensionsList[i].modifiedName = $scope.extensionsList[i].component.split('-')[0].replace(/[0-9]/g,'');
-                }
             }
         })   
     }
