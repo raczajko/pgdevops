@@ -512,7 +512,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $scope.addedNewHost = true;
     });
 
-    $scope.action = function ( event, host) {
+    $scope.action = function ( event, host, name) {
         var showingSpinnerEvents = ['Initialize', 'Start', 'Stop', 'Restart'];
         if(showingSpinnerEvents.indexOf(event.target.innerText) >= 0 ){
             currentComponent = getCurrentComponent( event.currentTarget.getAttribute('value'), host);
@@ -525,7 +525,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 }
             }else{
                 if(event.target.innerText.toLowerCase() != 'initialize'){
-                    session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value'), host]);
+                    session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value'), name]);
                 }
                 // var event_url = cmd + '/' + event.currentTarget.getAttribute('value') + '/' + host;
                 // var eventData = bamAjaxCall.getCmdData(event_url);
