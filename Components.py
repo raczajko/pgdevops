@@ -165,7 +165,7 @@ class ComponentAction(object):
             pgcCmd = pgcCmd.split(' --datadir')[0]
         if host:
             pgcCmd = pgcCmd + " --host \"" + host + "\""
-        if (name > 'pg90') and (name < 'pg99'):
+        if ((name > 'pg90') and (name < 'pg99')) or name == 'pg10':
             pgpass_file = PGC_HOME + os.sep + name + os.sep + ".pgpass"
             if not os.path.isfile(pgpass_file):
                 password_file = open(pgpass_file, 'w')
