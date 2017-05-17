@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies) {
+angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce) {
     $scope.alerts = [];
 
     var session;
@@ -171,6 +171,11 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
        
         getLablist.then(function function_name(argument) {
             $scope.lablist = argument;
+            for (var i = $scope.lablist.length - 1; i >= 0; i--) {
+                if($scope.lablist[i].lab=="pgdg-repos"){
+                    $scope.pgdgDesc = $sce.trustAsHtml($scope.lablist[i].short_desc);
+                }
+            }
         })
     };
 
