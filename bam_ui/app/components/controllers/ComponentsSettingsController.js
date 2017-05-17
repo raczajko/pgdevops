@@ -172,9 +172,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         getLablist.then(function function_name(argument) {
             $scope.lablist = argument;
             for (var i = $scope.lablist.length - 1; i >= 0; i--) {
-                if($scope.lablist[i].lab=="pgdg-repos"){
-                    $scope.pgdgDesc = $sce.trustAsHtml($scope.lablist[i].short_desc);
-                }
+                $scope.lablist[i]['markdownDesc'] = $sce.trustAsHtml($scope.lablist[i].short_desc);
             }
         })
     };

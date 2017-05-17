@@ -50,6 +50,10 @@ angular.module('bigSQL.menus').component('topMenu', {
             callList(host);
         });
 
+        $rootScope.$on('refreshUpdates', function (argument, host) {
+            callList($scope.currentHost);
+        });
+
         $rootScope.$on('updatesCheck', function (argument, host) {
             callList(host);
         });

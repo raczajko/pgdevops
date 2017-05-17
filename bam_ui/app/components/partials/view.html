@@ -69,7 +69,8 @@
                             <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
                             <span><h3>Loading...</h3></span>
                         </div>
-                        <div ng-hide="ExtensionsLoading" id="extensions-tab" class="col-md-2 col-sm-3 col-xs-6 extensions-area"  ng-click="openDetailsModal(ext.component)" style="width: 11.499999995% ; padding: 13px;" ng-repeat="ext in extensionsList">
+                        <div ng-if="noExtension.found && !ExtensionsLoading" class="extLoading"><strong>No Extensions Found</strong></div>
+                        <div ng-hide="ExtensionsLoading || noExtension.found" id="extensions-tab" class="col-md-2 col-sm-3 col-xs-6 extensions-area"  ng-click="openDetailsModal(ext.component)" style="width: 11.499999995% ; padding: 13px;" ng-repeat="ext in extensionsList">
                             <span class="badge new-comp-wrapper" ng-if="ext.is_new == 1 && ext.status == 'NotInstalled'" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="Release date: {{ ext.release_date }}">New</span>
                             <i class="fa fa-check-circle-o pull-right installedSymbol" ng-if="ext.status == 'Installed'|| ext.status == 'NotInitialized'" style="position: absolute; margin-left: 95px"></i>
                             <span class="update-component-arrow-wrapper" style="position: absolute;" tooltip-append-to-body="true" uib-tooltip="New version available: {{ext.current_version}}" ng-if="ext.updates>0">

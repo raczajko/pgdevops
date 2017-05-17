@@ -10,7 +10,7 @@
             <div ng-show="loadingSpinner">
                 <h4 class="control-label" ng-hide="noUpdates"><i class="fa fa-spinner fa-2x  fa-pulse"></i>&#160;&#160;&#160; Checking for updates..</h4>
             </div>
-            <h4 class="control-label" ng-hide="noUpdates || loadingSpinner">{{components.length}} Update(s) Available</h4>
+            <h4 class="control-label" ng-hide="noUpdates || loadingSpinner">{{totalUpdates}} Update(s) Available</h4>
             <div class="pull-right" style="margin-top: -35px;">
                 <button class="btn btn-sm" type="button" ng-click="selectedUpdate()" ng-hide="noUpdates || loadingSpinner">Update All</button>
             </div>

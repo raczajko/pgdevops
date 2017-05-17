@@ -165,7 +165,7 @@ class ComponentAction(object):
             pgcCmd = pgcCmd.split(' --datadir')[0]
         if host:
             pgcCmd = pgcCmd + " --host \"" + host + "\""
-        if (name > 'pg90') and (name < 'pg99'):
+        if ((name > 'pg90') and (name < 'pg99')) or name == 'pg10':
             pgpass_file = PGC_HOME + os.sep + name + os.sep + ".pgpass"
             if not os.path.isfile(pgpass_file):
                 password_file = open(pgpass_file, 'w')
@@ -182,7 +182,7 @@ class ComponentAction(object):
                 pass
 
     @inlineCallbacks
-    def update(self, name):
+    def update(self, name, host=None):
         """
         Method to upgrade a component from installed version to is_current version.
         :param name: Name of the component to be upgraded.
@@ -191,6 +191,8 @@ class ComponentAction(object):
         pgcCmd = PGC_HOME + os.sep + "pgc --json upgrade "
         if name:
             pgcCmd = pgcCmd + name
+        if host:
+            pgcCmd = pgcCmd + " --host " + host
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
