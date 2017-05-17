@@ -34,6 +34,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
             $scope.hideLatestInstalled = true;
 
             $scope.components = $(data).filter(function(i,n){ return n.updates>0 ;});
+            $scope.totalUpdates = $scope.components.length;
             
             for (var i = 0; i < $scope.components.length; i++) {
                 if($scope.components[i].is_current == 0 && $scope.components[i].current_version){
@@ -171,13 +172,20 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                         });
                 }
                 angular.element(document.querySelector('#' + currentComponent.component)).remove();
-                if ($scope.components.length == 1 ) {
+                if ($scope.totalUpdates == 1 ) {
                     // session.call("com.bigsql.getBamConfig");
                     $uibModalInstance.dismiss('cancel');
                     $rootScope.$emit('updatesCheck');
                 }
-                if($scope.updateAll){
-                    $scope.components.splice(0,1);
+                // if($scope.updateAll){
+                //     $scope.components.splice($scope.components.length-1, 1);
+                // }
+                if ($scope.updateAll && $scope.totalUpdates ==1) {
+                    $rootScope.$emit('refreshUpdateDate');
+                    $rootScope.$emit('refreshUpdates');
+                }
+                if (data.status != "cancelled") {
+                    $scope.totalUpdates = $scope.totalUpdates - 1;
                 }
             }
             $scope.$apply();
