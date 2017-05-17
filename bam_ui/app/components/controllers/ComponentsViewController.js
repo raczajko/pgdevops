@@ -46,7 +46,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 nonPgComps.push(comps[i]);
             };
         }
-        if(comps.length > 0 && comps[0]['component'] == 'pg10' && comps[0]['stage'] == 'test'){
+        if(comps.length > 0 && comps[0]['component'] == 'pg10'){
             pgComps.push(comps[0]);
         }
         return  pgComps.reverse().concat(nonPgComps);
@@ -193,6 +193,10 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         }else{
             session.call('com.bigsql.getTestSetting', [$scope.currentHost]);
         }
+    });
+
+    $rootScope.$on('refreshUpdates', function (argument, host) {
+        getList($scope.currentHost);
     });
 
     $rootScope.$on('sessionCreated', function () {

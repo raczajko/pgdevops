@@ -158,7 +158,6 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 delete currentComponent.installationRunning;
                 delete currentComponent.installation;
                 if (data.state == 'unpack' || data.state == 'update') {
-                    console.log("In complete");
                     // session.call('com.bigsql.infoComponent', [$scope.currentComponent])
                     $scope.alerts.push({
                             msg:  data.msg,
@@ -191,13 +190,12 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
             if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
                 session.call(sessionKey, [compName]);
             }else {
-                currentComponent = getCurrentComponent(compName);
-                currentComponent.init = true;
-                var event_url = action + '/' + compName + '/' + $scope.currentHost ;
-                var eventData = bamAjaxCall.getCmdData(event_url);
-                eventData.then(function(data) {
-                    getList($scope.currentHost);
-                });
+                session.call(sessionKey, [compName, $scope.currentHost]);
+                // var event_url =  'upgrade/' + compName + '/' + $scope.currentHost ;
+                // var eventData = bamAjaxCall.getCmdData(event_url);
+                // eventData.then(function(data) {
+                //     getList($scope.currentHost);
+                // });
             }
         };
 
@@ -287,7 +285,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
      **/
     $scope.$on('$destroy', function () {
         $rootScope.$emit('refreshUpdateDate');
-        $rootScope.$emit('topMenuEvent');
+        $rootScope.$emit('refreshUpdates');
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);
         }
