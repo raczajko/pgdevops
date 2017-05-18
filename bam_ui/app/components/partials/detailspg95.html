@@ -40,7 +40,7 @@
                             <span class="pull-left"><b>Data Size</b></span> 
                             <span class="pull-right" ng-bind="component.data_size" id="dt_added"></span>
                         </li>
-                        <li class="list-group-item" id="li-pointer" ng-show="component.is_installed == 1 ">
+                        <li class="list-group-item" id="li-pointer" ng-show="component.is_installed == 1 && component.status!='NotInitialized'">
                             <span class="pull-left"><b>Auto Start</b></span> 
                             <span class="pull-right">
                                 <input type="checkbox" ng-model="component.autostart" ng-change="autostartChange(component.autostart)">
