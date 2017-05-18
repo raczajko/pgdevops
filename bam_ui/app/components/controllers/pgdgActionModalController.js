@@ -42,7 +42,7 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
             "repo" : $scope.pgdgRepo,
             "action" : 'register'
         }
-        var pgdgCmd = $http.post($window.location.origin + '/api/pgdgAction', args);
+        var pgdgCmd = $http.post($window.location.origin + '/api/pgdgAction?q=' + Math.floor(Date.now() / 1000).toString(), args);
         pgdgCmd.then(function (argument) {
             setTimeout(function() {getBGStatus(argument.data.process_log_id)},3000);
         });
@@ -52,7 +52,7 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
 
     function getBGStatus(process_log_id){
         
-        var bgReportStatus = $http.get($window.location.origin + '/api/bgprocess_status/'+ process_log_id);
+        var bgReportStatus = $http.get($window.location.origin + '/api/bgprocess_status/'+ process_log_id + '?q=' + Math.floor(Date.now() / 1000).toString());
 
         bgReportStatus.then(function (ret_data){
             $scope.procId = ret_data.data.pid;
