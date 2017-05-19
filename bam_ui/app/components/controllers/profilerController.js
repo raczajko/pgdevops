@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall) {
+angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', '$cookies', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, $cookies) {
 
     $scope.alerts = [];
     $scope.successAlerts = [];
@@ -310,6 +310,11 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         $scope.successAlerts.splice(index, 1);
         $scope.alerts.splice(index, 1);
         $scope.extensionAlerts.splice(index,1);
+    };
+
+    $scope.clearCookies = function(argument){
+        $cookies.remove('remote_host');
+        $cookies.remove('openedExtensions');
     };
 
     //need to destroy all the subscriptions on a template before exiting it

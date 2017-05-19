@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('badgerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall) {
+angular.module('bigSQL.components').controller('badgerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', '$cookies', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, $cookies) {
 
     $scope.alerts = [];
     $scope.checkedFirst = false;
@@ -130,11 +130,13 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     function checkBGprocess(argument) {
         var getbgProcess = bamAjaxCall.getCmdData('bgprocess_list/badger');
         getbgProcess.then(function (argument) {
-            for (var i = argument.process.length - 1; i >= 0; i--) {
-                if (!argument.process[i].process_completed) {
-                    $scope.showBgProcess = true;
-                    $rootScope.$emit('backgroundProcessStarted', argument.process[i].process_log_id);
-                    $scope.disableGenrate = true;
+            if (argument.process) {
+                for (var i = argument.process.length - 1; i >= 0; i--) {
+                    if (!argument.process[i].process_completed) {
+                        $scope.showBgProcess = true;
+                        $rootScope.$emit('backgroundProcessStarted', argument.process[i].process_log_id);
+                        $scope.disableGenrate = true;
+                    }
                 }
             }
         })
@@ -343,6 +345,10 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         $scope.alerts.splice(index, 1);
     };
 
+    $scope.clearCookies = function(argument){
+        $cookies.remove('remote_host');
+        $cookies.remove('openedExtensions');
+    };
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
         for (var i = 0; i < subscriptions.length; i++) {
