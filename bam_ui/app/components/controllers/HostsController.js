@@ -566,6 +566,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     windowClass: 'modal',
                     controller: 'addHostController',
                     scope: $scope,
+                    keyboard  : false,
+                    backdrop  : 'static',
                 });
             }else{
                 $scope.alerts.push({
