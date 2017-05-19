@@ -1,6 +1,7 @@
 define('pgadmin.browser',
         ['require', 'jquery', 'underscore', 'underscore.string', 'bootstrap',
-        'pgadmin', 'alertify', 'codemirror', 'codemirror/mode/sql/sql', 'wcdocker',
+        'pgadmin', 'alertify', 'codemirror', 'sources/check_node_visibility',
+        'codemirror/mode/sql/sql', 'wcdocker',
         'jquery.contextmenu', 'jquery.aciplugin', 'jquery.acitree',
         'pgadmin.alertifyjs', 'pgadmin.browser.messages',
         'pgadmin.browser.menu', 'pgadmin.browser.panel',
@@ -8,7 +9,10 @@ define('pgadmin.browser',
         'pgadmin.browser.node', 'pgadmin.browser.collection'
 
        ],
-function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
+function(
+  require, $, _, S, Bootstrap, pgAdmin, Alertify,
+  CodeMirror, checkNodeVisibility
+) {
 
   // Some scripts do export their object in the window only.
   // Generally the one, which do no have AMD support.
@@ -593,10 +597,16 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
         single: single
       }
     },
+
+    // This will hold preference data (Works as a cache object)
+    // Here node will be a key and it's preference data will be value
+    node_preference_data: {},
+
     // Add menus of module/extension at appropriate menu
     add_menus: function(menus) {
-      var pgMenu = this.menus;
-      var MenuItem = pgAdmin.Browser.MenuItem;
+      var self = this,
+        pgMenu = this.menus,
+        MenuItem = pgAdmin.Browser.MenuItem;
       _.each(menus, function(m) {
         _.each(m.applies, function(a) {
           /* We do support menu type only from this list */
@@ -604,6 +614,19 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
               'context', 'file', 'edit', 'object',
               'management', 'tools', 'help']) >= 0) {
             var menus;
+
+            // If current node is not visible in browser tree
+            // then return from here
+            if(!checkNodeVisibility(self, m.node)) {
+                return;
+            } else if(_.has(m, 'module') && !_.isUndefined(m.module)) {
+              // If module to which this menu applies is not visible in
+              // browser tree then also we do not display menu
+              if(!checkNodeVisibility(self, m.module.type)) {
+                return;
+              }
+            }
+
             pgMenu[a] = pgMenu[a] || {};
             if (_.isString(m.node)) {
               menus = pgMenu[a][m.node] = pgMenu[a][m.node] || {};
@@ -916,14 +939,14 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                             ) != 1
                           )
                             return true;
-                          m = Math.round((e - s) / 2);
-                          i = items.eq(e);
+                          m = s + Math.round((e - s) / 2);
+                          i = items.eq(m);
                           d = ctx.t.itemData(i);
-                          if (
-                            pgAdmin.natural_sort(
-                              d._label, _data._label
-                            ) == 1
-                          ) {
+                          var res = pgAdmin.natural_sort(d._label, _data._label);
+                          if (res == 0)
+                            return true;
+
+                          if (res == -1) {
                             s = m + 1;
                             e--;
                           } else {
@@ -1203,8 +1226,18 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                 this.t.setLabel(ctx.i, {label: this.new.label});
                 this.t.addIcon(ctx.i, {icon: this.new.icon});
                 this.t.setId(ctx.id, {id: this.new.id});
-                this.t.openPath(this.i);
-                this.t.deselect(this.i);
+
+                // if label is different then we need to
+                // refresh parent so that node get properly
+                // placed in tree
+                if(this.d.label != this.new.label) {
+                  var p = this.t.parent(this.i);
+                  pgAdmin.Browser.onRefreshTreeNode(p);
+                }
+
+                self.t.openPath(self.i);
+                self.t.deselect(self.i);
+
                 // select tree item after few milliseconds
                 setTimeout(function() {
                   self.t.select(self.i);
@@ -1271,7 +1304,11 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                         while (e >= s) {
                           i = items.eq(s);
                           d = ctx.t.itemData(i);
-                          if (d.label > _new.label)
+                          if (
+                            pgAdmin.natural_sort(
+                              d._label, _data._label
+                            ) == 1
+                          )
                             return true;
                           s++;
                         }
@@ -1283,25 +1320,31 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                         return false;
                       },
                       binarySearch = function() {
-                        var d, m;
-                        // Binary search only outperforms Linear search for n > 44.
-                        // Reference:
-                        // https://en.wikipedia.org/wiki/Binary_search_algorithm#cite_note-30
-                        //
-                        // We will try until it's half.
                         while (e - s > 22) {
                           i = items.eq(s);
                           d = ctx.t.itemData(i);
-                          if (d.label > _new.label)
+                          if (
+                            pgAdmin.natural_sort(
+                              d._label, _data._label
+                            ) != -1
+                          )
                             return true;
                           i = items.eq(e);
                           d = ctx.t.itemData(i);
-                          if (d.label < _new.label)
+                          if (
+                            pgAdmin.natural_sort(
+                              d._label, _data._label
+                            ) != 1
+                          )
                             return true;
-                          m = Math.round((e - s) / 2);
-                          i = items.eq(e);
+                          m = s + Math.round((e - s) / 2);
+                          i = items.eq(m);
                           d = ctx.t.itemData(i);
-                          if (d.label < _new.label) {
+                          var res = pgAdmin.natural_sort(d._label, _data._label);
+                          if (res == 0)
+                            return true;
+
+                          if (res == -1) {
                             s = m + 1;
                             e--;
                           } else {
@@ -1392,7 +1435,6 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
       ctx.pI.push(_old);
       _new._label = _new.label;
       _new.label = _.escape(_new.label);
-
       if (_old._pid != _new._pid) {
         ctx.op = 'RECREATE';
         traversePath();
@@ -1473,6 +1515,7 @@ function(require, $, _, S, Bootstrap, pgAdmin, Alertify, CodeMirror) {
                 ctx.t.setLabel(ctx.i, {label: _d.label});
                 ctx.t.addIcon(ctx.i, {icon: _d.icon});
                 ctx.t.setId(ctx.i, {id: _d.id});
+                ctx.t.setInode(ctx.i, {inode: data.inode});
 
                 if (
                   _n.can_expand && typeof(_n.can_expand) == 'function'

@@ -2,7 +2,8 @@ define(
   [
     'jquery', 'underscore', 'underscore.string', 'alertify', 'pgadmin',
     'backbone', 'backgrid', 'codemirror', 'pgadmin.misc.explain',
-    'sources/selection/clipboard',
+    'sources/selection/grid_selector', 'sources/selection/clipboard',
+    'sources/selection/copy_data',
 
     'slickgrid', 'bootstrap', 'pgadmin.browser', 'wcdocker',
     'codemirror/mode/sql/sql', 'codemirror/addon/selection/mark-selection',
@@ -21,13 +22,12 @@ define(
     'slickgrid/plugins/slick.cellrangedecorator',
     'slickgrid/plugins/slick.cellrangeselector',
     'slickgrid/plugins/slick.cellselectionmodel',
-    'slickgrid/plugins/slick.checkboxselectcolumn',
     'slickgrid/plugins/slick.cellcopymanager',
     'slickgrid/plugins/slick.rowselectionmodel',
     'slickgrid/slick.grid'
   ],
   function(
-    $, _, S, alertify, pgAdmin, Backbone, Backgrid, CodeMirror, pgExplain, clipboard
+    $, _, S, alertify, pgAdmin, Backbone, Backgrid, CodeMirror, pgExplain, GridSelector, clipboard, copyData
   ) {
     /* Return back, this has been called more than once */
     if (pgAdmin.SqlEditor)
@@ -540,6 +540,9 @@ define(
         // To store primary keys before they gets changed
         self.handler.primary_keys_data = {};
 
+        // Add getItemMetadata into handler for later use
+        self.handler.data_view = collection;
+
         // Remove any existing grid first
         if (self.handler.slickgrid) {
             self.handler.slickgrid.destroy();
@@ -549,14 +552,7 @@ define(
           collection = [];
         }
 
-        var grid_columns = new Array(),
-          checkboxSelector;
-
-          checkboxSelector = new Slick.CheckboxSelectColumn({
-            cssClass: "sc-cb"
-          });
-
-          grid_columns.push(checkboxSelector.getColumnDefinition());
+        var grid_columns = [];
 
         var grid_width = $($('#editor-panel').find('.wcFrame')[1]).width()
         _.each(columns, function(c) {
@@ -564,7 +560,9 @@ define(
               id: c.name,
               pos: c.pos,
               field: c.name,
-              name: c.label
+              name: c.label,
+              not_null: c.not_null,
+              has_default_val: c.has_default_val
             };
 
             // Get the columns width based on data type
@@ -592,6 +590,9 @@ define(
            grid_columns.push(options)
         });
 
+        var gridSelector = new GridSelector();
+        grid_columns = gridSelector.getColumnDefinitionsWithCheckboxes(grid_columns);
+
         var grid_options = {
           editable: true,
           enableAddRow: is_editable,
@@ -615,19 +616,29 @@ define(
         // Add-on function which allow us to identify the faulty row after insert/update
         // and apply css accordingly
         collection.getItemMetadata = function(i) {
-          var res = {}, cssClass = '';
+          var res = {},
+            cssClass = '',
+            data_store = self.handler.data_store;
+
           if (_.has(self.handler, 'data_store')) {
-            if (i in self.handler.data_store.added_index) {
+            if (i in data_store.added_index &&
+              data_store.added_index[i] in data_store.added) {
               cssClass = 'new_row';
-              if (self.handler.data_store.added[self.handler.data_store.added_index[i]].err) {
+              if (data_store.added[data_store.added_index[i]].err) {
                 cssClass += ' error';
               }
-            } else if (i in self.handler.data_store.updated_index) {
+            } else if (i in data_store.updated_index && i in data_store.updated) {
               cssClass = 'updated_row';
-              if (self.handler.data_store.updated[self.handler.data_store.updated_index[i]].err) {
+              if (data_store.updated[data_store.updated_index[i]].err) {
                 cssClass += ' error';
               }
             }
+          }
+          // Disable rows having default values
+          if (!_.isUndefined(self.handler.rows_to_disable) &&
+            _.indexOf(self.handler.rows_to_disable, i) !== -1
+          ) {
+            cssClass += ' disabled_row';
           }
           return {'cssClasses': cssClass};
         }
@@ -635,7 +646,7 @@ define(
         var grid = new Slick.Grid($data_grid, collection, grid_columns, grid_options);
         grid.registerPlugin( new Slick.AutoTooltips({ enableForHeaderCells: false }) );
         grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
-        grid.registerPlugin(checkboxSelector);
+        grid.registerPlugin(gridSelector);
 
         var editor_data = {
           keys: self.handler.primary_keys,
@@ -672,28 +683,53 @@ define(
                  });
                  // Now assign mapped temp PK to PK
                  primary_key_list =  _tmp_keys;
+
+                 // Check if selected is new row ?
+                 // Allow to delete if yes
+                 var cell_el = this.grid.getCellNode(selected_rows_list[0], 0),
+                  parent_el = $(cell_el).parent(),
+                  is_new_row = $(parent_el).hasClass('new_row');
+
+                 // Clear selection model if row primary keys is set to default
+                 var row_data = collection[selected_rows_list[0]];
+                 if (primary_key_list.length &&
+                     !_.has(row_data, primary_key_list) && !is_new_row) {
+                   this.selection.setSelectedRows([]);
+                   selected_rows_list = [];
+                 }
                }
+
+              // Clear the object as no rows to delete
+              // and disable delete/copy rows button
+              var clear_staged_rows = function() {
+                rows_for_stage = {};
+                $("#btn-delete-row").prop('disabled', true);
+                $("#btn-copy-row").prop('disabled', true);
+              }
 
               // If any row(s) selected ?
               if(selected_rows_list.length) {
                 if(this.editor.handler.can_edit)
-                  // Enable delete rows button
+                  // Enable delete rows and copy rows button
                   $("#btn-delete-row").prop('disabled', false);
+                  $("#btn-copy-row").prop('disabled', false);
+                  // Collect primary key data from collection as needed for stage row
+                  _.each(selected_rows_list, function(row_index) {
+                    var row_data = collection[row_index],
+                      pkey_data = _.pick(row_data, primary_key_list);
 
-                // Enable copy rows button
-                $("#btn-copy-row").prop('disabled', false);
-                // Collect primary key data from collection as needed for stage row
-                _.each(selected_rows_list, function(row_index) {
-                  var row_data = collection[row_index];
-                  // Store Primary key data for selected rows
-                  rows_for_stage[row_data.__temp_PK] = _.pick(row_data, primary_key_list);
-                });
+                    // Store Primary key data for selected rows
+                    if (!_.isUndefined(row_data) && !_.isUndefined(pkey_data)) {
+                      // check for invalid row
+                      rows_for_stage[row_data.__temp_PK] = _.pick(row_data, primary_key_list);
+                    }
+                  });
               } else {
-                // Clear the object as no rows to delete
-                rows_for_stage = {};
-                // Disable delete/copy rows button
-                $("#btn-delete-row").prop('disabled', true);
-                $("#btn-copy-row").prop('disabled', true);
+                //clear staged rows
+                clear_staged_rows();
+              }
+              if (!Object.keys(rows_for_stage).length) {
+                clear_staged_rows();
               }
 
              // Update main data store
@@ -706,6 +742,14 @@ define(
         // This will be used to collect primary key for that row
         grid.onBeforeEditCell.subscribe(function (e, args) {
             var before_data = args.item;
+
+            // If newly added row is saved but grid is not refreshed,
+            // then disable cell editing for that row
+            if(self.handler.rows_to_disable &&
+              _.contains(self.handler.rows_to_disable, args.row)) {
+              return false;
+            }
+
             if(self.handler.can_edit && before_data && '__temp_PK' in before_data) {
               var _pk = before_data.__temp_PK,
                 _keys = self.handler.primary_keys,
@@ -810,12 +854,39 @@ define(
           $("#btn-save").prop('disabled', false);
         }.bind(editor_data));
 
+
+        // Listener function which will be called after cell is changed
+        grid.onActiveCellChanged.subscribe(function (e, args) {
+          // Access to row/cell value after a cell is changed.
+          // The purpose is to remove row_id from temp_new_row
+          // if new row has primary key instead of [default_value]
+          // so that cell edit is enabled for that row.
+          var grid = args.grid,
+            row_data = grid.getDataItem(args.row),
+            primary_key = row_data && row_data[0];
+
+          // temp_new_rows is available only for view data.
+          if (!_.isUndefined(primary_key) &&
+            self.handler.temp_new_rows
+          ) {
+            var index = self.handler.temp_new_rows.indexOf(args.row);
+            if (index > -1) {
+              self.handler.temp_new_rows.splice(index, 1);
+            }
+          }
+        });
+
         // Listener function which will be called when user adds new rows
         grid.onAddNewRow.subscribe(function (e, args) {
           // self.handler.data_store.added will holds all the newly added rows/data
           var _key = epicRandomString(10),
             column = args.column,
             item = args.item, data_length = this.grid.getDataLength();
+
+          // Add new row in list to keep track of it
+          if (_.isUndefined(item[0])) {
+            self.handler.temp_new_rows.push(data_length);
+          }
 
           if(item) {
             item.__temp_PK = _key;
@@ -1633,6 +1704,10 @@ define(
           self.query_start_time = new Date();
           self.rows_affected = 0;
           self._init_polling_flags();
+          // keep track of newly added rows
+          self.rows_to_disable = new Array();
+          // Temporarily hold new rows added
+          self.temp_new_rows = new Array();
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
@@ -2081,7 +2156,9 @@ define(
                     'label': column_label,
                     'cell': col_cell,
                     'can_edit': self.can_edit,
-                    'type': type
+                    'type': type,
+                    'not_null': c.not_null,
+                    'has_default_val': c.has_default_val
                   };
                   columns.push(col);
                 });
@@ -2171,6 +2248,30 @@ define(
           return (self.get('can_edit'));
         },
 
+        rows_to_delete: function(data) {
+          var self = this;
+          var tmp_keys = [];
+          _.each(self.primary_keys, function(p, idx) {
+            // For each columns search primary key position
+            _.each(self.columns, function(c) {
+               if(c.name == idx) {
+                 tmp_keys.push(c.pos);
+               }
+            });
+          });
+
+          // re-calculate rows with no primary keys
+          self.temp_new_rows = [];
+          data.forEach(function(d, idx) {
+            var p_keys_idx = _.pick(d, tmp_keys);
+            if (Object.keys(p_keys_idx).length == 0) {
+              self.temp_new_rows.push(idx);
+            }
+          });
+          data.getItemMetadata = self.data_view.getItemMetadata;
+          self.rows_to_disable = _.clone(self.temp_new_rows);
+        },
+
         // This function will delete selected row.
         _delete: function() {
           var self = this, deleted_keys = [],
@@ -2200,6 +2301,7 @@ define(
                      return (d && _.indexOf(deleted_keys, d.__temp_PK) > -1)
                    });
                   }
+                  self.rows_to_delete.apply(self, [data]);
                   grid.resetActiveCell();
                   grid.setData(data, true);
                   grid.setSelectedRows([]);
@@ -2320,8 +2422,18 @@ define(
                           data.splice(idx, 1);
                         });
                       }
+                      self.rows_to_delete.apply(self, [data]);
                       grid.setData(data, true);
                       grid.setSelectedRows([]);
+                    }
+
+                    // whether a cell is editable or not is decided in
+                    // grid.onBeforeEditCell function (on cell click)
+                    // but this function should do its job after save
+                    // operation. So assign list of added rows to original
+                    // rows_to_disable array.
+                    if (is_added) {
+                       self.rows_to_disable = _.clone(self.temp_new_rows);
                     }
 
                     // Reset data store
@@ -2350,6 +2462,12 @@ define(
                       (!_.isUndefined(res.data._rowid)|| !_.isNull(res.data._rowid))) {
                     var _row_index = self._find_rowindex(res.data._rowid);
                     if(_row_index in self.data_store.added_index) {
+                      // Remove new row index from temp_list if save operation
+                      // fails
+                      var index = self.handler.temp_new_rows.indexOf(_rowid);
+                      if (index > -1) {
+                         self.handler.temp_new_rows.splice(index, 1);
+                      }
                      self.data_store.added[self.data_store.added_index[_row_index]].err = true
                     } else if (_row_index in self.data_store.updated_index) {
                      self.data_store.updated[self.data_store.updated_index[_row_index]].err = true
@@ -2947,46 +3065,7 @@ define(
         },
 
         // This function will copy the selected row.
-        _copy_row: function() {
-          var self = this, grid, data, rows, copied_text = '';
-
-          self.copied_rows = [];
-
-          // Disable copy button
-          $("#btn-copy-row").prop('disabled', true);
-          // Enable paste button
-          if(self.can_edit) {
-            $("#btn-paste-row").prop('disabled', false);
-          }
-
-          grid = self.slickgrid;
-          data = grid.getData();
-          rows = grid.getSelectedRows();
-          // Iterate over all the selected rows & fetch data
-          for (var i = 0; i < rows.length; i += 1) {
-            var idx = rows[i],
-              _rowData = data[idx],
-              _values = [];
-            self.copied_rows.push(_rowData);
-            // Convert it as CSV for clipboard
-            for (var j = 0; j < self.columns.length; j += 1) {
-               var val = _rowData[self.columns[j].pos];
-               if(val && _.isObject(val))
-                 val = "'" + JSON.stringify(val) + "'";
-               else if(val && typeof val != "number" && typeof true != "boolean")
-                 val = "'" + val.toString() + "'";
-               else if (_.isNull(val) || _.isUndefined(val))
-                 val = '';
-                _values.push(val);
-            }
-            // Append to main text string
-            if(_values.length > 0)
-              copied_text += _values.toString() + "\n";
-          }
-          // If there is something to set into clipboard
-          if(copied_text)
-            clipboard.copyTextToClipboard(copied_text);
-        },
+        _copy_row: copyData,
 
         // This function will paste the selected row.
         _paste_row: function() {
@@ -3007,7 +3086,17 @@ define(
                   var _pk = epicRandomString(8);
                   row.__temp_PK = _pk;
               });
-              data = data.concat(copied_rows);
+
+              var temp_func = self.data_view.getItemMetadata,
+                  count = Object.keys(data).length-1;
+
+              _.each(copied_rows, function(row, idx) {
+                data[count] = row;
+                count++;
+              });
+
+              //update data_view
+              data.getItemMetadata = temp_func;
               grid.setData(data, true);
               grid.updateRowCount();
               grid.setSelectedRows([]);
@@ -3132,8 +3221,10 @@ define(
 
           $("#btn-flash").prop('disabled', true);
 
-          if (explain_prefix != undefined && !sql.trim().toUpperCase().startsWith("EXPLAIN"))
+          if (explain_prefix != undefined &&
+                !S.startsWith(sql.trim().toUpperCase(), "EXPLAIN")) {
             sql = explain_prefix + ' ' + sql;
+          }
 
           self.query_start_time = new Date();
           self.query = sql;
