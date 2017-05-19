@@ -18,8 +18,8 @@ import os
 import random
 import select
 import sys
-import csv
 
+import simplejson as json
 import psycopg2
 import psycopg2.extras
 from flask import g, current_app, session
@@ -36,11 +36,17 @@ from ..abstract import BaseDriver, BaseConnection
 from .cursor import DictCursor
 
 if sys.version_info < (3,):
+    # Python2 in-built csv module do not handle unicode
+    # backports.csv module ported from PY3 csv module for unicode handling
+    from backports import csv
     from StringIO import StringIO
     psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
     psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
+    IS_PY2 = True
 else:
     from io import StringIO
+    import csv
+    IS_PY2 = False
 
 _ = gettext
 
@@ -58,8 +64,8 @@ psycopg2.extensions.register_type(
             17, 1186,
             # to cast int4range, int8range, numrange tsrange, tstzrange, daterange
             3904,3926, 3906, 3908, 3910, 3912, 3913,
-            # date, timestamp, timestamptz, bigint, double precision
-            1700, 1082, 1114, 1184, 20, 701
+            # date, timestamp, timestamptz, bigint, double precision, bigint[]
+            1700, 1082, 1114, 1184, 20, 701, 1016
          ),
         'TYPECAST_TO_STRING', psycopg2.STRING)
 )
@@ -226,6 +232,7 @@ class Connection(BaseConnection):
         res['conn_id'] = self.conn_id
         res['database'] = self.db
         res['async'] = self.async
+        res['wasConnected'] = self.wasConnected
 
         return res
 
@@ -596,7 +603,22 @@ WHERE
         if self.async == 1:
             self._wait(cur.connection)
 
-    def execute_on_server_as_csv(self, query, params=None, formatted_exception_msg=False, records=2000):
+    def execute_on_server_as_csv(self,
+                                 query, params=None,
+                                 formatted_exception_msg=False,
+                                 records=2000):
+        """
+        To fetch query result and generate CSV output
+
+        Args:
+            query: SQL
+            params: Additional parameters
+            formatted_exception_msg: For exception
+            records: Number of initial records
+
+        Returns:
+            Generator response
+        """
         status, cur = self.__cursor(server_cursor=True)
         self.row_count = 0
 
@@ -604,24 +626,29 @@ WHERE
             return False, str(cur)
         query_id = random.randint(1, 9999999)
 
-        if sys.version_info < (3,) and type(query) == unicode:
+        if IS_PY2 and type(query) == unicode:
             query = query.encode('utf-8')
 
-        current_app.logger.log(25,
-                               u"Execute (with server cursor) for server #{server_id} - {conn_id} (Query-id: {query_id}):\n{query}".format(
-                                   server_id=self.manager.sid,
-                                   conn_id=self.conn_id,
-                                   query=query.decode('utf-8') if sys.version_info < (3,) else query,
-                                   query_id=query_id
-                               )
-                               )
+        current_app.logger.log(
+           25,
+           u"Execute (with server cursor) for server #{server_id} - {conn_id} "
+           u"(Query-id: {query_id}):\n{query}".format(
+               server_id=self.manager.sid,
+               conn_id=self.conn_id,
+               query=query.decode('utf-8') if
+               sys.version_info < (3,) else query,
+               query_id=query_id
+           )
+        )
         try:
             self.__internal_blocking_execute(cur, query, params)
         except psycopg2.Error as pe:
             cur.close()
             errmsg = self._formatted_exception_msg(pe, formatted_exception_msg)
             current_app.logger.error(
-                u"failed to execute query ((with server cursor) for the server #{server_id} - {conn_id} (query-id: {query_id}):\nerror message:{errmsg}".format(
+                u"failed to execute query ((with server cursor) "
+                u"for the server #{server_id} - {conn_id} "
+                u"(query-id: {query_id}):\nerror message:{errmsg}".format(
                     server_id=self.manager.sid,
                     conn_id=self.conn_id,
                     query=query,
@@ -630,6 +657,53 @@ WHERE
                 )
             )
             return False, errmsg
+
+        def handle_json_data(json_columns, results):
+            """
+            [ This is only for Python2.x]
+            This function will be useful to handle json data types.
+            We will dump json data as proper json instead of unicode values
+
+            Args:
+                json_columns: Columns which contains json data
+                results: Query result
+
+            Returns:
+                results
+            """
+            # Only if Python2 and there are columns with JSON type
+            if IS_PY2 and len(json_columns) > 0:
+                temp_results = []
+                for row in results:
+                    res = dict()
+                    for k, v in row.items():
+                        if k in json_columns:
+                            res[k] = json.dumps(v)
+                        else:
+                            res[k] = v
+                    temp_results.append(res)
+                results = temp_results
+            return results
+
+        def convert_keys_to_unicode(results, conn_encoding):
+            """
+            [ This is only for Python2.x]
+            We need to convert all keys to unicode as psycopg2
+            sends them as string
+
+            Args:
+                res: Query result set from psycopg2
+                conn_encoding: Connection encoding
+
+            Returns:
+                Result set (With all the keys converted to unicode)
+            """
+            new_results = []
+            for row in results:
+                new_results.append(
+                    dict([(k.decode(conn_encoding), v) for k, v in row.items()])
+                )
+            return new_results
 
         def gen():
 
@@ -640,14 +714,33 @@ WHERE
                 yield gettext('The query executed did not return any data.')
                 return
 
-            header = [c.to_dict()['name'] for c in cur.ordered_description()]
+            header = []
+            json_columns = []
+            conn_encoding = cur.connection.encoding
+
+            # json, jsonb, json[], jsonb[]
+            json_types = (114, 199, 3802, 3807)
+            for c in cur.ordered_description():
+                # This is to handle the case in which column name is non-ascii
+                column_name = c.to_dict()['name']
+                if IS_PY2:
+                    column_name = column_name.decode(conn_encoding)
+                header.append(column_name)
+                if c.to_dict()['type_code'] in json_types:
+                    json_columns.append(column_name)
+
+            if IS_PY2:
+                results = convert_keys_to_unicode(results, conn_encoding)
 
             res_io = StringIO()
 
             csv_writer = csv.DictWriter(
-                res_io, fieldnames=header, delimiter=str(','), quoting=csv.QUOTE_NONNUMERIC
+                res_io, fieldnames=header, delimiter=u',',
+                quoting=csv.QUOTE_NONNUMERIC
             )
+
             csv_writer.writeheader()
+            results = handle_json_data(json_columns, results)
             csv_writer.writerows(results)
 
             yield res_io.getvalue()
@@ -662,8 +755,14 @@ WHERE
                 res_io = StringIO()
 
                 csv_writer = csv.DictWriter(
-                    res_io, fieldnames=header, delimiter=str(','), quoting=csv.QUOTE_NONNUMERIC
+                    res_io, fieldnames=header, delimiter=u',',
+                    quoting=csv.QUOTE_NONNUMERIC
                 )
+
+                if IS_PY2:
+                    results = convert_keys_to_unicode(results, conn_encoding)
+
+                results = handle_json_data(json_columns, results)
                 csv_writer.writerows(results)
                 yield res_io.getvalue()
 
@@ -1487,8 +1586,8 @@ class ServerManager(object):
                     not isinstance(database, unicode):
                 database = database.decode('utf-8')
             if did is not None:
-                if did in self.db_info:                        
-                    self.db_info[did]['datname']=database            
+                if did in self.db_info:
+                    self.db_info[did]['datname']=database
         else:
             if did is None:
                 database = self.db
@@ -1565,15 +1664,18 @@ WHERE db.oid = {0}""".format(did))
                 self, conn_info['conn_id'], conn_info['database'],
                 True, conn_info['async']
             )
-
-            try:
-                conn.connect(
-                    password=data['password'],
-                    server_types=ServerType.types()
-                )
-            except Exception as e:
-                current_app.logger.exception(e)
-                self.connections.pop(conn_info['conn_id'])
+            # only try to reconnect if connection was connected previously.
+            if conn_info['wasConnected']:
+                try:
+                    conn.connect(
+                        password=data['password'],
+                        server_types=ServerType.types()
+                    )
+                    # This will also update wasConnected flag in connection so
+                    # no need to update the flag manually.
+                except Exception as e:
+                    current_app.logger.exception(e)
+                    self.connections.pop(conn_info['conn_id'])
 
     def release(self, database=None, conn_id=None, did=None):
         if did is not None:

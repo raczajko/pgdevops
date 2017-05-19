@@ -12,6 +12,7 @@ import simplejson as json
 import os
 import pickle
 import random
+import codecs
 
 from flask import Response, url_for, render_template, session, request
 from flask_babel import gettext
@@ -440,8 +441,23 @@ def get_columns(trans_id):
     columns = dict()
     columns_info = None
     primary_keys = None
+    rset = None
     status, error_msg, conn, trans_obj, session_obj = check_transaction_status(trans_id)
     if status and conn is not None and session_obj is not None:
+
+        ver = conn.manager.version
+        # Get the template path for the column
+        template_path = 'column/sql/#{0}#'.format(ver)
+        command_obj = pickle.loads(session_obj['command_obj'])
+        if hasattr(command_obj, 'obj_id'):
+            SQL = render_template("/".join([template_path,
+                                            'nodes.sql']),
+                                  tid=command_obj.obj_id)
+            # rows with attribute not_null
+            status, rset = conn.execute_2darray(SQL)
+            if not status:
+                return internal_server_error(errormsg=rset)
+
         # Check PK column info is available or not
         if 'primary_keys' in session_obj:
             primary_keys = session_obj['primary_keys']
@@ -449,10 +465,17 @@ def get_columns(trans_id):
         # Fetch column information
         columns_info = conn.get_column_info()
         if columns_info is not None:
-            for col in columns_info:
+            for key, col in enumerate(columns_info):
                 col_type = dict()
                 col_type['type_code'] = col['type_code']
                 col_type['type_name'] = None
+                if rset:
+                    col_type['not_null'] = col['not_null'] = \
+                        rset['rows'][key]['not_null']
+
+                    col_type['has_default_val'] = col['has_default_val'] = \
+                        rset['rows'][key]['has_default_val']
+
                 columns[col['name']] = col_type
 
         # As we changed the transaction object we need to
@@ -602,6 +625,7 @@ def save(trans_id):
     status, error_msg, conn, trans_obj, session_obj = check_transaction_status(trans_id)
     if status and conn is not None \
             and trans_obj is not None and session_obj is not None:
+        setattr(trans_obj, 'columns_info', session_obj['columns_info'])
 
         # If there is no primary key found then return from the function.
         if len(session_obj['primary_keys']) <= 0 or len(changed_data) <= 0:
@@ -1220,7 +1244,10 @@ def load_file():
 
     file_path = unquote(file_data['file_name'])
     if hasattr(str, 'decode'):
-        file_path = unquote(file_data['file_name']).encode('utf-8').decode('utf-8')
+        file_path = unquote(
+            file_data['file_name']
+        ).encode('utf-8').decode('utf-8')
+
     # retrieve storage directory path
     storage_manager_path = get_storage_directory()
     if storage_manager_path:
@@ -1230,45 +1257,27 @@ def load_file():
             file_path.lstrip('/').lstrip('\\')
         )
 
-    file_data = None
+    status, err_msg, is_binary, \
+        is_startswith_bom, enc = Filemanager.check_file_for_bom_and_binary(
+            file_path
+        )
 
-    # check if file type is text or binary
-    textchars = bytearray(
-        [7, 8, 9, 10, 12, 13, 27]) + bytearray(
-        range(0x20, 0x7f)) + bytearray(range(0x80, 0x100))
+    if not status:
+        return internal_server_error(
+            errormsg=gettext(err_msg)
+        )
 
-    is_binary_string = lambda bytes: bool(
-        bytes.translate(None, textchars)
-    )
+    if is_binary:
+        return internal_server_error(
+            errormsg=gettext("File type not supported")
+        )
 
-    # read file
-    try:
-        with open(file_path, 'rb') as fileObj:
-            is_binary = is_binary_string(fileObj.read(1024))
-            if not is_binary:
-                fileObj.seek(0)
-                if hasattr(str, 'decode'):
-                    file_data = fileObj.read().decode('utf-8')
-                else:
-                    file_data = fileObj.read()
-            else:
-                return internal_server_error(
-                    errormsg=gettext("File type not supported")
-                )
-    except IOError as e:
-        # we don't want to expose real path of file
-        # so only show error message.
-        if e.strerror == 'Permission denied':
-            err_msg = "Error: {0}".format(e.strerror)
-        else:
-            err_msg = "Error: {0}".format(e.strerror)
-        return internal_server_error(errormsg=err_msg)
-    except Exception as e:
-        err_msg = "Error: {0}".format(e.strerror)
-        return internal_server_error(errormsg=err_msg)
+    with codecs.open(file_path, 'r', encoding=enc) as fileObj:
+        data = fileObj.read()
+
     return make_json_response(
         data={
-            'status': True, 'result': file_data,
+            'status': True, 'result': data,
         }
     )
 
@@ -1337,7 +1346,8 @@ def save_file():
 @login_required
 def start_query_download_tool(trans_id):
     sync_conn = None
-    status, error_msg, conn, trans_obj, session_obj = check_transaction_status(trans_id)
+    status, error_msg, conn, trans_obj, \
+        session_obj = check_transaction_status(trans_id)
 
     if status and conn is not None \
             and trans_obj is not None and session_obj is not None:
@@ -1361,11 +1371,15 @@ def start_query_download_tool(trans_id):
                     del conn.manager.connections[sync_conn.conn_id]
 
                 # This returns generator of records.
-                status, gen = sync_conn.execute_on_server_as_csv(sql, records=2000)
+                status, gen = sync_conn.execute_on_server_as_csv(
+                    sql, records=2000
+                )
 
                 if not status:
                     r = Response('"{0}"'.format(gen), mimetype='text/csv')
-                    r.headers["Content-Disposition"] = "attachment;filename=error.csv"
+                    r.headers[
+                        "Content-Disposition"
+                    ] = "attachment;filename=error.csv"
                     r.call_on_close(cleanup)
                     return r
 
@@ -1377,7 +1391,18 @@ def start_query_download_tool(trans_id):
                     import time
                     filename = str(int(time.time())) + ".csv"
 
-                r.headers["Content-Disposition"] = "attachment;filename={0}".format(filename)
+                # We will try to encode report file name with latin-1
+                # If it fails then we will fallback to default ascii file name
+                # werkzeug only supports latin-1 encoding supported values
+                try:
+                    tmp_file_name = filename
+                    tmp_file_name.encode('latin-1', 'strict')
+                except UnicodeEncodeError:
+                    filename = "download.csv"
+
+                r.headers[
+                    "Content-Disposition"
+                ] = "attachment;filename={0}".format(filename)
 
                 r.call_on_close(cleanup)
                 return r
@@ -1388,4 +1413,6 @@ def start_query_download_tool(trans_id):
             r.call_on_close(cleanup)
             return r
     else:
-        return internal_server_error(errormsg=gettext("Transaction status check failed."))
+        return internal_server_error(
+            errormsg=gettext("Transaction status check failed.")
+        )

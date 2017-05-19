@@ -13,6 +13,8 @@ import os
 
 from datetime import datetime
 
+from copy import deepcopy
+
 import config as app_config
 from pgadmin.utils.route import BaseTestGenerator
 from regression.feature_utils.pgadmin_page import PgadminPage
@@ -22,12 +24,15 @@ class BaseFeatureTest(BaseTestGenerator):
     CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 
     def setUp(self):
+        self.server = deepcopy(self.server)
+        self.server['name'] += ' Feature Tests'
         if app_config.SERVER_MODE:
             self.skipTest("Currently, config is set to start pgadmin in server mode. "
                           "This test doesn't know username and password so doesn't work in server mode")
 
         self.page = PgadminPage(self.driver, app_config)
         try:
+            self.page.driver.switch_to.default_content()
             self.page.wait_for_app()
             self.page.wait_for_spinner_to_disappear()
             self.page.reset_layout()

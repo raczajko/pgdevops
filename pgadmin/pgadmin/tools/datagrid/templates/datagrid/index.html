@@ -96,7 +96,7 @@
                 </ul>
             </div>
             <div class="btn-group" role="group" aria-label="">
-                <button id="btn-copy-row" type="button" class="btn btn-default" title="{{ _('Copy Row') }}" disabled>
+                <button id="btn-copy-row" type="button" class="btn btn-default" title="{{ _('Copy') }}" disabled>
                     <i class="fa fa-files-o" aria-hidden="true"></i>
                 </button>
                 <button id="btn-paste-row" type="button" class="btn btn-default" title="{{ _('Paste Row') }}" disabled>
@@ -265,6 +265,13 @@ function($, pgAdmin, R, S) {
     loadingDiv = $('#fetching_data'),
     msgDiv = loadingDiv.find('.sql-editor-busy-text');
 
+    // Register unload event on window close.
+    window.onbeforeunload = function(ev) {
+      $.ajax({
+        url: "{{ url_for('datagrid.index') }}" + "close/" + {{ uniqueId }},
+        method: 'GET'
+      });
+    };
     // Get the controller object from pgAdmin.SqlEditor
     var sqlEditorController = pgAdmin.SqlEditor.create(editorPanel);
 
