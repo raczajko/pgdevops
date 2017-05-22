@@ -1,7 +1,7 @@
 <div class="updateModal">
 <div ng-click="cancel()" class="close-modal pull-right" style="margin-right: -41px;
     margin-top: 6px;" data-dismiss="modal" aria-hidden="true">
-    <i class="fa fa-close fa-lg"></i>
+    <i class="fa fa-close fa-lg cursor_pointer"></i>
 </div>
 <div class="modal-body">
     <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
