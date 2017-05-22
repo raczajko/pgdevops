@@ -113,7 +113,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
         	if(!$scope.portNumber){
                 $scope.portNumber = document.getElementById('portNumber').value;
             }
-            session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDirVal, $scope.portNumber ] );
+            session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDir, $scope.portNumber.toString() ] );
         } else {
             if ($scope.userName == undefined || $scope.password == undefined) {
                 var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password ;
