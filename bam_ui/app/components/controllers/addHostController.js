@@ -6,6 +6,7 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	$scope.tryToConnect = false;
 	$scope.connectionStatus = false;
 	$scope.installingStatus = false;
+	$scope.setupError = false;
 	$scope.registerResponse;
 	$scope.type = 'Add';
 
@@ -71,10 +72,11 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	    			$scope.connectionStatus = true;
 	    			$scope.message = jsonData[0].msg;
 	    		} else if(jsonData[0].state == 'error'){
+	    			$scope.setupError = true
+	    			$scope.connectionStatus = false;
+					$scope.installingStatus = false;
 	    			$scope.tryToConnect = false;
-	    			$scope.connectionError = true;
 	    			$scope.message = jsonData[0].msg;
-	    			// $uibModalInstance.dismiss('cancel');
 	    		}
 	    		$scope.$apply();
 	        }).then(function (subscription) {
