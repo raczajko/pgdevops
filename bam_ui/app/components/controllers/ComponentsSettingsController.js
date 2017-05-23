@@ -187,7 +187,8 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     }
 
     $rootScope.$on('refreshUpdateDate', function (argument) {
-       $window.location.reload(); 
+       // $window.location.reload(); 
+       getInfo();
     });
 
     getInfo($cookies.get('remote_host'));

@@ -116,7 +116,7 @@ class pgcApiListRelnotes(Resource):
         return data
 
 
-api.add_resource(pgcApiListRelnotes, '/api/relnotes/<string:cmd>/<string:pgc_host>')
+api.add_resource(pgcApiListRelnotes, '/api/hostrelnotes/<string:cmd>/<string:pgc_host>')
 
 
 class pgcApiHosts(Resource):

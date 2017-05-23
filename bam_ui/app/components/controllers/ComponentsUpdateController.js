@@ -12,6 +12,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
     $scope.alerts = [];
     $scope.updateAll = false;
     $scope.hideNewComponents = true;
+    $scope.error = {show : false};
 
     function getList(argument) {
         argument = typeof argument !== 'undefined' ? argument : "";
@@ -19,7 +20,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         if (argument=="localhost" || argument == ''){
             var listData = bamAjaxCall.getCmdData('relnotes/list');
         } else{
-            var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
+            var listData = bamAjaxCall.getCmdData('hostrelnotes/list/'+argument);
         }
         $scope.loadingSpinner = true;
         $scope.body = false;
@@ -113,13 +114,28 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         } else {
             $scope.loadingSpinner = true;
             $scope.body = false;
-            session.call('com.bigsql.updatesCheck').then(
-                function (sub) {
-                    $scope.loadingSpinner = false;
-                    $scope.body = true;
-                    getList($scope.currentHost);
-                });
+            if ($scope.selecthost == 'localhost') {
+                session.call('com.bigsql.updatesCheck');  
+            } else {
+                session.call('com.bigsql.updatesCheck', [remote_host]);
+            }
         }
+
+        session.subscribe("com.bigsql.onUpdatesCheck", function (argument) {
+            var data = JSON.parse(argument[0]);
+            if (data[0].state == 'error') {
+                $scope.error.show = true;
+                $scope.errorMsg = data[0].msg;
+            }else if (data[0].status == 'completed'){
+                $scope.error.show = false;
+                $scope.loadingSpinner = false;
+                $scope.body = true;
+                getList($scope.currentHost);
+            }
+            $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
 
         $scope.ok = function () {
             $uibModalInstance.close();
@@ -187,6 +203,12 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 if (data.status != "cancelled") {
                     $scope.totalUpdates = $scope.totalUpdates - 1;
                 }
+            }
+            if (data.state == "error") {
+                $scope.alerts.push({
+                    msg: data.msg,
+                    type: 'danger'
+                });
             }
             $scope.$apply();
         }).then(function (subscription) {

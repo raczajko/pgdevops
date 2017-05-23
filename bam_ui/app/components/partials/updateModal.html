@@ -6,6 +6,7 @@
 <div class="modal-body">
     <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
     <div class="container-fluid">
+        <div ng-if="!error.show">
         <div class="row" id="updatesTable" ng-hide="noUpdates">
             <div ng-show="loadingSpinner">
                 <h4 class="control-label" ng-hide="noUpdates"><i class="fa fa-spinner fa-2x  fa-pulse"></i>&#160;&#160;&#160; Checking for updates..</h4>
@@ -179,11 +180,15 @@
         <!-- /.box -->
         <!-- /.box -->
     </div>
+    </div>
+    <div class="row components-update-msg" ng-if="error.show">
+        <div class="well">
+            <h4 style="padding: 8px;">{{errorMsg}} </h4>
+        </div>
+    </div>
     <div class="row components-update-msg" ng-if="!hideNewComponents">
         <div class="well">
             <h4 style="padding: 8px;">No new components released in the last 30 days </h4>
         </div>
     </div>
-        <div class="modal-footer">
-        </div>
 </div>

@@ -395,7 +395,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         modalInstance.component = comp;
         modalInstance.dataDir = '';
         modalInstance.autoStartButton = true;
-        modalInstance.host = $scope.hostsList[$scope.openedHostIndex].host;
+        modalInstance.host = $scope.hostsList[$scope.openedHostIndex].name;
         modalInstance.host_name = $scope.hostsList[$scope.openedHostIndex].name;
     };
 

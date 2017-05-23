@@ -25,6 +25,8 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
         }
         infoData.then(function(args) {
             var data = args[0];
+            $scope.dataDir = data.available_datadir;
+            $scope.portNumber = data.available_port;
             if (data.component == $scope.comp) {
                 if(data['autostart'] == "on" ){
                     $scope.autostartOn = true;
@@ -41,23 +43,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
-    	session = val;
-        session.call('com.bigsql.getAvailPort',[$scope.comp,'']);
-        if($scope.host == 'localhost' || $scope.host == '' || !$scope.host ){
-            var hostInfo = bamAjaxCall.getCmdData('info');
-        } else{
-            var hostInfo = bamAjaxCall.getCmdData('hostcmd/info/' + $scope.host);
-        }
-        hostInfo.then(function (argument) {
-            var data = argument[0];
-            if(!$scope.dataDir){
-                $scope.dataDir = data.home + '/data/' + $scope.comp;      
-            }
-            if($scope.dataDir.length > 40){
-                $scope.dataDir = "..." + $scope.dataDir.substring(17, $scope.dataDir.length)
-            }
-            $scope.dataDirVal = data.home + '/data/' + $scope.comp;
-        });
+    	session = val;        
 
         $scope.portNumber = '';
 
@@ -71,14 +57,6 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
                 $scope.autostart.value = false;
             }
         }
-
-        session.subscribe('com.bigsql.onPortSelect', 
-            function (data) {
-                $scope.portNumber = data.join();
-            }).then(
-            function (subscription){
-                subscriptions.push(subscription);
-            });
 
         session.subscribe('com.bigsql.onAutostart', function (data) {
             if($scope.host == 'localhost' || $scope.host == '' || !$scope.host){
@@ -135,7 +113,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
         	if(!$scope.portNumber){
                 $scope.portNumber = document.getElementById('portNumber').value;
             }
-            session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDirVal, $scope.portNumber ] );
+            session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDir, $scope.portNumber.toString() ] );
         } else {
             if ($scope.userName == undefined || $scope.password == undefined) {
                 var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password ;
