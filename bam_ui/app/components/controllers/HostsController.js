@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', '$interval', '$cookies', '$cookieStore', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, $interval, $cookies, $cookieStore) {
+angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', '$interval', '$cookies', '$cookieStore', 'htmlMessages', '$sce', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, $interval, $cookies, $cookieStore, htmlMessages, $sce ) {
 
     $scope.alerts = [];
 
@@ -570,7 +570,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     backdrop  : 'static',
                 });
             }else{
+                var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+
                 $scope.alerts.push({
+                    msg: getMessage,
                     type: 'warning'
                 });
             }
@@ -594,7 +597,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     }
                 }
             }else{
+                var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+
                 $scope.alerts.push({
+                    msg: getMessage,
                     type: 'warning'
                 });
             }

@@ -20,7 +20,7 @@
         <span><h3>Loading...</h3></span>
     </div>
     <div class="uib-text" uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert()" dismiss-on-timeout="8000">
-        This is a beta feature, you need to enable this in <a ui-sref="components.settingsView">settings.</a> 
+        <div ng-bind-html="alert.msg"></div> 
     </div>
     <div ng-if="nothingInstalled" class="jumbotron"
          style="background-color: #fff; margin-top: 15px; text-align: center;"><h3> You haven't registered any
