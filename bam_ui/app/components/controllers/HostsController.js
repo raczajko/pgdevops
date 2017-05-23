@@ -4,6 +4,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     var subscriptions = [];
     $scope.components = {};
+    $scope.hostState = {active : true};
 
     var currentComponent = {};
     var parentComponent = {};
@@ -197,12 +198,18 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
         var statusData = bamAjaxCall.getCmdData(status_url);
         statusData.then(function(data) {
-                data = $(data).filter(function(i,n){ return n.category == '1' });
-                $scope.groupsList[p_idx].hosts[idx].comps = data;
-                if ($scope.groupsList[p_idx].hosts[idx].comps.length == 0) {
-                    $scope.groupsList[p_idx].hosts[idx].showMsg = true;
-                } else {
-                    $scope.groupsList[p_idx].hosts[idx].showMsg = false;
+                if ( data.length > 0 && data[0].state == 'error') {
+                    $scope.hostState.active = false;
+                    $scope.errorMsg = data[0].msg;
+                    $interval.cancel(stopStatusCall);
+                }else{
+                    data = $(data).filter(function(i,n){ return n.category == '1' });
+                    $scope.groupsList[p_idx].hosts[idx].comps = data;
+                    if ($scope.groupsList[p_idx].hosts[idx].comps.length == 0) {
+                        $scope.groupsList[p_idx].hosts[idx].showMsg = true;
+                    } else {
+                        $scope.groupsList[p_idx].hosts[idx].showMsg = false;
+                    }
                 }
             });
     }
@@ -303,6 +310,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         previousTopData = '';
         $scope.hostsList[idx].comps = '';
         $scope.hostStatus = true;
+        $scope.hostState.active = true;
         $scope.retry = false;
         var isOpened = false;
         if (typeof $scope.hostsList[idx].open == "undefined") {
@@ -336,8 +344,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
             var statusData = bamAjaxCall.getCmdData(status_url);
             statusData.then(function(data) {
-                $scope.hostStatus = false;
-                data = $(data).filter(function(i,n){ return n.category == '1' });
+                if ( data.length > 0 && data[0].state == 'error') {
+                    $scope.hostState.active = false;
+                    $scope.errorMsg = data[0].msg;
+                }else{
+                    $scope.hostStatus = false;
+                    data = $(data).filter(function(i,n){ return n.category == '1' });
                     if(data.length <= 0){
                         $scope.groupsList[p_idx].hosts[idx].comps = data;
                         $scope.groupsList[p_idx].hosts[idx].showMsg = true;
@@ -351,7 +363,8 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                         $scope.groupsList[p_idx].hosts[idx].comps = data;
                         $scope.groupsList[p_idx].hosts[idx].showMsg = false;
                     }
-                });
+                }
+            });
             $interval.cancel(stopStatusCall);
 
             var timeVal = new Date(Date.now());

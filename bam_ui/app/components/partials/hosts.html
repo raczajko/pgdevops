@@ -79,7 +79,7 @@
                                             </div>
                                         </div>
                                 </uib-accordion-heading>
-
+                                <div ng-if="hostState.active">
                                 <div class="col-md-7 col-sm-12 col-xs-12" ng-if="host.hostInfo.home">
 
                                     <!-- <span style="float: right;" ng-click="loadHost(parentIndex, $index,true)">
@@ -188,6 +188,10 @@
                                             </table>
                                         </div>
                                     </div>
+                                </div>
+                                </div>
+                                <div ng-if="!hostState.active">
+                                    {{errorMsg}}
                                 </div>
                             </uib-accordion-group>
                         </uib-accordion>

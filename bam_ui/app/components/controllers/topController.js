@@ -10,12 +10,10 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
     var checkUpdates;
 
     var topRefresh;
-
+    $scope.hostActive = {state: true};
     var previousTopData = "";
 
     function getTopCmdData() {
-
-        //console.log($scope.top_host);
 
         var selectedHost = $scope.top_host;
         $scope.loadingSpinner = true;
@@ -32,9 +30,16 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
         }
 
         infoData.then(function (data) {
-            $scope.topProcess = data[0];
-            $scope.topProcess.kb_read_sec = 0;
-            $scope.topProcess.kb_write_sec = 0;
+            if (data.length > 0 && data[0].state) {
+                $scope.errorMsg = data[0].msg;
+                $scope.hostActive.state = false;
+                $interval.cancel(topRefresh);
+            }else{
+                $scope.hostActive.state = true;
+                $scope.topProcess = data[0];
+                $scope.topProcess.kb_read_sec = 0;
+                $scope.topProcess.kb_write_sec = 0;
+            }   
 
         });
 
