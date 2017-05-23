@@ -164,6 +164,7 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     	if($scope.secondPhase){
     		$scope.secondPhase = false;
     		$scope.firstPhase = true;
+    		$scope.setupError = false;
     	}else if($scope.thirdPhase){
     		$scope.thirdPhase = false;
     		$scope.secondPhase = true;
