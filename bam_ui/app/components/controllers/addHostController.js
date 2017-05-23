@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('addHostController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', 'bamAjaxCall', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal, bamAjaxCall) {
+angular.module('bigSQL.components').controller('addHostController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', 'bamAjaxCall', 'htmlMessages', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal, bamAjaxCall, htmlMessages) {
 
     var session;
 	var sessPromise = PubSubService.getSession();
@@ -9,6 +9,7 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	$scope.setupError = false;
 	$scope.registerResponse;
 	$scope.type = 'Add';
+	$scope.alerts = [];
 
 	$scope.hostName = '';
 	$scope.pgcDir = '';
@@ -87,8 +88,6 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 
     $scope.next = function (argument) {
     	if($scope.firstPhase){
-    		$scope.tryToConnect = true;
-    		$scope.connectionError = false;
     		var data = {
              hostname:$scope.hostName,
              username:$scope.userName
@@ -101,33 +100,41 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
              data.ssh_key=$scope.ssh_key;
             }
 
-
-
-    		var checkUser = bamAjaxCall.getCmdData('checkUser', data);
-    		checkUser.then(function (argument) {
-    			var jsonData = JSON.parse(argument)[0];
-    			if (jsonData.state == 'success') {
-    				$scope.isSudo =  jsonData.isSudo;
-    				$scope.pgcDir = jsonData.pgc_home_path;
-    				$scope.pgcVersion = jsonData.pgc_version;
-    				/*if(!$scope.pgcDir){
-	    				if($scope.isSudo){
-	    					//$scope.serviceUser = 'Postgres';
-	    					$scope.pgcDir = '/opt'
-	    				}else{
-	    					//$scope.serviceUser = $scope.userName;
-	    					$scope.pgcDir = '~/bigsql'
-	    				}
-	    			}*/
-    				$scope.tryToConnect = false;
-    				$scope.firstPhase = false;
-    				$scope.secondPhase = true;
-    			} else{
-	    			$scope.connectionError = true;
-	    			$scope.tryToConnect = false;
-    				$scope.message = jsonData.msg;
-    			}
-    		})
+            if ($scope.password && $scope.ssh_key) {
+            	var msg = htmlMessages.getMessage('pwd-or-ssh-msg');
+            	$scope.alerts.push({
+	                msg : msg,
+	                type : 'danger'
+	            });
+            }else{
+            	$scope.tryToConnect = true;
+    			$scope.connectionError = false;
+            	var checkUser = bamAjaxCall.getCmdData('checkUser', data);
+	    		checkUser.then(function (argument) {
+	    			var jsonData = JSON.parse(argument)[0];
+	    			if (jsonData.state == 'success') {
+	    				$scope.isSudo =  jsonData.isSudo;
+	    				$scope.pgcDir = jsonData.pgc_home_path;
+	    				$scope.pgcVersion = jsonData.pgc_version;
+	    				/*if(!$scope.pgcDir){
+		    				if($scope.isSudo){
+		    					//$scope.serviceUser = 'Postgres';
+		    					$scope.pgcDir = '/opt'
+		    				}else{
+		    					//$scope.serviceUser = $scope.userName;
+		    					$scope.pgcDir = '~/bigsql'
+		    				}
+		    			}*/
+	    				$scope.tryToConnect = false;
+	    				$scope.firstPhase = false;
+	    				$scope.secondPhase = true;
+	    			} else{
+		    			$scope.connectionError = true;
+		    			$scope.tryToConnect = false;
+	    				$scope.message = jsonData.msg;
+	    			}
+	    		})
+            }
     	}else if($scope.secondPhase){
     		$scope.secondPhase = false;
     		$scope.thirdPhase = true;
@@ -157,11 +164,16 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     	if($scope.secondPhase){
     		$scope.secondPhase = false;
     		$scope.firstPhase = true;
+    		$scope.setupError = false;
     	}else if($scope.thirdPhase){
     		$scope.thirdPhase = false;
     		$scope.secondPhase = true;
     	}
     }
+
+    $scope.closeAlert = function (index) {
+        $scope.alerts.splice(index, 1);
+    };
 
 	$scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');

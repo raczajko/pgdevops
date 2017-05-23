@@ -26,7 +26,7 @@
 <div class="modal-body">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-12" ng-if="hostActive.state">
                 <p ng-if="topProcess.state=='error'" class="text-danger">Error while running top command : {{ topProcess.msg }}</p>
                 <h5>
                     <strong> OS </strong> : {{ hostinfo.os }} &nbsp;
@@ -68,6 +68,9 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="col-md-12" ng-if="!hostActive.state">
+                {{errorMsg}}
             </div>
         </div>
     </div>
