@@ -7080,3 +7080,9 @@ fieldset
 .host-uib-tab-heading{
   font-size: 1.4rem
 }
+
+.cursor_pointer{
+  cursor: pointer;
+}
+
+#ip-address .ng-invalid  { border: 1px solid red; }

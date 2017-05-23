@@ -203,11 +203,13 @@ class ComponentAction(object):
 
 
     @inlineCallbacks
-    def updatesCheck(self):
+    def updatesCheck(self, host=None):
         """
         Method to check for updates to all components
         """
         pgcCmd = PGC_HOME + os.sep + "pgc --json update"
+        if host:
+            pgcCmd = pgcCmd + " --host " + host
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
         for line in iter(pgcProcess.stdout.readline, ''):
             ln = (line).rstrip('\n')
