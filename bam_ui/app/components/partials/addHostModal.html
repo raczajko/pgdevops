@@ -3,7 +3,7 @@
     <h4 ng-if="thirdPhase" class="modal-title"> {{type}} PGC Server</h4>
 </div>
 <div class="modal-body">
-
+    <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
     <div ng-if="tryToConnect">
         <i class="fa fa-spinner fa-pulse fa-2x"></i> &nbsp;<strong> Trying to connect {{hostName}} </strong>
     </div>
