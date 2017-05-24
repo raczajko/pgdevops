@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce) {
+angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', 'htmlMessages', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce, htmlMessages) {
     $scope.alerts = [];
 
     var session;
@@ -33,6 +33,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         modalInstance.disp_name = disp_name;
     };
 
+    $scope.lastUpdateNone = htmlMessages.getMessage('last-update-none');
     // var infoData = bamAjaxCall.getCmdData('info')
     // infoData.then(function(data) {
     //     $scope.pgcInfo = data[0];
