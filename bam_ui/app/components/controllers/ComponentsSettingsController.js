@@ -208,6 +208,22 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             $window.location.reload();
         };
 
+    $rootScope.$on('disableLab', function (argument, lab, val) {
+        session.call('com.bigsql.setLabSetting', [lab, val]);
+    })
+
+    $scope.runRds = function (lab, disp_name) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/rdsModal.html',
+            controller: 'rdsModalController',
+            keyboard  : false,
+            backdrop  : 'static',
+            size : 'lg'
+        });
+        modalInstance.lab = lab;
+        modalInstance.disp_name = disp_name;
+    }
+
     /**
      Unsubscribe to all the apis on the template and scope destroy
      **/

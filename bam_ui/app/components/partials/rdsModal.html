@@ -1,0 +1,64 @@
+<div class="modal-header">
+    <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <i class="fa fa-lg fa-close cursor_pointer"></i>
+    </div>
+    <h4 class="modal-title" > {{disp_name}} </h4>
+</div>
+<div ng-click="cancel()" class="close-modal" data-dismiss="modal" aria-hidden="true">
+    <div class="lr">
+        <div class="rl">
+        </div>
+    </div>
+</div>
+<uib-alert ng-repeat="alert in alerts" type="{{ alert.type }}" dismiss-on-timeout="8000" close="closeAlert()"
+           class="uib-text">{{ alert.msg }}</uib-alert>
+
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-12 col-xs-12" ng-if="loadingSpinner">
+            <div class="well">
+                <i class="fa fa-spinner fa-2x  fa-pulse"></i>&nbsp;Loading...
+            </div>
+        </div>
+        <div class="col-md-12 col-xs-12">
+            <div class="well" ng-bind="errMsg" ng-if="!loadingSpinner && !rdsList">
+            </div>
+        </div>
+        <div class="" ng-if="rdsList">
+            <div class="box-body">
+                <div id="serversTable">
+                <div class="component_head_box">
+                    <div class="col-md-2 col-sm-2 col-xs-2"><strong>Instance</strong></div>
+                    <div class="col-md-2 col-sm-2 col-xs-2"><strong>Master User</strong></div>
+                    <div class="col-md-1 col-sm-1 col-xs-1"><strong>Status</strong></div>
+                    <div class="col-md-1 col-sm-1 col-xs-1"><strong>Port</strong></div>
+                    <div class="col-md-1 col-sm-1 col-xs-1"><strong>Region</strong></div>
+                    <div class="col-md-5 col-sm-5 col-xs-5"><strong>Address</strong></div>
+                </div>
+                <div id="serversTableTbody">
+                    <div ng-repeat="rds in rdsList" class= "component_box" ng-class-odd="'oddRow'" style="border-bottom: 1px solid #f4f4f4;">
+                        <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
+                            {{rds.instance}}
+                        </div>
+                        <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
+                            {{rds.master_user}}
+                        </div>
+                        <div class="col-md-1 col-sm-1 col-xs-1" style="white-space: nowrap;">
+                            {{rds.status}}
+                        </div>
+                        <div class="col-md-1 col-sm-1 col-xs-1" style="white-space: nowrap;">
+                            {{rds.port}}
+                        </div>
+                        <div class="col-md-1 col-sm-1 col-xs-1" style="white-space: nowrap;">
+                            {{rds.region_name}}
+                        </div>
+                        <div class="col-md-5 col-sm-5 col-xs-5" style="white-space: nowrap;">
+                            {{rds.address}}
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
