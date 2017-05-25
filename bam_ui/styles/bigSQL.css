@@ -7085,4 +7085,6 @@ fieldset
   cursor: pointer;
 }
 
-#ip-address .ng-invalid  { border: 1px solid red; }
+#pgc-info-box > .form-group {
+  margin-bottom: 0px;
+}

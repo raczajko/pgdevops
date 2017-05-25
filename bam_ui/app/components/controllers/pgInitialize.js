@@ -39,6 +39,14 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
         });
     }
 
+    function startComp(args) {
+        if($scope.host == 'localhost' || $scope.host == '' || !$scope.host){
+                session.call('com.bigsql.start', [$scope.comp]);
+        }else{
+            session.call('com.bigsql.start', [$scope.comp, $scope.host]);
+        }
+    }
+
     getInfoComp();
 
     var sessionPromise = PubSubService.getSession();
@@ -59,11 +67,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
         }
 
         session.subscribe('com.bigsql.onAutostart', function (data) {
-            if($scope.host == 'localhost' || $scope.host == '' || !$scope.host){
-                session.call('com.bigsql.start', [$scope.comp]);
-            }else{
-                session.call('com.bigsql.start', [$scope.comp, $scope.host]);
-            }
+            startComp();
         }).then(function (sub) {
             subscriptions.push(sub);
         });
@@ -94,14 +98,15 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
 
     $scope.addToMetaData = function (comp, remote_host) {
         if($scope.host == 'localhost' || $scope.host == '' || !$scope.host){
-            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp)
+            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp);
         }else{
-            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp + '/' + $scope.host)
+            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp + '/' + $scope.host);
         }
         infoComp.then(function(args) { 
             args[0]['host'] = $scope.host;
             var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', args[0]);
             addToMetaData.then(function (argument) {
+                startComp();
                 $uibModalInstance.dismiss('cancel');                        
             });
         });
@@ -124,15 +129,9 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             eventData.then(function(data) {
                 $scope.addToMetaData();
                 if (!$scope.autostartOn && $scope.autoStartVal) {
-                    if($scope.host == 'localhost' || $scope.host == '' || !$scope.host ){
-                        session.call('com.bigsql.autostart',[$scope.autoStartVal,$scope.comp]).then(function (argument) {
+                    session.call('com.bigsql.autostart',[$scope.autoStartVal,$scope.comp, $scope.host]).then(function (argument) {
                         getInfoComp();
                     });
-                    } else{
-                        session.call('com.bigsql.autostart',[$scope.autoStartVal,$scope.comp, $scope.host]).then(function (argument) {
-                            getInfoComp();
-                        });
-                    }
                 }                  
             });
         }
