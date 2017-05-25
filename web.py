@@ -385,6 +385,8 @@ class AddtoMetadata(Resource):
         component_port = args.get("port",5432)
         component_host = args.get("host","localhost")
         component_proj = args.get("project")
+        component_db = args.get("db","postgres")
+        component_user = args.get("user", "postgres")
         servergroup_id = 1
         try:
             user_id=current_user.id
@@ -404,11 +406,11 @@ class AddtoMetadata(Resource):
             if component_server.count()==0:
                 svr = Server(user_id=user_id,
                             servergroup_id=servergroup_id,
-                            name=component_name + "(%s)" %component_host,
+                            name=component_name + "(%s)" % component_host,
                             host=component_host,
                             port=component_port,
-                            maintenance_db='postgres',
-                            username="postgres",
+                            maintenance_db=component_db,
+                            username=component_user,
                             ssl_mode='prefer',
                             comment=component_proj,
                             discovery_id="BigSQL PostgreSQL")
