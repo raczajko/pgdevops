@@ -368,7 +368,8 @@ class AddtoMetadata(Resource):
         try:
             user_id=current_user.id
             if is_rds:
-                server_group_name = "AWS RDS"
+                server_group_name = args.get("region","AWS RDS")
+
                 rds_serverGroup = ServerGroup.query.filter_by(
                     user_id=current_user.id,
                     name=server_group_name
@@ -379,7 +380,7 @@ class AddtoMetadata(Resource):
                 else:
                     sg = ServerGroup(
                         user_id=current_user.id,
-                        name="AWS RDS")
+                        name=server_group_name)
                     db.session.add(sg)
                     db.session.commit()
                     servergroup_id=sg.id

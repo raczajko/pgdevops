@@ -37,6 +37,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                 args['component'] = $scope.availList[i].instance;
                 args['project'] = 'aws-rds';
                 args['rds'] = true;
+                args['region'] = $scope.availList[i].region;
                 var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', args);
             }
         }
