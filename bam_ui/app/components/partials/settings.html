@@ -19,50 +19,29 @@
         <div class="col-md-6 col-sm-6 col-xs-6">
         <div class="box">
             <div class="box-header with-border">
-                <h4><strong> PGC Server Info </strong></h4></div>
-            <div class="box-body">
-                <form class="form-horizontal">
+                <h4><strong> PGC Server Info </strong></h4>
+            </div>
+            <div>
+                <form class="form-horizontal" id="pgc-info-box">
                     <div class="form-group">
-                        <div class="col-sm-12 col-md-12 col-xs-12">
-                            <div class="col-md-3"><strong>PGC:</strong></div>
-                            <div class="col-md-9">{{pgcInfo.version}}</div>
-                        </div>
+                        <label class="col-sm-3 control-label">PGC :</label>
+                        <div class="col-sm-9 form-control-static">{{pgcInfo.version}} &nbsp; {{pgcInfo.home}}</div>
                     </div>
                     <div class="form-group">
-                        <div class="col-sm-12 col-md-12 col-xs-12">
-                            <div class="col-md-3"><strong>User &amp; Host:</strong></div>
-                            <div class="col-md-9">{{pgcInfo.user}} &nbsp; {{pgcInfo.host}}</div>
-                        </div>
+                        <label class="col-sm-3 control-label">User &amp; Host :</label>
+                        <div class="col-sm-9 form-control-static">{{pgcInfo.user}} &nbsp; {{pgcInfo.host}}</div>
                     </div>
                     <div class="form-group">
-                        <div class="col-sm-12 col-md-12 col-xs-12">
-                            <div class="col-md-3"><strong>OS:</strong></div>
-                            <div class="col-md-9">{{pgcInfo.os}}</div>
-                        </div>
+                        <label class="col-sm-3 control-label">Platform :</label>
+                        <div class="col-sm-9 form-control-static">{{pgcInfo.platform}} &nbsp;|&nbsp; {{pgcInfo.os}} &nbsp;|&nbsp; python {{pgcInfo.python_ver}} &nbsp;|&nbsp; pip {{pgcInfo.pip_ver}}</div>
                     </div>
                     <div class="form-group">
-                        <div class="col-sm-12 col-md-12 col-xs-12">
-                            <div class="col-md-3"><strong>pip:</strong></div>
-                            <div class="col-md-9">{{pgcInfo.pip_ver}}</div>
-                        </div>
+                        <label class="col-sm-3 control-label">Hardware :</label>
+                        <div class="col-sm-9 form-control-static">{{pgcInfo.mem}} GB, {{pgcInfo.cpu}}</div>
                     </div>
                     <div class="form-group">
-                        <div class="col-sm-12 col-md-12 col-xs-12">
-                            <div class="col-md-3"><strong>Python:</strong></div>
-                            <div class="col-md-9">{{pgcInfo.python_ver}}</div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-sm-12 col-md-12 col-xs-12">
-                            <div class="col-md-3"><strong>Hardware:</strong></div>
-                            <div class="col-md-9">{{pgcInfo.mem}} GB, {{pgcInfo.cpu}}</div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-sm-12 col-md-12 col-xs-12">
-                            <div class="col-md-3"><strong>Repo URL:</strong></div>
-                            <div class="col-md-9">{{pgcInfo.repo}}</div>
-                        </div>
+                        <label class="col-sm-3 control-label">Repo URL :</label>
+                        <div class="col-sm-9 form-control-static">{{pgcInfo.repo}}</div>
                     </div>
                 </form>
             </div>
