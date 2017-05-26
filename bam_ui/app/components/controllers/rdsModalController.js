@@ -44,6 +44,15 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         $uibModalInstance.dismiss('cancel');
     };
 
+    $scope.toggleAll = function() { 
+        if($scope.isAllSelected){
+            $scope.isAllSelected = false;
+        }else{
+            $scope.isAllSelected = true;
+        }
+        angular.forEach($scope.availList, function(itm){ itm.selected = $scope.isAllSelected; });
+    }
+
     $scope.optionToggled = function(){
         $scope.checked = false;
         angular.forEach($scope.availList, function (item) {

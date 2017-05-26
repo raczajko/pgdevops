@@ -16,6 +16,7 @@
     </div>
     <span ng-if="pgcNotAvailable && !loading" style="text-align: center;"> <h4>{{errorData.msg}}</h4> </span>
     <div ng-if="!loading && !pgcNotAvailable">
+        <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="col-md-6 col-sm-6 col-xs-6">
         <div class="box">
             <div class="box-header with-border">
@@ -24,77 +25,93 @@
             <div>
                 <form class="form-horizontal" id="pgc-info-box">
                     <div class="form-group">
-                        <label class="col-sm-3 control-label">PGC :</label>
-                        <div class="col-sm-9 form-control-static">{{pgcInfo.version}} &nbsp; {{pgcInfo.home}}</div>
+                        <div class="col-sm-3 info-label"> <strong> PGC : </strong></div>
+                        <div class="col-sm-9 info-text">v{{pgcInfo.version}} &nbsp; {{pgcInfo.home}}</div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-3 control-label">User &amp; Host :</label>
-                        <div class="col-sm-9 form-control-static">{{pgcInfo.user}} &nbsp; {{pgcInfo.host}}</div>
+                        <div class="col-sm-3 info-label"> <strong> User &amp; Host : </strong> </div>
+                        <div class="col-sm-9 info-text">{{pgcInfo.user}} &nbsp; {{pgcInfo.host}}</div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-3 control-label">Platform :</label>
-                        <div class="col-sm-9 form-control-static">{{pgcInfo.platform}} &nbsp;|&nbsp; {{pgcInfo.os}} &nbsp;|&nbsp; python {{pgcInfo.python_ver}} &nbsp;|&nbsp; pip {{pgcInfo.pip_ver}}</div>
+                        <div class="col-sm-3 info-label"> <strong> Platform : </strong> </div>
+                        <div class="col-sm-9 info-text">{{pgcInfo.platform}} &nbsp;|&nbsp; {{pgcInfo.os}} &nbsp;|&nbsp; python {{pgcInfo.python_ver}} &nbsp;|&nbsp; pip {{pgcInfo.pip_ver}}</div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-3 control-label">Hardware :</label>
-                        <div class="col-sm-9 form-control-static">{{pgcInfo.mem}} GB, {{pgcInfo.cpu}}</div>
+                        <div class="col-sm-3 info-label"> <strong> Hardware : </strong> </div>
+                        <div class="col-sm-9 info-text">{{pgcInfo.mem}} GB, {{pgcInfo.cores}} x {{pgcInfo.cpu}}</div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-3 control-label">Repo URL :</label>
-                        <div class="col-sm-9 form-control-static">{{pgcInfo.repo}}</div>
+                        <div class="col-sm-3 info-label"> <strong> Repo URL : </strong> </div>
+                        <div class="col-sm-9 info-text">{{pgcInfo.repo}}</div>
                     </div>
                 </form>
             </div>
         </div>
         </div>
         <div class="col-md-6 col-sm-6 col-xs-6">
-        <div class="box">
-            <div class="box-header with-border">
-                <div class="col-md-8">
-                    <h4><strong> Check for updates </strong></h4>
-                </div>
-                <div class="col-md-4">
-                    <button type="button" id="check-updates" class="btn btn-default pull-right" id="checkNow" ng-click="open('manual')">Check now</button>
-                </div>
-            </div>
-            <div class="box-body">
-                <p class="col-md-12 col-xs-12 col-sm-12" ng-if="lastUpdateStatus" id="last-update-status">The last time you checked for updates was at {{lastUpdateStatus}}</p>
-                <p class="col-md-12 col-xs-12 col-sm-12" ng-if="!lastUpdateStatus" ng-bind="lastUpdateNone"></p>
-            </div>
-        </div>
-        </div>
-        <div class="col-md-6 col-sm-6 col-xs-6">
-        <div class="box">
-           <div class="box-header with-border">
-                <label>
-                    <h4>
-                        <strong> pgDevOps Labs </strong>
-                    </h4>
-                </label>
-            </div> 
-            <div id="serversTableTbody">
-                <div ng-repeat="lab in lablist" class="row lab_row">
-                    <div class="col-md-9">
-                        <div style="margin-bottom: 7px;">
-                            <div><strong>{{lab.disp_name}}</strong></div>
-                            <div class="labDescription">{{lab.credit_to}}</div>
-                        </div>
-                        <div class="labDescription" ng-bind-html="lab.markdownDesc"></div>
+            <div class="box">
+                <div class="box-header with-border">
+                    <div class="col-md-8">
+                        <h4><strong> Check for updates </strong></h4>
                     </div>
-                    <div class="col-md-3">
-                        <label>
-                            <input type="radio" id="{{lab.lab}}-enable" ng-model="lab.enabled" value="on" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on'); runRds(lab.lab, lab.disp_name);" ng-if="lab.lab == 'aws-rds'">
-                            <input type="radio" id="{{lab.lab}}-enable" ng-model="lab.enabled" value="on" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on')" ng-if="lab.lab != 'aws-rds'"> Enable
-                        </label>
-                        <label><input type="radio" id="{{lab.lab}}-disable" ng-model="lab.enabled" value="" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'off')"> Disable</label>
-                        <div id="email-feedback">
-                            <a href="" ng-click="openFeedbackForm(lab.lab, lab.disp_name)">Email Feedback</a>
-                        </div>
+                    <div class="col-md-4">
+                        <button type="button" id="check-updates" class="btn btn-default pull-right" id="checkNow" ng-click="open('manual')">Check now</button>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <p class="col-md-12 col-xs-12 col-sm-12" ng-if="lastUpdateStatus" id="last-update-status">The last time you checked for updates was at {{lastUpdateStatus}}</p>
+                    <p class="col-md-12 col-xs-12 col-sm-12" ng-if="!lastUpdateStatus" ng-bind="lastUpdateNone"></p>
+                </div>
+            </div>
+            <div class="box" ng-if="awsRdsTile">
+                <div class="box-header with-border">
+                    <div class="col-md-8">
+                        <h4><strong> AWS Postgres RDS </strong></h4>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" id="aws-refresh" class="btn btn-default pull-right">Refresh</button>
                     </div>
                 </div>
             </div>
         </div>
         </div>
-    </div>
+        <!-- <div class="col-md-6 col-sm-6 col-xs-6">
+                
+        </div> -->
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="box">
+               <div class="box-header with-border">
+                    <label>
+                        <h4>
+                            <strong> OpenSCG Labs </strong>
+                        </h4>
+                    </label>
+                </div> 
+                <div id="serversTableTbody">
+                    <div ng-repeat="lab in lablist" class="row lab_row">
+                        <div class="col-md-10">
+                            <div style="margin-bottom: 7px;">
+                                <div><strong>{{lab.disp_name}}</strong></div>
+                                <div class="labDescription">{{lab.credit_to}}</div>
+                            </div>
+                            <div class="labDescription" ng-bind-html="lab.markdownDesc"></div>
+                        </div>
+                        <div class="col-md-2">
+                            <label>
+                                <input type="radio" id="{{lab.lab}}-enable" ng-model="lab.enabled" value="on" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on'); runRds(lab.lab, lab.disp_name);" ng-if="lab.lab == 'aws-rds'">
+                                <input type="radio" id="{{lab.lab}}-enable" ng-model="lab.enabled" value="on" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'on')" ng-if="lab.lab != 'aws-rds'"> Enable
+                            </label><br \>
+                            <label><input type="radio" id="{{lab.lab}}-disable" ng-model="lab.enabled" value="" name="{{lab.lab}}" ng-click="changeSetting(lab.lab, 'off')"> Disable</label>
+                            <div id="email-feedback">
+                                <a href="" ng-click="openFeedbackForm(lab.lab, lab.disp_name)">Email Feedback</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+            </div>
+        </div>
     </div>
 </section>

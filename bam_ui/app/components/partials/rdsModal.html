@@ -3,7 +3,7 @@
         <i class="fa fa-lg fa-close cursor_pointer"></i>
     </div>
     <div>
-        <button class="btn btn-default pull-right" ng-if="rdsList" ng-disabled="!checked" ng-click="createConnPgadmin()">Create connections in pgAdmin4</button>&nbsp;
+        <button class="btn btn-default pull-right" ng-if="rdsList" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Create connections in pgAdmin4</button>&nbsp;
         <h4 class="modal-title pull-left"> {{disp_name}} </h4>
     </div>
 </div>
@@ -32,14 +32,16 @@
                 <div class="component_head_box">
                     <div class="row">
                     <div class="col-md-2 col-sm-2 col-xs-2">
-                        <div class="col-md-4 col-sm-4 col-xs-4"></div>
-                        <div class="col-md-8 col-sm-8 col-xs-8"><strong>Instance</strong></div>
+                        <div class="col-md-4 col-sm-4 col-xs-4">
+                            <input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected" name="">
+                        </div>
+                        <div class="col-md-8 col-sm-8 col-xs-8"><strong>Region</strong></div>
                     </div>
                     <div class="col-md-10 col-sm-10 col-xs-10">
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Instance</strong></div>
                         <div class="col-md-1 col-sm-1 col-xs-1"><strong>User</strong></div>
                         <div class="col-md-1 col-sm-1 col-xs-1"><strong>Port</strong></div>
                         <div class="col-md-2 col-sm-2 col-xs-2"><strong>Database</strong></div>
-                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Region</strong></div>
                         <div class="col-md-6 col-sm-6 col-xs-6"><strong>Address</strong></div>
                     </div>
                     </div>
@@ -50,10 +52,13 @@
                         <div class="col-md-2 col-sm-2 col-xs-2">
                             <div class="col-md-4 col-sm-4 col-xs-4"><input type="checkbox" ng-model="rds.selected" ng-click="optionToggled()" name=""> </div>
                             <div class="col-md-8 col-sm-8 col-xs-8" style="white-space: nowrap;">
-                                {{rds.instance}}
+                                {{rds.region}}
                             </div>
                         </div>
                         <div class="col-md-10 col-sm-10 col-xs-10">
+                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
+                                {{rds.instance}}
+                            </div>
                             <div class="col-md-1 col-sm-1 col-xs-1" style="white-space: nowrap;">
                                 {{rds.master_user}}
                             </div>
@@ -62,9 +67,6 @@
                             </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
                                 {{rds.dbname}}
-                            </div>
-                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
-                                {{rds.region}}
                             </div>
                             <div class="col-md-6 col-sm-6 col-xs-6" style="white-space: nowrap;">
                                 {{rds.address}}
