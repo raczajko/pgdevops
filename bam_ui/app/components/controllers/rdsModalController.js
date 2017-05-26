@@ -41,6 +41,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                 var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', args);
             }
         }
+        $rootScope.$emit('refreshUpdateDate');
         $uibModalInstance.dismiss('cancel');
     };
 
