@@ -5,7 +5,9 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'pwd-or-ssh-msg' : 'Please provide either password or SSH Key',
         'last-update-none' : 'Last Update : None',
         'add-to-pgadmin' : 'Creating connections in pgAdmin4',
-        'discover-rds' : 'Discovering available RDS instances'
+        'discover-rds' : 'Discovering available RDS instances',
+        'pgc-not-active' : 'Unable to connect PGC.',
+        'no-rds' : 'There are no RDS Instances found.'
     };
 
     return {
