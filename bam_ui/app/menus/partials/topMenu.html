@@ -102,4 +102,5 @@
             </ul>
         </div>
     </nav>
+    <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="4000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
 </header>

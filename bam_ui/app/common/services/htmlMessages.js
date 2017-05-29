@@ -7,7 +7,8 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'add-to-pgadmin' : 'Creating connections in pgAdmin4',
         'discover-rds' : 'Discovering available RDS instances',
         'pgc-not-active' : 'Unable to connect PGC.',
-        'no-rds' : 'There are no RDS Instances found.'
+        'no-rds' : 'There are no RDS Instances found.',
+        'email-response' : 'Thanks for your valuable feedback, we will get back to you shortly.'
     };
 
     return {
