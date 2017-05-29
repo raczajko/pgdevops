@@ -182,11 +182,25 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         })
     };
 
-    $scope.changeSetting = function (settingName, value) {
+    $scope.changeSetting = function (settingName, value, disp_name) {
         if (settingName == 'aws-rds' && value == 'off') {
             $scope.awsRdsTile = false;
         }
-        session.call('com.bigsql.setLabSetting', [settingName, value]);
+        if (settingName == 'aws-rds' && (value == 'on' || value=='')) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/rdsModal.html',
+                controller: 'rdsModalController',
+                keyboard  : false,
+                backdrop  : 'static',
+                windowClass : 'rds-modal',
+                size : 'lg'
+            });
+            modalInstance.lab = settingName;
+            modalInstance.disp_name = disp_name;
+        }
+        if (value) {
+            session.call('com.bigsql.setLabSetting', [settingName, value]);            
+        }
         // if ($scope.currentHost == "" || $scope.currentHost == 'localhost'){
         //     session.call('com.bigsql.setLabSetting', [settingName, value]);
         // }else{
@@ -219,18 +233,6 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         session.call('com.bigsql.setLabSetting', [lab, val]);
     })
 
-    $scope.runRds = function (lab, disp_name) {
-        var modalInstance = $uibModal.open({
-            templateUrl: '../app/components/partials/rdsModal.html',
-            controller: 'rdsModalController',
-            keyboard  : false,
-            backdrop  : 'static',
-            windowClass : 'rds-modal',
-            size : 'lg'
-        });
-        modalInstance.lab = lab;
-        modalInstance.disp_name = disp_name;
-    }
 
     /**
      Unsubscribe to all the apis on the template and scope destroy

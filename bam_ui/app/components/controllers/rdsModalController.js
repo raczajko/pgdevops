@@ -21,6 +21,10 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                     $scope.availList.push($scope.rdsList[i]);
                 }
             }
+            if ($scope.availList.length == 0) {
+                $scope.noRDS = true;
+                $scope.noRDSMsg = htmlMessages.getMessage('no-rds');
+            }
         }
     });
 

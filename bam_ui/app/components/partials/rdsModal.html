@@ -3,7 +3,7 @@
         <i class="fa fa-lg fa-close cursor_pointer"></i>
     </div>
     <div>
-        <button class="btn btn-default pull-right" ng-if="rdsList" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Create connections in pgAdmin4</button>&nbsp;
+        <button class="btn btn-default pull-right" ng-if="rdsList && !noRDS" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections for pgDevOps/pgAdmin4</button>&nbsp;
         <h4 class="modal-title pull-left"> {{disp_name}} </h4>
     </div>
 </div>
@@ -24,6 +24,11 @@
         <div class="col-md-12 col-xs-12">
             <div class="well" ng-if="addToMetadata">
                 <i class="fa fa-spinner fa-2x  fa-pulse"></i> &nbsp; {{addToMetadataMsg}}
+            </div>
+        </div>
+        <div class="col-md-12 col-xs-12">
+            <div class="well" ng-if="noRDS">
+                <div> {{noRDSMsg}} </div>
             </div>
         </div>
         <div ng-if="availList.length > 0 && !addToMetadata">
