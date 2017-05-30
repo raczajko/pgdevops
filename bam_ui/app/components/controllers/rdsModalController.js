@@ -62,6 +62,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     $scope.createConnPgadmin = function(index){
         $scope.addToMetadata = true;
         $scope.addToMetadataMsg = htmlMessages.getMessage('add-to-pgadmin');
+        var argsJson = [];
         for (var i = $scope.availList.length - 1; i >= 0; i--) {
             if($scope.availList[i].selected){
                 var args = {};
@@ -73,11 +74,15 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                 args['project'] = 'aws-rds';
                 args['rds'] = true;
                 args['region'] = $scope.availList[i].region;
-                var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', args);
+                argsJson.push(args);
             }
         }
-        $rootScope.$emit('refreshUpdateDate');
-        $uibModalInstance.dismiss('cancel');
+        var multiArgs = {'multiple': argsJson}
+        var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', multiArgs );
+        addToMetaData.then(function (argument) {
+            $rootScope.$emit('refreshUpdateDate');
+            $uibModalInstance.dismiss('cancel');
+        } );
     };
 
     $scope.toggleAll = function() { 
