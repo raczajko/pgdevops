@@ -361,6 +361,7 @@ class AddtoMetadata(Resource):
                 component_name = pg_arg.get("component")
                 component_port = pg_arg.get("port", 5432)
                 component_host = pg_arg.get("host", "localhost")
+                component_proj = pg_arg.get("project")
                 component_db = pg_arg.get("db", "postgres")
                 component_user = pg_arg.get("user", "postgres")
                 servergroup_id = 1
@@ -448,7 +449,6 @@ class AddtoMetadata(Resource):
         args = request.json
         is_multiple = args.get("multiple")
         if is_multiple:
-            print is_multiple
             for pg_data in args.get("multiple"):
                 add_to_pginstances(pg_data)
         else:
