@@ -7,26 +7,57 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     var addList = [];
     $scope.addToMetadata = false;
     $scope.discoverMsg = htmlMessages.getMessage('discover-rds');
+    var session;
 
-    var rdslist = bamAjaxCall.getCmdData('rdslist');
-    rdslist.then(function (data) {
-        $scope.loadingSpinner = false;
-        if (data[0].state=="error") {
-            $scope.errMsg = data[0].msg;
-            $rootScope.$emit('disableLab', $scope.lab, 'off')
-        }else{
-            $scope.rdsList = data;
-            for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
-                if($scope.rdsList[i].status == 'available'){
-                    $scope.availList.push($scope.rdsList[i]);
+    var sessionPromise = PubSubService.getSession();
+    sessionPromise.then(function (val) {
+        session = val;
+        session.call('com.bigsql.rdsList');
+
+        session.subscribe('com.bigsql.onRdsList', function (data) {
+           var data = JSON.parse(data[0]);
+            if (data[0].state == 'info') {
+                $scope.discoverMsg = data[0].msg;
+            }else if (data[0].state=="error") {
+                $scope.errMsg = data[0].msg;
+                $rootScope.$emit('disableLab', $scope.lab, 'off')
+            }else if(data[0].state=="completed"){
+                $scope.loadingSpinner = false;
+                $scope.rdsList = data[0].data;
+                for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
+                    if($scope.rdsList[i].status == 'available'){
+                        $scope.availList.push($scope.rdsList[i]);
+                    }
                 }
-            }
-            if ($scope.availList.length == 0) {
-                $scope.noRDS = true;
-                $scope.noRDSMsg = htmlMessages.getMessage('no-rds');
-            }
-        }
+                if ($scope.availList.length == 0) {
+                    $scope.noRDS = true;
+                    $scope.noRDSMsg = htmlMessages.getMessage('no-rds');
+                }
+           }
+           $scope.$apply();
+        });
+
     });
+
+    // var rdslist = bamAjaxCall.getCmdData('rdslist');
+    // rdslist.then(function (data) {
+    //     $scope.loadingSpinner = false;
+    //     if (data[0].state=="error") {
+    //         $scope.errMsg = data[0].msg;
+    //         $rootScope.$emit('disableLab', $scope.lab, 'off')
+    //     }else{
+    //         $scope.rdsList = data;
+    //         for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
+    //             if($scope.rdsList[i].status == 'available'){
+    //                 $scope.availList.push($scope.rdsList[i]);
+    //             }
+    //         }
+    //         if ($scope.availList.length == 0) {
+    //             $scope.noRDS = true;
+    //             $scope.noRDSMsg = htmlMessages.getMessage('no-rds');
+    //         }
+    //     }
+    // });
 
     $scope.createConnPgadmin = function(index){
         $scope.addToMetadata = true;
