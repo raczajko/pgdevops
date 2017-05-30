@@ -116,6 +116,13 @@ angular.module('bigSQL.menus').component('topMenu', {
             modalInstance.isExtension = true;
         };
 
+        $scope.logOut = function (){
+            var cookies = $cookies.getAll();
+            angular.forEach(cookies, function (v, k) {
+                $cookies.remove(k);
+            });
+        };
+
         $scope.usersPopup = function () {
 
             UpdateComponentsService.setCheckUpdatesAuto();
