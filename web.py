@@ -388,25 +388,52 @@ class AddtoMetadata(Resource):
         component_db = args.get("db","postgres")
         component_user = args.get("user", "postgres")
         servergroup_id = 1
+        is_rds = args.get("rds")
         try:
             user_id=current_user.id
-            servergroups = ServerGroup.query.filter_by(
-                user_id=user_id
-            ).order_by("id")
+            if is_rds:
+                server_group_name = args.get("region","AWS RDS")
 
-            if servergroups.count() > 0:
-                servergroup = servergroups.first()
-                servergroup_id = servergroup.id
+                rds_serverGroup = ServerGroup.query.filter_by(
+                    user_id=current_user.id,
+                    name=server_group_name
+                ).order_by("id")
+                if rds_serverGroup.count()>0:
+                    servergroup = rds_serverGroup.first()
+                    servergroup_id = servergroup.id
+                else:
+                    sg = ServerGroup(
+                        user_id=current_user.id,
+                        name=server_group_name)
+                    db.session.add(sg)
+                    db.session.commit()
+                    servergroup_id=sg.id
+            else:
+                servergroups = ServerGroup.query.filter_by(
+                    user_id=user_id
+                ).order_by("id")
 
+                if servergroups.count() > 0:
+                    servergroup = servergroups.first()
+                    servergroup_id = servergroup.id
+                else:
+                    sg = ServerGroup(
+                        user_id=current_user.id,
+                        name="Servers")
+                    db.session.add(sg)
+                    db.session.commit()
+                    servergroup_id = sg.id
 
+            servername = "{0}({1})".format(component_name,component_host)
             component_server = Server.query.filter_by(
-                name=component_name,
-                host=component_host
+                name=servername,
+                host=component_host,
+                servergroup_id=servergroup_id
             )
             if component_server.count()==0:
                 svr = Server(user_id=user_id,
                             servergroup_id=servergroup_id,
-                            name=component_name + "(%s)" % component_host,
+                            name=servername,
                             host=component_host,
                             port=component_port,
                             maintenance_db=component_db,

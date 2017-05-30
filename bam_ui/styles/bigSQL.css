@@ -7085,4 +7085,21 @@ fieldset
   cursor: pointer;
 }
 
-#ip-address .ng-invalid  { border: 1px solid red; }
+#pgc-info-box > .form-group {
+  margin-bottom: 0px;
+}
+
+#pgc-info-box > .form-group > .info-label {
+  margin-top: 2px;
+  text-align: right;
+  margin-bottom: 2px;
+}
+
+#pgc-info-box > .form-group > .info-text {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+.rds-modal .modal-dialog {
+    width: 75%;
+}

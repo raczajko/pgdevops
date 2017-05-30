@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce) {
+angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', 'htmlMessages', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce, htmlMessages) {
     $scope.alerts = [];
 
     var session;
@@ -7,6 +7,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     $scope.components = {};
     $scope.currentHost;
     $scope.showPgDgFeature = false;
+    $scope.awsRdsTile = false;
     $scope.settingsOptions = [{name:'Weekly'},{name:'Daily'},{name:'Monthly'}]
 
     $scope.open = function (manual) {
@@ -33,6 +34,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         modalInstance.disp_name = disp_name;
     };
 
+    $scope.lastUpdateNone = htmlMessages.getMessage('last-update-none');
     // var infoData = bamAjaxCall.getCmdData('info')
     // infoData.then(function(data) {
     //     $scope.pgcInfo = data[0];
@@ -173,12 +175,32 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             $scope.lablist = argument;
             for (var i = $scope.lablist.length - 1; i >= 0; i--) {
                 $scope.lablist[i]['markdownDesc'] = $sce.trustAsHtml($scope.lablist[i].short_desc);
+                if ($scope.lablist[i].lab == 'aws-rds' && $scope.lablist[i].enabled == 'on') {
+                    $scope.awsRdsTile = true;
+                }
             }
         })
     };
 
-    $scope.changeSetting = function (settingName, value) {
-        session.call('com.bigsql.setLabSetting', [settingName, value]);
+    $scope.changeSetting = function (settingName, value, disp_name) {
+        if (settingName == 'aws-rds' && value == 'off') {
+            $scope.awsRdsTile = false;
+        }
+        if (settingName == 'aws-rds' && (value == 'on' || value=='')) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/rdsModal.html',
+                controller: 'rdsModalController',
+                keyboard  : false,
+                backdrop  : 'static',
+                windowClass : 'rds-modal',
+                size : 'lg'
+            });
+            modalInstance.lab = settingName;
+            modalInstance.disp_name = disp_name;
+        }
+        if (value) {
+            session.call('com.bigsql.setLabSetting', [settingName, value]);            
+        }
         // if ($scope.currentHost == "" || $scope.currentHost == 'localhost'){
         //     session.call('com.bigsql.setLabSetting', [settingName, value]);
         // }else{
@@ -206,6 +228,11 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     function wait() {
             $window.location.reload();
         };
+
+    $rootScope.$on('disableLab', function (argument, lab, val) {
+        session.call('com.bigsql.setLabSetting', [lab, val]);
+    })
+
 
     /**
      Unsubscribe to all the apis on the template and scope destroy

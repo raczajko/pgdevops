@@ -23,6 +23,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.openedHostIndex = '';
     $scope.openedGroupIndex = '';
     $scope.addedNewHost = false;
+    $scope.pgcNotActive = false;
     // $scope.groupOpen = true;
     // $scope.hostOpen = true;
 
@@ -476,43 +477,48 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     function getGroupsList(checkStorage) {
         $http.get($window.location.origin + '/api/groups?q='+ Math.floor(Date.now() / 1000).toString())
             .success(function (data) {
-                var storageData;
-                try{
-                    storageData = JSON.parse(localStorage.getItem('groupsListCookie'));
-                }catch(err){
-                    storageData = '';
-                }
-                if(storageData && checkStorage && data.length == storageData.length && data[0].hosts.length == storageData[0].hosts.length){
-                    $scope.groupsList = storageData;
-                    for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
-                        if ($scope.groupsList[i].state == true) {
-                            for (var j = $scope.groupsList[i].hosts.length - 1; j >= 0; j--) {
-                                if($scope.groupsList[i].hosts[j].state == true){
-                                    $scope.loadHost(i, j, false);
-                                }
-                            }
-                        };
-                    }   
-                } else{
-                    localStorage.clear();
-                    $scope.groupsList = data;
-                    for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
-                        $scope.groupsList[i].state = true;
-                    } 
-                    if($scope.addedNewHost){
-                        var hostNumber = $scope.groupsList[0].hosts.length - 1;
-                        $scope.loadHost(0, hostNumber, false);
-                        $scope.groupsList[0].hosts[hostNumber]['state'] = true;
-                    }else{
-                        $scope.loadHost(0, 0, false);  
-                        $scope.groupsList[0].hosts[0]['state'] = true;                      
+                if (data[0].state == 'error') {
+                    $scope.loading = false;
+                    $scope.errorData = data[0].msg;
+                }else{
+                    var storageData;
+                    try{
+                        storageData = JSON.parse(localStorage.getItem('groupsListCookie'));
+                    }catch(err){
+                        storageData = '';
                     }
+                    if(storageData && checkStorage && data.length == storageData.length && data[0].hosts.length == storageData[0].hosts.length){
+                        $scope.groupsList = storageData;
+                        for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                            if ($scope.groupsList[i].state == true) {
+                                for (var j = $scope.groupsList[i].hosts.length - 1; j >= 0; j--) {
+                                    if($scope.groupsList[i].hosts[j].state == true){
+                                        $scope.loadHost(i, j, false);
+                                    }
+                                }
+                            };
+                        }   
+                    } else{
+                        localStorage.clear();
+                        $scope.groupsList = data;
+                        for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+                            $scope.groupsList[i].state = true;
+                        } 
+                        if($scope.addedNewHost){
+                            var hostNumber = $scope.groupsList[0].hosts.length - 1;
+                            $scope.loadHost(0, hostNumber, false);
+                            $scope.groupsList[0].hosts[hostNumber]['state'] = true;
+                        }else{
+                            $scope.loadHost(0, 0, false);  
+                            $scope.groupsList[0].hosts[0]['state'] = true;                      
+                        }
+                    }
+                    $rootScope.$emit('hideUpdates');
+                    $scope.nothingInstalled = false;
+                    $scope.loading = false;
                 }
-                $rootScope.$emit('hideUpdates');
-                $scope.nothingInstalled = false;
-                $scope.loading = false;
             }).error(function (error) {
-                $timeout(wait, 5000);
+                // $timeout(wait, 5000);
                 $scope.loading = false;
                 $scope.retry = true;
             });
@@ -558,7 +564,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     $timeout(function () {
         if ($scope.loading) {
-            $window.location.reload();
+            $scope.pgcNotActive = true;
+            $scope.loading = false;
+            $scope.pgcNotActiveMsg = htmlMessages.getMessage('pgc-not-active');
+            // $window.location.reload();
         }
         ;
     }, 5000);

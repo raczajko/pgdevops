@@ -5,6 +5,19 @@ angular.module('bigSQL.menus').component('topMenu', {
         /**Below function is for displaying update badger on every page.
          **/
 
+        $scope.alerts = [];
+
+        $rootScope.$on('emailSucessMsg', function (event, msg, state) {
+            $scope.alerts.push({
+                msg:  $scope.successMsg = msg,
+                type: state
+            });
+        });
+
+        $scope.closeAlert = function (index) {
+            $scope.alerts.splice(index, 1);
+        };
+
         $scope.hideUpdates = false;
         $scope.currentHost = $cookies.get('remote_host');
         function callList(argument) {
