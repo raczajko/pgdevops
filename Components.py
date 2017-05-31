@@ -372,21 +372,18 @@ class Components(ComponentAction):
         data = pgcProcess.communicate()     
 
     @inlineCallbacks
-    def rdsList(self):
+    def rdsList(self, email):
         """
         Method to get the rds instances list
         """
         pgcCmd = PGC_HOME + os.sep + "pgc rdslist --json"
+        if email:
+            pgcCmd = pgcCmd + " --email " + email
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell= True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
             ln = (line).rstrip('\n')
-            try:
-                if type(eval(ln)) is list:
-                    self.session.publish('com.bigsql.onRdsList', ln)
-            except Exception as e:
-                ln = self.process.communicate()
-                self.session.publish('com.bigsql.onRdsListData', ln)
+            self.session.publish('com.bigsql.onRdsList', ln)
             yield sleep(0.001)
         self.process = ''
         returnValue(1)

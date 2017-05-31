@@ -12,7 +12,11 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
-        session.call('com.bigsql.rdsList');
+        var userInfoData = bamAjaxCall.getCmdData('userinfo');
+        userInfoData.then(function(data) {
+            $scope.userInfo = data;
+            session.call('com.bigsql.rdsList', [$scope.userInfo.email]);
+        });
 
         session.subscribe('com.bigsql.onRdsList', function (data) {
            var data = JSON.parse(data[0]);
@@ -26,6 +30,10 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                 $scope.rdsList = data[0].data;
                 for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
                     if($scope.rdsList[i].status == 'available'){
+                        if ($scope.rdsList[i].is_in_pglist == true) {
+                            $scope.rdsList[i].selected = true;
+                            $scope.checked = true;
+                        }
                         $scope.availList.push($scope.rdsList[i]);
                     }
                 }
