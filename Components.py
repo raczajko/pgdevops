@@ -573,6 +573,9 @@ class Components(ComponentAction):
                 pgcProcess.stdin.write(pwd+"\n")
                 pgcProcess.stdin.flush()
                 line = ""
+            if line.find("Sorry, try again.")>=0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [{"state": "error", "msg": "Failed to authenticate with password provided.", "pwd_failed":True}]
         pgcInfo = line
         if pgcInfo.find("sudo: no tty present and no askpass program specified") >= 0:
             return [{"state":"error","msg":"Password required"}]
@@ -605,6 +608,10 @@ class Components(ComponentAction):
             if pwd and line.find("sudo") >= 0 and line.find("password")>=0 and line.endswith(":"):
                 pgcProcess.stdin.write(pwd + "\n")
                 pgcProcess.stdin.flush()
+                line = ""
+            if line.find("Sorry, try again.")>=0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [{"state": "error", "msg": "Failed to authenticate with password provided.", "pwd_failed":True}]
                 line = ""
         pgcInfo = line
         if pgcInfo.find("sudo: no tty present and no askpass program specified") >= 0:

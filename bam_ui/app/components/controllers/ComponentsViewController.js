@@ -503,6 +503,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 if (data[0].msg == "Password required" ){
                 $scope.sudo_pwd=true;
                 } else{
+                if (data[0].msg == "Failed to authenticate with password provided."){
+                $scope.sudo_pwd=true;
+                }
                 $scope.pgdgNotAvailableMsg = data[0].msg;
                 }
 
