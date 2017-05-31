@@ -25,6 +25,11 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
     $scope.selectRepo = {value:''};
     $scope.os = {ubuntu: false};
     $scope.noExtension = {found: false};
+    $scope.sudo_pwd=false;
+    $scope.cmd_str = ""
+    $scope.host_pwd="";
+    $scope.pwd = {text: ''};
+    $scope.previous_repo = "";
 
     var getCurrentComponent = function (name) {
         for (var i = 0; i < $scope.components.length; i++) {
@@ -383,17 +388,33 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             }
             
             $scope.selectRepo.value = repo;
+            $scope.sudo_pwd=false;
             if (status == "Installed" || isInstalled) {
+                $scope.sudo_pwd=false;
                 $scope.noRepoSelected = false;
                 $scope.gettingPGDGdata = true;
+                $scope.previous_repo = repo;
                 if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
                     var getRepoList =  bamAjaxCall.getCmdData('pgdg/'+ repo + '/list');
                 }else{
+                if ($scope.host_pwd == ""){
                     var getRepoList = bamAjaxCall.getCmdData('pgdg/'+ repo + '/list/' + $scope.currentHost)
-                }        
+                    } else{
+                    var getRepoList = bamAjaxCall.getCmdData('pgdg/'+ repo + '/list/' + $scope.currentHost + "/" + $scope.host_pwd)
+                    }
+                }
+                $scope.host_pwd="";
+                $scope.pwd.text="";
                 getRepoList.then(function (argument) {
                     $scope.gettingPGDGdata = false;
                     if(argument[0].state == 'error' || argument == 'error'){
+                        if (argument[0].msg == "Password required" ){
+                            $scope.cmd_str = 'pgdg';
+                            $scope.sudo_pwd=true;
+                        } else{
+                            $scope.errorMsg = argument[0].msg;
+                        }
+
                         $scope.errorMsg = argument[0].msg;
                         $scope.repoList = [];
                         localStorage.removeItem('cacheRepo');
@@ -431,22 +452,60 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             if(argument != 'error' || argument != 'error'){
                 $scope.repoList = argument;
             }
+            if (argument[0].state == 'error') {
+                if (argument[0].msg == "Password required" ){
+                $scope.sudo_pwd=true;
+                } else{
+                $scope.pgdgNotAvailableMsg = data[0].msg;
+                }
+            }
         }) 
     }
 
+    $scope.continueAction = function(argument){
+    if ($scope.cmd_str == "repolist"){
+        $scope.host_pwd=$scope.pwd.text;
+
+        $scope.selectPgDg();
+     }
+        else if ($scope.cmd_str == "pgdg"){
+        $scope.host_pwd=$scope.pwd.text;
+        $scope.repoChange($scope.previous_repo);
+        }
+    }
+
     $scope.selectPgDg = function (argument) {
+    $scope.sudo_pwd=false;
         $scope.pgdgSelected = true;
         $scope.gettingPGDGdata = true;
         $scope.showRepoList = false;
         if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
             var pgdgComps = bamAjaxCall.getCmdData('repolist')
         }else{
-            var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost)
+
+        $scope.cmd_str = 'repolist';
+        if ($scope.host_pwd == ""){
+        var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost);
+        } else{
+        var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost + "/" + $scope.host_pwd);
         }
+        var data = {
+             hostname:$scope.currentHost,
+             cmd:"repolist"
+                         };
+            //var pgdgComps = bamAjaxCall.getCmdData('pgdglist',data)
+        }
+        $scope.host_pwd="";
+        $scope.pwd.text="";
         pgdgComps.then(function (data) {
             if (data[0].state == 'error') {
                 $scope.pgdgNotAvailable = true;
+                if (data[0].msg == "Password required" ){
+                $scope.sudo_pwd=true;
+                } else{
                 $scope.pgdgNotAvailableMsg = data[0].msg;
+                }
+
                 $scope.gettingPGDGdata = false;
             }else{
                 $scope.pgdgNotAvailable = false;

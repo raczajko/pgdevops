@@ -169,21 +169,39 @@ api.add_resource(pgcUtilRelnotes, '/api/utilRelnotes/<string:comp>','/api/utilRe
 
 
 class pgcApiHostCmd(Resource):
-    def get(self, pgc_cmd, host_name):
-        data = pgc.get_data(pgc_cmd + " --host \""+ host_name + "\"")
+    def get(self, pgc_cmd, host_name,pwd=None):
+        if session.get("hostname", "") == host_name:
+            if not pwd and session.get("pwd"):
+                pwd =  session.get("pwd")
+        session['hostname'] = host_name
+        if pwd:
+            session['pwd'] = pwd
+        data = pgc.get_data(pgc_cmd ,pgc_host=host_name, pwd=pwd)
         return data
 
 
-api.add_resource(pgcApiHostCmd, '/api/hostcmd/<string:pgc_cmd>/<string:host_name>')
+api.add_resource(pgcApiHostCmd,
+                 '/api/hostcmd/<string:pgc_cmd>/<string:host_name>',
+                 '/api/hostcmd/<string:pgc_cmd>/<string:host_name>/<string:pwd>/')
+
 
 
 class pgdgCommand(Resource):
-    def get(self, repo_id, pgc_cmd, host=None): 
-        data = pgc.get_pgdg_data(repo_id, pgc_cmd, pgc_host=host)
+    def get(self, repo_id, pgc_cmd, host=None, pwd=None):
+        if session.get("hostname", "") == host:
+            if not pwd and session.get("pwd"):
+                pwd =  session.get("pwd")
+        session['hostname'] = host
+        if pwd:
+            session['pwd'] = pwd
+        data = pgc.get_pgdg_data(repo_id, pgc_cmd, pgc_host=host, pwd=pwd)
         return data
 
 
-api.add_resource(pgdgCommand, '/api/pgdg/<string:repo_id>/<string:pgc_cmd>','/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>')
+api.add_resource(pgdgCommand,
+                 '/api/pgdg/<string:repo_id>/<string:pgc_cmd>',
+                 '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>',
+                 '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>/<string:pwd>')
 
 class pgdgHostCommand(Resource):
     def get(self, repo_id, pgc_cmd, comp, host=None):
@@ -502,6 +520,12 @@ class pgdgAction(Resource):
         component_name = args.get("component")
         component_host = args.get("host","localhost")
         pwd=args.get("pwd")
+        if session.get("hostname", "") == component_host:
+            if not pwd and session.get("pwd"):
+                pwd =  session.get("pwd")
+        session['hostname'] = component_host
+        if pwd:
+            session['pwd'] = pwd
         repo = args.get("repo")
         action = args.get("action")
         from detached_process import detached_process
