@@ -43,12 +43,17 @@
                                         <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !pgList.state, 'fa fa-minus': pgList.state}"></i>
                                         <div>{{value[0].server_group}}</div>
                                 </uib-accordion-heading>
-                                <div ng-if="hostState.active">
-                                <div class="col-md-7 col-sm-12 col-xs-12">
+                                <uib-accordion close-others="true">
+                                <uib-accordion-group ng-repeat="serverVal in value">
+                                    <uib-accordion-heading ng-click="">
+                                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !pgList.state, 'fa fa-minus': pgList.state}"></i>
+                                            <div>{{serverVal.server_name}}</div>
+                                    </uib-accordion-heading>
+                                    <div class="col-md-7 col-sm-12 col-xs-12">
 
 
-                                    <div><strong>Host : </strong>{{ value[0].host }}</div>
-                                    <div><strong>User : </strong>{{ value[0].db_user }}</div>
+                                    <div><strong>Host : </strong>{{ serverVal.host }}</div>
+                                    <div><strong>User : </strong>{{ serverVal.db_user }}</div>
 
                                     <p>
                                     <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('CPU Load')">
@@ -88,16 +93,16 @@
                                                 </tr>
                                                 </thead>
                                                 <tbody id="serversTableBody">
-                                                <tr ng-repeat="comp in value">
+                                                <tr>
                                                     <td class="col-md-3 col-xs-3" style="white-space: nowrap;">
-                                                        <a>{{ comp.server_name }}</a>
+                                                        <a>{{ serverVal.server_name }}</a>
                                                     </td>
                                                     <td class="col-md-6 col-xs-6" style="white-space: nowrap;">
                                                         <i ng-class="statusColors['Running']" style="margin-top:2px;margin-right:10px" class="fa fa-stop fa-2x pull-left"></i>
-                                                        <div>connected on port {{ comp.port }}</div>
+                                                        <div>connected on port {{ serverVal.port }}</div>
                                                     </td>
                                                     <td class="col-md-3 col-xs-3" style="white-space: nowrap;">
-                                                        <div>{{ comp.db }}</div>
+                                                        <div>{{ serverVal.db }}</div>
                                                     </td>
                                                 </tr>
                                                 </tbody>
@@ -105,7 +110,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                </div>
+                                </uib-accordion-group>
+                                </uib-accordion>
                             </uib-accordion-group>
                         </uib-accordion>
                     </div>
