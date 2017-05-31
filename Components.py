@@ -165,7 +165,7 @@ class ComponentAction(object):
             pgcCmd = pgcCmd.split(' --datadir')[0]
         if host:
             pgcCmd = pgcCmd + " --host \"" + host + "\""
-        if ((name > 'pg90') and (name < 'pg99')) or name == 'pg10':
+        if util.is_postgres(name):
             pgpass_file = PGC_HOME + os.sep + name + os.sep + ".pgpass"
             if not os.path.isfile(pgpass_file):
                 password_file = open(pgpass_file, 'w')
@@ -370,6 +370,24 @@ class Components(ComponentAction):
             pgcCmd = pgcCmd + " --host \"" + host  +"\""
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         data = pgcProcess.communicate()     
+
+    @inlineCallbacks
+    def rdsList(self, email):
+        """
+        Method to get the rds instances list
+        """
+        pgcCmd = PGC_HOME + os.sep + "pgc rdslist --json"
+        if email:
+            pgcCmd = pgcCmd + " --email " + email
+        process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell= True)
+        self.process = process
+        for line in iter(process.stdout.readline, ''):
+            ln = (line).rstrip('\n')
+            self.session.publish('com.bigsql.onRdsList', ln)
+            yield sleep(0.001)
+        self.process = ''
+        returnValue(1)
+
 
 
     @inlineCallbacks

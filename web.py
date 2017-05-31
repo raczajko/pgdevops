@@ -29,6 +29,7 @@ import pytz
 import psutil
 from pickle import dumps, loads
 import csv
+import sqlite3
 
 parser = reqparse.RequestParser()
 #parser.add_argument('data')
@@ -395,77 +396,106 @@ api.add_resource(GetEnvFile, '/api/read/env/<string:comp>')
 
 
 class AddtoMetadata(Resource):
+
     def post(self):
+        def add_to_pginstances(pg_arg):
+            try:
+                component_name = pg_arg.get("component")
+                component_port = pg_arg.get("port", 5432)
+                component_host = pg_arg.get("host", "localhost")
+                component_proj = pg_arg.get("project")
+                component_db = pg_arg.get("db", "postgres")
+                component_user = pg_arg.get("user", "postgres")
+                servergroup_id = 1
+                is_rds = pg_arg.get("rds")
+                if is_rds:
+                    server_group_name = pg_arg.get("region","AWS RDS")
+                    rds_serverGroup = ServerGroup.query.filter_by(
+                        user_id=current_user.id,
+                        name=server_group_name
+                    ).order_by("id")
+                    if rds_serverGroup.count() > 0:
+                        servergroup = rds_serverGroup.first()
+                        servergroup_id = servergroup.id
+                    else:
+                        try:
+                            sg = ServerGroup(
+                                user_id=current_user.id,
+                                name=server_group_name)
+                            db.session.add(sg)
+                            db.session.commit()
+                            servergroup_id = sg.id
+                        except sqlite3.IntegrityError as e:
+                            err_msg = str(e)
+                            if err_msg.find("UNIQUE constraint failed") >= 0:
+                                rds_serverGroup = ServerGroup.query.filter_by(
+                                    user_id=current_user.id,
+                                    name=server_group_name
+                                ).order_by("id")
+                                if rds_serverGroup.count() > 0:
+                                    servergroup = rds_serverGroup.first()
+                                    servergroup_id = servergroup.id
+                            else:
+                                print (err_msg)
+                                result = {}
+                                result['error'] = 1
+                                result['msg'] = err_msg
+                                return result
+                else:
+                    user_id = current_user.id
+                    servergroups = ServerGroup.query.filter_by(
+                        user_id=user_id
+                    ).order_by("id")
+
+                    if servergroups.count() > 0:
+                        servergroup = servergroups.first()
+                        servergroup_id = servergroup.id
+                    else:
+                        sg = ServerGroup(
+                            user_id=current_user.id,
+                            name="Servers")
+                        db.session.add(sg)
+                        db.session.commit()
+                        servergroup_id = sg.id
+
+                servername = "{0}({1})".format(component_name, component_host)
+                if is_rds:
+                    servername = component_name
+                
+                component_server = Server.query.filter_by(
+                    name=servername,
+                    host=component_host,
+                    servergroup_id=servergroup_id
+                )
+                if component_server.count() == 0:
+                    svr = Server(user_id=current_user.id,
+                                 servergroup_id=servergroup_id,
+                                 name=servername,
+                                 host=component_host,
+                                 port=component_port,
+                                 maintenance_db=component_db,
+                                 username=component_user,
+                                 ssl_mode='prefer',
+                                 comment=component_proj,
+                                 discovery_id="BigSQL PostgreSQL")
+
+                    db_session.add(svr)
+                    db_session.commit()
+            except Exception as e:
+                print ("Failed while adding pg instance to metadata :")
+                print (str(e))
+                pass
+
         result = {}
         result['error'] = 0
         args = request.json
-        component_name = args.get("component")
-        component_port = args.get("port",5432)
-        component_host = args.get("host","localhost")
-        component_proj = args.get("project")
-        component_db = args.get("db","postgres")
-        component_user = args.get("user", "postgres")
-        servergroup_id = 1
-        is_rds = args.get("rds")
-        try:
-            user_id=current_user.id
-            if is_rds:
-                server_group_name = args.get("region","AWS RDS")
 
-                rds_serverGroup = ServerGroup.query.filter_by(
-                    user_id=current_user.id,
-                    name=server_group_name
-                ).order_by("id")
-                if rds_serverGroup.count()>0:
-                    servergroup = rds_serverGroup.first()
-                    servergroup_id = servergroup.id
-                else:
-                    sg = ServerGroup(
-                        user_id=current_user.id,
-                        name=server_group_name)
-                    db.session.add(sg)
-                    db.session.commit()
-                    servergroup_id=sg.id
-            else:
-                servergroups = ServerGroup.query.filter_by(
-                    user_id=user_id
-                ).order_by("id")
-
-                if servergroups.count() > 0:
-                    servergroup = servergroups.first()
-                    servergroup_id = servergroup.id
-                else:
-                    sg = ServerGroup(
-                        user_id=current_user.id,
-                        name="Servers")
-                    db.session.add(sg)
-                    db.session.commit()
-                    servergroup_id = sg.id
-
-            servername = "{0}({1})".format(component_name,component_host)
-            component_server = Server.query.filter_by(
-                name=servername,
-                host=component_host,
-                servergroup_id=servergroup_id
-            )
-            if component_server.count()==0:
-                svr = Server(user_id=user_id,
-                            servergroup_id=servergroup_id,
-                            name=servername,
-                            host=component_host,
-                            port=component_port,
-                            maintenance_db=component_db,
-                            username=component_user,
-                            ssl_mode='prefer',
-                            comment=component_proj,
-                            discovery_id="BigSQL PostgreSQL")
-
-                db_session.add(svr)
-                db_session.commit()
-        except Exception as e:
-            result = {}
-            result['error'] = 1
-            result['msg'] = str(e)
+        is_multiple = args.get("multiple")
+        if is_multiple:
+            for pg_data in args.get("multiple"):
+                add_to_pginstances(pg_data)
+        else:
+            add_to_pginstances(args)
 
         return result
 

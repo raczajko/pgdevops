@@ -141,6 +141,8 @@ class AppSession(ApplicationSession):
 
         self.register(components.setLabSetting, 'com.bigsql.setLabSetting')
 
+        self.register(components.rdsList, 'com.bigsql.rdsList')
+
         self.register(monitoring.activity, 'com.bigsql.activity')
 
         self.register(monitoring.checkExtension, 'com.bigsql.checkExtension')

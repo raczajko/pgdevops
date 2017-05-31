@@ -55,7 +55,10 @@
                     <div ng-repeat="rds in availList" class= "component_box" ng-class-odd="'oddRow'" style="border-bottom: 1px solid #f4f4f4;">
                         <div class="row">
                         <div class="col-md-2 col-sm-2 col-xs-2">
-                            <div class="col-md-4 col-sm-4 col-xs-4"><input type="checkbox" ng-model="rds.selected" ng-click="optionToggled()" name=""> </div>
+                            <div class="col-md-4 col-sm-4 col-xs-4">
+                                <input type="checkbox" ng-model="rds.selected" ng-change="optionToggled()" ng-if="!rds.is_in_pglist" name="">
+                                <input type="checkbox" ng-checked="true" ng-disabled="true" ng-if="rds.is_in_pglist" name=""> 
+                            </div>
                             <div class="col-md-8 col-sm-8 col-xs-8" style="white-space: nowrap;">
                                 {{rds.region}}
                             </div>
