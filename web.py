@@ -171,12 +171,13 @@ api.add_resource(pgcUtilRelnotes, '/api/utilRelnotes/<string:comp>','/api/utilRe
 
 class pgcApiHostCmd(Resource):
     def get(self, pgc_cmd, host_name,pwd=None):
+        pwd_session_name = "{0}_pwd".format(host_name)
         if session.get("hostname", "") == host_name:
-            if not pwd and session.get("pwd"):
-                pwd =  session.get("pwd")
+            if not pwd and session.get(pwd_session_name):
+                pwd =  session.get(pwd_session_name)
         session['hostname'] = host_name
         if pwd:
-            session['pwd'] = pwd
+            session[pwd_session_name] = pwd
         data = pgc.get_data(pgc_cmd ,pgc_host=host_name, pwd=pwd)
         return data
 
@@ -189,12 +190,13 @@ api.add_resource(pgcApiHostCmd,
 
 class pgdgCommand(Resource):
     def get(self, repo_id, pgc_cmd, host=None, pwd=None):
+        pwd_session_name = "{0}_pwd".format(host)
         if session.get("hostname", "") == host:
-            if not pwd and session.get("pwd"):
-                pwd =  session.get("pwd")
+            if not pwd and session.get(pwd_session_name):
+                pwd = session.get(pwd_session_name)
         session['hostname'] = host
         if pwd:
-            session['pwd'] = pwd
+            session[pwd_session_name] = pwd
         data = pgc.get_pgdg_data(repo_id, pgc_cmd, pgc_host=host, pwd=pwd)
         return data
 
@@ -550,12 +552,13 @@ class pgdgAction(Resource):
         component_name = args.get("component")
         component_host = args.get("host","localhost")
         pwd=args.get("pwd")
+        pwd_session_name = "{0}_pwd".format(component_host)
         if session.get("hostname", "") == component_host:
-            if not pwd and session.get("pwd"):
-                pwd =  session.get("pwd")
+            if not pwd and session.get(pwd_session_name):
+                pwd = session.get(pwd_session_name)
         session['hostname'] = component_host
         if pwd:
-            session['pwd'] = pwd
+            session[pwd_session_name] = pwd
         repo = args.get("repo")
         action = args.get("action")
         from detached_process import detached_process
