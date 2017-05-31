@@ -42,6 +42,16 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
                 } else {
                     $scope.hosts = data;
                 }
+                var cookieValid = false;
+                for (var i = $scope.hosts.length - 1; i >= 0; i--) {
+                    if( $cookies.get('remote_host') && $scope.hosts[i].name == $cookies.get('remote_host') ){
+                        cookieValid = true;
+                    }
+                }
+                if (!cookieValid) {
+                    $scope.selecthost = '';
+                    $scope.hostChange();
+                }
                 if($scope.title=="Log Tailer"){
                     var localhost = [];
                     localhost.push($scope.hosts[0]);
@@ -49,13 +59,14 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
                 }
             });
 
-            gethostInfo($cookies.get('remote_host'));
+            // gethostInfo($cookies.get('remote_host'));
 
             $scope.hostChange = function (host) {
 
                 var shost= host;
                 if (shost == "" || shost == 'localhost') {
                     shost="localhost";
+                    $scope.selecthost = '';
                 }
                 gethostInfo(shost);
                 $rootScope.$emit('refreshData', shost);
