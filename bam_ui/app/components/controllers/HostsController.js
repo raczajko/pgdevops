@@ -135,10 +135,35 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     })
 
+    $scope.openPostgresConnGroup = function (argument) {
+        $scope.pgList.state = !argument;
+    }
+
     var sessionPromise = PubSubService.getSession();
 
     sessionPromise.then(function (val) {
         session = val;
+
+        var userInfoData = bamAjaxCall.getCmdData('userinfo');
+        userInfoData.then(function(data) {
+            $scope.userInfo = data;
+            session.call('com.bigsql.pgList', [$scope.userInfo.email]);
+        });
+
+        session.subscribe("com.bigsql.onPgList", function (data) {
+            var data = JSON.parse(data);
+            var groups = {};
+            for (var i = 0; i < data.length; i++) {
+              var groupName = data[i].server_group;
+              if (!groups[groupName]) {
+                groups[groupName] = [];
+              }
+              groups[groupName].push(data[i]);
+            }
+            $scope.pgList = {'state': true, 'data': groups};
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
 
         // session.call('com.bigsql.getBetaFeatureSetting', ['hostManager']);
 

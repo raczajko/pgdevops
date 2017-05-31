@@ -1,6 +1,6 @@
 <section class="content-header">
     <h1 class="components-update-title-wrapper">
-        HOST MANAGER
+        Server Manager
     </h1>
     <div class="btn-group pull-right " uib-dropdown >
         <button type="button" class="btn btn-default" uib-dropdown-toggle>
@@ -27,6 +27,92 @@
     <div ng-if="nothingInstalled" class="jumbotron"
          style="background-color: #fff; margin-top: 15px; text-align: center;"><h3> You haven't registered any
         hosts.</h3></div>
+    <div class="hostmanager-accordian-wrapper" ng-if="!loading && !errorData && !pgcNotActive">
+        <div class="box">
+            <uib-accordion ng-if="pgList" close-others="true">
+                <uib-accordion-group is-open="pgList.state">
+                    <uib-accordion-heading>
+                        <span class="host-uib-tab-heading" ng-click="openPostgresConnGroup(pgList.state)">
+                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': pgList.state, 'fa fa-minus': !pgList.state}"></i> &nbsp;PostgreSQL Connections
+                        </span>
+                    </uib-accordion-heading>
+                    <div class="col-md-12">
+                        <uib-accordion close-others="true">
+                            <uib-accordion-group ng-repeat="value in pgList.data">
+                                <uib-accordion-heading ng-click="">
+                                        <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !pgList.state, 'fa fa-minus': pgList.state}"></i>
+                                        <div>{{value[0].server_group}}</div>
+                                </uib-accordion-heading>
+                                <div ng-if="hostState.active">
+                                <div class="col-md-7 col-sm-12 col-xs-12">
+
+
+                                    <div><strong>Host : </strong>{{ value[0].host }}</div>
+                                    <div><strong>User : </strong>{{ value[0].db_user }}</div>
+
+                                    <p>
+                                    <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('CPU Load')">
+                                        <div class="host-perf-viz">
+                                                <h5>CPU Load</h5>
+                                            <nvd3 options="cpuChart" data="cpuData" showLegend="false"></nvd3>
+                                        </div>
+                                    </div>
+                                    <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('Disk IO')">
+                                        <div class="host-perf-viz">
+                                                <h5>Disk IO</h5>
+                                            <nvd3 options="ioChart" data="diskIO" showLegend="false"></nvd3>
+                                        </div>
+                                    </div>
+                                    <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('Network IO')">
+                                        <div class="host-perf-viz">
+                                                <h5>Network IO</h5>
+                                            <nvd3 options="networkChart" data="NetworkIO" showLegend="false"></nvd3>
+                                        </div>
+                                    </div>
+                                    </p>
+                                </div>
+
+                                <div class="col-md-5 col-sm-12 col-xs-12">
+                                    
+                                    <div class="box" >
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">Services</h3>
+                                        </div>
+                                        <div class="box-body">
+                                            <table class="table" id="serversTable">
+                                                <thead>
+                                                <tr>
+                                                    <th class="col-md-3 col-xs-3" style="white-space: nowrap;">Server Name</th>
+                                                    <th class="col-md-6 col-xs-6">Port</th>
+                                                    <th class="col-md-3 col-xs-3">Database</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody id="serversTableBody">
+                                                <tr ng-repeat="comp in value">
+                                                    <td class="col-md-3 col-xs-3" style="white-space: nowrap;">
+                                                        <a>{{ comp.server_name }}</a>
+                                                    </td>
+                                                    <td class="col-md-6 col-xs-6" style="white-space: nowrap;">
+                                                        <i ng-class="statusColors['Running']" style="margin-top:2px;margin-right:10px" class="fa fa-stop fa-2x pull-left"></i>
+                                                        <div>connected on port {{ comp.port }}</div>
+                                                    </td>
+                                                    <td class="col-md-3 col-xs-3" style="white-space: nowrap;">
+                                                        <div>{{ comp.db }}</div>
+                                                    </td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                            </uib-accordion-group>
+                        </uib-accordion>
+                    </div>
+                </uib-accordion-group>
+            </uib-accordion>
+        </div>
+    </div>
 
     <div class="hostmanager-accordian-wrapper" ng-if="!loading && !errorData && !pgcNotActive">
         <div class="box">
@@ -34,7 +120,7 @@
                 <uib-accordion-group ng-repeat="group in groupsList" is-open="group.state"  ng-init="parentIndex = $index" >
                     <uib-accordion-heading>
                         <span ng-click="loadGroup($index)" ng-if="group.group == 'default'" class="host-uib-tab-heading">
-                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i> &nbsp;All Hosts
+                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i> &nbsp;All SSH Hosts
                         </span>
                         <span ng-click="loadGroup($index)" ng-if="group.group != 'default'" class="host-uib-tab-heading">
                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i>&nbsp; {{group.group}}
