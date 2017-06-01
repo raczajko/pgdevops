@@ -136,7 +136,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     })
 
     $scope.openPostgresConnGroup = function (argument) {
-        $scope.pgList.state = !argument;
+        $scope.showpgList = !argument;
     }
 
     var sessionPromise = PubSubService.getSession();
@@ -152,15 +152,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
         session.subscribe("com.bigsql.onPgList", function (data) {
             var data = JSON.parse(data);
-            var groups = {};
-            for (var i = 0; i < data.length; i++) {
-              var groupName = data[i].server_group;
-              if (!groups[groupName]) {
-                groups[groupName] = [];
-              }
-              groups[groupName].push(data[i]);
+            $scope.pgListRes = data;
+            if (data.length > 0) {
+                $scope.showpgList = true;
+            }else{
+                $scope.showpgList = false;
             }
-            $scope.pgList = {'state': true, 'data': groups};
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
