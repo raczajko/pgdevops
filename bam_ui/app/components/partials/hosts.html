@@ -56,13 +56,13 @@
                                     <div><strong>User : </strong>{{ serverVal.db_user }}</div>
 
                                     <p>
-                                    <div style="padding:0;" class="col-md-6 col-sm-6 col-xs-12" ng-click="openGraphModal('CPU Load')">
+                                    <div style="padding:0;" class="col-md-6 col-sm-6 col-xs-12">
                                         <div class="host-perf-viz">
                                                 <h5>Transactions per Second</h5>
                                             <nvd3 options="cpuChart" data="rowsData" showLegend="false"></nvd3>
                                         </div>
                                     </div>
-                                    <div style="padding:0;" class="col-md-6 col-sm-6 col-xs-12" ng-click="openGraphModal('Disk IO')">
+                                    <div style="padding:0;" class="col-md-6 col-sm-6 col-xs-12">
                                         <div class="host-perf-viz">
                                                 <h5>Rows per Second</h5>
                                             <nvd3 options="cpuChart" data="rowsData" showLegend="false"></nvd3>
