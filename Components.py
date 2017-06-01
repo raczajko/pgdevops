@@ -389,6 +389,15 @@ class Components(ComponentAction):
         returnValue(1)
 
 
+    @inlineCallbacks
+    def pgList(self, mail):
+        """
+        Method to get the pglist 
+        """
+        pgcCmd = PGC_HOME + os.sep + "pgc pglist --json " + mail
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        data = pgcProcess.communicate()
+        yield self.session.publish('com.bigsql.onPgList', data[0].strip('\n'))
 
     @inlineCallbacks
     def selectedLog(self,logdir):
