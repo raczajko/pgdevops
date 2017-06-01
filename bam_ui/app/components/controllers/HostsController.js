@@ -92,6 +92,22 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.cpuChart.chart.type = "stackedAreaChart";
     $scope.cpuChart.chart.showControls = false;
 
+    $scope.rowsData = [{
+        values: [],
+        key: 'Insert',
+        color: '#006400'
+    },{
+        values: [],
+        key: 'Update',
+        color: '#FF5733'
+    }]
+
+    $scope.rowsData[0].values.push({x:0, y:10});
+    $scope.rowsData[1].values.push({x:0, y:10});
+
+    $scope.rowsData[0].values.push({x:100, y:100});
+    $scope.rowsData[1].values.push({x:100, y:100});
+
     $scope.cpuData = [{
         values: [],
         key: 'CPU System %',
