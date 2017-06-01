@@ -587,7 +587,7 @@ class Components(ComponentAction):
             line = line + c
             if pgcCmd.find("lablist")<0 and line.find("sudo") >= 0 and line.find("password") >= 0 and line.endswith(":"):
                 if pwd and std_in:
-                    pgcProcess.stdin.write(pwd + "\n")
+                    pgcProcess.stdin.write(pwd + str(os.linesep))
                     pgcProcess.stdin.flush()
                     line = ""
                 else:
@@ -637,7 +637,7 @@ class Components(ComponentAction):
             line = line + c
             if line.find("sudo") >= 0 and line.find("password") >= 0 and line.endswith(":"):
                 if pwd and std_in:
-                    pgcProcess.stdin.write(pwd + "\n")
+                    pgcProcess.stdin.write(pwd + str(os.linesep))
                     pgcProcess.stdin.flush()
                     line = ""
                 else:
