@@ -44,7 +44,7 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
                 }
                 var cookieValid = false;
                 for (var i = $scope.hosts.length - 1; i >= 0; i--) {
-                    if( $cookies.get('remote_host') && $scope.hosts[i].name == $cookies.get('remote_host') ){
+                    if( $cookies.get('remote_host') && $scope.hosts[i].name == $cookies.get('remote_host') || $cookies.get('remote_host') == undefined ){
                         cookieValid = true;
                     }
                 }

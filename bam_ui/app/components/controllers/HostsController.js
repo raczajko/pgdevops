@@ -480,7 +480,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 if (data[0].state == 'error') {
                     $scope.loading = false;
                     $scope.errorData = data[0].msg;
-                }else{
+                }else if ($scope.loading){
                     var storageData;
                     try{
                         storageData = JSON.parse(localStorage.getItem('groupsListCookie'));
@@ -570,7 +570,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             // $window.location.reload();
         }
         ;
-    }, 5000);
+    }, 10000);
 
     function wait() {
         $window.location.reload();
