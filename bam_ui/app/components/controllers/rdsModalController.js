@@ -23,6 +23,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
             if (data[0].state == 'info') {
                 $scope.discoverMsg = data[0].msg;
             }else if (data[0].state=="error") {
+                $scope.loadingSpinner = false;
                 $scope.errMsg = data[0].msg;
                 $rootScope.$emit('disableLab', $scope.lab, 'off')
             }else if(data[0].state=="completed"){
