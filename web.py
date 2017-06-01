@@ -179,7 +179,7 @@ class pgcApiHostCmd(Resource):
         if pwd:
             session[pwd_session_name] = pwd
         data = pgc.get_data(pgc_cmd, pgc_host=host_name, pwd=pwd)
-        if data[0].get("pwd_failed"):
+        if len(data)>0 and data[0].get("pwd_failed"):
             session.pop(pwd_session_name)
         return data
 
@@ -200,7 +200,7 @@ class pgdgCommand(Resource):
         if pwd:
             session[pwd_session_name] = pwd
         data = pgc.get_pgdg_data(repo_id, pgc_cmd, pgc_host=host, pwd=pwd)
-        if data[0].get("pwd_failed"):
+        if len(data)>0 and data[0].get("pwd_failed"):
             session.pop(pwd_session_name)
         return data
 
