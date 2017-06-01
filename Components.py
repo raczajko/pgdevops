@@ -552,12 +552,13 @@ class Components(ComponentAction):
         yield self.session.publish('com.bigsql.onCheckOS', platform.system())
 
     @staticmethod
-    def get_data(command, component=None, pgc_host=None, pwfile=None, relnotes=None):
+    def get_data(command, component=None, pgc_host=None, pwfile=None, relnotes=None, pwd=None):
         """
         Method to get the host settings.
         :param p_host: Name of the host to retrieve the settings.
         :return: It returns dict of settings.
         """
+        std_in = None
 
         pgcCmd = PGC_HOME + os.sep + "pgc --json " + command
         if relnotes:
@@ -568,19 +569,36 @@ class Components(ComponentAction):
             if pwfile:
                 pgcCmd = pgcCmd + " --pwfile " + pwfile + " --host \"" + pgc_host +"\""
             else:
-                pgcCmd = pgcCmd + " --host \"" + pgc_host + "\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
-        pgcInfo = pgcProcess.communicate()
-        return json.loads(pgcInfo[0])
+                pgcCmd = pgcCmd + " --host \"" + pgc_host + "\"" #+ " --no-tty"
+            if pwd:
+                std_in = subprocess.PIPE
+            else:
+                pgcCmd = pgcCmd + " --no-tty"
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True, stdin=std_in)
+        line = ""
+        for c in iter(lambda: pgcProcess.stdout.read(1), ''):
+            line = line + c
+            if pwd and line.find("sudo")>=0 and line.find("password")>=0 and line.endswith(":"):
+                pgcProcess.stdin.write(pwd+"\n")
+                pgcProcess.stdin.flush()
+                line = ""
+            if line.find("Sorry, try again.")>=0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [{"state": "error", "msg": "Failed to authenticate with password provided.", "pwd_failed":True}]
+        pgcInfo = line
+        if pgcInfo.find("sudo: no tty present and no askpass program specified") >= 0:
+            return [{"state":"error","msg":"Password required"}]
+        final_data = pgcInfo.replace("sudo: no tty present and no askpass program specified","").strip()
+        return json.loads(final_data)
 
     @staticmethod
-    def get_pgdg_data(repo_id, command, component=None, pgc_host=None):
+    def get_pgdg_data(repo_id, command, component=None, pgc_host=None, pwd=None):
         """
         Method to get the host settings.
         :param p_host: Name of the host to retrieve the settings.
         :return: It returns dict of settings.
         """
-
+        std_in = None
         pgcCmd = PGC_HOME + os.sep + "pgc --json repo-pkgs " + repo_id + " " + command + " -y"
         if command == 'register':
             pgcCmd = PGC_HOME + os.sep + "pgc --json register REPO " + repo_id + " -y"
@@ -588,6 +606,24 @@ class Components(ComponentAction):
             pgcCmd = pgcCmd + " " + component
         if pgc_host:
             pgcCmd = pgcCmd + " --host \"" + pgc_host +"\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
-        pgcInfo = pgcProcess.communicate()
-        return json.loads(pgcInfo[0])
+            if pwd:
+                std_in = subprocess.PIPE
+            else:
+                pgcCmd = pgcCmd + " --no-tty"
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True, stdin=std_in)
+        line = ""
+        for c in iter(lambda: pgcProcess.stdout.read(1), ''):
+            line = line + c
+            if pwd and line.find("sudo") >= 0 and line.find("password")>=0 and line.endswith(":"):
+                pgcProcess.stdin.write(pwd + "\n")
+                pgcProcess.stdin.flush()
+                line = ""
+            if line.find("Sorry, try again.")>=0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [{"state": "error", "msg": "Failed to authenticate with password provided.", "pwd_failed":True}]
+                line = ""
+        pgcInfo = line
+        if pgcInfo.find("sudo: no tty present and no askpass program specified") >= 0:
+            return [{"state": "error", "msg": "Password required"}]
+        final_data = pgcInfo.replace("sudo: no tty present and no askpass program specified", "").strip()
+        return json.loads(final_data)

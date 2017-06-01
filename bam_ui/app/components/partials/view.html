@@ -120,6 +120,15 @@
             <div class="box-body" ng-if="pgdgNotAvailable && !gettingPGDGdata">
                 <div style="text-align: center;"><h4>{{pgdgNotAvailableMsg}}</h4></div>
             </div>
+            <div class="form-group" ng-if="sudo_pwd">
+                <label class="col-sm-2 control-label">sudo password:<span class="requiredSymbol">*</span></label>
+                        <div class="col-sm-3">
+                            <input type="password" ng-model="pwd.text" id="rpwd" class="form-control" placeholder="password">
+                        </div>
+                <span class="input-group-btn">
+                    <button class="btn btn-default" ng-click="continueAction()">Continue</button>
+                </span>
+            </div>
             <div class="box-body">
                 <form class="form-inline" ng-if="showRepoList && !pgdgNotAvailable">
                     <label>Repository:&nbsp;</label>
