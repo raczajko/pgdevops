@@ -352,7 +352,7 @@ def execute():
         if stdin_str:
             import time
             time.sleep(5)
-            pwd = b'{}'.format(stdin_str + "\n")
+            pwd = b'{}'.format(stdin_str + str(os.linesep))
             process.stdin.write(pwd)
             process.stdin.flush()
 
@@ -536,7 +536,7 @@ if __name__ == '__main__':
             if stdin_str:
                 import time
                 time.sleep(5)
-                pwd = b'{}'.format(stdin_str + "\n")
+                pwd = b'{}'.format(stdin_str + str(os.linesep))
                 p.stdin.write(pwd)
                 p.stdin.flush()
 
