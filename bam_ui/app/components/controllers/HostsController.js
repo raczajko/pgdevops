@@ -89,6 +89,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
     $scope.ioChart = angular.copy($scope.cpuChart);
     $scope.networkChart = angular.copy($scope.cpuChart);
+    $scope.dummyChart = angular.copy($scope.cpuChart);
     $scope.cpuChart.chart.type = "stackedAreaChart";
     $scope.cpuChart.chart.showControls = false;
 
@@ -115,8 +116,21 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
     ];
 
-    if($scope.rowsData.length <= 2){
-        $scope.cpuChart.chart.noData = "_ No Data Available."
+    $scope.dummyData = [{
+        values: [],
+        key: 'CPU System %',
+        color: '#006994',
+        area: true
+    }, {
+        values: [],
+        key: 'CPU User %',
+        color: '#FF5733',
+        area: true
+    }
+    ];
+
+    if($scope.dummyData.length <= 2){
+        $scope.dummyChart.chart.noData = "_ No Data Available."
     }
 
     $scope.diskIO = [{
