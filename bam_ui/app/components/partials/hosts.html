@@ -56,15 +56,15 @@
                                     <div><strong>User : </strong>{{ serverVal.db_user }}</div>
 
                                     <p>
-                                    <div style="padding:0;" class="col-md-6 col-sm-6 col-xs-12">
+                                    <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12">
                                         <div class="host-perf-viz">
                                                 <h5>Transactions per Second</h5>
                                             <nvd3 options="cpuChart" data="rowsData" showLegend="false"></nvd3>
                                         </div>
                                     </div>
-                                    <div style="padding:0;" class="col-md-6 col-sm-6 col-xs-12">
+                                    <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12">
                                         <div class="host-perf-viz">
-                                                <h5>Rows per Second</h5>
+                                                <h5>Connections</h5>
                                             <nvd3 options="cpuChart" data="rowsData" showLegend="false"></nvd3>
                                         </div>
                                     </div>
@@ -89,7 +89,7 @@
                                                 <tbody id="serversTableBody">
                                                 <tr>
                                                     <td class="col-md-3 col-xs-3" style="white-space: nowrap;">
-                                                        {{ serverVal.server_name }}
+                                                        <a ui-sref="components.connections({component:serverVal.server_name})">{{ serverVal.server_name }}</a>
                                                     </td>
                                                     <td class="col-md-6 col-xs-6" style="white-space: nowrap;">
                                                         <i ng-class="statusColors['Running']" style="margin-top:2px;margin-right:10px" class="fa fa-stop fa-2x pull-left"></i>

@@ -102,12 +102,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         color: '#FF5733'
     }]
 
-    $scope.rowsData[0].values.push({x:0, y:10});
-    $scope.rowsData[1].values.push({x:0, y:10});
-
-    $scope.rowsData[0].values.push({x:100, y:100});
-    $scope.rowsData[1].values.push({x:100, y:100});
-
     $scope.cpuData = [{
         values: [],
         key: 'CPU System %',
@@ -120,6 +114,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         area: true
     }
     ];
+
+    if($scope.rowsData.length <= 2){
+        $scope.cpuChart.chart.noData = "_ No Data Available."
+    }
 
     $scope.diskIO = [{
         values: [],
