@@ -5,7 +5,8 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     var session = PubSubService.getSession();
     $scope.loading = true;
 
-    
+    $scope.tpsGraph = {open:true} ;
+    $scope.connectionGraph = {open:true};    
 
     $scope.statusColors = {
         "Stopped": "orange",

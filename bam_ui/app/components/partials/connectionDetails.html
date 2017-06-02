@@ -62,11 +62,11 @@
                         <div class="col-md-12 col-xs-12">
                             <div class="box">
                                 <uib-accordion>
-                                    <uib-accordion-group is-open="true">
+                                    <uib-accordion-group is-open="tpsGraph.open">
                                       <uib-accordion-heading>
                                         <span ng-click="tabClick()">Transactions per Second
                                             <i class="pull-right glyphicon" 
-                                ng-class="{'fa fa-plus': !uibStatus.tpsChartCollapsed, 'fa fa-minus': uibStatus.tpsChartCollapsed}"></i>
+                                ng-class="{'fa fa-plus': !tpsGraph.open, 'fa fa-minus': tpsGraph.open}"></i>
                                         </span>
                                       </uib-accordion-heading>
                                         <div>
@@ -81,11 +81,11 @@
                         <div class="col-md-12 col-xs-12">
                             <div class="box">
                                 <uib-accordion>
-                                    <uib-accordion-group is-open="true">
+                                    <uib-accordion-group is-open="connectionGraph.open">
                                       <uib-accordion-heading>
                                         <span ng-click="tabClick()">Connections
                                         <i class="pull-right glyphicon" 
-                                ng-class="{'fa fa-plus': !uibStatus.connectionsCollapsed, 'fa fa-minus': uibStatus.connectionsCollapsed}"></i>
+                                ng-class="{'fa fa-plus': !connectionGraph.open, 'fa fa-minus': connectionGraph.open}"></i>
                                         </span> 
                                       </uib-accordion-heading>
                                         <div>
