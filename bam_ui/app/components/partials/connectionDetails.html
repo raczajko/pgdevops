@@ -60,9 +60,9 @@
                         <div class="row tab-content graphsTab" style="padding: 15px;">
                         <div class="row"> 
                         <div class="col-md-12 col-xs-12">
-                            <div class="box" ng-if="showGraphs">
+                            <div class="box">
                                 <uib-accordion>
-                                    <uib-accordion-group is-open="uibStatus.tpsChartCollapsed" is-disabled="component.status != 'Running'">
+                                    <uib-accordion-group is-open="true">
                                       <uib-accordion-heading>
                                         <span ng-click="tabClick()">Transactions per Second
                                             <i class="pull-right glyphicon" 
@@ -79,9 +79,9 @@
                         </div>
                         <div class="row">
                         <div class="col-md-12 col-xs-12">
-                            <div class="box" ng-if="showGraphs">
+                            <div class="box">
                                 <uib-accordion>
-                                    <uib-accordion-group>
+                                    <uib-accordion-group is-open="true">
                                       <uib-accordion-heading>
                                         <span ng-click="tabClick()">Connections
                                         <i class="pull-right glyphicon" 
@@ -95,12 +95,6 @@
                                  </uib-accordion>
                             </div>
                         </div>
-                        </div>
-                        <div class="col-md-12 col-xs-12" style="height: 100%; text-align: center;" ng-if="!showGraphs">
-                            <p style="margin: 50px 0">
-                                <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
-                                <span class="sr-only">Loading...</span>
-                            </p>
                         </div>
                         </div>
                     </uib-tab>
