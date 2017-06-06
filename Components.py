@@ -377,6 +377,8 @@ class Components(ComponentAction):
         """
         Method to get the rds instances list
         """
+        if this_uname != "Windows":
+            os.environ["PYTHONPATH"] = devops_lib_path
         pgcCmd = PGC_HOME + os.sep + "pgc rdslist --json"
         if email:
             pgcCmd = pgcCmd + " --email " + email
