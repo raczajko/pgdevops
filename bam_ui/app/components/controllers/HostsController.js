@@ -24,6 +24,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.openedGroupIndex = '';
     $scope.addedNewHost = false;
     $scope.pgcNotActive = false;
+    $scope.sshTimeout = 20000;
     // $scope.groupOpen = true;
     // $scope.hostOpen = true;
 
@@ -169,6 +170,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     var sessionPromise = PubSubService.getSession();
 
+    function getPgList(argument) {
+        session.call('com.bigsql.pgList', [$scope.userInfo.email]);
+    }
+
     sessionPromise.then(function (val) {
         session = val;
 
@@ -178,6 +183,21 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             session.call('com.bigsql.pgList', [$scope.userInfo.email]);
         });
 
+        session.call('com.bigsql.getSetting', ['SSH_TIMEOUT']);
+
+        session.subscribe('com.bigsql.onGetSetting', function (data) {
+            if (data[0]) {
+                $scope.sshTimeout = data[0];
+            }
+            $timeout(function () {
+                if ($scope.loading) {
+                    $scope.pgcNotActive = true;
+                    $scope.loading = false;
+                    $scope.pgcNotActiveMsg = htmlMessages.getMessage('pgc-not-active');
+                };
+            }, $scope.sshTimeout);
+        })
+
         session.subscribe("com.bigsql.onPgList", function (data) {
             var data = JSON.parse(data);
             $scope.pgListRes = data;
@@ -186,6 +206,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             }else{
                 $scope.showpgList = false;
             }
+            getGroupsList();
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -477,7 +498,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
         session.call('com.bigsql.deleteHost', [hostToDelete]);
         session.subscribe("com.bigsql.onDeleteHost", function (data) {
+            $scope.loading = true;
             getGroupsList(false);
+            $scope.showpgList = undefined;
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -508,6 +531,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         session.call('com.bigsql.deleteGroup', [groupToDelete]);
         session.subscribe("com.bigsql.onDeleteGroup", function (data) {
             getGroupsList(false);
+            getPgList();
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -574,10 +598,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             });
     };
 
-    getGroupsList(true);
+    // getGroupsList(true);
 
     $rootScope.$on('addedHost', function () {
+        $scope.loading = true;
         getGroupsList(false);
+        $scope.showpgList = undefined;
         $scope.addedNewHost = true;
     });
 
@@ -611,16 +637,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);
     };
-
-    $timeout(function () {
-        if ($scope.loading) {
-            $scope.pgcNotActive = true;
-            $scope.loading = false;
-            $scope.pgcNotActiveMsg = htmlMessages.getMessage('pgc-not-active');
-            // $window.location.reload();
-        }
-        ;
-    }, 10000);
 
     function wait() {
         $window.location.reload();

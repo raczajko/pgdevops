@@ -317,25 +317,27 @@ class Components(ComponentAction):
         BamConfigData[setting] = option
 
     @inlineCallbacks
-    def getTestSetting(self, host=None):
+    def getSetting(self, setting, host=None):
         """
         Method to get test list setting of bam.
         :return: It yields json string.
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc get GLOBAL STAGE "
+        pgcCmd = PGC_HOME + os.sep + "pgc get GLOBAL " + setting
         if host:
             pgcCmd = pgcCmd + " --host \"" + host + "\""
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         data = pgcProcess.communicate()
-        yield self.session.publish('com.bigsql.onGetTestSetting', data[0].strip('\n'))
+        print pgcCmd
+        print data
+        yield self.session.publish('com.bigsql.onGetSetting', data[0].strip('\n'))
 
-    def setTestSetting(self, val, host):
+    def setSetting(self, setting, val, host):
         """
         Method to set the test list setting of bam.
         :return: It yields json string.
         """
         # util.set_value("GLOBAL", "STAGE", val)
-        pgcCmd = PGC_HOME + os.sep + "pgc set GLOBAL STAGE " + val
+        pgcCmd = PGC_HOME + os.sep + "pgc set GLOBAL " + setting +  " " + val
         if host != '' and host != 'localhost':
             pgcCmd = pgcCmd + " --host \"" + host + "\""
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
@@ -617,7 +619,6 @@ class Components(ComponentAction):
             print ("Error : " + str(e))
             print ("cmd : " + str(pgcCmd))
             print ("Data Received : ")
-            print (final_data)
             return [{"state": "error", "msg": str(e), "cmd": pgcCmd}]
 
     @staticmethod
