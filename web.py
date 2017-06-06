@@ -17,6 +17,7 @@ from flask_mail import Mail
 from flask_babel import Babel, gettext
 from pgadmin.utils.session import create_session_interface
 from pgadmin.model import db, Role, User, Server, ServerGroup, Process
+from pgadmin.utils.crypto import encrypt, decrypt, pqencryptpassword
 from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 import config
@@ -247,6 +248,44 @@ class checkUser(Resource):
         return data
 
 api.add_resource(checkUser, '/api/checkUser')
+
+
+
+class check_pg_password(Resource):
+    def post(self):
+        sid = request.args.get('sid')
+        gid = request.args.get('gid')
+        pwd = request.args.get('pwd')
+        save_pwd = request.args.get('save_pwd')
+        json_dict = {}
+        try:
+            import psycopg2
+            pg_server = Server.query.filter_by(
+                id=sid,
+                servergroup_id=gid,
+                user_id=current_user.id
+            ).first()
+            if pg_server:
+                pg_connect = psycopg2.connect(dbname=pg_server.maintenance_db,
+                                              user=pg_server.username,
+                                              password=pwd,
+                                              host=pg_server.host,
+                                              port=pg_server.port)
+                pg_connect.close()
+                if save_pwd:
+                    password = encrypt(pwd, current_user.password)
+                    pg_server.password = password
+                    db_session.commit()
+                    json_dict['msg'] = "Password saved sucessfully."
+                json_dict['state'] = "completed"
+        except Exception as e:
+            errmsg = "ERROR: " + str(e)
+            json_dict['state'] = "error"
+            json_dict['msg'] = errmsg
+        data = json.dumps([json_dict])
+        return data
+
+api.add_resource(check_pg_password, '/api/checkPgPassword')
 
 
 class checkHostAccess(Resource):
