@@ -457,20 +457,21 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             		    $scope.need_pwd=true;
             		    $scope.version=false;
 	    			} else{
-	    			$scope.connect_err=false;
-	    			$scope.need_pwd=false;
-	    			var timeData = Math.round( (new Date( argument.time + ' UTC')).getTime() );
+
+	    			    $scope.connect_err=false;
+	    			    $scope.need_pwd=false;
+	    			    var timeData = Math.round( (new Date( argument.time + ' UTC')).getTime() );
 
 
-                if ($scope.connectionsData[0].values.length>30){
-                    $scope.connectionsData[0].values.splice(0, $scope.connectionsData[0].values.length);
-                    $scope.connectionsData[1].values.splice(0, $scope.connectionsData[1].values.length);
-                    $scope.connectionsData[2].values.splice(0, $scope.connectionsData[2].values.length);
-                }
+                        if ($scope.connectionsData[0].values.length>30){
+                            $scope.connectionsData[0].values.splice(0, $scope.connectionsData[0].values.length);
+                            $scope.connectionsData[1].values.splice(0, $scope.connectionsData[1].values.length);
+                            $scope.connectionsData[2].values.splice(0, $scope.connectionsData[2].values.length);
+                        }
 
-                $scope.connectionsData[0].values.push({ x: timeData, y: argument.connections.active});
-                $scope.connectionsData[1].values.push({ x: timeData, y: argument.connections.idle });
-	            $scope.connectionsData[2].values.push({x: timeData, y: argument.connections.idle_in_transaction});
+                        $scope.connectionsData[0].values.push({ x: timeData, y: argument.connections.active});
+                        $scope.connectionsData[1].values.push({ x: timeData, y: argument.connections.idle });
+                        $scope.connectionsData[2].values.push({x: timeData, y: argument.connections.idle_in_transaction});
 
 	    			}
 	    			$timeout(function() {stats(sid, gid)}, 5000);

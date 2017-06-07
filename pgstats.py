@@ -92,7 +92,7 @@ class ConnectAPI(MethodView):
                     cur.execute("SELECT version()")
                     x = cur.fetchone()[0]
                     cur.close()
-                    json_dict['version'] = x
+                    json_dict['version'] = x.split(",")[0]
                     json_dict['msg'] = "connected sucessfully"
 
             except Exception as e:
@@ -157,7 +157,7 @@ class StatsAPI(MethodView):
 
         json_dict = {}
         if not conn.connected():
-            return jsonify({'message': 'db is not connected', 'state':"error"})
+            return jsonify({'msg': 'Connection is closed.', 'state':"error"})
         else:
             try:
                 stats_timestamp = datetime.utcnow()
@@ -192,7 +192,7 @@ class ConfigAPI(MethodView):
 
         json_dict = {}
         if not conn.connected():
-            return jsonify({'message': 'db is not connected', 'state': "error"})
+            return jsonify({'msg': 'Connection is closed.', 'state': "error"})
         else:
             try:
                 cur = conn.conn.cursor()
@@ -216,22 +216,28 @@ class DBCloseAPI(MethodView):
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
         conn = manager.connection()
         if not conn.connected():
-            return jsonify({'message': 'db is not connected', 'state': "error"})
+            return jsonify({'msg': 'Connection is already closed.', 'state': "success"})
         else:
             conn.conn.close()
             manager.update_session()
-            return jsonify({'message': 'db was closed succesfully', 'state': "success"})
+            return jsonify({'msg': 'db was closed succesfully', 'state': "success"})
 
 pgstats.add_url_rule('/disconnect/', view_func=DBCloseAPI.as_view('disconnect'))
 
 
 class CloseAllDBSessionsAPI(MethodView):
     def get(self):
-        managers = session.get('__pgsql_server_managers')
-        for sess in managers:
-            sess_mgr = managers[sess]
-            for mgr in [m for m in sess_mgr if isinstance(m, ServerManager)]:
-                mgr.release()
+        servers_list = Server.query.filter_by(
+            user_id=current_user.id
+        )
+        if servers_list.count()>0:
+            for server in servers_list:
+                try:
+                    manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(server.id))
+                    conn = manager.connection()
+                    conn.conn.close()
+                except Exception as e:
+                    pass
         return jsonify({"msg": "All Connection released", 'state': "success"})
 
 pgstats.add_url_rule('/disconnectall/', view_func=CloseAllDBSessionsAPI.as_view('disconnectall'))
