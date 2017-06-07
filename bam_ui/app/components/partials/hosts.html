@@ -47,21 +47,13 @@
                                 <uib-accordion-group ng-repeat="serverVal in value" is-open="dbStatus.open">
                                     <uib-accordion-heading>
                                         <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !dbStatus.open, 'fa fa-minus': dbStatus.open}"></i>
-                                        <div>{{serverVal.server_name}}</div>
-                                    </uib-accordion-heading>
-                                    <div class="col-md-7 col-sm-12 col-xs-12">
-
-
-                                    <div><strong>Host : </strong>{{ serverVal.host }}</div>
-                                    <div><strong>User : </strong>{{ serverVal.db_user }}</div>
-                                        <div ng-if="version"><strong>Version : </strong>{{ version }}</div>
-                                        <div ng-if="need_pwd">
-                                            <input type="password" ng-model="pg_pwd">
-                                            <input type="button" ng-click="connect_pg(serverVal.sid,serverVal.gid, pg_pwd)" value="Connect">
-                                            <div ng-if="connect_err">{{connect_err}}</div>
+                                        <div>{{serverVal.db_user}}@{{ serverVal.host }}:{{ serverVal.port }}/{{serverVal.db}}</div>
+                                        <div class="pull-right" style="margin-top: -26px">
+                                            <a ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); navToDetails(serverVal.server_name)" 
+                                            class="btn btn-default" class="ng-binding" ng-if="dbStatus.open">Details</a>
                                         </div>
-
-                                    <p>
+                                    </uib-accordion-heading>
+                                    <div class="col-md-12 col-sm-12 col-xs-12">
                                     <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12">
                                         <div class="host-perf-viz">
                                                 <h5>Transactions per Second</h5>
@@ -71,42 +63,7 @@
                                     <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12">
                                         <div class="host-perf-viz">
                                                 <h5>Connections</h5>
-                                            <nvd3 options="connectionsChart" data="connectionsData" showLegend="false"></nvd3>
-                                        </div>
-                                    </div>
-                                    </p>
-                                </div>
-
-                                <div class="col-md-5 col-sm-12 col-xs-12">
-                                    
-                                    <div class="box" >
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">Services</h3>
-                                        </div>
-                                        <div class="box-body">
-                                            <table class="table" id="serversTable">
-                                                <thead>
-                                                <tr>
-                                                    <th class="col-md-3 col-xs-3" style="white-space: nowrap;">Server Name</th>
-                                                    <th class="col-md-6 col-xs-6">Port</th>
-                                                    <th class="col-md-3 col-xs-3">Database</th>
-                                                </tr>
-                                                </thead>
-                                                <tbody id="serversTableBody">
-                                                <tr>
-                                                    <td class="col-md-3 col-xs-3" style="white-space: nowrap;">
-                                                        <a ui-sref="components.connections({component:serverVal.server_name})">{{ serverVal.server_name }}</a>
-                                                    </td>
-                                                    <td class="col-md-6 col-xs-6" style="white-space: nowrap;">
-                                                        <i ng-class="statusColors['Running']" style="margin-top:2px;margin-right:10px" class="fa fa-stop fa-2x pull-left"></i>
-                                                        <div>connected on port {{ serverVal.port }}</div>
-                                                    </td>
-                                                    <td class="col-md-3 col-xs-3" style="white-space: nowrap;">
-                                                        <div>{{ serverVal.db }}</div>
-                                                    </td>
-                                                </tr>
-                                                </tbody>
-                                            </table>
+                                            <nvd3 options="dummyChart" data="dummyData" showLegend="false"></nvd3>
                                         </div>
                                     </div>
                                 </div>

@@ -241,6 +241,15 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         session.call('com.bigsql.pgList', [$scope.userInfo.email]);
     }
 
+    $scope.navToDetails = function (argument) {
+        $rootScope.connection_comp = argument;
+        $interval.cancel(stopStatusCall);
+        for (var i = 0; i < subscriptions.length; i++) {
+            session.unsubscribe(subscriptions[i])
+        }
+        $window.location = '#/connection-details';
+    }
+
     sessionPromise.then(function (val) {
         session = val;
 
