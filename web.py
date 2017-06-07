@@ -79,6 +79,9 @@ paths.init_app(application)
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(application, user_datastore)
 
+from pgstats import pgstats
+application.register_blueprint(pgstats, url_prefix='/pgstats')
+
 PGC_HOME = os.getenv("PGC_HOME", "")
 PGC_LOGS = os.getenv("PGC_LOGS", "")
 

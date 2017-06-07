@@ -327,8 +327,6 @@ class Components(ComponentAction):
             pgcCmd = pgcCmd + " --host \"" + host + "\""
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         data = pgcProcess.communicate()
-        print pgcCmd
-        print data
         yield self.session.publish('com.bigsql.onGetSetting', data[0].strip('\n'))
 
     def setSetting(self, setting, val, host):

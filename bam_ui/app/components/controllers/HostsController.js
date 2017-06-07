@@ -25,8 +25,11 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.addedNewHost = false;
     $scope.pgcNotActive = false;
     $scope.sshTimeout = 20000;
+    $scope.need_pwd=true;
+    $scope.connect_err = false;
     // $scope.groupOpen = true;
     // $scope.hostOpen = true;
+    $scope.version=false;
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -43,6 +46,48 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
 
     var host_info ;
+
+    $scope.transctionsPerSecondChart = {
+        chart: {
+            type: 'lineChart',
+            height: 150,
+            margin : {
+                top: 20,
+                right: 40,
+                bottom: 40,
+                left: 55
+            },
+            x: function(d){ return d.x; },
+            y: function(d){ return d.y; },
+            noData:"Loading...",
+            interactiveLayer : {
+                tooltip: {
+                    headerFormatter: function (d) {
+                        var point = new Date(d);
+                        return d3.time.format('%Y/%m/%d %H:%M:%S')(point);
+                    },
+                },
+            },
+
+            xAxis: {
+                xScale: d3.time.scale(),
+                    tickFormat: function(d) {
+                        var point = new Date(d);
+                        return d3.time.format('%H:%M:%S')(point)
+                    },
+                },
+            yAxis: {
+                tickFormat: function(d) {
+                    return d3.format(',')(d);
+                }
+            },
+            forceY: [0,5],
+            useInteractiveGuideline: true,
+            legend: { margin : {
+                top: 10, right: 0, left: 0, bottom: 0
+            }}
+        }
+    };
 
     $scope.cpuChart = {
         chart: {
@@ -91,8 +136,26 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.ioChart = angular.copy($scope.cpuChart);
     $scope.networkChart = angular.copy($scope.cpuChart);
     $scope.dummyChart = angular.copy($scope.cpuChart);
+    $scope.connectionsChart = angular.copy($scope.transctionsPerSecondChart);
+    $scope.connectionsChart.chart.type = "stackedAreaChart";
+    $scope.connectionsChart.chart.showControls = false;
+
     $scope.cpuChart.chart.type = "stackedAreaChart";
     $scope.cpuChart.chart.showControls = false;
+
+    $scope.connectionsData = [{
+            values: [],
+            key: 'Active',
+            color: '#FF5733',
+        },{
+            values: [],
+            key: 'Idle',
+            color: '#006994',
+        },{
+            values: [],
+            key: 'Idle Transactions',
+            color: '#9932CC',
+        }];
 
     $scope.rowsData = [{
         values: [],
@@ -132,6 +195,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     if($scope.dummyData.length <= 2){
         $scope.dummyChart.chart.noData = "_ No Data Available."
+    }
+
+    if($scope.connectionsData.length <= 3){
+        $scope.connectionsChart.chart.noData = "_ No Data Available."
     }
 
     $scope.diskIO = [{
@@ -367,6 +434,63 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         //     $scope.groupsList[index]['state'] = false;
         // }
     // }
+
+    var stats = function (sid,gid){
+    var connect_api_url = "/pgstats/stats/";
+        var data = {
+             sid:sid,
+             gid:gid
+            };
+            var statusData = bamAjaxCall.getData(connect_api_url, data);
+            statusData.then(function (argument) {
+            		if (argument.state=="error"){
+            		    $scope.connect_err=argument.msg;
+            		    $scope.need_pwd=true;
+            		    $scope.version=false;
+	    			} else{
+	    			$scope.connect_err=false;
+	    			$scope.need_pwd=false;
+	    			var timeData = Math.round( (new Date( argument.time + ' UTC')).getTime() );
+
+
+                if ($scope.connectionsData[0].values.length>30){
+                    $scope.connectionsData[0].values.splice(0, $scope.connectionsData[0].values.length);
+                    $scope.connectionsData[1].values.splice(0, $scope.connectionsData[1].values.length);
+                    $scope.connectionsData[2].values.splice(0, $scope.connectionsData[2].values.length);
+                }
+
+                $scope.connectionsData[0].values.push({ x: timeData, y: argument.connections.active});
+                $scope.connectionsData[1].values.push({ x: timeData, y: argument.connections.idle });
+	            $scope.connectionsData[2].values.push({x: timeData, y: argument.connections.idle_in_transaction});
+
+	    			}
+	    			$timeout(function() {stats(sid, gid)}, 5000);
+            });
+
+    };
+    $scope.connect_pg = function(sid,gid, pwd){
+        var connect_api_url = "/pgstats/connect/";
+        var data = {
+             sid:sid,
+             gid:gid
+            };
+            if (pwd){
+             data.pwd=pwd;
+            };
+            var statusData = bamAjaxCall.postData(connect_api_url, data);
+            statusData.then(function (argument) {
+            		if (argument.state=="error"){
+            		    $scope.connect_err=argument.msg;
+            		    $scope.need_pwd=true;
+            		    $scope.version=false;
+	    			} else{
+	    			$scope.version=argument.version;
+	    			$scope.connect_err=false;
+	    			$scope.need_pwd=false;
+	    			$timeout(function() {stats(sid, gid)}, 2000);
+	    			}
+            });
+    };
 
     $scope.loadHost = function (p_idx, idx, refresh) {
         // if ($scope.groupsList[p_idx].hosts[idx]['state'] == undefined || $scope.groupsList[p_idx].hosts[idx]['state'] == false) {

@@ -54,6 +54,12 @@
 
                                     <div><strong>Host : </strong>{{ serverVal.host }}</div>
                                     <div><strong>User : </strong>{{ serverVal.db_user }}</div>
+                                        <div ng-if="version"><strong>Version : </strong>{{ version }}</div>
+                                        <div ng-if="need_pwd">
+                                            <input type="password" ng-model="pg_pwd">
+                                            <input type="button" ng-click="connect_pg(serverVal.sid,serverVal.gid, pg_pwd)" value="Connect">
+                                            <div ng-if="connect_err">{{connect_err}}</div>
+                                        </div>
 
                                     <p>
                                     <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12">
@@ -65,7 +71,7 @@
                                     <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12">
                                         <div class="host-perf-viz">
                                                 <h5>Connections</h5>
-                                            <nvd3 options="dummyChart" data="dummyData" showLegend="false"></nvd3>
+                                            <nvd3 options="connectionsChart" data="connectionsData" showLegend="false"></nvd3>
                                         </div>
                                     </div>
                                     </p>
