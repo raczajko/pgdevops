@@ -35,7 +35,7 @@ class ConnectAPI(MethodView):
                         cur.execute("SELECT version()")
                         x = cur.fetchone()[0]
                         cur.close()
-                        json_dict['version'] = x
+                        json_dict['version'] = x.split(",")[0]
                         json_dict['state'] = "success"
                         json_dict['msg'] = "Already Connected."
                         return jsonify(json_dict)
@@ -123,7 +123,7 @@ class ConnStatusAPI(MethodView):
                         cur.execute("SELECT version()")
                         x = cur.fetchone()[0]
                         cur.close()
-                        json_dict['version'] = x
+                        json_dict['version'] = x.split(",")[0]
                         json_dict['state'] = "success"
                         json_dict['msg'] = "Already Connected."
                         return jsonify(json_dict)
