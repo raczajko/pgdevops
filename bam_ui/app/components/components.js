@@ -100,7 +100,7 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
             }
         }
     }).state('components.connections', {
-        url: '^/connection-details/{component}',
+        url: '^/connection-details',
         views: {
             "sub": {
                 controller: 'connectionDetailsController',

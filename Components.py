@@ -377,7 +377,7 @@ class Components(ComponentAction):
         """
         if this_uname != "Windows":
             os.environ["PYTHONPATH"] = devops_lib_path
-        pgcCmd = PGC_HOME + os.sep + "pgc rdslist --json"
+        pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json"
         if email:
             pgcCmd = pgcCmd + " --email " + email
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -394,7 +394,7 @@ class Components(ComponentAction):
         """
         Method to get the pglist 
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc pglist --json " + mail
+        pgcCmd = PGC_HOME + os.sep + "pgc dblist pg --json --email " + mail
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         data = pgcProcess.communicate()
         yield self.session.publish('com.bigsql.onPgList', data[0].strip('\n'))

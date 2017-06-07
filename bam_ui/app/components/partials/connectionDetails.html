@@ -1,9 +1,14 @@
 <!-- Content Header (Page header) -->
 <section class="content-header">
-    <!-- <form class="form form-inline "> -->
-        <!-- <h3><strong>Connection Details</strong></h3> -->
-    <!-- </form> -->
-    <server-info-details title="Connection Details"></server-info-details>
+    <!-- <server-info-details title="Connection Details"></server-info-details> -->
+    <div class="components-update-title-wrapper">
+        <form class="form form-inline ">
+            <h1 style="float:left; display: inline; padding-right: 10px;"><strong>Connection Details</strong></h1>
+            <select class="form-control" id="serverInfoDropDown" ng-change="connChange(selectConn)" ng-model="selectConn">
+                <option ng-repeat="pg in pgList" value="{{ pg.server_name }}">{{pg.db_user}}@{{ pg.host }}:{{ pg.port }}/{{pg.db}}</option> 
+            </select>
+        </form>
+    </div>
 </section>
 <!-- Main content -->
 <section class="content">
@@ -40,9 +45,8 @@
                             </span>
                         </li>
                     </ul>
-                    <div ng-show="connData.port" class="comp-status-wrap text-center">
-                        <i ng-class="statusColors['Running']" class="fa fa-stop fa-4x"></i>
-                        <h4>Connected <br /><small><span>on port {{connData.port}} </span></small></h4>
+                    <div ng-show="connData.port" class="text-center">
+                        <h4 style="color: #FFA500;">Disconnected <br /><small><span>on port {{connData.port}} </span></small></h4>
                     </div>
                     <div class="clearfix"></div>
                 </div>
@@ -84,6 +88,25 @@
                                     <uib-accordion-group is-open="connectionGraph.open">
                                       <uib-accordion-heading>
                                         <span ng-click="tabClick()">Connections
+                                        <i class="pull-right glyphicon" 
+                                ng-class="{'fa fa-plus': !connectionGraph.open, 'fa fa-minus': connectionGraph.open}"></i>
+                                        </span> 
+                                      </uib-accordion-heading>
+                                        <div>
+                                            <nvd3 options="connectionsChart" data="connectionsData"></nvd3>
+                                        </div>
+                                    </uib-accordion-group>    
+                                 </uib-accordion>
+                            </div>
+                        </div>
+                        </div>
+                        <div class="row">
+                        <div class="col-md-12 col-xs-12">
+                            <div class="box">
+                                <uib-accordion>
+                                    <uib-accordion-group is-open="connectionGraph.open">
+                                      <uib-accordion-heading>
+                                        <span ng-click="tabClick()">Rows per Second
                                         <i class="pull-right glyphicon" 
                                 ng-class="{'fa fa-plus': !connectionGraph.open, 'fa fa-minus': connectionGraph.open}"></i>
                                         </span> 
