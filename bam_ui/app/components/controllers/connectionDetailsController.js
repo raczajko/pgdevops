@@ -26,6 +26,23 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         interval: ''
     }
 
+    $scope.connChange = function (argument) {
+        if (!argument && !localStorage.getItem('selectedConnection')) {
+            argument = $scope.pgList[0].server_name;
+        }else if( !argument && localStorage.getItem('selectedConnection')){
+            argument = localStorage.getItem('selectedConnection');
+        }
+        $scope.selectConn = argument;
+        $scope.loading = true;
+        for (var i = $scope.pgList.length - 1; i >= 0; i--) {
+            if($scope.pgList[i].server_name == argument){
+                localStorage.setItem('selectedConnection', argument);
+                $scope.loading = false;
+                $scope.connData = $scope.pgList[i];
+            }
+        }
+    }
+
     var getCurrentObject = function (list, name) {
         var currentObject;
         for (var i = 0; i < list.length; i++) {
@@ -58,11 +75,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         session.subscribe("com.bigsql.onPgList", function (data) {
             var data = JSON.parse(data);
             $scope.pgList = data;
-            for (var i = $scope.pgList.length - 1; i >= 0; i--) {
-                if($scope.pgList[i].server_name == $stateParams.component){
-                    $scope.connData = $scope.pgList[i];
-                }
-            }
+            $scope.connChange($rootScope.connection_comp);
             $scope.loading = false;
             $scope.$apply();
 
