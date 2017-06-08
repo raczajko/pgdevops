@@ -6,7 +6,8 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     $scope.loading = true;
 
     $scope.tpsGraph = {open:true} ;
-    $scope.connectionGraph = {open:true};    
+    $scope.connGraph = {open:true};
+    $scope.rowsGraph = {open:false};    
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -26,6 +27,14 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         interval: ''
     }
 
+    $rootScope.$on('updateVersion', function (argument, ver) {
+        $scope.connVersion = ver;
+    });
+
+    $rootScope.$on('navToPwd', function (argument) {
+        
+    })
+    
     $scope.connChange = function (argument) {
         if (!argument && !localStorage.getItem('selectedConnection')) {
             argument = $scope.pgList[0].server_name;
@@ -39,6 +48,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                 localStorage.setItem('selectedConnection', argument);
                 $scope.loading = false;
                 $scope.connData = $scope.pgList[i];
+                $rootScope.$emit('getDBstatus', $scope.pgList[i].sid, $scope.pgList[i].gid, '');
             }
         }
     }

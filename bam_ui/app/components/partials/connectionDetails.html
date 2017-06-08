@@ -3,7 +3,7 @@
     <!-- <server-info-details title="Connection Details"></server-info-details> -->
     <div class="components-update-title-wrapper">
         <form class="form form-inline ">
-            <h1 style="float:left; display: inline; padding-right: 10px;"><strong>Connection Details</strong></h1>
+            <h1 style="float:left; display: inline; padding-right: 10px;"><strong>PostgreSQL Connection Details</strong></h1>
             <select class="form-control" id="serverInfoDropDown" ng-change="connChange(selectConn)" ng-model="selectConn">
                 <option ng-repeat="pg in pgList" value="{{ pg.server_name }}">{{pg.db_user}}@{{ pg.host }}:{{ pg.port }}/{{pg.db}}</option> 
             </select>
@@ -25,18 +25,18 @@
                     <div class="comp-det-top">
                         <div class="col-md-4"><img class="img-responsive comp-logo-img" id="component-logo" ng-src="assets/img/component-logos/pg96.png" err-src="assets/img/component-logos/no_img.png" alt="">
                         </div>
-                        <div class="col-md-3">
-                            <h4 class="comp-name" ng-bind="connData.server_name" id="comp_name" style="white-space: nowrap;"></h4>
+                        <div class="col-md-8">
+                            <h4 id="conn_name" style="white-space: nowrap;"> {{connData.server_name}} </h4><span>{{connData.server_group}} </span>
                         </div>
-                        <!-- <div class="col-md-5 version-wrapper">
-                            &nbsp;v.<span class="" ng-bind="component.version" id="comp_version"></span>
-                        </div> -->
                     </div>
                     <span class="clearfix"></span>
                     <!-- <div style="text-align: center; padding-bottom: 25px;"><b><a href="" tooltip-append-to-body="true" uib-tooltip="Check out the new features of {{ component.component }}" ng-click="openWhatsNew()"> What's New</a></b></div> -->
                     <ul class="list-group list-group-unbordered" id="comp_details">
                         <li class="list-group-item">
-                            <span class="pull-left"><b>Uptime</b></span> <span class="pull-right" ng-bind="connData.up_time" id="comp_version"></span>
+                            <span class="pull-left"><b>Version</b></span> <span class="pull-right" ng-bind="connVersion" id="conn_version"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <span class="pull-left"><b>Uptime</b></span> <span class="pull-right" ng-bind="connData.up_time" id="conn_uptime"></span>
                         </li>
                         <li class="list-group-item" id="li-pointer">
                             <span class="pull-left"><b>Refresh Interval </b>(sec)</span>
@@ -55,12 +55,12 @@
             <!-- /.box -->
         </div>
 
-        <div class="col-md-9 col-sm-8 col-xs-12" ng-if="!loading && !showErrormsg">
+        <div class="col-md-9 col-sm-8 col-xs-12" ng-show="!loading && !showErrormsg" ng-controller="dbGraphsController">
 
        
-            <div class="nav-tabs-custom" id="comp-details-tabs-wrapper" ng-controller="graphsTabController">
+            <div class="nav-tabs-custom" id="comp-details-tabs-wrapper">
                 <uib-tabset>
-                    <uib-tab heading="Overview"  active="activeOverview">
+                    <uib-tab heading="Overview" active="activeOverview">
                         <div class="row tab-content graphsTab" style="padding: 15px;">
                         <div class="row"> 
                         <div class="col-md-12 col-xs-12">
@@ -68,13 +68,13 @@
                                 <uib-accordion>
                                     <uib-accordion-group is-open="tpsGraph.open">
                                       <uib-accordion-heading>
-                                        <span ng-click="tabClick()">Transactions per Second
+                                        <span>Transactions per Second
                                             <i class="pull-right glyphicon" 
                                 ng-class="{'fa fa-plus': !tpsGraph.open, 'fa fa-minus': tpsGraph.open}"></i>
                                         </span>
                                       </uib-accordion-heading>
                                         <div>
-                                            <nvd3 options="transctionsPerSecondChart" data="commitRollbackData"></nvd3>
+                                        <nvd3 options="transctionsPerSecondChart" data="commitRollbackData" showLegend="false"></nvd3>
                                         </div>
                                     </uib-accordion-group>    
                                  </uib-accordion>
@@ -85,15 +85,15 @@
                         <div class="col-md-12 col-xs-12">
                             <div class="box">
                                 <uib-accordion>
-                                    <uib-accordion-group is-open="connectionGraph.open">
+                                    <uib-accordion-group is-open="connGraph.open">
                                       <uib-accordion-heading>
-                                        <span ng-click="tabClick()">Connections
+                                        <span>Connections
                                         <i class="pull-right glyphicon" 
-                                ng-class="{'fa fa-plus': !connectionGraph.open, 'fa fa-minus': connectionGraph.open}"></i>
+                                ng-class="{'fa fa-plus': !connGraph.open, 'fa fa-minus': connGraph.open}"></i>
                                         </span> 
                                       </uib-accordion-heading>
                                         <div>
-                                            <nvd3 options="connectionsChart" data="connectionsData"></nvd3>
+                                            <nvd3 options="connectionsChart" data="connectionsData" showLegend="false"></nvd3>
                                         </div>
                                     </uib-accordion-group>    
                                  </uib-accordion>
@@ -104,15 +104,15 @@
                         <div class="col-md-12 col-xs-12">
                             <div class="box">
                                 <uib-accordion>
-                                    <uib-accordion-group is-open="connectionGraph.open">
+                                    <uib-accordion-group is-open="rowsGraph.open">
                                       <uib-accordion-heading>
-                                        <span ng-click="tabClick()">Rows per Second
+                                        <span>Rows per Second
                                         <i class="pull-right glyphicon" 
-                                ng-class="{'fa fa-plus': !connectionGraph.open, 'fa fa-minus': connectionGraph.open}"></i>
+                                ng-class="{'fa fa-plus': !rowsGraph.open, 'fa fa-minus': rowsGraph.open}"></i>
                                         </span> 
                                       </uib-accordion-heading>
                                         <div>
-                                            <nvd3 options="connectionsChart" data="connectionsData"></nvd3>
+                                            <nvd3 options="rowsChart" data="rowsData" showLegend="false"></nvd3>
                                         </div>
                                     </uib-accordion-group>    
                                  </uib-accordion>
