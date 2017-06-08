@@ -1,3 +1,7 @@
+####################################################################
+#########         Copyright 2016-2017 BigSQL             ###########
+####################################################################
+
 from flask import Blueprint, request, jsonify, session
 from flask.views import MethodView
 from flask_security import login_required, roles_required, current_user
@@ -15,6 +19,7 @@ pgstats = Blueprint('pgstats', 'pgstats', url_prefix='/pgstats')
 
 
 class ConnectAPI(MethodView):
+
     def post(self):
         json_dict = {}
         if not current_user:
@@ -105,6 +110,7 @@ pgstats.add_url_rule('/connect/', view_func=ConnectAPI.as_view('connect'))
 
 
 class ConnStatusAPI(MethodView):
+
     def get(self):
         json_dict = {}
         if not current_user:
@@ -144,7 +150,6 @@ class ConnStatusAPI(MethodView):
             return jsonify(json_dict)
 
 pgstats.add_url_rule('/conn_status/', view_func=ConnStatusAPI.as_view('conn_status'))
-
 
 
 class StatsAPI(MethodView):
@@ -197,6 +202,44 @@ class StatsAPI(MethodView):
 pgstats.add_url_rule('/stats/', view_func=StatsAPI.as_view('stats'))
 
 
+class ActivityAPI(MethodView):
+
+    def get(self):
+        json_dict = {}
+        if not current_user:
+            json_dict['state'] = "error"
+            json_dict['msg'] = "Access denied."
+            return jsonify(json_dict)
+        sid = request.args.get('sid')
+        gid = request.args.get('gid')
+        manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
+        conn = manager.connection()
+
+        json_dict = {}
+        if not conn.connected():
+            return jsonify({'msg': 'Connection is closed.', 'state':"error"})
+        else:
+            try:
+                stats_timestamp = datetime.utcnow()
+                stats_time = stats_timestamp.strftime('%Y/%m/%d %H:%M:%S')
+                cur = conn.conn.cursor()
+                cur.execute(activity_query)
+                columns = [desc[0] for desc in cur.description]
+                result = []
+                for res in cur:
+                    result.append(dict(zip(columns, res)))
+                cur.close()
+                json_dict['activity'] = result
+                json_dict['time'] = stats_time
+            except Exception as e:
+                errmsg = "ERROR: " + str(e)
+                json_dict['state'] = "error"
+                json_dict['msg'] = errmsg
+            return jsonify(json_dict)
+
+pgstats.add_url_rule('/activity/', view_func=ActivityAPI.as_view('activity'))
+
+
 class ConfigAPI(MethodView):
 
     def get(self):
@@ -216,9 +259,18 @@ class ConfigAPI(MethodView):
         else:
             try:
                 cur = conn.conn.cursor()
-                cur.execute("SELECT version()")
-                x = cur.fetchone()[0]
-                json_dict['x'] = str(x)
+                cur.execute(pg_settings_query)
+                columns = [desc[0] for desc in cur.description]
+                result = []
+                for res in cur:
+                    result.append(dict(zip(columns, res)))
+                cur.close()
+                import itertools
+                final_list = []
+                for key, group in itertools.groupby(result, key=lambda x: x['category']):
+                    final_list.append({'name': str(key), 'settings': list(group)})
+                json_dict['settings'] = final_list
+                json_dict['state'] = "success"
             except Exception as e:
                 errmsg = "ERROR: " + str(e)
                 json_dict['state'] = "error"
