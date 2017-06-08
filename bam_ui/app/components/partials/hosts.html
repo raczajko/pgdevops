@@ -52,7 +52,7 @@
                                         <div>{{serverVal.db_user}}@{{ serverVal.host }}:{{ serverVal.port }}/{{serverVal.db}}</div>
                                         <div class="pull-right" style="margin-top: -26px">
                                             <a ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); navToDetails(serverVal.server_name)" 
-                                            class="btn btn-default" class="ng-binding" ng-if="dbStatus.open">Details</a>
+                                            class="btn btn-default" class="ng-binding" ng-if="serverVal.isOpen">Details</a>
                                         </div>
                                     </uib-accordion-heading>
                                     <div class="col-md-12 col-sm-12 col-xs-12">
