@@ -108,6 +108,88 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         $scope.component.spinner = 'Initializing..';
     });
 
+
+    $scope.configureTabEvent = function () {
+        var data = {
+             sid:$scope.connData.sid,
+             gid:$scope.connData.gid
+            };
+        var configureData = bamAjaxCall.getData("/pgstats/config/", data);
+        configureData.then(function (data) {
+            $scope.settingsData = data.settings;
+                $scope.gridSettings = {
+                    expandableRowTemplate: '<div ui-grid="row.entity.subGridOptions" style="height: 140px"></div>',
+                };
+
+                $scope.gridSettings.columnDefs = [
+                    {field: "name", displayName: 'Category'}
+                ];
+
+                $scope.gridSettings.enableColumnMenus = false;
+
+                data = data.settings;
+                for (var i = 0; i < data.length; i++) {
+                    data[i].subGridOptions = {
+                        columnDefs: [
+                            {
+                                field: "name",
+                                displayName: "Parameter",
+                                cellTemplate: '<div class="ui-grid-cell-contents" title="{{row.entity.short_desc}}"><a>{{ COL_FIELD }}</a></div>'
+                            },
+                            {field: "setting", displayName: "value"},
+                            {field: "short_desc", visible: false}],
+                        data: data[i].settings,
+                        enableColumnMenus: false
+                    }
+                }
+                $scope.gridSettings.data = data;
+
+        })
+    }
+
+    $scope.dataBaseTabEvent = function () {
+        var data = {
+             sid:$scope.connData.sid,
+             gid:$scope.connData.gid
+            };
+        var databaseData = bamAjaxCall.getData("/pgstats/db_list/", data);
+        databaseData.then(function (data) {
+            $scope.myData = data.activity;
+            $scope.gridOptions = {
+                data: 'myData', columnDefs: [{
+                    field: "datname", displayName: "Database"
+                }, {
+                    field: 'owner', displayName: "Owner"
+                }, {
+                    field: 'size',
+                    displayName: "Size (MB)",
+                    cellClass: 'numberCell',
+                    headerTooltip: 'This is the total disk space used by the database, which includes all the database objects like Tables and Indexes within that database',
+                    sort: {direction: 'desc', priority: 0}
+                }], enableColumnMenus: false
+            };
+        })
+    }
+
+    $scope.activityTabEvent = function () {
+        var data = {
+             sid:$scope.connData.sid,
+             gid:$scope.connData.gid
+            };
+        var activityData = bamAjaxCall.getData("/pgstats/activity/", data);
+        activityData.then(function (data) {
+            var parseData = data.activity;
+            if (parseData === undefined || parseData.length == 0) {
+                $scope.activities = '';
+                $scope.noActivities = true;
+                activityTab.empty();
+            } else {
+                $scope.noActivities = false;
+                $scope.activities = parseData;
+            }
+        })
+    }
+
     //need to destroy all the subscriptions on a template before exiting it
     $scope.$on('$destroy', function () {
         for (var i = 0; i < subscriptions.length; i++) {
@@ -115,7 +197,6 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         }
         var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
         statusData.then(function (argument) {
-            console.log("close all");
         })
     });
 

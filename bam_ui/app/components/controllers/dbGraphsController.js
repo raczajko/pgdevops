@@ -219,7 +219,7 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
                     $scope.version=argument.version;
                     $scope.connect_err=false;
                     $scope.need_pwd=false;
-                    $rootScope.$emit('updateVersion', argument.pg_version);
+                    $rootScope.$emit('updateVersion', argument.version);
 
                     $timeout(function() {stats(sid, gid)}, 2000);
                     }
