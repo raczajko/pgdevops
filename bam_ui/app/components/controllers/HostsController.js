@@ -243,7 +243,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
 
     $scope.closeAllConnections = function() {
-        console.log("closedAll");
         var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
         statusData.then(function (argument) {
         })

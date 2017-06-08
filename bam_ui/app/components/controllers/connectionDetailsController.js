@@ -113,6 +113,10 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);
         }
+        var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
+        statusData.then(function (argument) {
+            console.log("close all");
+        })
     });
 
 }]);
