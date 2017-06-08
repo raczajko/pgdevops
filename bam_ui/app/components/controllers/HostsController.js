@@ -250,6 +250,21 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $window.location = '#/connection-details';
     }
 
+    $scope.changeStatus = function (arg, value) {
+        for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
+            if($scope.pgListRes[i].server_name == arg){
+                $scope.pgListRes[i].isOpen = !value;
+                console.log($scope.pgListRes[i].isOpen);
+            }
+        }
+    }
+
+    $scope.closeAllServers = function(){
+        for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
+            $scope.pgListRes[i].isOpen = false;
+        }
+    }
+
     sessionPromise.then(function (val) {
         session = val;
 
@@ -277,6 +292,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         session.subscribe("com.bigsql.onPgList", function (data) {
             var data = JSON.parse(data);
             $scope.pgListRes = data;
+            for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
+                $scope.pgListRes[i]['isOpen'] = false;
+            }
             if (data.length > 0) {
                 $scope.showpgList = true;
             }else{
