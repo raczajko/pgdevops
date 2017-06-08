@@ -89,6 +89,7 @@ class ConnectAPI(MethodView):
                     json_dict['msg'] = errmsg
                     return jsonify(json_dict)
                 if not status:
+                    errmsg = errmsg.split("\n")[0]
                     if hasattr(str, 'decode'):
                         errmsg = errmsg.decode('utf-8')
                     json_dict['state'] = "error"
