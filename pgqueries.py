@@ -2,6 +2,8 @@
 #########         Copyright 2016-2017 BigSQL             ###########
 ####################################################################
 
+version_query = "SELECT version()"
+
 connection_query = """WITH act_base as (
                     SELECT unnest(ARRAY['idle','active','idle_in_transaction']) as "state" )
                     SELECT ab.state, count(sa.state)
@@ -23,7 +25,7 @@ metrics_query = """SELECT sum(numbackends::float8) as "num_backends",
                           sum(tup_deleted::float8) as "tup_deleted"
                      FROM pg_stat_database"""
 
-pg_settings_query = "select category, name, setting, short_desc from pg_settings order by category"
+pg_settings_query = "SELECT category, name, setting, short_desc FROM pg_settings ORDER BY category"
 
 
 activity_query = """SELECT datname, state, pid, usename, client_addr::varchar,

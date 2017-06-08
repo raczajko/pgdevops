@@ -37,10 +37,13 @@ class ConnectAPI(MethodView):
                 if conn.connected():
                     try:
                         cur = conn.conn.cursor()
-                        cur.execute("SELECT version()")
+                        cur.execute(version_query)
                         x = cur.fetchone()[0]
                         cur.close()
-                        json_dict['version'] = x.split(",")[0]
+                        ver_platform = x.split(",")[0]
+                        json_dict['version'] = ver_platform
+                        version_info = ver_platform.split()
+                        json_dict['pg_version'] = version_info[1]
                         json_dict['state'] = "success"
                         json_dict['msg'] = "Already Connected."
                         return jsonify(json_dict)
@@ -94,10 +97,13 @@ class ConnectAPI(MethodView):
                 else:
                     manager.update_session()
                     cur = conn.conn.cursor()
-                    cur.execute("SELECT version()")
+                    cur.execute(version_query)
                     x = cur.fetchone()[0]
                     cur.close()
-                    json_dict['version'] = x.split(",")[0]
+                    ver_platform = x.split(",")[0]
+                    json_dict['version'] = ver_platform
+                    version_info = ver_platform.split()
+                    json_dict['pg_version'] = version_info[1]
                     json_dict['msg'] = "connected sucessfully"
 
             except Exception as e:
@@ -127,10 +133,13 @@ class ConnStatusAPI(MethodView):
                 if conn.connected():
                     try:
                         cur = conn.conn.cursor()
-                        cur.execute("SELECT version()")
+                        cur.execute(version_query)
                         x = cur.fetchone()[0]
                         cur.close()
-                        json_dict['version'] = x.split(",")[0]
+                        ver_platform = x.split(",")[0]
+                        json_dict['version'] = ver_platform
+                        version_info = ver_platform.split()
+                        json_dict['pg_version'] = version_info[1]
                         json_dict['state'] = "success"
                         json_dict['msg'] = "Already Connected."
                         return jsonify(json_dict)
