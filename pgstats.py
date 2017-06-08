@@ -31,7 +31,18 @@ class ConnectAPI(MethodView):
             sid = args.get('sid')
             gid = args.get('gid')
             pwd = args.get('pwd')
+            save = args.get('save')
             try:
+                pg_server = Server.query.filter_by(
+                    id=sid,
+                    servergroup_id=gid,
+                    user_id=current_user.id
+                ).first()
+                if not pg_server:
+                    json_dict['state'] = "error"
+                    json_dict['msg'] = "Server not available in metadata."
+                    return jsonify(json_dict)
+
                 manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
                 conn = manager.connection()
                 if conn.connected():
@@ -49,15 +60,6 @@ class ConnectAPI(MethodView):
                         return jsonify(json_dict)
                     except Exception as e:
                         pass
-                pg_server = Server.query.filter_by(
-                    id=sid,
-                    servergroup_id=gid,
-                    user_id=current_user.id
-                ).first()
-                if not pg_server:
-                    json_dict['state'] = "error"
-                    json_dict['msg'] = "Server not available in metadata."
-                    return jsonify(json_dict)
 
                 password = ""
                 if pwd:
@@ -97,6 +99,8 @@ class ConnectAPI(MethodView):
                         errmsg = errmsg.decode('utf-8')
                     json_dict['state'] = "error"
                     json_dict['msg'] = errmsg
+                    if errmsg.find("password authentication failed")>0:
+                        json_dict['msg'] = "password required."
                     return jsonify(json_dict)
                 else:
                     manager.update_session()
@@ -109,6 +113,9 @@ class ConnectAPI(MethodView):
                     version_info = ver_platform.split()
                     json_dict['pg_version'] = version_info[1]
                     json_dict['msg'] = "connected sucessfully"
+                    if save and pwd:
+                        pg_server.password = password
+                        db.session.commit()
 
             except Exception as e:
                 errmsg = "ERROR: " + str(e)
