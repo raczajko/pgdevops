@@ -27,11 +27,18 @@ metrics_query = """SELECT sum(numbackends::float8) as "num_backends",
 
 pg_settings_query = "SELECT category, name, setting, short_desc FROM pg_settings ORDER BY category"
 
+db_list_query = """SELECT d.datname,
+                          cast (round((pg_database_size(d.datname::text)/1024.0)/1024.0, 1) as float8) as size,
+                          u.usename as owner
+                    FROM pg_database d
+                    JOIN pg_user u ON (d.datdba = u.usesysid)
+                   WHERE d.datname NOT IN ('template0','template1')
+                   ORDER BY 1"""
 
 activity_query = """SELECT datname, state, pid, usename, client_addr::varchar,
-            to_char(backend_start::timestamp(0),'MM-DD-YYYY HH24:MI:SS') as backend_start,
-            to_char(xact_start::timestamp(0),'MM-DD-YYYY HH24:MI:SS') as xact_start,
-            justify_interval((clock_timestamp() - query_start)::interval(0))::varchar as query_time,
-            query
-            FROM pg_stat_activity
-            ORDER BY 8 DESC"""
+                    to_char(backend_start::timestamp(0),'MM-DD-YYYY HH24:MI:SS') as backend_start,
+                    to_char(xact_start::timestamp(0),'MM-DD-YYYY HH24:MI:SS') as xact_start,
+                    justify_interval((clock_timestamp() - query_start)::interval(0))::varchar as query_time,
+                    query
+                    FROM pg_stat_activity
+                    ORDER BY 8 DESC"""

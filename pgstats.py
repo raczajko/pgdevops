@@ -89,7 +89,10 @@ class ConnectAPI(MethodView):
                     json_dict['msg'] = errmsg
                     return jsonify(json_dict)
                 if not status:
-                    errmsg = errmsg.split("\n")[0]
+                    emsg = errmsg.split("\n")
+                    if len(emsg)>1:
+                        if emsg[0] == emsg[1]:
+                            errmsg = emsg[0]
                     if hasattr(str, 'decode'):
                         errmsg = errmsg.decode('utf-8')
                     json_dict['state'] = "error"
@@ -248,6 +251,44 @@ class ActivityAPI(MethodView):
             return jsonify(json_dict)
 
 pgstats.add_url_rule('/activity/', view_func=ActivityAPI.as_view('activity'))
+
+
+class DbListAPI(MethodView):
+
+    def get(self):
+        json_dict = {}
+        if not current_user:
+            json_dict['state'] = "error"
+            json_dict['msg'] = "Access denied."
+            return jsonify(json_dict)
+        sid = request.args.get('sid')
+        gid = request.args.get('gid')
+        manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
+        conn = manager.connection()
+
+        json_dict = {}
+        if not conn.connected():
+            return jsonify({'msg': 'Connection is closed.', 'state':"error"})
+        else:
+            try:
+                stats_timestamp = datetime.utcnow()
+                stats_time = stats_timestamp.strftime('%Y/%m/%d %H:%M:%S')
+                cur = conn.conn.cursor()
+                cur.execute(db_list_query)
+                columns = [desc[0] for desc in cur.description]
+                result = []
+                for res in cur:
+                    result.append(dict(zip(columns, res)))
+                cur.close()
+                json_dict['activity'] = result
+                json_dict['time'] = stats_time
+            except Exception as e:
+                errmsg = "ERROR: " + str(e)
+                json_dict['state'] = "error"
+                json_dict['msg'] = errmsg
+            return jsonify(json_dict)
+
+pgstats.add_url_rule('/db_list/', view_func=DbListAPI.as_view('db_list'))
 
 
 class ConfigAPI(MethodView):
