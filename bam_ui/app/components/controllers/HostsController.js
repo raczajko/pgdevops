@@ -157,6 +157,18 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             color: '#9932CC',
         }];
 
+    $scope.commitRollbackData = [
+        {
+            values: [],
+            key: 'Commit',
+            color: '#FF5733'
+        },
+        {
+            values: [],
+            key: 'Rollback',
+            color: '#006994'
+        }];
+
     $scope.rowsData = [{
         values: [],
         key: 'Insert',
@@ -180,21 +192,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
     ];
 
-    $scope.dummyData = [{
-        values: [],
-        key: 'CPU System %',
-        color: '#006994',
-        area: true
-    }, {
-        values: [],
-        key: 'CPU User %',
-        color: '#FF5733',
-        area: true
-    }
-    ];
 
-    if($scope.dummyData.length <= 2){
-        $scope.dummyChart.chart.noData = "_ No Data Available."
+    if($scope.commitRollbackData.length <= 2){
+        $scope.transctionsPerSecondChart.chart.noData = "_ No Data Available."
     }
 
     if($scope.connectionsData.length <= 3){
@@ -443,7 +443,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         //     $scope.groupsList[index]['state'] = false;
         // }
     // }
-
+    var previous_data = {};
     var stats = function (sid,gid){
     var connect_api_url = "/pgstats/stats/";
         var data = {
@@ -460,18 +460,54 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
 	    			    $scope.connect_err=false;
 	    			    $scope.need_pwd=false;
+
+	    			    if (!previous_data.hasOwnProperty(sid)){
+	    			        previous_data[sid]={};
+	    			    }
+
+                        previous_data[sid]["commit"]=argument.xact_commit;
+                        previous_data[sid]["rollback"]=argument.xact_rollback;
+
+
 	    			    var timeData = Math.round( (new Date( argument.time + ' UTC')).getTime() );
 
 
                         if ($scope.connectionsData[0].values.length>30){
-                            $scope.connectionsData[0].values.splice(0, $scope.connectionsData[0].values.length);
-                            $scope.connectionsData[1].values.splice(0, $scope.connectionsData[1].values.length);
-                            $scope.connectionsData[2].values.splice(0, $scope.connectionsData[2].values.length);
+                            $scope.connectionsData[0].values.shift();
+                            $scope.connectionsData[1].values.shift();
+                            $scope.connectionsData[2].values.shift();
+                        }
+
+                        if ($scope.commitRollbackData[0].values.length>30){
+                            $scope.commitRollbackData[0].values.shift();
+                            $scope.commitRollbackData[1].values.shift();
                         }
 
                         $scope.connectionsData[0].values.push({ x: timeData, y: argument.connections.active});
                         $scope.connectionsData[1].values.push({ x: timeData, y: argument.connections.idle });
                         $scope.connectionsData[2].values.push({x: timeData, y: argument.connections.idle_in_transaction});
+
+                        if (!previous_data.hasOwnProperty(sid)){
+	    			        previous_data[sid]={};
+	    			    }
+
+	    			    if (previous_data[sid].hasOwnProperty("commit")){
+
+	    			        var diff_ms = timeData-previous_data[sid]['timeData'];
+                            var diff=Math.floor(diff_ms/1000);
+
+
+	    			        var commit = Math.floor((argument.xact_commit-previous_data[sid]["commit"])/diff);
+	    			        var rollback = Math.floor((argument.xact_rollback-previous_data[sid]["rollback"])/diff);
+
+	    			        $scope.commitRollbackData[0].values.push({ x: timeData, y: commit});
+                            $scope.commitRollbackData[1].values.push({ x: timeData, y: rollback});
+
+	    			    }
+
+                        previous_data[sid]['timeData']=timeData;
+                        previous_data[sid]["commit"]=argument.xact_commit;
+                        previous_data[sid]["rollback"]=argument.xact_rollback;
 
 	    			}
 	    			$timeout(function() {stats(sid, gid)}, 5000);

@@ -101,15 +101,16 @@ class ConnectAPI(MethodView):
                 json_dict['msg'] = errmsg
             return jsonify(json_dict)
 
-
 pgstats.add_url_rule('/connect/', view_func=ConnectAPI.as_view('connect'))
 
 
 class ConnStatusAPI(MethodView):
     def get(self):
+        json_dict = {}
         if not current_user:
-            return jsonify({'msg': 'Not Authorised',
-                            'state': "error"})
+            json_dict['state'] = "error"
+            json_dict['msg'] = "Access denied."
+            return jsonify(json_dict)
         else:
             sid = request.args.get('sid')
             gid = request.args.get('gid')
@@ -142,7 +143,6 @@ class ConnStatusAPI(MethodView):
                 json_dict['msg'] = errmsg
             return jsonify(json_dict)
 
-
 pgstats.add_url_rule('/conn_status/', view_func=ConnStatusAPI.as_view('conn_status'))
 
 
@@ -150,6 +150,11 @@ pgstats.add_url_rule('/conn_status/', view_func=ConnStatusAPI.as_view('conn_stat
 class StatsAPI(MethodView):
 
     def get(self):
+        json_dict = {}
+        if not current_user:
+            json_dict['state'] = "error"
+            json_dict['msg'] = "Access denied."
+            return jsonify(json_dict)
         sid = request.args.get('sid')
         gid = request.args.get('gid')
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
@@ -169,10 +174,20 @@ class StatsAPI(MethodView):
                 for res in cur:
                     result.append(dict(zip(columns, res)))
                 cur.close()
-                json_dict['time'] = stats_time
                 json_dict['connections'] = {}
                 for r in result:
                     json_dict['connections'][str(r['state'])] = r['count']
+                cur = conn.conn.cursor()
+                cur.execute(metrics_query)
+                columns = [desc[0] for desc in cur.description]
+                result = []
+                for res in cur:
+                    result.append(dict(zip(columns, res)))
+                cur.close()
+                tps = result[0]
+                for key in tps.keys():
+                    json_dict[key]=tps[key]
+                json_dict['time'] = stats_time
             except Exception as e:
                 errmsg = "ERROR: " + str(e)
                 json_dict['state'] = "error"
@@ -185,6 +200,11 @@ pgstats.add_url_rule('/stats/', view_func=StatsAPI.as_view('stats'))
 class ConfigAPI(MethodView):
 
     def get(self):
+        json_dict = {}
+        if not current_user:
+            json_dict['state'] = "error"
+            json_dict['msg'] = "Access denied."
+            return jsonify(json_dict)
         sid = request.args.get('sid')
         gid = request.args.get('gid')
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
@@ -211,6 +231,11 @@ pgstats.add_url_rule('/config/', view_func=ConfigAPI.as_view('config'))
 class DBCloseAPI(MethodView):
 
     def get(self):
+        json_dict = {}
+        if not current_user:
+            json_dict['state'] = "error"
+            json_dict['msg'] = "Access denied."
+            return jsonify(json_dict)
         sid = request.args.get('sid')
         gid = request.args.get('gid')
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
@@ -227,6 +252,11 @@ pgstats.add_url_rule('/disconnect/', view_func=DBCloseAPI.as_view('disconnect'))
 
 class CloseAllDBSessionsAPI(MethodView):
     def get(self):
+        json_dict = {}
+        if not current_user:
+            json_dict['state'] = "error"
+            json_dict['msg'] = "Access denied."
+            return jsonify(json_dict)
         servers_list = Server.query.filter_by(
             user_id=current_user.id
         )
