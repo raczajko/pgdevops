@@ -49,6 +49,8 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                 $scope.loading = false;
                 $scope.connData = $scope.pgList[i];
                 $rootScope.$emit('getDBstatus', $scope.pgList[i].sid, $scope.pgList[i].gid, '');
+                $scope.activeOverview = true;
+                console.log($scope.activeOverview);
             }
         }
     }
@@ -116,7 +118,12 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
             };
         var configureData = bamAjaxCall.getData("/pgstats/config/", data);
         configureData.then(function (data) {
-            $scope.settingsData = data.settings;
+            if (data.state == 'error') {
+                $scope.configureTabError = data.msg;
+                $scope.errorOnConfig = true;
+            }else{
+                $scope.errorOnConfig = false;
+                $scope.settingsData = data.settings;
                 $scope.gridSettings = {
                     expandableRowTemplate: '<div ui-grid="row.entity.subGridOptions" style="height: 140px"></div>',
                 };
@@ -143,6 +150,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                     }
                 }
                 $scope.gridSettings.data = data;
+            }
 
         })
     }
@@ -154,20 +162,26 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
             };
         var databaseData = bamAjaxCall.getData("/pgstats/db_list/", data);
         databaseData.then(function (data) {
-            $scope.myData = data.activity;
-            $scope.gridOptions = {
-                data: 'myData', columnDefs: [{
-                    field: "datname", displayName: "Database"
-                }, {
-                    field: 'owner', displayName: "Owner"
-                }, {
-                    field: 'size',
-                    displayName: "Size (MB)",
-                    cellClass: 'numberCell',
-                    headerTooltip: 'This is the total disk space used by the database, which includes all the database objects like Tables and Indexes within that database',
-                    sort: {direction: 'desc', priority: 0}
-                }], enableColumnMenus: false
-            };
+            if (data.state == 'error') {
+                $scope.databaseTabError = data.msg;
+                $scope.errorOnDatabase = true;
+            }else{
+                $scope.errorOnDatabase = false;
+                $scope.myData = data.activity;
+                $scope.gridOptions = {
+                    data: 'myData', columnDefs: [{
+                        field: "datname", displayName: "Database"
+                    }, {
+                        field: 'owner', displayName: "Owner"
+                    }, {
+                        field: 'size',
+                        displayName: "Size (MB)",
+                        cellClass: 'numberCell',
+                        headerTooltip: 'This is the total disk space used by the database, which includes all the database objects like Tables and Indexes within that database',
+                        sort: {direction: 'desc', priority: 0}
+                    }], enableColumnMenus: false
+                };
+            }
         })
     }
 
@@ -178,14 +192,20 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
             };
         var activityData = bamAjaxCall.getData("/pgstats/activity/", data);
         activityData.then(function (data) {
-            var parseData = data.activity;
-            if (parseData === undefined || parseData.length == 0) {
-                $scope.activities = '';
-                $scope.noActivities = true;
-                activityTab.empty();
-            } else {
-                $scope.noActivities = false;
-                $scope.activities = parseData;
+            if (data.state == 'error') {
+                $scope.activityTabError = data.msg;
+                $scope.errorOnActivity = true;
+            }else{
+                $scope.errorOnActivity = false;
+                var parseData = data.activity;
+                if (parseData === undefined || parseData.length == 0) {
+                    $scope.activities = '';
+                    $scope.noActivities = true;
+                    activityTab.empty();
+                } else {
+                    $scope.noActivities = false;
+                    $scope.activities = parseData;
+                }
             }
         })
     }

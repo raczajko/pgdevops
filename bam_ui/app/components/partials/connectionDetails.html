@@ -122,7 +122,7 @@
                         </div>
                     </uib-tab>
                     <uib-tab heading="Activity" ng-click="activityTabEvent()">
-                        <div class="row tab-content" style="padding: 10px;">
+                        <div class="row tab-content" style="padding: 10px;" ng-if="!errorOnActivity">
                             <div class="col-md-12 col-sm-12 col-xs-12">
                                 <div class="box" id="activityTab">
                                     <div class="box-header">
@@ -170,16 +170,19 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="gridStyle" ng-if="errorOnActivity">{{activityTabError}}</div>
                     </uib-tab>
                     <uib-tab heading="Configure" ng-click="configureTabEvent()">
-                        <div ng-if="gridSettings">
+                        <div ng-if="gridSettings && !errorOnConfig">
                             <div class="gridStyle" ui-grid-expandable  ui-grid="gridSettings" class="col-md-12 col-sm-12 col-xs-12"></div>
                         </div>
+                        <div class="gridStyle" ng-if="errorOnConfig">{{configureTabError}}</div>
                     </uib-tab>
                     <uib-tab heading="Databases" ng-click="dataBaseTabEvent()">
-                        <div ng-if="gridOptions">
+                        <div ng-if="gridOptions && !errorOnDatabase">
                             <div class="gridStyle" ui-grid="gridOptions" class="col-md-12 col-sm-12 col-xs-12"></div>
                         </div>
+                        <div class="gridStyle" ng-if="errorOnDatabase">{{databaseTabError}}</div>
                     </uib-tab>
                     <uib-tab heading="Performance" disable="true">
                     <div class="gridStyle">
