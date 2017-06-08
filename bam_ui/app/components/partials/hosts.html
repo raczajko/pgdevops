@@ -58,7 +58,7 @@
                                     <div class="col-md-12 col-sm-12 col-xs-12">
                                         <div ng-if="version"><strong>Version : </strong>{{ version }}</div>
                                         <div ng-if="need_pwd">
-                                            <input type="password" ng-model="pg_pwd">
+                                            <input type="password" ng-model="pg_pwd" placeholder="password">
                                             <input type="button" ng-click="connect_pg(serverVal.sid,serverVal.gid, pg_pwd)" value="Connect">
                                             <div ng-if="connect_err">{{connect_err}}</div>
                                         </div>
