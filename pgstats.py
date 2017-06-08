@@ -100,7 +100,7 @@ class ConnectAPI(MethodView):
                     json_dict['state'] = "error"
                     json_dict['msg'] = errmsg
                     if errmsg.find("password authentication failed")>0:
-                        json_dict['msg'] = "password required."
+                        json_dict['need_pwd'] = True
                     return jsonify(json_dict)
                 else:
                     manager.update_session()
