@@ -135,27 +135,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
     $scope.ioChart = angular.copy($scope.cpuChart);
     $scope.networkChart = angular.copy($scope.cpuChart);
-    $scope.dummyChart = angular.copy($scope.cpuChart);
-    $scope.connectionsChart = angular.copy($scope.transctionsPerSecondChart);
-    $scope.connectionsChart.chart.type = "stackedAreaChart";
-    $scope.connectionsChart.chart.showControls = false;
 
     $scope.cpuChart.chart.type = "stackedAreaChart";
     $scope.cpuChart.chart.showControls = false;
 
-    $scope.connectionsData = [{
-            values: [],
-            key: 'Active',
-            color: '#FF5733',
-        },{
-            values: [],
-            key: 'Idle',
-            color: '#006994',
-        },{
-            values: [],
-            key: 'Idle Transactions',
-            color: '#9932CC',
-        }];
 
     $scope.commitRollbackData = [
         {
@@ -193,13 +176,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     ];
 
 
-    if($scope.commitRollbackData.length <= 2){
-        $scope.transctionsPerSecondChart.chart.noData = "_ No Data Available."
-    }
+    // if($scope.commitRollbackData.length <= 2){
+    //     $scope.transctionsPerSecondChart.chart.noData = "_ No Data Available."
+    // }
 
-    if($scope.connectionsData.length <= 3){
-        $scope.connectionsChart.chart.noData = "_ No Data Available."
-    }
+    // if($scope.connectionsData.length <= 3){
+    //     $scope.connectionsChart.chart.noData = "_ No Data Available."
+    // }
 
     $scope.diskIO = [{
         values: [],
@@ -247,6 +230,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i])
         }
+        $rootScope.$emit('stopGraphCalls');
         $window.location = '#/connection-details';
     }
 
@@ -254,7 +238,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
             if($scope.pgListRes[i].server_name == arg){
                 $scope.pgListRes[i].isOpen = !value;
-                console.log($scope.pgListRes[i].isOpen);
             }
         }
     }
@@ -263,6 +246,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
             $scope.pgListRes[i].isOpen = false;
         }
+        $rootScope.$emit('stopGraphCalls');
     }
 
     sessionPromise.then(function (val) {
@@ -461,100 +445,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         //     $scope.groupsList[index]['state'] = false;
         // }
     // }
-    var previous_data = {};
-    var stats = function (sid,gid){
-    var connect_api_url = "/pgstats/stats/";
-        var data = {
-             sid:sid,
-             gid:gid
-            };
-            var statusData = bamAjaxCall.getData(connect_api_url, data);
-            statusData.then(function (argument) {
-            		if (argument.state=="error"){
-            		    $scope.connect_err=argument.msg;
-            		    $scope.need_pwd=true;
-            		    $scope.version=false;
-	    			} else{
 
-	    			    $scope.connect_err=false;
-	    			    $scope.need_pwd=false;
-
-	    			    if (!previous_data.hasOwnProperty(sid)){
-	    			        previous_data[sid]={};
-	    			    }
-
-                        previous_data[sid]["commit"]=argument.xact_commit;
-                        previous_data[sid]["rollback"]=argument.xact_rollback;
-
-
-	    			    var timeData = Math.round( (new Date( argument.time + ' UTC')).getTime() );
-
-
-                        if ($scope.connectionsData[0].values.length>30){
-                            $scope.connectionsData[0].values.shift();
-                            $scope.connectionsData[1].values.shift();
-                            $scope.connectionsData[2].values.shift();
-                        }
-
-                        if ($scope.commitRollbackData[0].values.length>30){
-                            $scope.commitRollbackData[0].values.shift();
-                            $scope.commitRollbackData[1].values.shift();
-                        }
-
-                        $scope.connectionsData[0].values.push({ x: timeData, y: argument.connections.active});
-                        $scope.connectionsData[1].values.push({ x: timeData, y: argument.connections.idle });
-                        $scope.connectionsData[2].values.push({x: timeData, y: argument.connections.idle_in_transaction});
-
-                        if (!previous_data.hasOwnProperty(sid)){
-	    			        previous_data[sid]={};
-	    			    }
-
-	    			    if (previous_data[sid].hasOwnProperty("commit")){
-
-	    			        var diff_ms = timeData-previous_data[sid]['timeData'];
-                            var diff=Math.floor(diff_ms/1000);
-
-
-	    			        var commit = Math.floor((argument.xact_commit-previous_data[sid]["commit"])/diff);
-	    			        var rollback = Math.floor((argument.xact_rollback-previous_data[sid]["rollback"])/diff);
-
-	    			        $scope.commitRollbackData[0].values.push({ x: timeData, y: commit});
-                            $scope.commitRollbackData[1].values.push({ x: timeData, y: rollback});
-
-	    			    }
-
-                        previous_data[sid]['timeData']=timeData;
-                        previous_data[sid]["commit"]=argument.xact_commit;
-                        previous_data[sid]["rollback"]=argument.xact_rollback;
-
-	    			}
-	    			$timeout(function() {stats(sid, gid)}, 5000);
-            });
-
-    };
-    $scope.connect_pg = function(sid,gid, pwd){
-        var connect_api_url = "/pgstats/connect/";
-        var data = {
-             sid:sid,
-             gid:gid
-            };
-            if (pwd){
-             data.pwd=pwd;
-            };
-            var statusData = bamAjaxCall.postData(connect_api_url, data);
-            statusData.then(function (argument) {
-            		if (argument.state=="error"){
-            		    $scope.connect_err=argument.msg;
-            		    $scope.need_pwd=true;
-            		    $scope.version=false;
-	    			} else{
-	    			$scope.version=argument.version;
-	    			$scope.connect_err=false;
-	    			$scope.need_pwd=false;
-	    			$timeout(function() {stats(sid, gid)}, 2000);
-	    			}
-            });
-    };
 
     $scope.loadHost = function (p_idx, idx, refresh) {
         // if ($scope.groupsList[p_idx].hosts[idx]['state'] == undefined || $scope.groupsList[p_idx].hosts[idx]['state'] == false) {

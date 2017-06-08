@@ -7,8 +7,8 @@
             <i class="fa fa-plus" aria-hidden="true"></i>
         </button>
         <ul uib-dropdown-menu role="menu " aria-labelledby="split-button ">
-            <li><a href="" ng-click="openGroupsModal()">Add Group</a></li>
-            <li><a href="" ng-click="open()">Add Host</a></li>
+            <li><a href="" ng-click="openGroupsModal()">Add SSH Group</a></li>
+            <li><a href="" ng-click="open()">Add SSH Host</a></li>
         </ul>
     </div>
 </section>
@@ -33,7 +33,7 @@
                 <uib-accordion-group is-open="showpgList" ng-if="pgListRes.length>0">
                     <uib-accordion-heading>
                         <span class="host-uib-tab-heading" ng-click="openPostgresConnGroup(showpgList); closeAllServers()">
-                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !showpgList, 'fa fa-minus':showpgList}"></i> &nbsp;PostgreSQL Connections
+                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !showpgList, 'fa fa-minus':showpgList}"></i> &nbsp; <strong> PostgreSQL Connections</strong>
                         </span>
                     </uib-accordion-heading>
                     <div class="col-md-12">
@@ -49,13 +49,14 @@
                                 <uib-accordion-group ng-repeat="serverVal in value" is-open="serverVal.isOpen">
                                     <uib-accordion-heading>
                                         <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !serverVal.isOpen, 'fa fa-minus': serverVal.isOpen}"></i>
-                                        <div>{{serverVal.db_user}}@{{ serverVal.host }}:{{ serverVal.port }}/{{serverVal.db}}</div>
+                                        <div>{{serverVal.server_name}}, {{serverVal.db_user}}@{{ serverVal.host }}:{{ serverVal.port }}/{{serverVal.db}}</div>
                                         <div class="pull-right" style="margin-top: -26px">
                                             <a ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); navToDetails(serverVal.server_name)" 
                                             class="btn btn-default" class="ng-binding" ng-if="serverVal.isOpen">Details</a>
                                         </div>
                                     </uib-accordion-heading>
-                                    <div class="col-md-12 col-sm-12 col-xs-12">
+                                    <div class="col-md-12 col-sm-12 col-xs-12" ng-controller="dbGraphsController">
+                                        <strong>{{serverVal.server_group}} : </strong> {{serverVal.server_name}}
                                         <div ng-if="version"><strong>Version : </strong>{{ version }}</div>
                                         <div ng-if="need_pwd">
                                             <input type="password" ng-model="pg_pwd" placeholder="password">
@@ -86,7 +87,7 @@
                 <uib-accordion-group ng-repeat="group in groupsList" is-open="group.state"  ng-init="parentIndex = $index" >
                     <uib-accordion-heading>
                         <span ng-click="loadGroup($index)" ng-if="group.group == 'default'" class="host-uib-tab-heading">
-                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i> &nbsp;SSH Hosts
+                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i> &nbsp; <strong> SSH Hosts</strong>
                         </span>
                         <span ng-click="loadGroup($index)" ng-if="group.group != 'default'" class="host-uib-tab-heading">
                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i>&nbsp; {{group.group}}
