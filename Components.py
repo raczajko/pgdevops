@@ -317,25 +317,25 @@ class Components(ComponentAction):
         BamConfigData[setting] = option
 
     @inlineCallbacks
-    def getTestSetting(self, host=None):
+    def getSetting(self, setting, host=None):
         """
         Method to get test list setting of bam.
         :return: It yields json string.
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc get GLOBAL STAGE "
+        pgcCmd = PGC_HOME + os.sep + "pgc get GLOBAL " + setting
         if host:
             pgcCmd = pgcCmd + " --host \"" + host + "\""
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         data = pgcProcess.communicate()
-        yield self.session.publish('com.bigsql.onGetTestSetting', data[0].strip('\n'))
+        yield self.session.publish('com.bigsql.onGetSetting', data[0].strip('\n'))
 
-    def setTestSetting(self, val, host):
+    def setSetting(self, setting, val, host):
         """
         Method to set the test list setting of bam.
         :return: It yields json string.
         """
         # util.set_value("GLOBAL", "STAGE", val)
-        pgcCmd = PGC_HOME + os.sep + "pgc set GLOBAL STAGE " + val
+        pgcCmd = PGC_HOME + os.sep + "pgc set GLOBAL " + setting +  " " + val
         if host != '' and host != 'localhost':
             pgcCmd = pgcCmd + " --host \"" + host + "\""
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
@@ -375,7 +375,9 @@ class Components(ComponentAction):
         """
         Method to get the rds instances list
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc rdslist --json"
+        if this_uname != "Windows":
+            os.environ["PYTHONPATH"] = devops_lib_path
+        pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json"
         if email:
             pgcCmd = pgcCmd + " --email " + email
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -392,7 +394,7 @@ class Components(ComponentAction):
         """
         Method to get the pglist 
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc pglist --json " + mail
+        pgcCmd = PGC_HOME + os.sep + "pgc dblist pg --json --email " + mail
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
         data = pgcProcess.communicate()
         yield self.session.publish('com.bigsql.onPgList', data[0].strip('\n'))
@@ -636,7 +638,8 @@ class Components(ComponentAction):
                         "cmd": pgcCmd}
         for c in iter(lambda: pgcProcess.stdout.read(1), ''):
             line = line + c
-            if pgcCmd.find("lablist")<0 and line.find("sudo") >= 0 and line.find("password") >= 0 and line.endswith(":"):
+            if pgcCmd.find("lablist") < 0 and line.find("sudo") >= 0 \
+                    and line.find("password") >= 0 and line.endswith(":"):
                 if pwd and std_in:
                     pgcProcess.stdin.write(pwd + str(os.linesep))
                     pgcProcess.stdin.flush()
@@ -751,7 +754,15 @@ class Components(ComponentAction):
                                       shell=True,
                                       stdin=std_in)
         line = ""
-
+        tty_msgs = ("sudo: no tty present and no askpass program specified",
+                    "sudo: sorry, you must have a tty to run sudo")
+        auth_err = {"state": "error",
+                    "msg": "Failed to authenticate with password provided.",
+                    "pwd_failed": True,
+                    "cmd": pgcCmd}
+        pwd_required = {"state": "error",
+                        "msg": "Password required",
+                        "cmd": pgcCmd}
         for c in iter(lambda: pgcProcess.stdout.read(1), ''):
             line = line + c
             if line.find("sudo") >= 0 and line.find("password") >= 0 and line.endswith(":"):
@@ -765,7 +776,7 @@ class Components(ComponentAction):
             elif line.find("Sorry, try again.") >= 0:
                 util.kill_process_tree(pgcProcess.pid)
                 return [auth_err]
-            elif line.find("is not in the sudoers file")>=0:
+            elif line.find("is not in the sudoers file") >= 0:
                 util.kill_process_tree(pgcProcess.pid)
                 return [auth_err]
             elif line.find(tty_msgs[0]) >= 0 or line.find(tty_msgs[1]) >= 0:
@@ -782,4 +793,4 @@ class Components(ComponentAction):
             print ("cmd : " + str(pgcCmd))
             print ("Data Received : ")
             print (final_data)
-            return [{"state": "error", "msg": str(e)}]
+            return [{"state": "error", "msg": str(e), "cmd": pgcCmd}]

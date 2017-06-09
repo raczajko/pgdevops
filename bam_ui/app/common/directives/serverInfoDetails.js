@@ -52,7 +52,7 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
                     $scope.selecthost = '';
                     $scope.hostChange();
                 }
-                if($scope.title=="Log Tailer"){
+                if($scope.title=="Log Tailer" || $scope.title == "Connection Details"){
                     var localhost = [];
                     localhost.push($scope.hosts[0]);
                     $scope.hosts = localhost;
