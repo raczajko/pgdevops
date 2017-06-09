@@ -19,19 +19,18 @@ PGC_HOME = os.getenv("PGC_HOME", "")
 PGC_LOGS = os.getenv("PGC_LOGS", "")
 
 try:
-    with open(os.path.join(PGC_HOME,'conf','bam_config.json'),'r') as _file:
+    with open(os.path.join(PGC_HOME, 'conf', 'bam_config.json'), 'r') as _file:
         BamConfigData = json.loads(_file.read())
 except:
     BamConfigData = {}
 
-
 pgc_scripts_path = os.path.join(PGC_HOME, 'hub', 'scripts')
 if pgc_scripts_path not in sys.path:
-  sys.path.append(pgc_scripts_path)
+    sys.path.append(pgc_scripts_path)
 
-pgclib_scripts_path = os.path.join(PGC_HOME, 'hub', 'scripts','lib')
+pgclib_scripts_path = os.path.join(PGC_HOME, 'hub', 'scripts', 'lib')
 if pgclib_scripts_path not in sys.path:
-  sys.path.append(pgclib_scripts_path)
+    sys.path.append(pgclib_scripts_path)
 
 this_uname = str(platform.system())
 devops_lib_path = os.path.join(os.path.dirname(__file__), 'lib')
@@ -39,10 +38,12 @@ sys.path.append(devops_lib_path)
 
 import util
 
+
 class ComponentAction(object):
     """
     This class exposes all the actions for the components in the methods defined.
     """
+
     def __init__(self, appsession=ApplicationSession):
         self.session = appsession
         self.process = ""
@@ -60,7 +61,7 @@ class ComponentAction(object):
             command_line = command_line + " -y"
         if host:
             command_line = command_line + " --host \"" + host + "\""
-        process = subprocess.Popen(command_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell= True)
+        process = subprocess.Popen(command_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
             ln = (line).rstrip('\n')
@@ -81,9 +82,8 @@ class ComponentAction(object):
         pgcCmd = PGC_HOME + os.sep + "pgc cancel"
         if host:
             pgcCmd = pgcCmd + " --host \"" + host + "\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         pgcData = pgcProcess.communicate()
-                
 
     @inlineCallbacks
     def remove_comp(self, comp_name, host=None):
@@ -110,7 +110,7 @@ class ComponentAction(object):
         pgcCmd = PGC_HOME + os.sep + "pgc start " + name
         if host:
             pgcCmd = pgcCmd + " --host \"" + host + "\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
 
     def restart(self, name, host=None):
         """
@@ -120,7 +120,7 @@ class ComponentAction(object):
         pgcCmd = PGC_HOME + os.sep + "pgc restart " + name
         if host:
             pgcCmd = pgcCmd + " --host \"" + host + "\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
 
     def stop(self, name, host=None):
         """
@@ -130,7 +130,7 @@ class ComponentAction(object):
         pgcCmd = PGC_HOME + os.sep + "pgc stop " + name
         if host:
             pgcCmd = pgcCmd + " --host \"" + host + "\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
 
     @inlineCallbacks
     def getAvailPort(self, comp, port):
@@ -172,7 +172,7 @@ class ComponentAction(object):
                 password_file.write(password + '\n')
                 password_file.close()
                 os.chmod(pgpass_file, 0600)
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         for line in iter(pgcProcess.stdout.readline, ''):
             try:
                 ln = (line).rstrip('\n')
@@ -193,14 +193,13 @@ class ComponentAction(object):
             pgcCmd = pgcCmd + name
         if host:
             pgcCmd = pgcCmd + " --host " + host
-        process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
             ln = (line).rstrip('\n')
             self.session.publish('com.bigsql.onInstall', ln)
             yield sleep(0.001)
         self.process = ''
-
 
     @inlineCallbacks
     def updatesCheck(self, host=None):
@@ -210,7 +209,7 @@ class ComponentAction(object):
         pgcCmd = PGC_HOME + os.sep + "pgc --json update"
         if host:
             pgcCmd = pgcCmd + " --host " + host
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         for line in iter(pgcProcess.stdout.readline, ''):
             ln = (line).rstrip('\n')
             self.session.publish('com.bigsql.onUpdatesCheck', ln)
@@ -221,22 +220,22 @@ class ComponentAction(object):
         """
         Method to Register remote host
         """
-        if this_uname!="Windows":
+        if this_uname != "Windows":
             os.environ["PYTHONPATH"] = devops_lib_path
-        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST \"" + hostName + "\" \"" + pgcDir + "\" \"" + userName + "\" \"" + name +"\""
+        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST \"" + hostName + "\" \"" + pgcDir + "\" \"" + userName + "\" \"" + name + "\""
         if password:
             pgcCmd = pgcCmd + " --pwd=\"" + password + "\""
         if key:
-            pgcCmd = pgcCmd + " --key=\"" + key +"\""
+            pgcCmd = pgcCmd + " --key=\"" + key + "\""
         if update:
             pgcCmd = pgcCmd + " --update=" + str(update)
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         for line in iter(pgcProcess.stdout.readline, ''):
             try:
                 ln = (line).rstrip('\n')
                 if type(eval(ln)) is list:
                     self.session.publish('com.bigsql.onRegisterHost', ln)
-                yield sleep(0.001)  
+                yield sleep(0.001)
             except Exception as e:
                 pass
 
@@ -246,7 +245,7 @@ class ComponentAction(object):
         Method to unregister remote host
         """
         pgcCmd = PGC_HOME + os.sep + "pgc unregister --json HOST  \"" + hostName + "\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         pgcData = pgcProcess.communicate()
         yield self.session.publish('com.bigsql.onDeleteHost', pgcData)
 
@@ -255,20 +254,20 @@ class ComponentAction(object):
         """
         Method to register server group
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc register GROUP --json \"" + name +"\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
+        pgcCmd = PGC_HOME + os.sep + "pgc register GROUP --json \"" + name + "\""
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         pgcData = pgcProcess.communicate()
         yield self.session.publish('com.bigsql.onRegisterServerGroup', pgcData)
         import util
-        util.map_group_hosts( name, hosts, p_group_id=0, isJson=False, printMsg=False)
+        util.map_group_hosts(name, hosts, p_group_id=0, isJson=False, printMsg=False)
 
     def updateServerGroup(self, name, hosts, group_id):
         """
         Method to register server group
         """
         import util
-        util.register_group( name, p_parent_group=0, p_group_id = group_id, isJson=False, printMsg=False)
-        util.map_group_hosts( name, hosts, p_group_id = group_id, isJson=False, printMsg=False)
+        util.register_group(name, p_parent_group=0, p_group_id=group_id, isJson=False, printMsg=False)
+        util.map_group_hosts(name, hosts, p_group_id=group_id, isJson=False, printMsg=False)
 
     @inlineCallbacks
     def deleteGroup(self, group):
@@ -276,15 +275,17 @@ class ComponentAction(object):
         Method to unregister remote host
         """
         pgcCmd = PGC_HOME + os.sep + "pgc unregister --json GROUP \"" + group + "\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)   
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         pgcData = pgcProcess.communicate()
-        yield self.session.publish('com.bigsql.onDeleteGroup', pgcData)     
+        yield self.session.publish('com.bigsql.onDeleteGroup', pgcData)
+
 
 class Components(ComponentAction):
     """
     This class is abstract class for ComponentAction which exposes
     component information with the methods defined.
     """
+
     @inlineCallbacks
     def list(self):
         """
@@ -292,7 +293,7 @@ class Components(ComponentAction):
         :return: It yields json string for the list of components.
         """
         pgcCmd = PGC_HOME + os.sep + "pgc --json list"
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         pgcInfo = pgcProcess.communicate()
         yield self.session.publish('com.bigsql.onList', pgcInfo)
 
@@ -311,35 +312,33 @@ class Components(ComponentAction):
         Method to set the test list setting of bam.
         :return: It yields json string.
         """
-        with open(os.path.join(PGC_HOME,'conf','bam_config.json'),'w') as _file:
-            json.dump({setting:option},_file)
+        with open(os.path.join(PGC_HOME, 'conf', 'bam_config.json'), 'w') as _file:
+            json.dump({setting: option}, _file)
         BamConfigData[setting] = option
 
-
     @inlineCallbacks
-    def getTestSetting(self, host=None):
+    def getSetting(self, setting, host=None):
         """
         Method to get test list setting of bam.
         :return: It yields json string.
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc get GLOBAL STAGE "
+        pgcCmd = PGC_HOME + os.sep + "pgc get GLOBAL " + setting
         if host:
-            pgcCmd = pgcCmd + " --host \"" + host  +"\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+            pgcCmd = pgcCmd + " --host \"" + host + "\""
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         data = pgcProcess.communicate()
-        yield self.session.publish('com.bigsql.onGetTestSetting', data[0].strip('\n'))
+        yield self.session.publish('com.bigsql.onGetSetting', data[0].strip('\n'))
 
-
-    def setTestSetting(self, val, host):
+    def setSetting(self, setting, val, host):
         """
         Method to set the test list setting of bam.
         :return: It yields json string.
         """
         # util.set_value("GLOBAL", "STAGE", val)
-        pgcCmd = PGC_HOME + os.sep + "pgc set GLOBAL STAGE " + val
-        if host!='' and host!='localhost':
-            pgcCmd = pgcCmd + " --host \"" + host  +"\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        pgcCmd = PGC_HOME + os.sep + "pgc set GLOBAL " + setting +  " " + val
+        if host != '' and host != 'localhost':
+            pgcCmd = pgcCmd + " --host \"" + host + "\""
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         data = pgcProcess.communicate()
 
     @inlineCallbacks
@@ -348,38 +347,40 @@ class Components(ComponentAction):
         Method to get test list setting of bam.
         :return: It yields json string.
         """
-        yield self.session.publish('com.bigsql.onGetBeataFeatureSetting', {'setting': settingName, 'value': util.get_value ("BETA", settingName)})
-
+        yield self.session.publish('com.bigsql.onGetBeataFeatureSetting',
+                                   {'setting': settingName, 'value': util.get_value("BETA", settingName)})
 
     def setBetaFeatureSetting(self, settingName, val):
         """
         Method to set the test list setting of bam.
         :return: It yields json string.
         """
-        util.set_value( "BETA", settingName, val)
+        util.set_value("BETA", settingName, val)
 
     def setLabSetting(self, setting, value, host=None):
         """
         Method to set the lab setting of pgdevops.
         """
-        if value=='on':
+        if value == 'on':
             pgcCmd = PGC_HOME + os.sep + "pgc set labs " + setting + " " + value
         else:
-            pgcCmd = PGC_HOME + os.sep + "pgc unset labs " + setting 
+            pgcCmd = PGC_HOME + os.sep + "pgc unset labs " + setting
         if host:
-            pgcCmd = pgcCmd + " --host \"" + host  +"\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
-        data = pgcProcess.communicate()     
+            pgcCmd = pgcCmd + " --host \"" + host + "\""
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
+        data = pgcProcess.communicate()
 
     @inlineCallbacks
     def rdsList(self, email):
         """
         Method to get the rds instances list
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc rdslist --json"
+        if this_uname != "Windows":
+            os.environ["PYTHONPATH"] = devops_lib_path
+        pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json"
         if email:
             pgcCmd = pgcCmd + " --email " + email
-        process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell= True)
+        process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
             ln = (line).rstrip('\n')
@@ -388,10 +389,18 @@ class Components(ComponentAction):
         self.process = ''
         returnValue(1)
 
-
+    @inlineCallbacks
+    def pgList(self, mail):
+        """
+        Method to get the pglist 
+        """
+        pgcCmd = PGC_HOME + os.sep + "pgc dblist pg --json --email " + mail
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        data = pgcProcess.communicate()
+        yield self.session.publish('com.bigsql.onPgList', data[0].strip('\n'))
 
     @inlineCallbacks
-    def selectedLog(self,logdir):
+    def selectedLog(self, logdir):
         """
         Method to tail the last 1000 lines from the PGC_LOGS to display default.
         :return: It yields the log lines.
@@ -399,27 +408,27 @@ class Components(ComponentAction):
         if logdir == None:
             yield self.session.publish('com.bigsql.logError', "Log file does not exist")
         else:
-            if logdir == 'pgcli': 
+            if logdir == 'pgcli':
                 logdir = PGC_LOGS
-            self.session.publish('com.bigsql.pgcliDir',logdir)
+            self.session.publish('com.bigsql.pgcliDir', logdir)
             try:
                 read_file = open(logdir)
-                _lines=deque(read_file,1000)
+                _lines = deque(read_file, 1000)
                 lines_out = "<br/>".join(_lines)
                 yield self.session.publish('com.bigsql.log', lines_out)
             except Exception as e:
                 pass
 
     @inlineCallbacks
-    def autostart(self,val,name, host=None):
+    def autostart(self, val, name, host=None):
         """
         Method to set the autostart configuration.
         :return: It yields the message.
         """
         pgcCmd = PGC_HOME + os.sep + "pgc --json config " + name + " --autostart=" + val
         if host:
-            pgcCmd = pgcCmd + " --host \"" + host+"\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+            pgcCmd = pgcCmd + " --host \"" + host + "\""
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         for line in iter(pgcProcess.stdout.readline, ''):
             try:
                 ln = (line).rstrip('\n')
@@ -429,7 +438,7 @@ class Components(ComponentAction):
                 pass
 
     @inlineCallbacks
-    def logIntLines(self,number, logdir):
+    def logIntLines(self, number, logdir):
         """
         Method to tail the selected number of lines from the selected log.
         :return: It yields the log lines.
@@ -441,14 +450,14 @@ class Components(ComponentAction):
                 logdir = PGC_LOGS
             try:
                 read_file = open(logdir)
-                _lines=deque(read_file,number)
+                _lines = deque(read_file, number)
                 lines_out = "<br/>".join(_lines)
                 yield self.session.publish('com.bigsql.log', lines_out)
             except Exception as e:
                 pass
 
     @inlineCallbacks
-    def liveLog(self,logdir):
+    def liveLog(self, logdir):
         """
         Method to tail  log lines for every 5 seconds.
         :return: It yields the log lines.
@@ -463,11 +472,11 @@ class Components(ComponentAction):
             if ln:
                 for log_line in ln:
                     yield self.session.publish('com.bigsql.log', log_line)
-        
+
     @inlineCallbacks
     def checkLogdir(self):
         import sqlite3, json
-        db_local  = PGC_HOME + os.sep + "conf" + os.sep + "pgc_local.db"
+        db_local = PGC_HOME + os.sep + "conf" + os.sep + "pgc_local.db"
         connL = sqlite3.connect(db_local)
         try:
             c = connL.cursor()
@@ -479,11 +488,11 @@ class Components(ComponentAction):
             connL.close()
             jsonDict = {}
             jsonList = []
-            
+
             for comp in t_comp:
-              jsonDict["component"] = str(comp[0])
-              jsonList.append(jsonDict)
-              jsonDict = {}
+                jsonDict["component"] = str(comp[0])
+                jsonList.append(jsonDict)
+                jsonDict = {}
 
             jsonObj = json.dumps(jsonList)
 
@@ -530,7 +539,7 @@ class Components(ComponentAction):
         if comp is None:
             p_comp = ""
         pgcCmd = PGC_HOME + os.sep + "pgc --json info " + p_comp
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         data = pgcProcess.communicate()
         return data
 
@@ -543,42 +552,138 @@ class Components(ComponentAction):
         yield self.session.publish('com.bigsql.onCheckOS', platform.system())
 
     @staticmethod
-    def get_data(command, component=None, pgc_host=None, pwfile=None, relnotes=None):
+    def get_data(command, component=None, pgc_host=None, pwfile=None, relnotes=None, pwd=None):
         """
         Method to get the host settings.
         :param p_host: Name of the host to retrieve the settings.
         :return: It returns dict of settings.
         """
+        std_in = None
 
         pgcCmd = PGC_HOME + os.sep + "pgc --json " + command
         if relnotes:
             pgcCmd = pgcCmd + " --relnotes"
         if component:
-            pgcCmd = pgcCmd + " " + component 
+            pgcCmd = pgcCmd + " " + component
         if pgc_host:
             if pwfile:
-                pgcCmd = pgcCmd + " --pwfile " + pwfile + " --host \"" + pgc_host +"\""
+                pgcCmd = pgcCmd + " --pwfile " + pwfile + " --host \"" + pgc_host + "\""
             else:
-                pgcCmd = pgcCmd + " --host \"" + pgc_host + "\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
-        pgcInfo = pgcProcess.communicate()
-        return json.loads(pgcInfo[0])
+                pgcCmd = pgcCmd + " --host \"" + pgc_host + "\""  # + " --no-tty"
+        if pwd:
+            std_in = subprocess.PIPE
+        else:
+            pgcCmd = pgcCmd + " --no-tty"
+        pgcProcess = subprocess.Popen(pgcCmd,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      shell=True,
+                                      stdin=std_in)
+        line = ""
+        tty_msgs = ("sudo: no tty present and no askpass program specified",
+                    "sudo: sorry, you must have a tty to run sudo")
+        auth_err = {"state": "error",
+                    "msg": "Failed to authenticate with password provided.",
+                    "pwd_failed": True,
+                    "cmd": pgcCmd}
+        pwd_required = {"state": "error",
+                        "msg": "Password required",
+                        "cmd": pgcCmd}
+        for c in iter(lambda: pgcProcess.stdout.read(1), ''):
+            line = line + c
+            if pgcCmd.find("lablist") < 0 and line.find("sudo") >= 0 \
+                    and line.find("password") >= 0 and line.endswith(":"):
+                if pwd and std_in:
+                    pgcProcess.stdin.write(pwd + str(os.linesep))
+                    pgcProcess.stdin.flush()
+                    line = ""
+                else:
+                    util.kill_process_tree(pgcProcess.pid)
+                    return [pwd_required]
+            elif line.find("Sorry, try again.") >= 0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [auth_err]
+            elif line.find("is not in the sudoers file") >= 0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [auth_err]
+            elif line.find(tty_msgs[0]) >= 0 or line.find(tty_msgs[1]) >= 0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [pwd_required]
+        pgcInfo = line
+        for tty_msg in tty_msgs:
+            pgcInfo = pgcInfo.replace(tty_msg, "").strip()
+        final_data = pgcInfo.strip()
+        try:
+            return json.loads(str(final_data))
+        except Exception as e:
+            print ("Error : " + str(e))
+            print ("cmd : " + str(pgcCmd))
+            print ("Data Received : ")
+            return [{"state": "error", "msg": str(e), "cmd": pgcCmd}]
 
     @staticmethod
-    def get_pgdg_data(repo_id, command, component=None, pgc_host=None):
+    def get_pgdg_data(repo_id, command, component=None, pgc_host=None, pwd=None):
         """
         Method to get the host settings.
         :param p_host: Name of the host to retrieve the settings.
         :return: It returns dict of settings.
         """
-
+        std_in = None
         pgcCmd = PGC_HOME + os.sep + "pgc --json repo-pkgs " + repo_id + " " + command + " -y"
         if command == 'register':
             pgcCmd = PGC_HOME + os.sep + "pgc --json register REPO " + repo_id + " -y"
         if component:
             pgcCmd = pgcCmd + " " + component
         if pgc_host:
-            pgcCmd = pgcCmd + " --host \"" + pgc_host +"\""
-        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell = True)
-        pgcInfo = pgcProcess.communicate()
-        return json.loads(pgcInfo[0])
+            pgcCmd = pgcCmd + " --host \"" + pgc_host + "\""
+
+        if pwd:
+            std_in = subprocess.PIPE
+        else:
+            pgcCmd = pgcCmd + " --no-tty"
+        pgcProcess = subprocess.Popen(pgcCmd,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      shell=True,
+                                      stdin=std_in)
+        line = ""
+        tty_msgs = ("sudo: no tty present and no askpass program specified",
+                    "sudo: sorry, you must have a tty to run sudo")
+        auth_err = {"state": "error",
+                    "msg": "Failed to authenticate with password provided.",
+                    "pwd_failed": True,
+                    "cmd": pgcCmd}
+        pwd_required = {"state": "error",
+                        "msg": "Password required",
+                        "cmd": pgcCmd}
+        for c in iter(lambda: pgcProcess.stdout.read(1), ''):
+            line = line + c
+            if line.find("sudo") >= 0 and line.find("password") >= 0 and line.endswith(":"):
+                if pwd and std_in:
+                    pgcProcess.stdin.write(pwd + str(os.linesep))
+                    pgcProcess.stdin.flush()
+                    line = ""
+                else:
+                    util.kill_process_tree(pgcProcess.pid)
+                    return [pwd_required]
+            elif line.find("Sorry, try again.") >= 0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [auth_err]
+            elif line.find("is not in the sudoers file") >= 0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [auth_err]
+            elif line.find(tty_msgs[0]) >= 0 or line.find(tty_msgs[1]) >= 0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [pwd_required]
+        pgcInfo = line
+        for tty_msg in tty_msgs:
+            pgcInfo = pgcInfo.replace(tty_msg, "").strip()
+        final_data = pgcInfo.strip()
+        try:
+            return json.loads(str(final_data))
+        except Exception as e:
+            print ("Error : " + str(e))
+            print ("cmd : " + str(pgcCmd))
+            print ("Data Received : ")
+            print (final_data)
+            return [{"state": "error", "msg": str(e), "cmd": pgcCmd}]

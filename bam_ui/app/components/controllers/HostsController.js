@@ -24,8 +24,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.openedGroupIndex = '';
     $scope.addedNewHost = false;
     $scope.pgcNotActive = false;
+    $scope.sshTimeout = 20000;
+    $scope.need_pwd=true;
+    $scope.connect_err = false;
     // $scope.groupOpen = true;
     // $scope.hostOpen = true;
+    $scope.version=false;
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -42,6 +46,48 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
 
     var host_info ;
+
+    $scope.transctionsPerSecondChart = {
+        chart: {
+            type: 'lineChart',
+            height: 150,
+            margin : {
+                top: 20,
+                right: 40,
+                bottom: 40,
+                left: 55
+            },
+            x: function(d){ return d.x; },
+            y: function(d){ return d.y; },
+            noData:"Loading...",
+            interactiveLayer : {
+                tooltip: {
+                    headerFormatter: function (d) {
+                        var point = new Date(d);
+                        return d3.time.format('%Y/%m/%d %H:%M:%S')(point);
+                    },
+                },
+            },
+
+            xAxis: {
+                xScale: d3.time.scale(),
+                    tickFormat: function(d) {
+                        var point = new Date(d);
+                        return d3.time.format('%H:%M:%S')(point)
+                    },
+                },
+            yAxis: {
+                tickFormat: function(d) {
+                    return d3.format(',')(d);
+                }
+            },
+            forceY: [0,5],
+            useInteractiveGuideline: true,
+            legend: { margin : {
+                top: 10, right: 0, left: 0, bottom: 0
+            }}
+        }
+    };
 
     $scope.cpuChart = {
         chart: {
@@ -89,8 +135,32 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     };
     $scope.ioChart = angular.copy($scope.cpuChart);
     $scope.networkChart = angular.copy($scope.cpuChart);
+
     $scope.cpuChart.chart.type = "stackedAreaChart";
     $scope.cpuChart.chart.showControls = false;
+
+
+    $scope.commitRollbackData = [
+        {
+            values: [],
+            key: 'Commit',
+            color: '#FF5733'
+        },
+        {
+            values: [],
+            key: 'Rollback',
+            color: '#006994'
+        }];
+
+    $scope.rowsData = [{
+        values: [],
+        key: 'Insert',
+        color: '#006400'
+    },{
+        values: [],
+        key: 'Update',
+        color: '#FF5733'
+    }]
 
     $scope.cpuData = [{
         values: [],
@@ -104,6 +174,15 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         area: true
     }
     ];
+
+
+    // if($scope.commitRollbackData.length <= 2){
+    //     $scope.transctionsPerSecondChart.chart.noData = "_ No Data Available."
+    // }
+
+    // if($scope.connectionsData.length <= 3){
+    //     $scope.connectionsChart.chart.noData = "_ No Data Available."
+    // }
 
     $scope.diskIO = [{
         values: [],
@@ -135,10 +214,87 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     })
 
+    $scope.openPostgresConnGroup = function (argument) {
+        $scope.showpgList = !argument;
+    }
+
     var sessionPromise = PubSubService.getSession();
+
+    function getPgList(argument) {
+        session.call('com.bigsql.pgList', [$scope.userInfo.email]);
+    }
+
+    $scope.navToDetails = function (argument) {
+        $rootScope.connection_comp = argument;
+        $interval.cancel(stopStatusCall);
+        for (var i = 0; i < subscriptions.length; i++) {
+            session.unsubscribe(subscriptions[i])
+        }
+        $rootScope.$emit('stopGraphCalls');
+        $window.location = '#/connection-details';
+    }
+
+    $scope.changeStatus = function (arg, value) {
+        for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
+            if($scope.pgListRes[i].server_name == arg){
+                $scope.pgListRes[i].isOpen = !value;
+            }
+        }
+    }
+
+    $scope.closeAllConnections = function() {
+        var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
+        statusData.then(function (argument) {
+        })
+    }
+
+    $scope.closeAllServers = function(){
+        for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
+            $scope.pgListRes[i].isOpen = false;
+        }
+        $scope.closeAllConnections();
+        $rootScope.$emit('stopGraphCalls');
+    }
 
     sessionPromise.then(function (val) {
         session = val;
+
+        var userInfoData = bamAjaxCall.getCmdData('userinfo');
+        userInfoData.then(function(data) {
+            $scope.userInfo = data;
+            session.call('com.bigsql.pgList', [$scope.userInfo.email]);
+        });
+
+        session.call('com.bigsql.getSetting', ['SSH_TIMEOUT']);
+
+        session.subscribe('com.bigsql.onGetSetting', function (data) {
+            if (data[0]) {
+                $scope.sshTimeout = data[0];
+            }
+            $timeout(function () {
+                if ($scope.loading) {
+                    $scope.pgcNotActive = true;
+                    $scope.loading = false;
+                    $scope.pgcNotActiveMsg = htmlMessages.getMessage('pgc-not-active');
+                };
+            }, $scope.sshTimeout);
+        })
+
+        session.subscribe("com.bigsql.onPgList", function (data) {
+            var data = JSON.parse(data);
+            $scope.pgListRes = data;
+            for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
+                $scope.pgListRes[i]['isOpen'] = false;
+            }
+            if (data.length > 0) {
+                $scope.showpgList = true;
+            }else{
+                $scope.showpgList = false;
+            }
+            getGroupsList();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
 
         // session.call('com.bigsql.getBetaFeatureSetting', ['hostManager']);
 
@@ -297,6 +453,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         // }
     // }
 
+
     $scope.loadHost = function (p_idx, idx, refresh) {
         // if ($scope.groupsList[p_idx].hosts[idx]['state'] == undefined || $scope.groupsList[p_idx].hosts[idx]['state'] == false) {
         //     $scope.groupsList[p_idx].hosts[idx]['state'] = true;
@@ -427,7 +584,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
         session.call('com.bigsql.deleteHost', [hostToDelete]);
         session.subscribe("com.bigsql.onDeleteHost", function (data) {
+            $scope.loading = true;
             getGroupsList(false);
+            $scope.showpgList = undefined;
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -458,6 +617,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         session.call('com.bigsql.deleteGroup', [groupToDelete]);
         session.subscribe("com.bigsql.onDeleteGroup", function (data) {
             getGroupsList(false);
+            getPgList();
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -480,7 +640,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 if (data[0].state == 'error') {
                     $scope.loading = false;
                     $scope.errorData = data[0].msg;
-                }else{
+                }else if ($scope.loading){
                     var storageData;
                     try{
                         storageData = JSON.parse(localStorage.getItem('groupsListCookie'));
@@ -524,10 +684,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             });
     };
 
-    getGroupsList(true);
+    // getGroupsList(true);
 
     $rootScope.$on('addedHost', function () {
+        $scope.loading = true;
         getGroupsList(false);
+        $scope.showpgList = undefined;
         $scope.addedNewHost = true;
     });
 
@@ -561,16 +723,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);
     };
-
-    $timeout(function () {
-        if ($scope.loading) {
-            $scope.pgcNotActive = true;
-            $scope.loading = false;
-            $scope.pgcNotActiveMsg = htmlMessages.getMessage('pgc-not-active');
-            // $window.location.reload();
-        }
-        ;
-    }, 5000);
 
     function wait() {
         $window.location.reload();

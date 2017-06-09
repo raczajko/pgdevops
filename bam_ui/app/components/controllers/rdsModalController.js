@@ -23,6 +23,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
             if (data[0].state == 'info') {
                 $scope.discoverMsg = data[0].msg;
             }else if (data[0].state=="error") {
+                $scope.loadingSpinner = false;
                 $scope.errMsg = data[0].msg;
                 $rootScope.$emit('disableLab', $scope.lab, 'off')
             }else if(data[0].state=="completed"){
@@ -88,6 +89,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         var multiArgs = {'multiple': argsJson}
         var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', multiArgs );
         addToMetaData.then(function (argument) {
+            $window.location = '#/hosts'
             $rootScope.$emit('refreshUpdateDate');
             $uibModalInstance.dismiss('cancel');
         } );

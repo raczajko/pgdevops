@@ -346,7 +346,6 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 $scope.alerts.push({
                     msg: res['msg']
                 });
-                compAction('start');
             }
             $scope.$apply();
         }).then(function (sub) {

@@ -1,14 +1,14 @@
 <section class="content-header">
     <h1 class="components-update-title-wrapper">
-        HOST MANAGER
+        Server Manager
     </h1>
     <div class="btn-group pull-right " uib-dropdown >
         <button type="button" class="btn btn-default" uib-dropdown-toggle>
             <i class="fa fa-plus" aria-hidden="true"></i>
         </button>
         <ul uib-dropdown-menu role="menu " aria-labelledby="split-button ">
-            <li><a href="" ng-click="openGroupsModal()">Add Group</a></li>
-            <li><a href="" ng-click="open()">Add Host</a></li>
+            <li><a href="" ng-click="openGroupsModal()">Add SSH Group</a></li>
+            <li><a href="" ng-click="open()">Add SSH Host</a></li>
         </ul>
     </div>
 </section>
@@ -27,14 +27,69 @@
     <div ng-if="nothingInstalled" class="jumbotron"
          style="background-color: #fff; margin-top: 15px; text-align: center;"><h3> You haven't registered any
         hosts.</h3></div>
-
     <div class="hostmanager-accordian-wrapper" ng-if="!loading && !errorData && !pgcNotActive">
         <div class="box">
             <uib-accordion close-others="true">
+                <uib-accordion-group is-open="showpgList" ng-if="pgListRes.length>0">
+                    <uib-accordion-heading>
+                        <span class="host-uib-tab-heading" ng-click="openPostgresConnGroup(showpgList); closeAllServers()">
+                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !showpgList, 'fa fa-minus':showpgList}"></i> &nbsp; <strong> PostgreSQL Connections</strong>
+                        </span>
+                    </uib-accordion-heading>
+                    <div class="col-md-12">
+                        <uib-accordion close-others="true">
+                            <uib-accordion-group ng-repeat="(key,value) in pgListRes | groupBy:'server_group'" is-open="serverUib.open">
+                                <uib-accordion-heading>
+                                    <span ng-click="closeAllServers()">
+                                        <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !serverUib.open, 'fa fa-minus': serverUib.open}"></i>
+                                        <div>{{value[0].server_group}}</div>
+                                    </span>
+                                </uib-accordion-heading>
+                                <uib-accordion close-others="true">
+                                <uib-accordion-group ng-repeat="serverVal in value" is-open="serverVal.isOpen">
+                                    <uib-accordion-heading>
+                                        <span ng-click="closeAllConnections()">
+                                        <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !serverVal.isOpen, 'fa fa-minus': serverVal.isOpen}"></i>
+                                        <div>{{serverVal.server_name}}, {{serverVal.db_user}}@{{ serverVal.host }}:{{ serverVal.port }}/{{serverVal.db}}</div>
+                                        <div class="pull-right" style="margin-top: -26px">
+                                            <a ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); navToDetails(serverVal.server_name)" 
+                                            class="btn btn-default" class="ng-binding" ng-if="serverVal.isOpen">Details</a>
+                                        </div>
+                                        </span>
+                                    </uib-accordion-heading>
+                                    <div class="col-md-12 col-sm-12 col-xs-12" ng-controller="dbGraphsController">
+                                        <strong>{{serverVal.server_group}} : </strong> {{serverVal.server_name}}
+                                        <div ng-if="version"><strong>Version : </strong>{{ version }}</div>
+                                        <div ng-if="need_pwd">
+                                            <input type="password" ng-model="pg_pwd" placeholder="password">
+                                            <input type="button" ng-click="connect_pg(serverVal.sid,serverVal.gid, pg_pwd)" value="Connect">
+                                            <div ng-if="connect_err">{{connect_err}}</div>
+                                        </div>
+                                        <div>&nbsp;</div>
+
+                                    <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12">
+                                        <div class="host-perf-viz">
+                                                <h5>Transactions per Second</h5>
+                                            <nvd3 options="transctionsPerSecondChart" data="commitRollbackData" showLegend="false"></nvd3>
+                                        </div>
+                                    </div>
+                                    <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12">
+                                        <div class="host-perf-viz">
+                                                <h5>Connections</h5>
+                                            <nvd3 options="connectionsChart" data="connectionsData" showLegend="false"></nvd3>
+                                        </div>
+                                    </div>
+                                </div>
+                                </uib-accordion-group>
+                                </uib-accordion>
+                            </uib-accordion-group>
+                        </uib-accordion>
+                    </div>
+                </uib-accordion-group>
                 <uib-accordion-group ng-repeat="group in groupsList" is-open="group.state"  ng-init="parentIndex = $index" >
                     <uib-accordion-heading>
                         <span ng-click="loadGroup($index)" ng-if="group.group == 'default'" class="host-uib-tab-heading">
-                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i> &nbsp;All Hosts
+                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i> &nbsp; <strong> SSH Hosts</strong>
                         </span>
                         <span ng-click="loadGroup($index)" ng-if="group.group != 'default'" class="host-uib-tab-heading">
                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i>&nbsp; {{group.group}}

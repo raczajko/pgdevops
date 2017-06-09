@@ -17,6 +17,7 @@ from flask_mail import Mail
 from flask_babel import Babel, gettext
 from pgadmin.utils.session import create_session_interface
 from pgadmin.model import db, Role, User, Server, ServerGroup, Process
+from pgadmin.utils.crypto import encrypt, decrypt, pqencryptpassword
 from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 import config
@@ -111,6 +112,8 @@ def on_user_registerd(app, user, confirm_token):
         return
     user_datastore.add_role_to_user(user.email, 'User')
 
+from pgstats import pgstats
+application.register_blueprint(pgstats, url_prefix='/pgstats')
 
 PGC_HOME = os.getenv("PGC_HOME", "")
 PGC_LOGS = os.getenv("PGC_LOGS", "")
@@ -204,21 +207,45 @@ api.add_resource(pgcUtilRelnotes, '/api/utilRelnotes/<string:comp>','/api/utilRe
 
 
 class pgcApiHostCmd(Resource):
-    def get(self, pgc_cmd, host_name):
-        data = pgc.get_data(pgc_cmd + " --host \""+ host_name + "\"")
+    def get(self, pgc_cmd, host_name,pwd=None):
+        pwd_session_name = "{0}_pwd".format(host_name)
+        if session.get("hostname", "") == host_name:
+            if not pwd and session.get(pwd_session_name):
+                pwd =  session.get(pwd_session_name)
+        session['hostname'] = host_name
+        if pwd:
+            session[pwd_session_name] = pwd
+        data = pgc.get_data(pgc_cmd, pgc_host=host_name, pwd=pwd)
+        if len(data)>0 and data[0].get("pwd_failed"):
+            session.pop(pwd_session_name)
         return data
 
 
-api.add_resource(pgcApiHostCmd, '/api/hostcmd/<string:pgc_cmd>/<string:host_name>')
+api.add_resource(pgcApiHostCmd,
+                 '/api/hostcmd/<string:pgc_cmd>/<string:host_name>',
+                 '/api/hostcmd/<string:pgc_cmd>/<string:host_name>/<string:pwd>/')
+
 
 
 class pgdgCommand(Resource):
-    def get(self, repo_id, pgc_cmd, host=None): 
-        data = pgc.get_pgdg_data(repo_id, pgc_cmd, pgc_host=host)
+    def get(self, repo_id, pgc_cmd, host=None, pwd=None):
+        pwd_session_name = "{0}_pwd".format(host)
+        if session.get("hostname", "") == host:
+            if not pwd and session.get(pwd_session_name):
+                pwd = session.get(pwd_session_name)
+        session['hostname'] = host
+        if pwd:
+            session[pwd_session_name] = pwd
+        data = pgc.get_pgdg_data(repo_id, pgc_cmd, pgc_host=host, pwd=pwd)
+        if len(data)>0 and data[0].get("pwd_failed"):
+            session.pop(pwd_session_name)
         return data
 
 
-api.add_resource(pgdgCommand, '/api/pgdg/<string:repo_id>/<string:pgc_cmd>','/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>')
+api.add_resource(pgdgCommand,
+                 '/api/pgdg/<string:repo_id>/<string:pgc_cmd>',
+                 '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>',
+                 '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>/<string:pwd>')
 
 class pgdgHostCommand(Resource):
     def get(self, repo_id, pgc_cmd, comp, host=None):
@@ -241,7 +268,6 @@ class checkUser(Resource):
             remote = PgcRemote(host, username, password=password, ssh_key=ssh_key)
             remote.connect()
             is_sudo = remote.has_sudo()
-            remote.disconnect()
             json_dict['state'] = "success"
             json_dict['isSudo'] = is_sudo
             remote_pgc_path = remote.get_exixting_pgc_path()
@@ -249,15 +275,40 @@ class checkUser(Resource):
             if remote_pgc_path.get('pgc_path_exists'):
                 json_dict['pgc_version'] = remote_pgc_path['pgc_version']
             data = json.dumps([json_dict])
+            remote.disconnect()
         except Exception as e:
-            print e
-            errmsg = "ERROR: Cannot connect to " + username + "@" + host + " - " + str(e.args[0])
+            errmsg = "ERROR: Cannot connect to " + username + "@" + host + " - " + str(e)
             json_dict['state'] = "error"
             json_dict['msg'] = errmsg
             data = json.dumps([json_dict])
         return data
 
 api.add_resource(checkUser, '/api/checkUser')
+
+
+class checkHostAccess(Resource):
+    def get(self):
+        host = request.args.get('hostname')
+        check_sudo_password = request.args.get('pwd')
+        [pgc_home, pgc_user, pgc_passwd, pgc_host, pgc_host_name, pgc_ssh_key, pgc_host_info] = get_pgc_host(host)
+        from PgcRemote import PgcRemote
+        json_dict = {}
+        try:
+            remote = PgcRemote(host, pgc_user, password=pgc_passwd, ssh_key=pgc_ssh_key, sudo_pwd=check_sudo_password)
+            remote.connect()
+            is_sudo = remote.has_root_access()
+            json_dict['state'] = "success"
+            json_dict['isSudo'] = is_sudo
+            data = json.dumps([json_dict])
+            remote.disconnect()
+        except Exception as e:
+            errmsg = "ERROR: Cannot connect to " + username + "@" + host + " - " + str(e)
+            json_dict['state'] = "error"
+            json_dict['msg'] = errmsg
+            data = json.dumps([json_dict])
+        return data
+
+api.add_resource(checkHostAccess, '/api/checkUserAccess')
 
 
 class initPGComp(Resource):
@@ -388,8 +439,8 @@ api.add_resource(GetEnvFile, '/api/read/env/<string:comp>')
 
 
 class AddtoMetadata(Resource):
-    def post(self):
 
+    def post(self):
         def add_to_pginstances(pg_arg):
             try:
                 component_name = pg_arg.get("component")
@@ -481,6 +532,7 @@ class AddtoMetadata(Resource):
         result = {}
         result['error'] = 0
         args = request.json
+
         is_multiple = args.get("multiple")
         if is_multiple:
             for pg_data in args.get("multiple"):
@@ -540,6 +592,14 @@ class pgdgAction(Resource):
         args = request.json
         component_name = args.get("component")
         component_host = args.get("host","localhost")
+        pwd=args.get("pwd")
+        pwd_session_name = "{0}_pwd".format(component_host)
+        if session.get("hostname", "") == component_host:
+            if not pwd and session.get(pwd_session_name):
+                pwd = session.get(pwd_session_name)
+        session['hostname'] = component_host
+        if pwd:
+            session[pwd_session_name] = pwd
         repo = args.get("repo")
         action = args.get("action")
         from detached_process import detached_process
@@ -548,11 +608,13 @@ class pgdgAction(Resource):
             report_cmd = PGC_HOME + os.sep + "pgc " + action + " REPO " + repo + " -y"
         else:
             report_cmd = PGC_HOME + os.sep + "pgc repo-pkgs " + repo + " " + action + " " + component_name
+        if not pwd:
+            report_cmd = report_cmd + " --no-tty"
         if component_host and component_host != "localhost":
             report_cmd = report_cmd + " --host \"" + component_host + "\""
         if this_uname == "Windows":
             report_cmd = report_cmd.replace("\\", "\\\\")
-        process_status = detached_process(report_cmd, ctime)
+        process_status = detached_process(report_cmd, ctime, stdin_str=pwd)
         result['error']=None
         result['status'] =process_status['status']
         result['log_dir'] = process_status['log_dir']

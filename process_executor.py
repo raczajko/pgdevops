@@ -302,6 +302,10 @@ def execute():
         if 'PROCID' in os.environ and os.environ['PROCID'] in os.environ:
             os.environ['PGPASSWORD'] = os.environ[os.environ['PROCID']]
 
+        stdin_str=None
+        if 'stdin_str' in os.environ:
+            stdin_str=os.environ.get("stdin_str")
+
         kwargs = dict()
         kwargs['close_fds'] = False
         kwargs['shell'] = True
@@ -319,9 +323,14 @@ def execute():
         if _IS_WIN:
             import shlex
             command = shlex.split(command[0],False, True)
+        stdin_arg=None
+        if stdin_str:
+            stdin_arg=PIPE
+        stdin = open(os.devnull, "r").fileno()
         process = Popen(
-            command, stdout=std_out_file, stderr=std_err_file, stdin=None, **kwargs
+            command, stdout=std_out_file, stderr=std_err_file, stdin=PIPE, **kwargs
         )
+
 
         args.update({
             'pid': process.pid
@@ -340,6 +349,12 @@ def execute():
         # Join both threads together
         process_stdout.join()
         process_stderr.join()
+        if stdin_str:
+            import time
+            time.sleep(5)
+            pwd = b'{}'.format(stdin_str + str(os.linesep))
+            process.stdin.write(pwd)
+            process.stdin.flush()
 
         _log('Waiting for the process to finish...')
         # Child process return code
@@ -450,6 +465,14 @@ if __name__ == '__main__':
     #signal.signal(signal.SIGTERM, signal_handler)
     #_log('Disabled the SIGINT, SIGTERM signals...')
 
+    stdin_str = None
+    if 'stdin_str' in os.environ:
+        stdin_str = os.environ.get("stdin_str")
+
+    stdin_arg = None
+    if stdin_str:
+        stdin_arg = PIPE
+
     if _IS_WIN:
         #_log('Disable the SIGBREAKM signal (windows)...')
         #signal.signal(signal.SIGBREAK, signal_handler)
@@ -491,9 +514,10 @@ if __name__ == '__main__':
             std_out_file = open(os.path.join(_out_dir, "out"), 'a+')
             std_err_file = open(os.path.join(_out_dir, "err"), 'a+')
 
+            stdin = open(os.devnull, "r").fileno()
 
             kwargs = {
-                'stdin': stdin.fileno(),
+                'stdin': stdin,
                 'stdout': std_out_file, #stdout.fileno(),
                 'stderr': std_err_file, #stderr.fileno(),
                 'creationflags': CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,
@@ -508,6 +532,14 @@ if __name__ == '__main__':
             _log('[PARENT] Command executings: {0}'.format(cmd))
 
             p = Popen(cmd, **kwargs)
+
+            if stdin_str:
+                import time
+                time.sleep(5)
+                pwd = b'{}'.format(stdin_str + str(os.linesep))
+                p.stdin.write(pwd)
+                p.stdin.flush()
+
 
             exitCode = p.poll()
 

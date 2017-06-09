@@ -58,7 +58,7 @@ def get_current_time(format='%Y-%m-%d %H:%M:%S.%f %z'):
         tzinfo=pytz.utc
     ).strftime(format)
 
-def detached_process(p_cmd, p_ctime=None, report_file=None):
+def detached_process(p_cmd, p_ctime=None, report_file=None, stdin_str=None):
 
 
     executor = file_quote(os.path.join(
@@ -103,6 +103,8 @@ def detached_process(p_cmd, p_ctime=None, report_file=None):
     env['PROCID'] = id
     env['OUTDIR'] = log_dir
     env['PGA_BGP_FOREGROUND'] = "1"
+    if stdin_str:
+        env['stdin_str'] = stdin_str
     if report_file:
         env['report_file'] = report_file
 
