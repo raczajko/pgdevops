@@ -30,6 +30,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     // $scope.groupOpen = true;
     // $scope.hostOpen = true;
     $scope.version=false;
+    $scope.connection = {savePwd:false};
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -176,14 +177,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     ];
 
 
-    // if($scope.commitRollbackData.length <= 2){
-    //     $scope.transctionsPerSecondChart.chart.noData = "_ No Data Available."
-    // }
-
-    // if($scope.connectionsData.length <= 3){
-    //     $scope.connectionsChart.chart.noData = "_ No Data Available."
-    // }
-
     $scope.diskIO = [{
         values: [],
         key: 'Read Bytes (kB)',
@@ -243,6 +236,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
 
     $scope.closeAllConnections = function() {
+        $scope.connection.savePwd =false;
         var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
         statusData.then(function (argument) {
         })

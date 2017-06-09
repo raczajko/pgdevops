@@ -31,28 +31,35 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         $scope.connVersion = ver;
     });
 
-    $rootScope.$on('navToPwd', function (argument) {
-        
-    })
+    $scope.openPasswordModal = function (argument) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/passwordModal.html',
+            controller: 'passwordModalController'
+        });
+        modalInstance.sid = $scope.connData.sid;
+        modalInstance.gid = $scope.connData.gid;
+    }
     
     $scope.connChange = function (argument) {
-        if (!argument && !localStorage.getItem('selectedConnection')) {
-            argument = $scope.pgList[0].server_name;
-        }else if( !argument && localStorage.getItem('selectedConnection')){
-            argument = localStorage.getItem('selectedConnection');
-        }
-        $scope.selectConn = argument;
         $scope.loading = true;
-        for (var i = $scope.pgList.length - 1; i >= 0; i--) {
-            if($scope.pgList[i].server_name == argument){
-                localStorage.setItem('selectedConnection', argument);
-                $scope.loading = false;
-                $scope.connData = $scope.pgList[i];
-                $rootScope.$emit('getDBstatus', $scope.pgList[i].sid, $scope.pgList[i].gid, '');
-                $scope.activeOverview = true;
-                console.log($scope.activeOverview);
+        var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
+        statusData.then(function (data) {
+            if (!argument && !localStorage.getItem('selectedConnection')) {
+                argument = $scope.pgList[0].server_name;
+            }else if( !argument && localStorage.getItem('selectedConnection')){
+                argument = localStorage.getItem('selectedConnection');
             }
-        }
+            $scope.selectConn = argument;
+            for (var i = $scope.pgList.length - 1; i >= 0; i--) {
+                if($scope.pgList[i].server_name == argument){
+                    localStorage.setItem('selectedConnection', argument);
+                    $scope.loading = false;
+                    $scope.connData = $scope.pgList[i];
+                    $rootScope.$emit('getDBstatus', $scope.pgList[i].sid, $scope.pgList[i].gid, '');
+                    $scope.activeOverview = true;
+                }
+            }
+        })
     }
 
     var getCurrentObject = function (list, name) {

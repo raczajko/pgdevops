@@ -2,6 +2,7 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
 	var session, subscriptions=[], componentStatus, refreshRate;
     $scope.showGraphs = false;
     var cancelGraphsTimeout;
+    $scope.connecting = false;
 
     $scope.transctionsPerSecondChart = {
         chart: {
@@ -115,7 +116,19 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
 
     }
 
-        var previous_data = {};
+    if($scope.commitRollbackData.length <= 2){
+        $scope.transctionsPerSecondChart.chart.noData = "Not Connected."
+    }
+
+    if($scope.connectionsData.length <= 3){
+        $scope.connectionsChart.chart.noData = "Not Connected."
+    }
+
+    if($scope.rowsData.length <= 4){
+        $scope.rowsChart.chart.noData = "Not Connected."
+    }
+
+    var previous_data = {};
     var stats = function (sid,gid){
     var connect_api_url = "/pgstats/stats/";
         var data = {
@@ -196,40 +209,44 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
 
     };
 
-    $scope.connect_pg = function(sid,gid, pwd){
+    $scope.connect_pg = function(sid,gid, pwd, savePwd){
         var connect_api_url = "/pgstats/connect/";
+        $scope.connecting = true;
         var data = {
              sid:sid,
-             gid:gid
+             gid:gid,
+             save:savePwd,
             };
             if (pwd){
              data.pwd=pwd;
             };
             var statusData = bamAjaxCall.postData(connect_api_url, data);
             statusData.then(function (argument) {
+                    $scope.connecting = false;
                     $timeout.cancel(cancelGraphsTimeout);
                     $rootScope.$emit('updateVersion', '');
+                    $rootScope.$emit('connectionData', argument);
                     clear();
                     if (argument.state=="error"){
                         $scope.connect_err=argument.msg;
-                        $rootScope.$emit('navToPwd');
+                        // $rootScope.$emit('navToPwd');
                         $scope.need_pwd=true;
                         $scope.version=false;
                     } else{
-                    $scope.version=argument.version;
-                    $scope.connect_err=false;
-                    $scope.need_pwd=false;
-                    $rootScope.$emit('updateVersion', argument.version);
+                        $scope.version=argument.version;
+                        $scope.connect_err=false;
+                        $scope.need_pwd=false;
+                        $rootScope.$emit('updateVersion', argument.version.replace("PostgreSQL ", ""));
 
-                    $timeout(function() {stats(sid, gid)}, 2000);
+                        $timeout(function() {stats(sid, gid)}, 2000);
                     }
             });
     };    
 
 
     var destroyGetDBStatus;
-    destroyGetDBStatus = $rootScope.$on('getDBstatus', function (event, sid, gid, pwd) {
-        $scope.connect_pg(sid, gid, pwd);
+    destroyGetDBStatus = $rootScope.$on('getDBstatus', function (event, sid, gid, pwd, savePwd) {
+        $scope.connect_pg(sid, gid, pwd, savePwd);
     })
 
     $scope.$on('$destroy', function (argument) {
