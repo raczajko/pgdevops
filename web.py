@@ -82,6 +82,8 @@ paths.init_app(application)
 def before_request():
     if not current_user.is_authenticated and request.endpoint == 'security.login' and no_admin_users():
         return redirect(url_for('security.register'))
+    if not current_user.is_authenticated and request.endpoint == 'security.register' and not no_admin_users():
+        return redirect(url_for('security.login'))
 
 application.before_request(before_request)
 
