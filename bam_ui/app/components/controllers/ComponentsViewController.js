@@ -479,11 +479,16 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.pgdgSelected = true;
         $scope.gettingPGDGdata = true;
         $scope.showRepoList = false;
+        $scope.cmd_str = 'repolist';
         if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
+        if ($scope.host_pwd == ""){
             var pgdgComps = bamAjaxCall.getCmdData('repolist')
+            } else {
+            var pgdgComps = bamAjaxCall.getCmdData('repolist/'+$scope.host_pwd)
+            }
         }else{
 
-        $scope.cmd_str = 'repolist';
+
         if ($scope.host_pwd == ""){
         var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost);
         } else{

@@ -99,7 +99,7 @@ class ConnectAPI(MethodView):
                         errmsg = errmsg.decode('utf-8')
                     json_dict['state'] = "error"
                     json_dict['msg'] = errmsg
-                    if errmsg.find("password authentication failed")>0:
+                    if errmsg.find("password authentication failed")>=0:
                         json_dict['need_pwd'] = True
                     return jsonify(json_dict)
                 else:
