@@ -71,4 +71,4 @@ def user_info():
                         u'Password must be at least 6 characters. Please try again.'
                     )
                 p1, p2, active = pprompt()
-    return email, p1,active
+    return email, p1, str(active)
