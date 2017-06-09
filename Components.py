@@ -602,6 +602,9 @@ class Components(ComponentAction):
                         if line_out.find("Sorry, try again")>=0:
                             pprocess.terminate()
                             return [auth_err]
+                        elif line_out.find("is not in the sudoers file")>=0:
+                            pprocess.terminate()
+                            return [auth_err]
                         else:
                             line_str=line_out
                             remaining_lines = pprocess.readlines()
@@ -627,15 +630,6 @@ class Components(ComponentAction):
                                       shell=True,
                                       stdin=std_in)
         line = ""
-        tty_msgs = ("sudo: no tty present and no askpass program specified",
-                   "sudo: sorry, you must have a tty to run sudo")
-        auth_err = {"state": "error",
-                    "msg": "Failed to authenticate with password provided.",
-                    "pwd_failed": True,
-                    "cmd": pgcCmd}
-        pwd_required = {"state": "error",
-                        "msg": "Password required",
-                        "cmd": pgcCmd}
         for c in iter(lambda: pgcProcess.stdout.read(1), ''):
             line = line + c
             if pgcCmd.find("lablist") < 0 and line.find("sudo") >= 0 \
@@ -717,6 +711,9 @@ class Components(ComponentAction):
                         if line_out.find("Sorry, try again")>=0:
                             pprocess.terminate()
                             return [auth_err]
+                        elif line_out.find("is not in the sudoers file")>=0:
+                            pprocess.terminate()
+                            return [auth_err]
                         else:
                             line_str=line_out
                             remaining_lines = pprocess.readlines()
@@ -754,15 +751,6 @@ class Components(ComponentAction):
                                       shell=True,
                                       stdin=std_in)
         line = ""
-        tty_msgs = ("sudo: no tty present and no askpass program specified",
-                    "sudo: sorry, you must have a tty to run sudo")
-        auth_err = {"state": "error",
-                    "msg": "Failed to authenticate with password provided.",
-                    "pwd_failed": True,
-                    "cmd": pgcCmd}
-        pwd_required = {"state": "error",
-                        "msg": "Password required",
-                        "cmd": pgcCmd}
         for c in iter(lambda: pgcProcess.stdout.read(1), ''):
             line = line + c
             if line.find("sudo") >= 0 and line.find("password") >= 0 and line.endswith(":"):
