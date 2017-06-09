@@ -243,6 +243,10 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
             });
     };    
 
+    $rootScope.$on('clearDBGraphs', function (argument) {
+        clear();
+    })
+
 
     var destroyGetDBStatus;
     destroyGetDBStatus = $rootScope.$on('getDBstatus', function (event, sid, gid, pwd, savePwd) {
