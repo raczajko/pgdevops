@@ -9,6 +9,7 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
     var currentComponent = {};
     var checkUpdates;
     $scope.users;
+    $rootScope.userInfoGlobal;
 
     // new user url = /admin/user_management/user/
     // post data format {email: "test@test.com", active: true, role: "2", newPassword: "password", confirmPassword: "password"}
@@ -51,6 +52,7 @@ angular.module('bigSQL.components').controller('usersController', ['$scope', '$u
     $http.get($window.location.origin + '/api/userinfo')
                 .success(function(data) {
                     $scope.userInfo = data;
+                    $rootScope.userInfoGlobal = data;
 
                 });
 

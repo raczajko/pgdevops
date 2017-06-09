@@ -2,7 +2,7 @@
 #########         Copyright 2016-2017 BigSQL             ###########
 ####################################################################
 
-from flask import Flask, render_template, url_for, request, session
+from flask import Flask, render_template, url_for, request, session, redirect
 
 import os
 from flask_triangle import Triangle
@@ -67,16 +67,50 @@ application.config['WTF_CSRF_ENABLED'] = False
 
 application.config['SECURITY_RECOVERABLE'] = True
 application.config['SECURITY_CHANGEABLE'] = True
+application.config['SECURITY_REGISTERABLE'] = True
 
+application.config['SECURITY_REGISTER_URL'] = '/register'
+application.config['SECURITY_CONFIRMABLE'] = False
+application.config['SECURITY_SEND_REGISTER_EMAIL'] = False
 db.init_app(application)
 Mail(application)
 import pgadmin.utils.paths as paths
 
 paths.init_app(application)
 
+def before_request():
+    if not current_user.is_authenticated and request.endpoint == 'security.login' and no_admin_users():
+        return redirect(url_for('security.register'))
+
+application.before_request(before_request)
+
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(application, user_datastore)
+
+from flask_security.signals import user_registered
+
+def no_admin_users():
+    if not len(User.query.filter(User.roles.any(name='Administrator'), User.active == True).all()) > 0:
+        return True
+    return False
+
+@user_registered.connect_via(application)
+def on_user_registerd(app, user, confirm_token):
+    sg = ServerGroup(
+        user_id=user.id,
+        name="Servers")
+    db.session.add(sg)
+    db.session.commit()
+    default_user = user_datastore.get_user('bigsql@bigsql.org')
+    if not len(User.query.filter(User.roles.any(name='Administrator'),User.active==True).all()) > 0 :
+        if default_user is not None and default_user.has_role('Administrator') and not default_user.active:
+            db.session.delete(default_user)
+            db.session.commit()
+        user_datastore.add_role_to_user(user.email, 'Administrator')
+        return
+    user_datastore.add_role_to_user(user.email, 'User')
+
 
 PGC_HOME = os.getenv("PGC_HOME", "")
 PGC_LOGS = os.getenv("PGC_LOGS", "")
