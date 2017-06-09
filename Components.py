@@ -572,17 +572,68 @@ class Components(ComponentAction):
             std_in = subprocess.PIPE
         else:
             pgcCmd = pgcCmd + " --no-tty"
+        tty_msgs = ("sudo: no tty present and no askpass program specified",
+                    "sudo: sorry, you must have a tty to run sudo")
+        auth_err = {"state": "error",
+                    "msg": "Failed to authenticate with password provided.",
+                    "pwd_failed": True,
+                    "cmd": pgcCmd}
+        pwd_required = {"state": "error",
+                        "msg": "Password required",
+                        "cmd": pgcCmd}
+        if this_uname=="Linux" and pgcCmd.find("repolist")>=0 and not pgc_host:
+            import pexpect
+            try:
+                pprocess = pexpect.spawn(pgcCmd)
+                try:
+                    pwd_promp = pprocess.expect("password",2)
+                except pexpect.exceptions.TIMEOUT as e:
+                    pwd_promp = -1
+                line_str=""
+                if pwd_promp>=0:
+                    if not pwd:
+                        pprocess.terminate()
+                    else:
+                        pprocess.sendline(pwd)
+                        line1=pprocess.readline().strip()
+                        line_out=pprocess.readline().strip()
+                        if line_out.find("Sorry, try again")>=0:
+                            pprocess.terminate()
+                            return [auth_err]
+                        else:
+                            line_str=line_out
+                            remaining_lines = pprocess.readlines()
+                            for ln in remaining_lines:
+                                line_str = line_str + ln.strip()
+                            try:
+                                return json.loads(str(line_str))
+                            except Exception as e:
+                                print ("Error : " + str(e))
+                                print ("cmd : " + str(pgcCmd))
+                                print ("Data Received : ")
+                                print (line_str)
+                                return [{"state": "error", "msg": str(e)}]
+                    return [pwd_required]
+                pprocess.terminate()
+                return [auth_err]
+            except Exception as e:
+                print str(e)
+                return [auth_err]
         pgcProcess = subprocess.Popen(pgcCmd,
                                       stdout=subprocess.PIPE,
                                       stderr=subprocess.PIPE,
                                       shell=True,
                                       stdin=std_in)
         line = ""
-        tty_msg = "sudo: no tty present and no askpass program specified"
+        tty_msgs = ("sudo: no tty present and no askpass program specified",
+                   "sudo: sorry, you must have a tty to run sudo")
         auth_err = {"state": "error",
                     "msg": "Failed to authenticate with password provided.",
-                    "pwd_failed": True}
-        pwd_required = {"state": "error", "msg": "Password required"}
+                    "pwd_failed": True,
+                    "cmd": pgcCmd}
+        pwd_required = {"state": "error",
+                        "msg": "Password required",
+                        "cmd": pgcCmd}
         for c in iter(lambda: pgcProcess.stdout.read(1), ''):
             line = line + c
             if pgcCmd.find("lablist")<0 and line.find("sudo") >= 0 and line.find("password") >= 0 and line.endswith(":"):
@@ -596,11 +647,24 @@ class Components(ComponentAction):
             elif line.find("Sorry, try again.") >= 0:
                 util.kill_process_tree(pgcProcess.pid)
                 return [auth_err]
+            elif line.find("is not in the sudoers file")>=0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [auth_err]
+            elif line.find(tty_msgs[0]) >= 0 or line.find(tty_msgs[1]) >= 0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [pwd_required]
         pgcInfo = line
-        if pgcInfo.find(tty_msg) >= 0:
-            return [pwd_required]
-        final_data = pgcInfo.replace(tty_msg, "").strip()
-        return json.loads(final_data)
+        for tty_msg in tty_msgs:
+            pgcInfo = pgcInfo.replace(tty_msg, "").strip()
+        final_data = pgcInfo.strip()
+        try:
+            return json.loads(str(final_data))
+        except Exception as e:
+            print ("Error : " + str(e))
+            print ("cmd : "+ str(pgcCmd))
+            print ("Data Received : ")
+            print (final_data)
+            return [{"state": "error", "msg": str(e)}]
 
     @staticmethod
     def get_pgdg_data(repo_id, command, component=None, pgc_host=None, pwd=None):
@@ -622,17 +686,72 @@ class Components(ComponentAction):
             std_in = subprocess.PIPE
         else:
             pgcCmd = pgcCmd + " --no-tty"
+        tty_msgs = ("sudo: no tty present and no askpass program specified",
+                    "sudo: sorry, you must have a tty to run sudo")
+        auth_err = {"state": "error",
+                    "msg": "Failed to authenticate with password provided.",
+                    "pwd_failed": True,
+                    "cmd": pgcCmd}
+        pwd_required = {"state": "error",
+                        "msg": "Password required",
+                        "cmd": pgcCmd}
+        if this_uname=="Linux" and not pgc_host:
+            import pexpect
+            try:
+                pprocess = pexpect.spawn(pgcCmd)
+                try:
+                    pwd_promp = pprocess.expect("password", 5)
+                except pexpect.exceptions.TIMEOUT as e:
+                    pwd_promp = -1
+                line_str=""
+                if pwd_promp>=0:
+                    if not pwd:
+                        pprocess.terminate()
+                    else:
+                        pprocess.sendline(pwd)
+                        line1=pprocess.readline().strip()
+                        line_out=pprocess.readline().strip()
+                        if line_out.find("Sorry, try again")>=0:
+                            pprocess.terminate()
+                            return [auth_err]
+                        else:
+                            line_str=line_out
+                            remaining_lines = pprocess.readlines()
+                            for ln in remaining_lines:
+                                line_str = line_str + ln.strip()
+                            try:
+                                return json.loads(str(line_str))
+                            except Exception as e:
+                                print ("Error : " + str(e))
+                                print ("cmd : " + str(pgcCmd))
+                                print ("Data Received : ")
+                                print (line_str)
+                                return [{"state": "error", "msg": str(e)}]
+                    return [pwd_required]
+                else:
+                    remaining_lines = pprocess.readlines()
+                    for ln in remaining_lines:
+                        line_str = line_str + ln.strip()
+                    try:
+                        return json.loads(str(line_str))
+                    except Exception as e:
+                        print ("Error : " + str(e))
+                        print ("cmd : " + str(pgcCmd))
+                        print ("Data Received : ")
+                        print (line_str)
+                        return [{"state": "error", "msg": str(e)}]
+                pprocess.terminate()
+                return [auth_err]
+            except Exception as e:
+                print str(e)
+                return [auth_err]
         pgcProcess = subprocess.Popen(pgcCmd,
                                       stdout=subprocess.PIPE,
                                       stderr=subprocess.PIPE,
                                       shell=True,
                                       stdin=std_in)
         line = ""
-        tty_msg = "sudo: no tty present and no askpass program specified"
-        auth_err = {"state": "error",
-                    "msg": "Failed to authenticate with password provided.",
-                    "pwd_failed": True}
-        pwd_required = {"state": "error", "msg": "Password required"}
+
         for c in iter(lambda: pgcProcess.stdout.read(1), ''):
             line = line + c
             if line.find("sudo") >= 0 and line.find("password") >= 0 and line.endswith(":"):
@@ -646,8 +765,21 @@ class Components(ComponentAction):
             elif line.find("Sorry, try again.") >= 0:
                 util.kill_process_tree(pgcProcess.pid)
                 return [auth_err]
+            elif line.find("is not in the sudoers file")>=0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [auth_err]
+            elif line.find(tty_msgs[0]) >= 0 or line.find(tty_msgs[1]) >= 0:
+                util.kill_process_tree(pgcProcess.pid)
+                return [pwd_required]
         pgcInfo = line
-        if pgcInfo.find(tty_msg) >= 0:
-            return [pwd_required]
-        final_data = pgcInfo.replace(tty_msg, "").strip()
-        return json.loads(final_data)
+        for tty_msg in tty_msgs:
+            pgcInfo = pgcInfo.replace(tty_msg, "").strip()
+        final_data = pgcInfo.strip()
+        try:
+            return json.loads(str(final_data))
+        except Exception as e:
+            print ("Error : " + str(e))
+            print ("cmd : " + str(pgcCmd))
+            print ("Data Received : ")
+            print (final_data)
+            return [{"state": "error", "msg": str(e)}]

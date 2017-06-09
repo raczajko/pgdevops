@@ -84,13 +84,23 @@ PGC_LOGS = os.getenv("PGC_LOGS", "")
 db_session = db.session
 
 class pgcApi(Resource):
-    def get(self, pgc_command):
+    def get(self, pgc_command,pwd=None):
         # if 'credentials' in session:
-        data = pgc.get_data(pgc_command)
+        rpassword=pwd
+        if session.get("localhost_pwd"):
+            rpassword=session.get("localhost_pwd")
+        elif pwd:
+            session["localhost_pwd"] = pwd
+        data = pgc.get_data(pgc_command, pwd=rpassword)
+        if len(data)>0 and data[0].get("pwd_failed"):
+            if session.get("localhost_pwd"):
+                session.pop("localhost_pwd")
         return data
 
 
-api.add_resource(pgcApi, '/api/<string:pgc_command>')
+api.add_resource(pgcApi,
+                 '/api/<string:pgc_command>',
+                 '/api/<string:pgc_command>/<string:pwd>')
 
 
 class pgcApiCom(Resource):
@@ -171,16 +181,24 @@ api.add_resource(pgcUtilRelnotes, '/api/utilRelnotes/<string:comp>','/api/utilRe
 
 class pgcApiHostCmd(Resource):
     def get(self, pgc_cmd, host_name,pwd=None):
+        password=pwd
         pwd_session_name = "{0}_pwd".format(host_name)
         if session.get("hostname", "") == host_name:
             if not pwd and session.get(pwd_session_name):
-                pwd =  session.get(pwd_session_name)
+                password =  session.get(pwd_session_name)
+            else:
+                session[pwd_session_name] = pwd
+        elif host_name is None or host_name in ("",  "localhost"):
+            pwd_session_name="localhost_pwd"
+            if not pwd and session.get(pwd_session_name):
+                password = session.get(pwd_session_name)
+            else:
+                session[pwd_session_name] = pwd
         session['hostname'] = host_name
-        if pwd:
-            session[pwd_session_name] = pwd
-        data = pgc.get_data(pgc_cmd, pgc_host=host_name, pwd=pwd)
+        data = pgc.get_data(pgc_cmd, pgc_host=host_name, pwd=password)
         if len(data)>0 and data[0].get("pwd_failed"):
-            session.pop(pwd_session_name)
+            if session.get(pwd_session_name):
+                session.pop(pwd_session_name)
         return data
 
 
@@ -192,16 +210,23 @@ api.add_resource(pgcApiHostCmd,
 
 class pgdgCommand(Resource):
     def get(self, repo_id, pgc_cmd, host=None, pwd=None):
+        password = pwd
         pwd_session_name = "{0}_pwd".format(host)
         if session.get("hostname", "") == host:
             if not pwd and session.get(pwd_session_name):
-                pwd = session.get(pwd_session_name)
-        session['hostname'] = host
-        if pwd:
-            session[pwd_session_name] = pwd
-        data = pgc.get_pgdg_data(repo_id, pgc_cmd, pgc_host=host, pwd=pwd)
+                password = session.get(pwd_session_name)
+            else:
+                session[pwd_session_name] = pwd
+        elif host is None or host in ("", "localhost"):
+            pwd_session_name = "localhost_pwd"
+            if not pwd and session.get("localhost_pwd"):
+                password = session.get("localhost_pwd")
+            else:
+                session['localhost_pwd'] = pwd
+        data = pgc.get_pgdg_data(repo_id, pgc_cmd, pgc_host=host, pwd=password)
         if len(data)>0 and data[0].get("pwd_failed"):
-            session.pop(pwd_session_name)
+            if session.get(pwd_session_name):
+                session.pop(pwd_session_name)
         return data
 
 
