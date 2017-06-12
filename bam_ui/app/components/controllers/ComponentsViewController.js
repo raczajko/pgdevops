@@ -484,7 +484,9 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         if ($scope.host_pwd == ""){
             var pgdgComps = bamAjaxCall.getCmdData('repolist')
             } else {
-            var pgdgComps = bamAjaxCall.getCmdData('repolist/'+$scope.host_pwd)
+            var params = {};
+            params.pwd = $scope.host_pwd;
+            var pgdgComps = bamAjaxCall.getCmdData('repolist/', params)
             }
         }else{
 

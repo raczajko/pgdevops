@@ -123,13 +123,13 @@ PGC_LOGS = os.getenv("PGC_LOGS", "")
 db_session = db.session
 
 class pgcApi(Resource):
-    def get(self, pgc_command,pwd=None):
+    def get(self, pgc_command):
         # if 'credentials' in session:
-        rpassword=pwd
+        rpassword = request.args.get('pwd')
         if session.get("localhost_pwd"):
             rpassword=session.get("localhost_pwd")
-        elif pwd:
-            session["localhost_pwd"] = pwd
+        elif rpassword:
+            session["localhost_pwd"] = rpassword
         data = pgc.get_data(pgc_command, pwd=rpassword)
         if len(data)>0 and data[0].get("pwd_failed"):
             if session.get("localhost_pwd"):
@@ -138,8 +138,7 @@ class pgcApi(Resource):
 
 
 api.add_resource(pgcApi,
-                 '/api/<string:pgc_command>',
-                 '/api/<string:pgc_command>/<string:pwd>')
+                 '/api/<string:pgc_command>')
 
 
 class pgcApiCom(Resource):
