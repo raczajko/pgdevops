@@ -348,6 +348,7 @@ def execute():
         if pwd_promp >= 0:
             if not stdin_str:
                 args.update({'exit_code': 101})
+                std_out_file.write("password required ...")
                 process.terminate()
             else:
                 process.sendline(stdin_str)
@@ -355,17 +356,18 @@ def execute():
                 process.logfile = fout
                 line_out = process.readline().strip()
                 if line_out.find("Sorry, try again") >= 0:
+                    std_out_file.write("password required ...")
+                    args.update({'exit_code': 102})
                     process.terminate()
-                    args.update({'exit_code': 101})
                 elif line_out.find("is not in the sudoers file") >= 0:
+                    args.update({'exit_code': 103})
                     process.terminate()
-                    args.update({'exit_code': 101})
                 else:
-                    process.terminate()
+                    process.wait()
                     args.update({'exit_code': 0})
         else:
             process.logfile = fout
-            process.terminate()
+            process.wait()
             args.update({'exit_code': 0})
 
 
