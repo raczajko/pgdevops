@@ -224,7 +224,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             session.unsubscribe(subscriptions[i])
         }
         $rootScope.$emit('stopGraphCalls');
-        $window.location = '#/connection-details';
+        $cookies.put('openConnection', argument);
+        $window.location.href = '#/connection-details';
+        $window.location.reload();
     }
 
     $scope.changeStatus = function (arg, value) {
@@ -233,28 +235,6 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 $scope.pgListRes[i].isOpen = !value;
             }
         }
-    }
-
-    $scope.closeAllConnections = function(argument) {
-        $scope.connection.savePwd =false;
-        $scope.connect_err = false;
-        var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
-        statusData.then(function (argument) {
-            for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
-                if($scope.pgListRes[i].isOpen == true){
-                    console.log("emit rootScope");
-                    $scope.$emit('getDBstatus', $scope.pgListRes[i].sid, $scope.pgListRes[i].gid, '');
-                }
-            }
-        })
-    }
-
-    $scope.closeAllServers = function(){
-        for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
-            $scope.pgListRes[i].isOpen = false;
-        }
-        $scope.closeAllConnections();
-        $rootScope.$emit('stopGraphCalls');
     }
 
     sessionPromise.then(function (val) {

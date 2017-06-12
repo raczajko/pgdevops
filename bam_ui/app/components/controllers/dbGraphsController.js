@@ -209,10 +209,28 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
 
     };
 
+    $scope.closeAllConnections = function(argument) {
+        $scope.connection.savePwd =false;
+        $scope.connect_err = false;
+        var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
+        statusData.then(function (argument) {
+            for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
+                if($scope.pgListRes[i].isOpen == true){
+                    $scope.connect_pg($scope.pgListRes[i].sid, $scope.pgListRes[i].gid, '');
+                }
+            }
+        })
+    }
+
+    $scope.closeAllServers = function(){
+        for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
+            $scope.pgListRes[i].isOpen = false;
+        }
+        $scope.closeAllConnections();
+        $timeout.cancel(cancelGraphsTimeout);
+    }
+
     $scope.connect_pg = function(sid,gid, pwd, savePwd){
-        $scope.connect_err=false;
-        $scope.need_pwd=false;
-        $scope.version=false;
         var connect_api_url = "/pgstats/connect/";
         $scope.connecting = true;
         var data = {
@@ -250,15 +268,12 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
         clear();
     })
 
+    if(!$rootScope.$$listenerCount['getDBstatus']){
+        $rootScope.$on('getDBstatus', function (event, sid, gid, pwd, savePwd) {
+            $scope.connect_pg(sid, gid, pwd, savePwd);
+        })
+    }
 
-    var destroyGetDBStatus;
-    destroyGetDBStatus = $rootScope.$on('getDBstatus', function (event, sid, gid, pwd, savePwd) {
-        $scope.connect_pg(sid, gid, pwd, savePwd);
-    })
-
-    $scope.$on('$destroy', function (argument) {
-        destroyGetDBStatus();
-    })
 
     $rootScope.$on('stopGraphCalls', function (argument) {
        $timeout.cancel(cancelGraphsTimeout); 
