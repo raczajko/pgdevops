@@ -235,10 +235,17 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     }
 
-    $scope.closeAllConnections = function() {
+    $scope.closeAllConnections = function(argument) {
         $scope.connection.savePwd =false;
+        $scope.connect_err = false;
         var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
         statusData.then(function (argument) {
+            for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
+                if($scope.pgListRes[i].isOpen == true){
+                    console.log("emit rootScope");
+                    $scope.$emit('getDBstatus', $scope.pgListRes[i].sid, $scope.pgListRes[i].gid, '');
+                }
+            }
         })
     }
 

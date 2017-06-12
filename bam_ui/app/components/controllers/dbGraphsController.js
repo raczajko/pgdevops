@@ -210,6 +210,9 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
     };
 
     $scope.connect_pg = function(sid,gid, pwd, savePwd){
+        $scope.connect_err=false;
+        $scope.need_pwd=false;
+        $scope.version=false;
         var connect_api_url = "/pgstats/connect/";
         $scope.connecting = true;
         var data = {

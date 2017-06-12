@@ -48,7 +48,7 @@
                                 <uib-accordion close-others="true">
                                 <uib-accordion-group ng-repeat="serverVal in value" is-open="serverVal.isOpen">
                                     <uib-accordion-heading>
-                                        <span ng-click="closeAllConnections()">
+                                        <span ng-click="closeAllConnections(serverVal.isOpen, serverVal)">
                                         <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !serverVal.isOpen, 'fa fa-minus': serverVal.isOpen}"></i>
                                         <div>{{serverVal.server_name}}, {{serverVal.db_user}}@{{ serverVal.host }}:{{ serverVal.port }}/{{serverVal.db}}</div>
                                         <div class="pull-right" style="margin-top: -26px">

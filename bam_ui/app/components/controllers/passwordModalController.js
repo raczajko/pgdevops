@@ -6,6 +6,7 @@ angular.module('bigSQL.components').controller('passwordModalController', ['$sco
 
     $scope.submitPassword = function (pwd) {
         $rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, pwd, $scope.connection.savePwd);
+        $scope.connect_err = '';
         $scope.connecting = true;
     }
     

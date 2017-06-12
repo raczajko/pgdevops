@@ -51,15 +51,20 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         $scope.loading = true;
         var connStatus = bamAjaxCall.getData(connect_api_url, data);
         connStatus.then(function (data) {
-            $scope.loading = false;
             if (data.state == 'success') {
                 $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
             }else{
                 var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
                 statusData.then(function (data){
+                    $scope.loading = false;
                     $scope.connVersion = '';
                     $scope.connectionStatus = false;
                     $rootScope.$emit('clearDBGraphs');
+                    if ($scope.connData.has_pwd) {
+                        $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
+                    }else{
+                        $scope.openPasswordModal();
+                    }
                 });
             }
         })
