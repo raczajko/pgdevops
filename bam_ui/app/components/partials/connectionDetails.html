@@ -47,13 +47,13 @@
                     </ul>
                     <div ng-show="connData.port" class="text-center">
                         <h4>
-                            <span ng-if="!connVersion" style="color: #FFA500;">Disconnected </span> 
-                            <span ng-if="connVersion" style="color: #008000;">Connected </span> 
+                            <span ng-if="!connectionStatus" style="color: #FFA500;">Disconnected </span> 
+                            <span ng-if="connectionStatus" style="color: #008000;">Connected </span> 
                             <br /><small><span>on port {{connData.port}} </span></small>
                         </h4>
                     </div>
                     <div class="text-center">
-                        <button ng-if="!connVersion" class="btn btn-default btn-primary" ng-click="openPasswordModal()">Connect</button>
+                        <button ng-if="!connectionStatus" class="btn btn-default btn-primary" ng-click="openPasswordModal()">Connect</button>
                         <!-- <button ng-if="connVersion" class="btn btn-default btn-warning">Disconnect</button> -->
                     </div>
                     <div class="clearfix"></div>

@@ -7,7 +7,8 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
 
     $scope.tpsGraph = {open:true} ;
     $scope.connGraph = {open:true};
-    $scope.rowsGraph = {open:false};    
+    $scope.rowsGraph = {open:false}; 
+    $scope.connectionStatus = false;   
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -29,6 +30,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
 
     $rootScope.$on('updateVersion', function (argument, ver) {
         $scope.connVersion = ver;
+        $scope.connectionStatus = true;
     });
 
     $scope.openPasswordModal = function (argument) {
@@ -39,11 +41,31 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         modalInstance.sid = $scope.connData.sid;
         modalInstance.gid = $scope.connData.gid;
     }
+
+    function checkConnection(sid, gid) {
+        var connect_api_url = "/pgstats/conn_status/";
+        var data = {
+             sid:sid,
+             gid:gid,
+            };
+        $scope.loading = true;
+        var connStatus = bamAjaxCall.getData(connect_api_url, data);
+        connStatus.then(function (data) {
+            $scope.loading = false;
+            if (data.state == 'success') {
+                $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
+            }else{
+                var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
+                statusData.then(function (data){
+                    $scope.connVersion = '';
+                    $scope.connectionStatus = false;
+                    $rootScope.$emit('clearDBGraphs');
+                });
+            }
+        })
+    }
     
     $scope.connChange = function (argument) {
-        $scope.loading = true;
-        var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
-        statusData.then(function (data) {
             if (!argument && !localStorage.getItem('selectedConnection')) {
                 argument = $scope.pgList[0].server_name;
             }else if( !argument && localStorage.getItem('selectedConnection')){
@@ -55,11 +77,10 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                     localStorage.setItem('selectedConnection', argument);
                     $scope.loading = false;
                     $scope.connData = $scope.pgList[i];
-                    $rootScope.$emit('getDBstatus', $scope.pgList[i].sid, $scope.pgList[i].gid, '');
+                    checkConnection($scope.pgList[i].sid, $scope.pgList[i].gid);
                     $scope.activeOverview = true;
                 }
             }
-        })
     }
 
     var getCurrentObject = function (list, name) {
@@ -71,14 +92,6 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
             }
         }
     };
-
-    $rootScope.$on('sessionCreated', function () {
-        var sessPromise = PubSubService.getSession();
-        sessPromise.then(function (sessParam) {
-            session = sessParam;
-            $rootScope.$emit('topMenuEvent');
-        });
-    });
 
     var sessionPromise = PubSubService.getSession();
 
