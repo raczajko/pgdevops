@@ -72,10 +72,14 @@ angular.module('bigSQL.components').controller('pgdgActionModalController', ['$s
 
             if (ret_data.data.process_completed){
                 var n = ret_data.data.out_data.search("sudo: no tty present and no askpass program specified");
+                var n2 = ret_data.data.out_data.search("password required");
             if (n>=0){
-            $scope.sudo_pwd = true;
-            var res = ret_data.data.out_data.replace("sudo: no tty present and no askpass program specified", "Password required ...");
-            $scope.out_data = res;
+                $scope.sudo_pwd = true;
+                var res = ret_data.data.out_data.replace("sudo: no tty present and no askpass program specified", "Password required ...");
+                $scope.out_data = res;
+            } else if (n2>=0){
+
+                $scope.sudo_pwd = true;
             }
 
                 $scope.procDone = false;
