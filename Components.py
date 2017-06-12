@@ -39,6 +39,24 @@ sys.path.append(devops_lib_path)
 import util
 
 
+def process_pxpect_output(p_out, p_cmd=None):
+    import re
+    remaining_lines = str(p_out)
+    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    final_lines = ansi_escape.sub("", remaining_lines)
+    striped_lines = str(final_lines).strip()
+    try:
+        return json.loads(striped_lines)
+    except Exception as e:
+        print ("Error : " + str(e))
+        if p_cmd:
+            print ("cmd : " + str(p_cmd))
+        print ("Data Received : ")
+        print (striped_lines)
+        return [{"state": "error", "msg": str(e)}]
+    return final_out
+
+
 class ComponentAction(object):
     """
     This class exposes all the actions for the components in the methods defined.
@@ -591,6 +609,8 @@ class Components(ComponentAction):
                     pwd_promp = pprocess.expect("password",2)
                 except pexpect.exceptions.TIMEOUT as e:
                     pwd_promp = -1
+                except pexpect.EOF as e:
+                    return process_pxpect_output(pprocess.before, pgcCmd)
                 line_str=""
                 if pwd_promp>=0:
                     if not pwd:
@@ -610,15 +630,14 @@ class Components(ComponentAction):
                             remaining_lines = pprocess.readlines()
                             for ln in remaining_lines:
                                 line_str = line_str + ln.strip()
-                            try:
-                                return json.loads(str(line_str))
-                            except Exception as e:
-                                print ("Error : " + str(e))
-                                print ("cmd : " + str(pgcCmd))
-                                print ("Data Received : ")
-                                print (line_str)
-                                return [{"state": "error", "msg": str(e)}]
+                            return process_pxpect_output(line_str, pgcCmd)
                     return [pwd_required]
+                else:
+                    remaining_lines = pprocess.readlines()
+                    print (remaining_lines)
+                    for ln in remaining_lines:
+                        line_str = line_str + ln.strip()
+                    return process_pxpect_output(line_str, pgcCmd)
                 pprocess.terminate()
                 return [auth_err]
             except Exception as e:
@@ -654,14 +673,7 @@ class Components(ComponentAction):
         for tty_msg in tty_msgs:
             pgcInfo = pgcInfo.replace(tty_msg, "").strip()
         final_data = pgcInfo.strip()
-        try:
-            return json.loads(str(final_data))
-        except Exception as e:
-            print ("Error : " + str(e))
-            print ("cmd : "+ str(pgcCmd))
-            print ("Data Received : ")
-            print (final_data)
-            return [{"state": "error", "msg": str(e)}]
+        return process_pxpect_output(final_data, pgcCmd)
 
     @staticmethod
     def get_pgdg_data(repo_id, command, component=None, pgc_host=None, pwd=None):
@@ -700,6 +712,8 @@ class Components(ComponentAction):
                     pwd_promp = pprocess.expect("password", 5)
                 except pexpect.exceptions.TIMEOUT as e:
                     pwd_promp = -1
+                except pexpect.EOF as e:
+                    return process_pxpect_output(pprocess.before, pgcCmd)
                 line_str=""
                 if pwd_promp>=0:
                     if not pwd:
@@ -719,27 +733,13 @@ class Components(ComponentAction):
                             remaining_lines = pprocess.readlines()
                             for ln in remaining_lines:
                                 line_str = line_str + ln.strip()
-                            try:
-                                return json.loads(str(line_str))
-                            except Exception as e:
-                                print ("Error : " + str(e))
-                                print ("cmd : " + str(pgcCmd))
-                                print ("Data Received : ")
-                                print (line_str)
-                                return [{"state": "error", "msg": str(e)}]
+                            return process_pxpect_output(line_str, pgcCmd)
                     return [pwd_required]
                 else:
                     remaining_lines = pprocess.readlines()
                     for ln in remaining_lines:
                         line_str = line_str + ln.strip()
-                    try:
-                        return json.loads(str(line_str))
-                    except Exception as e:
-                        print ("Error : " + str(e))
-                        print ("cmd : " + str(pgcCmd))
-                        print ("Data Received : ")
-                        print (line_str)
-                        return [{"state": "error", "msg": str(e)}]
+                    return process_pxpect_output(line_str, pgcCmd)
                 pprocess.terminate()
                 return [auth_err]
             except Exception as e:
@@ -774,11 +774,4 @@ class Components(ComponentAction):
         for tty_msg in tty_msgs:
             pgcInfo = pgcInfo.replace(tty_msg, "").strip()
         final_data = pgcInfo.strip()
-        try:
-            return json.loads(str(final_data))
-        except Exception as e:
-            print ("Error : " + str(e))
-            print ("cmd : " + str(pgcCmd))
-            print ("Data Received : ")
-            print (final_data)
-            return [{"state": "error", "msg": str(e), "cmd": pgcCmd}]
+        return process_pxpect_output(final_data, pgcCmd)
