@@ -58,12 +58,17 @@ def get_current_time(format='%Y-%m-%d %H:%M:%S.%f %z'):
         tzinfo=pytz.utc
     ).strftime(format)
 
-def detached_process(p_cmd, p_ctime=None, report_file=None, stdin_str=None):
+def detached_process(p_cmd, p_ctime=None, report_file=None, stdin_str=None, is_local=False):
 
 
     executor = file_quote(os.path.join(
         os.path.dirname(u(__file__)), u'process_executor.py'
     ))
+
+    if is_local:
+        executor = file_quote(os.path.join(
+            os.path.dirname(u(__file__)), u'local_process_executor.py'
+        ))
     paths = sys.path[:]
     interpreter = None
 
