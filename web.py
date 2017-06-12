@@ -636,11 +636,13 @@ class pgdgAction(Resource):
             report_cmd = PGC_HOME + os.sep + "pgc repo-pkgs " + repo + " " + action + " " + component_name
         if not pwd:
             report_cmd = report_cmd + " --no-tty"
+        isLocal = True
         if component_host and component_host != "localhost":
+            isLocal = False
             report_cmd = report_cmd + " --host \"" + component_host + "\""
         if this_uname == "Windows":
             report_cmd = report_cmd.replace("\\", "\\\\")
-        process_status = detached_process(report_cmd, ctime, stdin_str=pwd)
+        process_status = detached_process(report_cmd, ctime, stdin_str=pwd, is_local=isLocal)
         result['error']=None
         result['status'] =process_status['status']
         result['log_dir'] = process_status['log_dir']
