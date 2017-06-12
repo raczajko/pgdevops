@@ -112,7 +112,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         session.subscribe("com.bigsql.onPgList", function (data) {
             var data = JSON.parse(data);
             $scope.pgList = data;
-            $scope.connChange($rootScope.connection_comp);
+            $scope.connChange($cookies.get('openConnection'));
             $scope.loading = false;
             $scope.$apply();
 

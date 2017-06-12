@@ -36,7 +36,7 @@
                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !showpgList, 'fa fa-minus':showpgList}"></i> &nbsp; <strong> PostgreSQL Connections</strong>
                         </span>
                     </uib-accordion-heading>
-                    <div class="col-md-12">
+                    <div class="col-md-12" ng-controller="dbGraphsController">
                         <uib-accordion close-others="true">
                             <uib-accordion-group ng-repeat="(key,value) in pgListRes | groupBy:'server_group'" is-open="serverUib.open">
                                 <uib-accordion-heading>
@@ -57,7 +57,7 @@
                                         </div>
                                         </span>
                                     </uib-accordion-heading>
-                                    <div class="col-md-12 col-sm-12 col-xs-12" ng-controller="dbGraphsController">
+                                    <div class="col-md-12 col-sm-12 col-xs-12">
                                         <strong>{{serverVal.server_group}} : </strong> {{serverVal.server_name}}
                                         <div ng-if="version"><strong>Version : </strong>{{ version }}</div>
                                         <div ng-if="need_pwd">
