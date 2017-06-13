@@ -77,7 +77,7 @@ class ConnectAPI(MethodView):
                     else:
                         json_dict['state'] = "error"
                         json_dict['need_pwd'] = True
-                        json_dict['msg'] = "password required."
+                        json_dict['msg'] = "Password required."
                         return jsonify(json_dict)
                 status = True
                 try:
