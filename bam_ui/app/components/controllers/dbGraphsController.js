@@ -210,6 +210,7 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
     };
 
     $scope.closeAllConnections = function(argument) {
+        $timeout.cancel(cancelGraphsTimeout);
         $scope.connection.savePwd =false;
         $scope.connect_err = false;
         var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
