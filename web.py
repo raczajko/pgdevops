@@ -516,7 +516,8 @@ class AddtoMetadata(Resource):
                 servergroup_id = 1
                 is_rds = pg_arg.get("rds")
                 if is_rds:
-                    server_group_name = pg_arg.get("region","AWS RDS")
+                    servername = component_name
+                    server_group_name = pg_arg.get("region", "AWS RDS")
                     rds_serverGroup = ServerGroup.query.filter_by(
                         user_id=current_user.id,
                         name=server_group_name
@@ -549,6 +550,15 @@ class AddtoMetadata(Resource):
                                 result['msg'] = err_msg
                                 return result
                 else:
+                    servername = "{0}({1})".format(component_name, component_host)
+
+                    if component_host in ("localhost", ""):
+                        component_host = "localhost"
+                        servername = "{0}({1})".format(component_name, component_host)
+                    else:
+                        import util
+                        host_info = util.get_pgc_host(component_host)
+                        component_host = host_info[3]
                     user_id = current_user.id
                     servergroups = ServerGroup.query.filter_by(
                         user_id=user_id
@@ -565,14 +575,12 @@ class AddtoMetadata(Resource):
                         db.session.commit()
                         servergroup_id = sg.id
 
-                servername = "{0}({1})".format(component_name, component_host)
-                if is_rds:
-                    servername = component_name
                 
                 component_server = Server.query.filter_by(
                     name=servername,
                     host=component_host,
-                    servergroup_id=servergroup_id
+                    servergroup_id=servergroup_id,
+                    port=component_port
                 )
                 if component_server.count() == 0:
                     svr = Server(user_id=current_user.id,
