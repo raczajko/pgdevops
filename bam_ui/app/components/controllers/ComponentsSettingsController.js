@@ -183,7 +183,6 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     };
 
     $scope.changeSetting = function (settingName, value, disp_name) {
-        var getLablist = bamAjaxCall.getCmdData('lablist');
         if (settingName == 'aws-rds' && value == 'off') {
             $scope.awsRdsTile = false;
         }
