@@ -107,6 +107,14 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
                 templateUrl: '../app/components/partials/connectionDetails.html',
             }
         }
+    }).state('components.backupRestoreView', {
+        url: '/backupRestore',
+        views: {
+            "sub": {
+                controller: 'ComponentsBackupRestoreController',
+                templateUrl: '../app/components/partials/backupRestore.html',
+            }
+        }
     });
 }).controller('ComponentsController', ['$scope', function ($scope) {
 

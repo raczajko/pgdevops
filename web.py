@@ -711,6 +711,14 @@ class GenerateBadgerReports(Resource):
 
 api.add_resource(GenerateBadgerReports, '/api/generate_badger_reports')
 
+class BackupDatabase(Resource):
+    def post(self):
+        result = {}
+        args = request.json
+        print args
+        return result
+
+api.add_resource(BackupDatabase, '/api/backup_database')
 
 class GetBgProcessList(Resource):
     @login_required
