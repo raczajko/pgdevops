@@ -7,6 +7,7 @@ from flask import Flask, render_template, url_for, request, session, redirect
 import os
 from flask_triangle import Triangle
 from flask_restful import reqparse, abort, Api, Resource
+from flask_login import user_logged_in
 
 import json
 from Components import Components as pgc
@@ -38,6 +39,9 @@ parser = reqparse.RequestParser()
 import platform
 
 this_uname = str(platform.system())
+
+PGC_HOME = os.getenv("PGC_HOME", "")
+PGC_LOGS = os.getenv("PGC_LOGS", "")
 
 config.APP_NAME = "pgDevOps"
 config.LOGIN_NAME = "pgDevOps"
@@ -79,6 +83,7 @@ import pgadmin.utils.paths as paths
 
 paths.init_app(application)
 
+
 def before_request():
     if not current_user.is_authenticated and request.endpoint == 'security.login' and no_admin_users():
         return redirect(url_for('security.register'))
@@ -93,10 +98,12 @@ security = Security(application, user_datastore)
 
 from flask_security.signals import user_registered
 
+
 def no_admin_users():
     if not len(User.query.filter(User.roles.any(name='Administrator'), User.active == True).all()) > 0:
         return True
     return False
+
 
 @user_registered.connect_via(application)
 def on_user_registerd(app, user, confirm_token):
@@ -114,13 +121,44 @@ def on_user_registerd(app, user, confirm_token):
         return
     user_datastore.add_role_to_user(user.email, 'User')
 
+
+@user_logged_in.connect_via(application)
+def on_user_logged_in(sender, user):
+    try:
+        from pgadmin.model import UserPreference, Preferences
+        bin_pref = Preferences.query.filter_by(
+            name="pg_bin_dir"
+        ).order_by("id").first()
+        check_pref = UserPreference.query.filter_by(
+                        pid=bin_pref.id,
+                        uid=user.id
+                    ).order_by("pid")
+        if check_pref.count() > 0:
+            pass
+        else:
+            path = None
+            for p in ["pg10", "pg96", "pg95", "pg94"]:
+                bin_path = os.path.join(PGC_HOME, p, "bin")
+                if os.path.exists(bin_path):
+                    path = bin_path
+                    break
+            if path:
+                pref = UserPreference(
+                    pid=3,
+                    uid=user.id,
+                    value=path
+                )
+                db.session.add(pref)
+                db.session.commit()
+    except Exception as e:
+        pass
+
 from pgstats import pgstats
 application.register_blueprint(pgstats, url_prefix='/pgstats')
 
-PGC_HOME = os.getenv("PGC_HOME", "")
-PGC_LOGS = os.getenv("PGC_LOGS", "")
 
 db_session = db.session
+
 
 class pgcApi(Resource):
     def get(self, pgc_command):

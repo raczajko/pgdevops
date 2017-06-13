@@ -2,6 +2,7 @@ angular.module('bigSQL.components').controller('passwordModalController', ['$sco
 
     $scope.sid = $uibModalInstance.sid;
     $scope.gid = $uibModalInstance.gid;
+    $scope.errorMsg = $uibModalInstance.error;
     $scope.connection = {savePwd : false};
 
     $scope.submitPassword = function (pwd) {

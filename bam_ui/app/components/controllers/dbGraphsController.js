@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'bamAjaxCall', '$timeout', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, bamAjaxCall, $timeout) {
+angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'bamAjaxCall', '$timeout', '$uibModal', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, bamAjaxCall, $timeout, $uibModal) {
 	var session, subscriptions=[], componentStatus, refreshRate;
     $scope.showGraphs = false;
     var cancelGraphsTimeout;
@@ -210,6 +210,7 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
     };
 
     $scope.closeAllConnections = function(argument) {
+        $timeout.cancel(cancelGraphsTimeout);
         $scope.connection.savePwd =false;
         $scope.connect_err = false;
         var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
@@ -245,12 +246,17 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
             statusData.then(function (argument) {
                     $scope.connecting = false;
                     $timeout.cancel(cancelGraphsTimeout);
-                    $rootScope.$emit('updateVersion', '');
                     $rootScope.$emit('connectionData', argument);
                     clear();
                     if (argument.state=="error"){
                         $scope.connect_err=argument.msg;
-                        // $rootScope.$emit('navToPwd');
+                        var modalInstance = $uibModal.open({
+                            templateUrl: '../app/components/partials/passwordModal.html',
+                            controller: 'passwordModalController'
+                        });
+                        modalInstance.sid = sid;
+                        modalInstance.gid = gid;
+                        modalInstance.error = argument.msg;
                         $scope.need_pwd=true;
                         $scope.version=false;
                     } else{
