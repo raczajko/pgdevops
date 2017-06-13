@@ -344,6 +344,8 @@ def execute():
             pwd_promp = process.expect("password", 5)
         except pexpect.exceptions.TIMEOUT as e:
             pwd_promp = -1
+        except pexpect.EOF as e:
+            pass
         line_str = ""
         if pwd_promp >= 0:
             if not stdin_str:
@@ -367,8 +369,17 @@ def execute():
                     args.update({'exit_code': 0})
         else:
             process.logfile = fout
-            process.wait()
-            args.update({'exit_code': 0})
+            line_out = process.readline().strip()
+            if line_out.find("Sorry, try again") >= 0:
+                std_out_file.write("password required ...")
+                args.update({'exit_code': 102})
+                process.terminate()
+            elif line_out.find("is not in the sudoers file") >= 0:
+                args.update({'exit_code': 103})
+                process.terminate()
+            else:
+                process.wait()
+                args.update({'exit_code': 0})
 
 
     # If executable not found or invalid arguments passed
