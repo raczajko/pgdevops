@@ -125,9 +125,12 @@ def on_user_registerd(app, user, confirm_token):
 @user_logged_in.connect_via(application)
 def on_user_logged_in(sender, user):
     try:
-        from pgadmin.model import UserPreference
+        from pgadmin.model import UserPreference, Preferences
+        bin_pref = Preferences.query.filter_by(
+            name="pg_bin_dir"
+        ).order_by("id").first()
         check_pref = UserPreference.query.filter_by(
-                        pid=3,
+                        pid=bin_pref.id,
                         uid=user.id
                     ).order_by("pid")
         if check_pref.count() > 0:
