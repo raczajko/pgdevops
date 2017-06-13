@@ -144,7 +144,7 @@ def on_user_logged_in(sender, user):
                     break
             if path:
                 pref = UserPreference(
-                    pid=3,
+                    pid=bin_pref.id,
                     uid=user.id,
                     value=path
                 )
