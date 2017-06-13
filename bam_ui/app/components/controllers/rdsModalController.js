@@ -90,6 +90,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', multiArgs );
         addToMetaData.then(function (argument) {
             $window.location = '#/hosts'
+            $rootScope.$emit('refreshPgList');
             $rootScope.$emit('refreshUpdateDate');
             $uibModalInstance.dismiss('cancel');
         } );

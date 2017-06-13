@@ -4,11 +4,16 @@
     </h1>
     <div class="btn-group pull-right " uib-dropdown >
         <button type="button" class="btn btn-default" uib-dropdown-toggle>
-            <i class="fa fa-plus" aria-hidden="true"></i>
+            Add
+        </button>
+        <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation()" class="btn btn-default " ng-if="group.group!='default'"  uib-dropdown-toggle>
+            <span class="caret "></span>
+            <span class="sr-only ">Split button!</span>
         </button>
         <ul uib-dropdown-menu role="menu " aria-labelledby="split-button ">
-            <li><a href="" ng-click="openGroupsModal()">Add SSH Group</a></li>
-            <li><a href="" ng-click="open()">Add SSH Host</a></li>
+            <li><a href="" ng-click="openGroupsModal()">SSH Group</a></li>
+            <li><a href="" ng-click="open()">SSH Host</a></li>
+            <li><a href="" ng-click="discoverRds('aws-rds', '', 'AWS Postgres RDS')">Discover RDS Instances</a></li>
         </ul>
     </div>
 </section>
@@ -42,7 +47,7 @@
                                 <uib-accordion-heading>
                                     <span ng-click="closeAllServers()">
                                         <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !serverUib.open, 'fa fa-minus': serverUib.open}"></i>
-                                        <div>{{value[0].server_group}}</div>
+                                        <div>{{value[0].server_group}} ({{value.length}})</div>
                                     </span>
                                 </uib-accordion-heading>
                                 <uib-accordion close-others="true">
