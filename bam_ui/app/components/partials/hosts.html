@@ -52,6 +52,7 @@
                                         <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !serverVal.isOpen, 'fa fa-minus': serverVal.isOpen}"></i>
                                         <div>{{serverVal.server_name}}, {{serverVal.db_user}}@{{ serverVal.host }}:{{ serverVal.port }}/{{serverVal.db}}</div>
                                         <div class="pull-right" style="margin-top: -26px">
+                                            <button class="btn btn-default" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation();connect_pg(serverVal.sid,serverVal.gid, pg_pwd, connection.savePwd)" ng-if="need_pwd && serverVal.isOpen ">Connect</button>
                                             <a ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); navToDetails(serverVal.server_name)" 
                                             class="btn btn-default" class="ng-binding" ng-if="serverVal.isOpen">Details</a>
                                         </div>
@@ -60,18 +61,6 @@
                                     <div class="col-md-12 col-sm-12 col-xs-12">
                                         <strong>{{serverVal.server_group}} : </strong> {{serverVal.server_name}}
                                         <div ng-if="version"><strong>Version : </strong>{{ version }}</div>
-                                        <div ng-if="need_pwd">
-                                            <input type="password" ng-model="pg_pwd" ng-show="!serverVal.has_pwd" placeholder="password">
-                                            <button class="btn btn-default btn-xs" ng-click="connect_pg(serverVal.sid,serverVal.gid, pg_pwd, connection.savePwd)" ng-disabled="!pg_pwd && !serverVal.has_pwd" ng-if="!connecting">Connect</button>
-                                            <sapn ng-if="connecting">
-                                                <i class='fa fa-spinner fa-2x  fa-pulse'></i>
-                                                Connecting...
-                                            </sapn>
-                                            <div ng-if="connect_err">{{connect_err}}</div>
-                                            <div ng-if="!serverVal.has_pwd"> <input type="checkbox" name="" ng-model="connection.savePwd">&nbsp;Save Password</div>
-                                        </div>
-                                        <div>&nbsp;</div>
-
                                     <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12">
                                         <div class="host-perf-viz">
                                                 <h5>Transactions per Second</h5>

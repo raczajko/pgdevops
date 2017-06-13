@@ -8,7 +8,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     $scope.tpsGraph = {open:true} ;
     $scope.connGraph = {open:true};
     $scope.rowsGraph = {open:false}; 
-    $scope.connectionStatus = false;   
+    $scope.connectionStatus = false; 
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -34,12 +34,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     });
 
     $scope.openPasswordModal = function (argument) {
-        var modalInstance = $uibModal.open({
-            templateUrl: '../app/components/partials/passwordModal.html',
-            controller: 'passwordModalController'
-        });
-        modalInstance.sid = $scope.connData.sid;
-        modalInstance.gid = $scope.connData.gid;
+        $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
     }
 
     function checkConnection(sid, gid) {
@@ -71,15 +66,18 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     }
     
     $scope.connChange = function (argument) {
-            if (!argument && !localStorage.getItem('selectedConnection')) {
+            var validConnection = $($scope.pgList).filter(function(i,n){ return n.server_name == argument ;})
+            if (validConnection.length == 0) {
+               argument = $scope.pgList[0].server_name; 
+            }else if (!argument && !$cookies.get('openConnection') ) {
                 argument = $scope.pgList[0].server_name;
-            }else if( !argument && localStorage.getItem('selectedConnection')){
-                argument = localStorage.getItem('selectedConnection');
+            }else if( !argument && $cookies.get('openConnection')){
+                argument = $cookies.get('openConnection');
             }
             $scope.selectConn = argument;
             for (var i = $scope.pgList.length - 1; i >= 0; i--) {
                 if($scope.pgList[i].server_name == argument){
-                    localStorage.setItem('selectedConnection', argument);
+                    $cookies.put('openConnection', argument);
                     $scope.loading = false;
                     $scope.connData = $scope.pgList[i];
                     checkConnection($scope.pgList[i].sid, $scope.pgList[i].gid);
