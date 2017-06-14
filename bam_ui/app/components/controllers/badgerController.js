@@ -226,7 +226,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         var args={
                     "log_files": selectedFiles,
                     "db":       $scope.pgDB,
-                    "jobs":   $scope.pgJobs,
+                    "jobs":   $scope.pgJobs.toString(),
                     "log_prefix": $scope.pgLogPrefix,
                     "title":$scope.pgTitle
             };
