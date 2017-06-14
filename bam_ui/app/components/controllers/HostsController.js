@@ -709,6 +709,26 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $window.location.reload();
     };
 
+    $scope.openPGConnModal = function (argument) {
+        if ($scope.awsRdsFeature) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/addPGConnectionModal.html',
+                windowClass: 'modal',
+                controller: 'addPGConnectionModalController',
+                scope: $scope,
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+        }else{
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+
+                $scope.alerts.push({
+                    msg: getMessage,
+                    type: 'warning'
+                });
+        }
+    }
+
     $scope.open = function (p_idx, idx) {
             if ($scope.betaFeature) {
                 $scope.editHost = '';
