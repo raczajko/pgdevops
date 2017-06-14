@@ -90,8 +90,11 @@
                 </div> 
                 <div id="serversTableTbody">
                     <div ng-repeat="lab in lablist" class="row lab_row">
-                        <div class="col-md-10">
-                            <div style="margin-bottom: 7px;">
+                        <div class="col-md-2">
+                            <img style="height: 70px; width: 200px;" ng-src="{{ lab.enabled=='on' && lab.enabled_image_url || lab.disabled_image_url}}">
+                        </div>
+                        <div class="col-md-8" style="padding-left: 35px;">
+                            <div>
                                 <div><strong>{{lab.disp_name}}</strong></div>
                                 <div class="labDescription">{{lab.credit_to}}</div>
                             </div>
