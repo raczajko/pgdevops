@@ -616,9 +616,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $interval.cancel(stopStatusCall);
         var groupToDelete = $scope.groupsList[idx].group;
         session.call('com.bigsql.deleteGroup', [groupToDelete]);
+        $scope.loading = true;
         session.subscribe("com.bigsql.onDeleteGroup", function (data) {
             getGroupsList(false);
-            getPgList();
+            $scope.showpgList = undefined;
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -843,7 +844,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
 
     $rootScope.$on('updateGroups', function (argument) {
-        getGroupsList();
+        $scope.loading = true;
+        getGroupsList(false);
+        $scope.showpgList = undefined;
     })
     
     // Handle page visibility change events
