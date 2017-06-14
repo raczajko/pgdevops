@@ -103,7 +103,11 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp + '/' + $scope.host);
         }
         infoComp.then(function(args) { 
-            args[0]['host'] = $scope.host;
+            if ($scope.host == '') {
+                args[0]['host'] = 'localhost';
+            }else{
+                args[0]['host'] = $scope.host;                
+            }
             var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', args[0]);
             addToMetaData.then(function (argument) {
                 startComp();
