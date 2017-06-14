@@ -12,13 +12,7 @@ angular.module('bigSQL.components').controller('passwordModalController', ['$sco
     }
     
     $rootScope.$on('connectionData', function (event, argument) {
-        if (argument.state=="error"){
-            $scope.connect_err=argument.msg;
-            $scope.need_pwd=true;
-            $scope.connecting = false;
-        } else{
-            $uibModalInstance.dismiss('cancel');
-        }
+        $uibModalInstance.dismiss('cancel');
     })
     $scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');

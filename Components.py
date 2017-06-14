@@ -45,15 +45,21 @@ def process_pxpect_output(p_out, p_cmd=None):
     ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
     final_lines = ansi_escape.sub("", remaining_lines)
     striped_lines = str(final_lines).strip()
+    final_out = []
     try:
-        return json.loads(striped_lines)
+        final_out=json.loads(striped_lines)
     except Exception as e:
-        print ("Error : " + str(e))
-        if p_cmd:
-            print ("cmd : " + str(p_cmd))
-        print ("Data Received : ")
-        print (striped_lines)
-        return [{"state": "error", "msg": str(e)}]
+        # try with the new line
+        try:
+            split_lines = striped_lines.splitlines()
+            final_out = json.loads(str(split_lines[-1]))
+        except Exception as e:
+            print ("Error : " + str(e))
+            if p_cmd:
+                print ("cmd : " + str(p_cmd))
+            print ("Data Received : ")
+            print (striped_lines)
+            final_out = [{"state": "error", "msg": str(e)}]
     return final_out
 
 

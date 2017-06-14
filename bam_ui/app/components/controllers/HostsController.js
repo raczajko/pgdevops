@@ -207,8 +207,24 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     })
 
+    $scope.discoverRds = function (settingName, value, disp_name) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/rdsModal.html',
+            controller: 'rdsModalController',
+            keyboard  : false,
+            backdrop  : 'static',
+            windowClass : 'rds-modal',
+            size : 'lg'
+        });
+        modalInstance.lab = settingName;
+        modalInstance.disp_name = disp_name;
+    }
+
     $scope.openPostgresConnGroup = function (argument) {
         $scope.showpgList = !argument;
+        if ($scope.showpgList) {
+            getPgList();            
+        }
     }
 
     var sessionPromise = PubSubService.getSession();
@@ -216,6 +232,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     function getPgList(argument) {
         session.call('com.bigsql.pgList', [$scope.userInfo.email]);
     }
+
+    $rootScope.$on('refreshPgList', function (event) {
+        getPgList();
+    })
 
     $scope.navToDetails = function (argument) {
         $rootScope.connection_comp = argument;
@@ -596,9 +616,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $interval.cancel(stopStatusCall);
         var groupToDelete = $scope.groupsList[idx].group;
         session.call('com.bigsql.deleteGroup', [groupToDelete]);
+        $scope.loading = true;
         session.subscribe("com.bigsql.onDeleteGroup", function (data) {
             getGroupsList(false);
-            getPgList();
+            $scope.showpgList = undefined;
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
@@ -843,7 +864,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
 
     $rootScope.$on('updateGroups', function (argument) {
-        getGroupsList();
+        $scope.loading = true;
+        getGroupsList(false);
+        $scope.showpgList = undefined;
     })
     
     // Handle page visibility change events
