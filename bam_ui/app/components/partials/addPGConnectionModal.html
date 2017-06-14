@@ -1,6 +1,8 @@
 <div class="modal-header">
-    <h4 ng-if="!thirdPhase" class="modal-title"> {{type}} PostgreSQL Connection</h4>
-    <h4 ng-if="thirdPhase" class="modal-title"> {{type}} PostgreSQL Connection</h4>
+    <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <i class="fa fa-lg fa-close cursor_pointer"></i>
+    </div>
+    <h4 class="modal-title"> {{type}} PostgreSQL Connection</h4>
 </div>
 <div class="modal-body">
     <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
@@ -17,46 +19,64 @@
         <strong>{{message}}</strong>
     </div>
     <div ng-hide="tryToConnect || connectionStatus || installingStatus">
-        <form class="form-horizontal" id="hostForm" name="addHostForm">
-            <div class="form-group" ng-show="firstPhase">
+        <form class="form-horizontal" id="hostForm"  name="addPGConnForm">
+            <div class="form-group">
                 <label class="col-sm-3 control-label">Host IP:<span class="requiredSymbol">*</span></label>
                 <div class="col-sm-9">
-                    <input type="text" ng-model="hostName" name="hostName" class="form-control" placeholder="Host" ng-ip-address>
-                    <span ng-if="addHostForm.hostName.$invalid">Invalid</span>
-                    <span ng-if="addHostForm.hostName.$dirty && demoForm.hostName.$valid">Valid</span>
+                    <input type="text" ng-model="host" name="hostName" class="form-control" placeholder="Host" ng-ip-address>
                 </div>
             </div>
-            <div class="form-group" ng-show="firstPhase">
+            <div class="form-group">
                 <label class="col-sm-3 control-label">Name:<span class="requiredSymbol">*</span></label>
                 <div class="col-sm-9">
                     <input type="text" ng-model="connectionName" class="form-control" placeholder="Connection name">
                 </div>
             </div>
-            <div class="form-group" ng-show="firstPhase">
+            <div class="form-group">
                 <label class="col-sm-3 control-label">Server Group:<span class="requiredSymbol">*</span></label>
                 <div class="col-sm-9">
-                    <select name="selectServer"><option value="value1">Select Server</option></select>
+                    <select name="selectServer" class="form-control" ng-model="selectedServer" ng-options="value[0] for (key, value) in serverGroup" >
+                        <option value="">--Select--</option>
+                    </select>
                 </div>
             </div>
-            <div class="form-group" ng-show="firstPhase">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Port:<span class="requiredSymbol">*</span></label>
+                <div class="col-sm-9">
+                    <input type="number" ng-model="port" class="form-control" placeholder="Port">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Maintenance Database:<span class="requiredSymbol">*</span></label>
+                <div class="col-sm-9">
+                    <input type="text" ng-model="database" class="form-control" placeholder="Database">
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-sm-3 control-label">User Name:<span class="requiredSymbol">*</span></label>
                 <div class="col-sm-9">
                     <input type="text" ng-model="userName" class="form-control" placeholder="Username">
                 </div>
             </div>
             <div class="form-group form-group-custom">
-                <label class="col-sm-3 control-label">Password:</label>
+                <label class="col-sm-3 control-label">Password:<span class="requiredSymbol">*</span></label>
                 <div class="col-sm-9">
                     <input type="password" ng-model="password" class="form-control" placeholder="password">
                 </div>
             </div>
-            <div class="text-left" ng-show="firstPhase">
+            <div class="form-group form-group-custom">
+                <label class="col-sm-3 control-label">Save Password:</label>
+                <div class="col-sm-9">
+                    <input type="checkbox" ng-model="savePassword">
+                </div>
+            </div>
+            <br>
+            <div class="text-left">
                 <span style="color:red;">*</span> Required Field
             </div>
             <div class="form-actions">
                 <div class="text-right">
-                    <button class="btn btn-default" type="button" ng-click="cancel(); refreshHostManager()">Cancel</button>
-                    <button ng-show="!secondPhase" class="btn btn-default" type="button" ng-click="next()" ng-disabled="!(hostName && userName && connectionName && connectionName) || (!pgInstall && thirdPhase) ">Connect</button>
+                    <button class="btn btn-default" type="button" ng-disabled="!host || !connectionName || !selectedServer || !port || !userName || !password" ng-click="connect()">Connect</button>
                 </div>
             </div>
         </form>
