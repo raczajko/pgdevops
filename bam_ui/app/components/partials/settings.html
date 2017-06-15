@@ -91,7 +91,7 @@
                 <div id="serversTableTbody">
                     <div ng-repeat="lab in lablist" class="row lab_row">
                         <div class="col-md-2">
-                            <img style="height: 70px; width: 200px;" ng-src="{{ lab.enabled=='on' && lab.enabled_image_url || lab.disabled_image_url}}">
+                            <img class="lab-img" ng-src="{{ lab.enabled=='on' && lab.enabled_image_url || lab.disabled_image_url}}" err-src="assets/img/component-logos/no_img.png">
                         </div>
                         <div class="col-md-8" style="padding-left: 35px;">
                             <div>

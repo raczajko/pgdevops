@@ -7102,4 +7102,7 @@ fieldset
 
 .rds-modal .modal-dialog {
     width: 75%;
+.lab-img {
+  height: 86px; 
+  width: 200px;
 }
