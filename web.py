@@ -513,8 +513,11 @@ class AddtoMetadata(Resource):
                 component_proj = pg_arg.get("project")
                 component_db = pg_arg.get("db", "postgres")
                 component_user = pg_arg.get("user", "postgres")
-                servergroup_id = 1
+                gid = pg_arg.get("gid")
+                sid = pg_arg.get("sid")
+                servergroup_id=1
                 is_rds = pg_arg.get("rds")
+                is_new =True
                 if is_rds:
                     servername = component_name
                     server_group_name = pg_arg.get("region", "AWS RDS")
@@ -550,39 +553,58 @@ class AddtoMetadata(Resource):
                                 result['msg'] = err_msg
                                 return result
                 else:
-                    servername = "{0}({1})".format(component_name, component_host)
-
-                    if component_host in ("localhost", ""):
-                        component_host = "localhost"
+                    if gid:
+                        servername=component_name
+                        servergroup_id=gid
+                        if sid:
+                            component_server = Server.query.filter_by(
+                                id=sid,
+                                user_id=current_user.id,
+                            ).first()
+                            is_new=False
+                            
+                    else:
                         servername = "{0}({1})".format(component_name, component_host)
-                    else:
-                        import util
-                        host_info = util.get_pgc_host(component_host)
-                        component_host = host_info[3]
-                    user_id = current_user.id
-                    servergroups = ServerGroup.query.filter_by(
-                        user_id=user_id
-                    ).order_by("id")
 
-                    if servergroups.count() > 0:
-                        servergroup = servergroups.first()
-                        servergroup_id = servergroup.id
-                    else:
-                        sg = ServerGroup(
-                            user_id=current_user.id,
-                            name="Servers")
-                        db.session.add(sg)
-                        db.session.commit()
-                        servergroup_id = sg.id
+                        if component_host in ("localhost", ""):
+                            component_host = "localhost"
+                            servername = "{0}({1})".format(component_name, component_host)
+                        else:
+                            import util
+                            host_info = util.get_pgc_host(component_host)
+                            component_host = host_info[3]
+                        if component_host == '':
+                            component_host = pg_arg.get("host", "localhost")
+                        user_id = current_user.id
+                        servergroups = ServerGroup.query.filter_by(
+                            user_id=user_id
+                        ).order_by("id")
 
-                
-                component_server = Server.query.filter_by(
-                    name=servername,
-                    host=component_host,
-                    servergroup_id=servergroup_id,
-                    port=component_port
-                )
-                if component_server.count() == 0:
+                        if servergroups.count() > 0:
+                             servergroup = servergroups.first()
+                             servergroup_id = servergroup.id
+                        else:
+                             sg = ServerGroup(
+                                 user_id=current_user.id,
+                                 name="Servers")
+                             db.session.add(sg)
+                             db.session.commit()
+                             servergroup_id = sg.id
+
+                            
+                        component_server = Server.query.filter_by(
+                            name=servername,
+                            host=component_host,
+                            servergroup_id=servergroup_id,
+                            port=component_port
+                        ).first()
+                        print (servergroup_id)
+                        if component_server:
+                            is_new=False
+                        else:
+                            is_new=True
+
+                if is_new:
                     svr = Server(user_id=current_user.id,
                                  servergroup_id=servergroup_id,
                                  name=servername,
@@ -596,8 +618,17 @@ class AddtoMetadata(Resource):
 
                     db_session.add(svr)
                     db_session.commit()
+                else:
+                    component_server.servergroup_id=servergroup_id
+                    component_server.name=servername
+                    component_server.host=component_host
+                    component_server.port=component_port
+                    component_server.maintenance_db=component_db
+                    component_server.username=component_user
+                    db_session.commit()
+
             except Exception as e:
-                print ("Failed while adding pg instance to metadata :")
+                print ("Failed while adding/updating pg instance in metadata :")
                 print (str(e))
                 pass
 

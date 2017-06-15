@@ -745,6 +745,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 backdrop  : 'static',
             });
             modalInstance.pgList = $scope.pgListRes;
+            modalInstance.editConnData = argument;
         }else{
             var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
 

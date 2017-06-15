@@ -4,6 +4,7 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
 	var sessPromise = PubSubService.getSession();
 	var subscriptions = [];
 	$scope.pgList = $uibModalInstance.pgList;
+	$scope.editConnData = $uibModalInstance.editConnData;
 	$scope.serverGroup = {};
 	for (var i = 0; i < $scope.pgList.length; ++i) {
 	    var obj = $scope.pgList[i];
@@ -24,13 +25,15 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
 	$scope.userName = '';
 
     $scope.create_btn = "Create";
-	if($scope.editHost){
+	if($scope.editConnData){
 		$scope.type = 'Edit';
 		$scope.create_btn = "Update";
-		$scope.hostName = $scope.editHost.host;
-		$scope.pgcDir = $scope.editHost.pgc_home;
-		$scope.userName = $scope.editHost.user;
-		$scope.connectionName = $scope.editHost.name;
+		$scope.host = $scope.editConnData.host;
+		$scope.port = parseInt($scope.editConnData.port);
+		$scope.userName = $scope.editConnData.db_user;
+		$scope.database = $scope.editConnData.db;
+		$scope.connectionName = $scope.editConnData.server_name;
+		$scope.sid = $scope.editConnData.sid;
 	}
 
 	
@@ -43,14 +46,18 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
     	var data = {
     		component:$scope.connectionName,
     		host: $scope.host,
-    		project: $scope.selectedServer[0],
     		port: $scope.port,
     		database: $scope.database,
-    		user: $scope.userName
+    		user: $scope.userName,
+    		gid: parseInt($($scope.pgList).filter(function(i,n){ return n.server_group ==  $scope.selectedServer[0]})[0].gid)
     	};
-
+    	if ($scope.sid) {
+    		data.sid=$scope.sid;
+    	}
     	var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', data);
             addToMetaData.then(function (argument) {
+            	$rootScope.$emit('refreshPgList');
+            	$uibModalInstance.dismiss('cancel');
             });
     }
 

@@ -2,7 +2,7 @@
     <h1 class="components-update-title-wrapper">
         Server Manager
     </h1>
-    <div class="btn-group pull-right " uib-dropdown >
+    <div class="btn-group pull-right " ng-if="!loading" uib-dropdown >
         <button type="button" class="btn btn-default" uib-dropdown-toggle>
             Add
         </button>
@@ -59,6 +59,7 @@
                                         <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !serverVal.isOpen, 'fa fa-minus': serverVal.isOpen}"></i>
                                         <div>{{serverVal.server_name}}, {{serverVal.db_user}}@{{ serverVal.host }}:{{ serverVal.port }}/{{serverVal.db}}</div>
                                         <div class="pull-right" style="margin-top: -26px">
+                                            <button id="split-button " type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation();openPGConnModal(serverVal)" ng-if="need_pwd && serverVal.isOpen " class="btn btn-default" >Edit Connection</button>
                                             <button class="btn btn-default" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation();connect_pg(serverVal.sid,serverVal.gid, pg_pwd, connection.savePwd)" ng-if="need_pwd && serverVal.isOpen ">Connect</button>
                                             <a ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); navToDetails(serverVal.server_name)" 
                                             class="btn btn-default" class="ng-binding" ng-if="serverVal.isOpen">Details</a>
