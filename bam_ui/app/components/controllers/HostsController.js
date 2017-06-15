@@ -766,6 +766,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 $scope.editGroup = '';
                 if(idx){
                     $scope.editGroup = $scope.groupsList[idx];
+                    $scope.editGroupIndex = idx;
                     for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
                         if($scope.groupsList[i].group == $scope.editGroup.group){
                             modalInstance.groupServers = $scope.groupsList[i].hosts;

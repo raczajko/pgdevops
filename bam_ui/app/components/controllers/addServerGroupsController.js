@@ -15,10 +15,24 @@ angular.module('bigSQL.components').controller('addServerGroupsController', ['$s
 		$scope.type = 'Edit';
 		$scope.name = $scope.editGroup.group;
 		$scope.groupId = $scope.editGroup.group_id;
-		$scope.groupServers = $uibModalInstance.groupServers;
+		$http.get($window.location.origin + '/api/groups?q='+ Math.floor(Date.now() / 1000).toString())
+		   .success(function (data) {
+		   	  	$scope.groupsList = data;
+		   	  	$scope.editGroup = $scope.groupsList[$scope.editGroupIndex];
+		        for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+		            if($scope.groupsList[i].group == $scope.editGroup.group){
+		                $scope.groupServers = $scope.groupsList[i].hosts;
+		            }
+	        	}
+	        	getAvailableHosts();
+		   })
+	}else{
+		getAvailableHosts();
 	}
 
-	$http.get($window.location.origin + '/api/hosts')
+
+	function getAvailableHosts(argument) {
+		$http.get($window.location.origin + '/api/hosts')
 	    .success(function (data) {
 	    	if($scope.groupServers.length > 0){
 	    		for (var i = 0 ; i < data.length; i++) {
@@ -35,6 +49,7 @@ angular.module('bigSQL.components').controller('addServerGroupsController', ['$s
 	    .error(function (error) {
 	        
 	    });
+	}
 
 	
 	$scope.addToGroup = function (argument) {
@@ -67,7 +82,8 @@ angular.module('bigSQL.components').controller('addServerGroupsController', ['$s
 		    		$uibModalInstance.dismiss('cancel');
 		    		$rootScope.$emit('updateGroups');
 		    	}
-		    }).then(function (data) {
+		    }).then(function (subscription) {
+		    	subscriptions.push(subscription);
 		    })
     });
 

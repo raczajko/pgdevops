@@ -2,7 +2,7 @@
     <h1 class="components-update-title-wrapper">
         Server Manager
     </h1>
-    <div class="btn-group pull-right " uib-dropdown >
+    <div class="btn-group pull-right " uib-dropdown ng-if="!loading">
         <button type="button" class="btn btn-default" uib-dropdown-toggle>
             Add
         </button>
@@ -91,7 +91,7 @@
                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i> &nbsp; <strong> SSH Hosts</strong>
                         </span>
                         <span ng-click="loadGroup($index)" ng-if="group.group != 'default'" class="host-uib-tab-heading">
-                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i>&nbsp; {{group.group}}
+                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i>&nbsp; <strong>{{group.group}}</strong>
                         </span>
                             <div class="pull-right" style="margin-top: -10px">
                                 &nbsp;
