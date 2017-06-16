@@ -208,6 +208,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         $scope.disableGenrate = true;
         $scope.report_file = "";
         $scope.report_url = "";
+        var pgJobs;
         var selectedFiles = [];
         var totalSize = 0;
         var smallFiles = [];
@@ -223,10 +224,15 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             }
         }
 
+        if ($scope.pgJobs) {
+            pgJobs = $scope.pgJobs.toString();
+        }else{
+            pgJobs = '0';
+        }
         var args={
                     "log_files": selectedFiles,
                     "db":       $scope.pgDB,
-                    "jobs":   $scope.pgJobs.toString(),
+                    "jobs":   pgJobs,
                     "log_prefix": $scope.pgLogPrefix,
                     "title":$scope.pgTitle
             };
@@ -257,7 +263,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             modalInstance.selectedFiles = selectedFiles;
             modalInstance.pgTitle = $scope.pgTitle;
             modalInstance.pgDB = $scope.pgDB;
-            modalInstance.pgJobs = $scope.pgJobs;
+            modalInstance.pgJobs = pgJobs;
             modalInstance.pgLogPrefix = $scope.pgLogPrefix;
             modalInstance.smallFiles = smallFiles;
         }
