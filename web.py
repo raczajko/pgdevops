@@ -23,7 +23,7 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
 import config
 from flask_restful import reqparse
-from datetime import datetime
+from datetime import datetime, timedelta
 import dateutil
 import hashlib
 import time
@@ -77,6 +77,9 @@ application.config['SECURITY_REGISTERABLE'] = True
 application.config['SECURITY_REGISTER_URL'] = '/register'
 application.config['SECURITY_CONFIRMABLE'] = False
 application.config['SECURITY_SEND_REGISTER_EMAIL'] = False
+
+application.permanent_session_lifetime = timedelta(minutes=10)
+
 db.init_app(application)
 Mail(application)
 import pgadmin.utils.paths as paths
