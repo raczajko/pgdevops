@@ -1,8 +1,23 @@
-angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubService', '$rootScope', '$window', '$timeout', 'bamAjaxCall', function ($scope, PubSubService, $rootScope, $window, $timeout, bamAjaxCall) {
+angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubService', '$rootScope', '$window', '$timeout', 'bamAjaxCall', '$http', '$uibModal', function ($scope, PubSubService, $rootScope, $window, $timeout, bamAjaxCall, $http, $uibModal) {
 
 	$scope.bamLoading = true;
 	var subscriptions = [];
 	var session;
+  $scope.showSplash = false;
+
+  var getLablist = bamAjaxCall.getCmdData('lablist');
+  getLablist.then(function function_name(lablist) {
+      for (var i = lablist.length - 1; i >= 0; i--) {
+          if (lablist[i].lab == 'aws-rds' && lablist[i].enabled == 'on') {
+              var checkInitLogin = $http.get($window.location.origin + '/check_init_login')
+              checkInitLogin.then(function (arg) {
+                if (arg.data) {
+                  $scope.showSplash = true;
+                }
+              })
+          }
+      }
+  })
 
   var sessPromise = PubSubService.getSession();
   sessPromise.then(function (sessPram) {

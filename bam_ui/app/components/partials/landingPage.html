@@ -4,6 +4,7 @@
     </h1>
 </section>
 <section class="content">
+    <splash-screen desc="true" ng-if="showSplash"></splash-screen>
     <div ng-if="bamLoading" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
         <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
         <span><h3>Loading...</h3></span>

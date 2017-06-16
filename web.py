@@ -111,6 +111,7 @@ def on_user_registerd(app, user, confirm_token):
         user_id=user.id,
         name="Servers")
     db.session.add(sg)
+    session['initial-logged-in'] = True
     db.session.commit()
     default_user = user_datastore.get_user('bigsql@bigsql.org')
     if not len(User.query.filter(User.roles.any(name='Administrator'),User.active==True).all()) > 0 :
@@ -177,6 +178,16 @@ class pgcApi(Resource):
 
 api.add_resource(pgcApi,
                  '/api/<string:pgc_command>')
+
+
+class checkInitLogin(Resource):
+    def get(self):
+        if session.get('initial-logged-in'):
+            session['initial-logged-in'] = False
+            return True
+
+api.add_resource(checkInitLogin,
+                 '/check_init_login')
 
 
 class pgcApiCom(Resource):
