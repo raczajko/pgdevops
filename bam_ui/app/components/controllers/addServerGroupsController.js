@@ -15,10 +15,24 @@ angular.module('bigSQL.components').controller('addServerGroupsController', ['$s
 		$scope.type = 'Edit';
 		$scope.name = $scope.editGroup.group;
 		$scope.groupId = $scope.editGroup.group_id;
-		$scope.groupServers = $uibModalInstance.groupServers;
+		$http.get($window.location.origin + '/api/groups?q='+ Math.floor(Date.now() / 1000).toString())
+		   .success(function (data) {
+		   	  	$scope.groupsList = data;
+		   	  	$scope.editGroup = $scope.groupsList[$scope.editGroupIndex];
+		        for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
+		            if($scope.groupsList[i].group == $scope.editGroup.group){
+		                $scope.groupServers = $scope.groupsList[i].hosts;
+		            }
+	        	}
+	        	getAvailableHosts();
+		   })
+	}else{
+		getAvailableHosts();
 	}
 
-	$http.get($window.location.origin + '/api/hosts')
+
+	function getAvailableHosts(argument) {
+		$http.get($window.location.origin + '/api/hosts')
 	    .success(function (data) {
 	    	if($scope.groupServers.length > 0){
 	    		for (var i = 0 ; i < data.length; i++) {
@@ -35,25 +49,32 @@ angular.module('bigSQL.components').controller('addServerGroupsController', ['$s
 	    .error(function (error) {
 	        
 	    });
+	}
 
 	
 	$scope.addToGroup = function (argument) {
-		for (var i = argument.length - 1; i >= 0; i--) {
-			var data = JSON.parse(argument[i])
-			$scope.availableServers = $scope.availableServers.filter(function(arg) { 
-			   return arg.host_id !== data.host_id;  
-			});
-			$scope.groupServers.push(data);
+		if ($scope.selectedServers) {
+			for (var i = $scope.selectedServers.length - 1; i >= 0; i--) {
+				var data = JSON.parse($scope.selectedServers[i])
+				$scope.availableServers = $scope.availableServers.filter(function(arg) { 
+				   return arg.host_id !== data.host_id;  
+				});
+				$scope.groupServers.push(data);
+			}
+			$scope.selectedServers = [];
 		}
 	}
 
 	$scope.removeFromGroup = function (argument) {
-		for (var i = argument.length - 1; i >= 0; i--) {
-			var data = JSON.parse(argument[i])
-			$scope.groupServers = $scope.groupServers.filter(function(arg) { 
-			   return arg.host_id !== data.host_id;  
-			});
-			$scope.availableServers.push(data);
+		if ($scope.deselectServers) {
+			for (var i = $scope.deselectServers.length - 1; i >= 0; i--) {
+				var data = JSON.parse($scope.deselectServers[i])
+				$scope.groupServers = $scope.groupServers.filter(function(arg) { 
+				   return arg.host_id !== data.host_id;  
+				});
+				$scope.availableServers.push(data);
+			}
+			$scope.deselectServers = [];
 		}
 	}
 
@@ -67,7 +88,8 @@ angular.module('bigSQL.components').controller('addServerGroupsController', ['$s
 		    		$uibModalInstance.dismiss('cancel');
 		    		$rootScope.$emit('updateGroups');
 		    	}
-		    }).then(function (data) {
+		    }).then(function (subscription) {
+		    	subscriptions.push(subscription);
 		    })
     });
 

@@ -4,6 +4,7 @@
     </h1>
 </section>
 <section class="content">
+    <splash-screen desc="true" ng-if="showSplash"></splash-screen>
     <div ng-if="bamLoading" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
         <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
         <span><h3>Loading...</h3></span>
@@ -23,6 +24,14 @@
                     <img class="img-responsive" src="assets/img/pgadmin4-web.png" alt="">
                     <div class="caption">
                         <h4 class="home-page-tile-name">pgAdmin4 Web</h4>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-2 col-sm-3 col-xs-6">
+                <a ui-sref="components.hosts" class="thumbnail">
+                    <img class="img-responsive" src="assets/img/cloud-mgr-lg.png" alt="">
+                    <div class="caption">
+                        <h4 class="home-page-tile-name">Server Manager</h4>
                     </div>
                 </a>
             </div>
@@ -57,14 +66,6 @@
                     </div>
                     <div class="caption">
                         <h4 class="home-page-tile-name">Log Tailer</h4>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-2 col-sm-3 col-xs-6">
-                <a ui-sref="components.hosts" class="thumbnail">
-                    <img class="img-responsive" src="assets/img/cloud-mgr-lg.png" alt="">
-                    <div class="caption">
-                        <h4 class="home-page-tile-name">Server Manager</h4>
                     </div>
                 </a>
             </div>

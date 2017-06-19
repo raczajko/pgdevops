@@ -9,6 +9,9 @@
         {% if register_user_form.password_confirm %}
             {{ render_field_with_errors(register_user_form.password_confirm, "password") }}
           {% endif %}
+        {% if register_user_form.ami_id.type %}
+        {{ render_field_with_errors(register_user_form.ami_id, "text") }}
+        {% endif %}
         <input class="btn btn-lg btn-success btn-block" type="submit" value="{{ _('Login') }}">
     </fieldset>
 </form>
