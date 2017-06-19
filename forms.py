@@ -8,6 +8,7 @@ class RegisterForm(RegisterForm):
         ami_id = StringField('AWS instance Id', validators=[Length(max=50)])
 
         def validate_ami_id(form, field):
-            raise ValidationError('AWS instance Id if needs to be valied')
+            #raise ValidationError('AWS instance Id if needs to be valied')
+            pass
     else:
         pass
