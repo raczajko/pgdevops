@@ -92,9 +92,11 @@ def before_request():
 
 application.before_request(before_request)
 
+from forms import RegisterForm
+
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-security = Security(application, user_datastore)
+security = Security(application, user_datastore, register_form=RegisterForm)
 
 from flask_security.signals import user_registered
 
