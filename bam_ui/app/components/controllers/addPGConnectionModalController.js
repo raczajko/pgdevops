@@ -5,13 +5,17 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
 	var subscriptions = [];
 	$scope.pgList = $uibModalInstance.pgList;
 	$scope.editConnData = $uibModalInstance.editConnData;
-	$scope.serverGroup = {};
+	$scope.servers = [];
 	for (var i = 0; i < $scope.pgList.length; ++i) {
 	    var obj = $scope.pgList[i];
-	    if ($scope.serverGroup[obj.server_group] === undefined)
-	        $scope.serverGroup[obj.server_group] = [obj.server_group];
-	    $scope.serverGroup[obj.server_group].push(obj.DblValue);
+	    if ($scope.servers.indexOf(obj.server_group)<0) {
+		   	$scope.servers.push(obj.server_group)	    	
+	    }
 	}
+	if ($scope.servers.length < 1) {
+		$scope.servers = ['Servers'];
+	}
+	$scope.selectedServer = $scope.servers[0];
 	$scope.tryToConnect = false;
 	$scope.connectionStatus = false;
 	$scope.installingStatus = false;
@@ -34,6 +38,7 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
 		$scope.database = $scope.editConnData.db;
 		$scope.connectionName = $scope.editConnData.server_name;
 		$scope.sid = $scope.editConnData.sid;
+		$scope.selectedServer = $scope.editConnData.server_group;
 	}
 
 	
@@ -43,19 +48,34 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
     });
 
     $scope.connect = function (argument) {
+    	if ($scope.pgList.length > 0) {
+			$scope.gid = parseInt($($scope.pgList).filter(function(i,n){ return n.server_group ==  $scope.selectedServer})[0].gid);    		
+    	}else{
+    		$scope.gid = "1";
+    	}
     	var data = {
     		component:$scope.connectionName,
     		host: $scope.host,
     		port: $scope.port,
     		database: $scope.database,
     		user: $scope.userName,
-    		gid: parseInt($($scope.pgList).filter(function(i,n){ return n.server_group ==  $scope.selectedServer[0]})[0].gid)
+    		gid: $scope.gid,
+    		rds : false
     	};
     	if ($scope.sid) {
     		data.sid=$scope.sid;
     	}
     	var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', data);
             addToMetaData.then(function (argument) {
+            	debugger
+            	if(!$scope.sid){
+            		$scope.sid = argument.data.sid;
+            	}
+            	if ($scope.savePassword) {
+            		$rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, $scope.password, true);
+			        $scope.connect_err = '';
+			        $scope.connecting = true;
+            	}
             	$rootScope.$emit('refreshPgList');
             	$uibModalInstance.dismiss('cancel');
             });

@@ -506,6 +506,7 @@ class AddtoMetadata(Resource):
 
     def post(self):
         def add_to_pginstances(pg_arg):
+            server_id = None
             try:
                 component_name = pg_arg.get("component")
                 component_port = pg_arg.get("port", 5432)
@@ -618,6 +619,7 @@ class AddtoMetadata(Resource):
 
                     db_session.add(svr)
                     db_session.commit()
+                    server_id = svr.id
                 else:
                     component_server.servergroup_id=servergroup_id
                     component_server.name=servername
@@ -631,7 +633,7 @@ class AddtoMetadata(Resource):
                 print ("Failed while adding/updating pg instance in metadata :")
                 print (str(e))
                 pass
-
+            return server_id
         result = {}
         result['error'] = 0
         args = request.json
@@ -639,10 +641,10 @@ class AddtoMetadata(Resource):
         is_multiple = args.get("multiple")
         if is_multiple:
             for pg_data in args.get("multiple"):
-                add_to_pginstances(pg_data)
+                server_id = add_to_pginstances(pg_data)
         else:
-            add_to_pginstances(args)
-
+            server_id = add_to_pginstances(args)
+        result['sid'] = server_id
         return result
 
 
