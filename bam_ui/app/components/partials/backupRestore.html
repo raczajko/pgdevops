@@ -60,13 +60,13 @@
                             </div>
 
                         <div class="box-header with-border">
-                            <div class="col-md-12"><h4><strong>Destination SSH Server</strong></h4></div>
+                            <div class="col-md-12"><h4><strong>Backup Server</strong></h4></div>
                         </div>
                             <div class="form-group">
                                 <label class="col-sm-5 control-label">SSH Server:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
                                     <select class="form-control" id="dbBackupServerInfoDropDown" ng-model="backup.sshserver" ng-change="onSSHServerChange(backup.sshserver,'backup')" required>
-                                        <option ng-repeat="host in hosts" value="{{ host.host }}"><h3>{{ host.name }} </h3>   ({{ host.host }}), {{host.hostInfo.os}}, {{host.hostInfo.mem}} GB, {{ host.hostInfo.cores }} Core(s)</option>
+                                        <option ng-repeat="host in hosts" value="{{ host.name != null ? host.name : host.host }}"><h3>{{ host.name }} </h3>   ({{ host.host }}), {{host.hostInfo.os}}, {{host.hostInfo.mem}} GB, {{ host.hostInfo.cores }} Core(s)</option>
                                     </select>
                                 </div>
                             </div>
@@ -123,7 +123,7 @@
 
                     <div class="col-md-6">
                         <div class="box-header with-border">
-                            <div class="col-md-12"><h4><strong> Source SSH Server </strong></h4></div>
+                            <div class="col-md-12"><h4><strong> Backup Server </strong></h4></div>
                         </div>
                         <br>
                         <form class="form-horizontal" id="restoreForm" ng-submit="startRestore()">
@@ -132,7 +132,7 @@
                                 <label class="col-sm-5 control-label">SSH Server:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
                                     <select class="form-control" id="serverInfoDropDown" ng-model="restore.sshserver" ng-change="onSSHServerChange(restore.sshserver,'restore')" required>
-                                        <option ng-repeat="host in hosts" value="{{ host.host }}"><h3>{{ host.name }} </h3>   ({{ host.host }}), {{host.hostInfo.os}}, {{host.hostInfo.mem}} GB, {{ host.hostInfo.cores }} Core(s)</option>
+                                        <option ng-repeat="host in hosts" value="{{ host.name != null ? host.name : host.host }}"><h3>{{ host.name }} </h3>   ({{ host.host }}), {{host.hostInfo.os}}, {{host.hostInfo.mem}} GB, {{ host.hostInfo.cores }} Core(s)</option>
                                     </select>
                                 </div>
                             </div>
@@ -171,7 +171,7 @@
                             <div class="form-group">
                                 <label class="col-sm-5 control-label">PG Connection:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
-                                     <select class="form-control" id="dbRestorePgcListDropDown" ng-model="dbPGC" ng-change="onPGCChange(dbPGC,'restore')" required>
+                                     <select class="form-control" id="dbRestorePgcListDropDown" ng-model="restore.pgc" ng-change="onPGCChange(restore.pgc,'restore')" required>
                                         <option ng-repeat="pgc in pgListRes" value="{{ pgc.host }}"><h3>{{ pgc.server_name }}, {{pgc.db_user}}@{{pgc.host}}:{{pgc.port}}/{{pgc.db}} </h3> </option>
                                     </select>
                                 </div>
@@ -179,25 +179,25 @@
                             <div class="form-group">
                                 <label class="col-sm-5 control-label">Host:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
-                                    <input type="text" ng-model="dbRestoreHostName" class="form-control" placeholder="Host" data-fv-field="ip" data-fv-ip-message="Please enter a valid IP address" required>
+                                    <input type="text" ng-model="restore.hostname" class="form-control" placeholder="Host" data-fv-field="ip" data-fv-ip-message="Please enter a valid IP address" required>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="col-sm-5 control-label">Port:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
-                                    <input type="text" ng-model="dbRestorePort" class="form-control" placeholder="Port" required>
+                                    <input type="text" ng-model="restore.port" class="form-control" placeholder="Port" required>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="col-sm-5 control-label">DB:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
-                                    <input type="text" ng-model="dbRestoreName" class="form-control" placeholder="Database" required>
+                                    <input type="text" ng-model="restore.dbname" class="form-control" placeholder="Database" required>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="col-sm-5 control-label">User:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
-                                    <input type="text" ng-model="dbRestoreUser" class="form-control" placeholder="User" required>
+                                    <input type="text" ng-model="restore.user" class="form-control" placeholder="User" required>
                                 </div>
                             </div>
                             <div class="form-group">

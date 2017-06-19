@@ -20,7 +20,9 @@ class BackupRestore(object):
             pgc_cmd = pgc_cmd + " --pwd " + password
         if os.path.splitext(filename)[-1] == "":
             filename = filename + ".sql"
-        pgc_cmd = pgc_cmd + " " + filename + ' " -F ' + format + ' ' + adv_options + '"'+ ' --json'
+        pgc_cmd = pgc_cmd + " " + backup_directory + filename + ' ' + format + ' ' + adv_options + ' '+ ' --json'
+        if sshserver not in ["","localhost",None]:
+            pgc_cmd = pgc_cmd + " --host " + sshserver
         if this_uname == "Windows":
             pgc_cmd = pgc_cmd.replace("\\", "\\\\")
         process_status = detached_process(pgc_cmd, ctime)

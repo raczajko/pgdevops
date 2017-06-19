@@ -9,6 +9,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
     $scope.backup.advoptions = "-v"
     $scope.restore.advoptions = "-v"
     var session;
+
     var hostsList = bamAjaxCall.getCmdData('hosts');
     hostsList.then(function (data) {
         if (data.length > 0 && data[0].status == "error") {
@@ -16,9 +17,16 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         } else {
             $scope.hosts = data;
             if(data.length > 0){
-                $scope.backup.sshserver = data[0].host;
-                $scope.restore.sshserver = data[0].host;
-                $scope.onSSHServerChange(data[0].host,'backup');
+                if(data[0].name != null){
+                    $scope.backup.sshserver = data[0].name;
+                    $scope.restore.sshserver = data[0].name;
+                    $scope.onSSHServerChange(data[0].name,'backup');
+                }
+                else{
+                    $scope.backup.sshserver = data[0].host;
+                    $scope.restore.sshserver = data[0].host;
+                    $scope.onSSHServerChange(data[0].host,'backup');
+                }
             }
         }
      });
@@ -28,16 +36,16 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             var i;
             for(i = 0; i < $scope.pgListRes.length; i++){
                 if($scope.pgListRes[i].host == pgc && b_type == 'backup'){
-                    $scope.dbHostName=$scope.pgListRes[i].host;
-                    $scope.dbPort=$scope.pgListRes[i].port;
-                    $scope.dbName=$scope.pgListRes[i].db;
-                    $scope.dbUser=$scope.pgListRes[i].db_user;
+                    $scope.dbHostName = $scope.pgListRes[i].host;
+                    $scope.dbPort = $scope.pgListRes[i].port;
+                    $scope.dbName = $scope.pgListRes[i].db;
+                    $scope.dbUser = $scope.pgListRes[i].db_user;
                 }
                 else if($scope.pgListRes[i].host == pgc && b_type == 'restore'){
-                    $scope.dbRestoreHostName=$scope.pgListRes[i].host;
-                    $scope.dbRestorePort=$scope.pgListRes[i].port;
-                    $scope.dbRestoreName=$scope.pgListRes[i].db;
-                    $scope.dbRestoreUser=$scope.pgListRes[i].db_user;
+                    $scope.restore.hostname = $scope.pgListRes[i].host;
+                    $scope.restore.port = $scope.pgListRes[i].port;
+                    $scope.restore.dbname = $scope.pgListRes[i].db;
+                    $scope.restore.user = $scope.pgListRes[i].db_user;
                 }
             }
         }else{
@@ -46,7 +54,6 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
      };
 
      $scope.onSSHServerChange = function(sshServer,b_type){
-        debugger
         if(sshServer){
             if(b_type == 'backup'){
                 var cookieVal = $cookies.get('directory_'+sshServer);
@@ -68,8 +75,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
      };
 
      $scope.restoreDataBaseClick = function(){
-        $scope.onPGCChange($scope.dbPGC,'restore');
-        debugger
+        $scope.onPGCChange($scope.restore.pgc,'restore');
         $scope.onSSHServerChange($scope.restore.sshserver,'restore');
      };
 
@@ -88,7 +94,9 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             $scope.pgListRes = data;
             if(data.length > 0){
                 $scope.dbPGC = data[0].host;
+                $scope.restore.pgc = data[0].host;
                 $scope.onPGCChange($scope.dbPGC,'backup');
+                $scope.$apply();
             }
         }).then(function (subscription) {
             subscriptions.push(subscription);
@@ -126,10 +134,10 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             $cookies.put('directory_'+$scope.restore.sshserver,$scope.restore.directory);
             var args = {
                 "action":"restore",
-                "host":$scope.dbHostName,
-                "dbName":$scope.dbName,
-                "port":$scope.dbPort,
-                "username":$scope.dbUser,
+                "host":$scope.restore.hostname,
+                "dbName":$scope.restore.dbname,
+                "port":$scope.restore.port,
+                "username":$scope.restore.user,
                 "sshServer":$scope.restore.sshserver,
                 "backupDirectory":$scope.restore.directory,
                 "fileName":$scope.restore.filename,
