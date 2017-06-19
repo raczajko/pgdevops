@@ -31,6 +31,22 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         }
      });
 
+     $scope.onFormatChange = function(format, b_type){
+        if(format == 'p' && b_type == 'restore'){
+            $scope.restore.advoptions = "";
+        }
+        else if(b_type == 'restore'){
+            if($scope.restore.advoptions.indexOf("-v") == -1){
+                if($scope.restore.advoptions){
+                   $scope.restore.advoptions = $scope.restore.advoptions + " -v";
+                }
+                else{
+                    $scope.restore.advoptions = "-v";
+                }
+            }
+        }
+     }
+
      $scope.onPGCChange = function (pgc,b_type) {
         if(pgc){
             var i;
