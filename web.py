@@ -815,10 +815,6 @@ class GetBgProcessStatus(Resource):
         p = Process.query.filter_by(
             pid=process_log_id, user_id=current_user.id
         ).first()
-        print proc_status
-        print p
-        print p.start_time
-        print p.end_time
         try:
             if p.start_time is None or p.end_time is None:
                 p.start_time = proc_status['start_time']
