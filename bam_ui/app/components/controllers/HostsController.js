@@ -31,6 +31,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     // $scope.hostOpen = true;
     $scope.version=false;
     $scope.connection = {savePwd:false};
+    $scope.pgListRes = [];
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -198,11 +199,14 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }];
 
     var getLabList = bamAjaxCall.getCmdData('lablist');
-    $scope.betaFeature = false
+    $scope.betaFeature = false;
+    $scope.awsRdsFeature = false;
     getLabList.then(function (argument) {
         for (var i = argument.length - 1; i >= 0; i--) {
             if(argument[i].lab == "multi-host-mgr" && argument[i].enabled == "on"){
                 $scope.betaFeature = true;
+            }else if(argument[i].lab == "aws-rds" && argument[i].enabled == "on"){
+                $scope.awsRdsFeature = true;   
             }
         }
     })
@@ -729,6 +733,28 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     function wait() {
         $window.location.reload();
     };
+
+    $scope.openPGConnModal = function (argument) {
+        if ($scope.awsRdsFeature) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/addPGConnectionModal.html',
+                windowClass: 'modal',
+                controller: 'addPGConnectionModalController',
+                scope: $scope,
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+            modalInstance.pgList = $scope.pgListRes;
+            modalInstance.editConnData = argument;
+        }else{
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+
+                $scope.alerts.push({
+                    msg: getMessage,
+                    type: 'warning'
+                });
+        }
+    }
 
     $scope.open = function (p_idx, idx) {
             if ($scope.betaFeature) {
