@@ -53,22 +53,28 @@ angular.module('bigSQL.components').controller('addServerGroupsController', ['$s
 
 	
 	$scope.addToGroup = function (argument) {
-		for (var i = argument.length - 1; i >= 0; i--) {
-			var data = JSON.parse(argument[i])
-			$scope.availableServers = $scope.availableServers.filter(function(arg) { 
-			   return arg.host_id !== data.host_id;  
-			});
-			$scope.groupServers.push(data);
+		if ($scope.selectedServers) {
+			for (var i = $scope.selectedServers.length - 1; i >= 0; i--) {
+				var data = JSON.parse($scope.selectedServers[i])
+				$scope.availableServers = $scope.availableServers.filter(function(arg) { 
+				   return arg.host_id !== data.host_id;  
+				});
+				$scope.groupServers.push(data);
+			}
+			$scope.selectedServers = [];
 		}
 	}
 
 	$scope.removeFromGroup = function (argument) {
-		for (var i = argument.length - 1; i >= 0; i--) {
-			var data = JSON.parse(argument[i])
-			$scope.groupServers = $scope.groupServers.filter(function(arg) { 
-			   return arg.host_id !== data.host_id;  
-			});
-			$scope.availableServers.push(data);
+		if ($scope.deselectServers) {
+			for (var i = $scope.deselectServers.length - 1; i >= 0; i--) {
+				var data = JSON.parse($scope.deselectServers[i])
+				$scope.groupServers = $scope.groupServers.filter(function(arg) { 
+				   return arg.host_id !== data.host_id;  
+				});
+				$scope.availableServers.push(data);
+			}
+			$scope.deselectServers = [];
 		}
 	}
 
