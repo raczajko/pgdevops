@@ -234,6 +234,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var sessionPromise = PubSubService.getSession();
 
     function getPgList(argument) {
+        $rootScope.$emit("stopGraphCalls");
         session.call('com.bigsql.pgList', [$scope.userInfo.email]);
     }
 
@@ -780,6 +781,22 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 });
             }
         };
+
+    $scope.deletePGConn = function (sid, gid) {
+        var data = {
+            sid:sid,
+            gid:gid
+        };
+        var addToMetaData = $http.post($window.location.origin + '/api/delete_from_metadata', data);
+            addToMetaData.then(function (argument) {
+                console.log(argument.data.msg);
+                $scope.alerts.push({
+                    msg: argument.data.msg,
+                    type: 'warning'
+                });
+                getPgList();
+            });
+    }
 
     $scope.openGroupsModal = function (idx) {
             if($scope.betaFeature){
