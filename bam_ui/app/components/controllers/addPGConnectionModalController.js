@@ -6,6 +6,8 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
 	$scope.pgList = $uibModalInstance.pgList;
 	$scope.editConnData = $uibModalInstance.editConnData;
 	$scope.servers = [];
+	$scope.port = 5432;
+
 	for (var i = 0; i < $scope.pgList.length; ++i) {
 	    var obj = $scope.pgList[i];
 	    if ($scope.servers.indexOf(obj.server_group)<0) {
@@ -67,7 +69,6 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
     	}
     	var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', data);
             addToMetaData.then(function (argument) {
-            	debugger
             	if(!$scope.sid){
             		$scope.sid = argument.data.sid;
             	}
