@@ -76,6 +76,10 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
             		$rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, $scope.password, true);
 			        $scope.connect_err = '';
 			        $scope.connecting = true;
+            	}else{
+            		$rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, $scope.password, false);
+			        $scope.connect_err = '';
+			        $scope.connecting = true;
             	}
             	$rootScope.$emit('refreshPgList');
             	$uibModalInstance.dismiss('cancel');
