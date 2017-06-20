@@ -212,16 +212,25 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     })
 
     $scope.discoverRds = function (settingName, value, disp_name) {
-        var modalInstance = $uibModal.open({
-            templateUrl: '../app/components/partials/rdsModal.html',
-            controller: 'rdsModalController',
-            keyboard  : false,
-            backdrop  : 'static',
-            windowClass : 'rds-modal',
-            size : 'lg'
-        });
-        modalInstance.lab = settingName;
-        modalInstance.disp_name = disp_name;
+        if ($scope.awsRdsFeature) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/rdsModal.html',
+                controller: 'rdsModalController',
+                keyboard  : false,
+                backdrop  : 'static',
+                windowClass : 'rds-modal',
+                size : 'lg'
+            });
+            modalInstance.lab = settingName;
+            modalInstance.disp_name = disp_name;
+        }else{
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+
+                $scope.alerts.push({
+                    msg: getMessage,
+                    type: 'warning'
+                });
+        }
     }
 
     $scope.openPostgresConnGroup = function (argument) {
