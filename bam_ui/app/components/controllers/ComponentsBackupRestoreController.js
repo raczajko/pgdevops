@@ -8,6 +8,28 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
     $scope.showBackupBgProcess = false;
     $scope.backup.advoptions = "-v"
     $scope.restore.advoptions = "-v"
+
+    $scope.backupRestoreFeature = false;
+
+    var getLabList = bamAjaxCall.getCmdData('lablist');
+
+    getLabList.then(function (argument) {
+        for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "dumprest" && argument[i].enabled == "on"){
+                $scope.backupRestoreFeature = true;
+                break;
+            }
+        }
+        if(!$scope.backupRestoreFeature){
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+            debugger
+                $scope.alerts.push({
+                    msg: getMessage,
+                    type: 'warning'
+                });
+        }
+    });
+
     var session;
 
     var hostsList = bamAjaxCall.getCmdData('hosts');
@@ -176,6 +198,10 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         $rootScope.$on('hidebgProcess', function (argument) {
             $scope.showBackupBgProcess = false;
         });
+
+        $scope.closeAlert = function (index) {
+            $scope.alerts.splice(index, 1);
+        };
 
         //need to destroy all the subscriptions on a template before exiting it
         $scope.$on('$destroy', function () {
