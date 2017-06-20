@@ -212,16 +212,25 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     })
 
     $scope.discoverRds = function (settingName, value, disp_name) {
-        var modalInstance = $uibModal.open({
-            templateUrl: '../app/components/partials/rdsModal.html',
-            controller: 'rdsModalController',
-            keyboard  : false,
-            backdrop  : 'static',
-            windowClass : 'rds-modal',
-            size : 'lg'
-        });
-        modalInstance.lab = settingName;
-        modalInstance.disp_name = disp_name;
+        if ($scope.awsRdsFeature) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/rdsModal.html',
+                controller: 'rdsModalController',
+                keyboard  : false,
+                backdrop  : 'static',
+                windowClass : 'rds-modal',
+                size : 'lg'
+            });
+            modalInstance.lab = settingName;
+            modalInstance.disp_name = disp_name;
+        }else{
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+
+                $scope.alerts.push({
+                    msg: getMessage,
+                    type: 'warning'
+                });
+        }
     }
 
     $scope.openPostgresConnGroup = function (argument) {
@@ -234,6 +243,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var sessionPromise = PubSubService.getSession();
 
     function getPgList(argument) {
+        $rootScope.$emit("stopGraphCalls");
         session.call('com.bigsql.pgList', [$scope.userInfo.email]);
     }
 
@@ -734,6 +744,11 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $window.location.reload();
     };
 
+    $rootScope.$on('openEditConn', function (argument, sid) {
+        var serverDetails = $($scope.pgListRes).filter(function(i,n){ return n.sid == sid })[0];
+        $scope.openPGConnModal(serverDetails);
+    })
+
     $scope.openPGConnModal = function (argument) {
         if ($scope.awsRdsFeature) {
             var modalInstance = $uibModal.open({
@@ -780,6 +795,25 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 });
             }
         };
+
+    $scope.deletePGConn = function (sid, gid) {
+        var data = {
+            sid:sid,
+            gid:gid
+        };
+        var addToMetaData = $http.post($window.location.origin + '/api/delete_from_metadata', data);
+            addToMetaData.then(function (argument) {
+                getPgList();
+                var type = "danger";
+                if (argument.data.error == 0) {
+                    type = "success";
+                }
+                $scope.alerts.push({
+                    msg: $sce.trustAsHtml(argument.data.msg),
+                    type: type
+                });
+            });
+    }
 
     $scope.openGroupsModal = function (idx) {
             if($scope.betaFeature){

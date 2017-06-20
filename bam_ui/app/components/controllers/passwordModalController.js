@@ -10,10 +10,16 @@ angular.module('bigSQL.components').controller('passwordModalController', ['$sco
         $scope.connect_err = '';
         $scope.connecting = true;
     }
-    
+        
+    $scope.openEditConn = function function_name(argument) {
+        $rootScope.$emit('openEditConn', $scope.sid);
+        $uibModalInstance.dismiss('cancel');
+    }
+
     $rootScope.$on('connectionData', function (event, argument) {
         $uibModalInstance.dismiss('cancel');
     })
+
     $scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');
     };

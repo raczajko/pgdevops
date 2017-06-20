@@ -59,7 +59,16 @@
                                         <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !serverVal.isOpen, 'fa fa-minus': serverVal.isOpen}"></i>
                                         <div>{{serverVal.server_name}}, {{serverVal.db_user}}@{{ serverVal.host }}:{{ serverVal.port }}/{{serverVal.db}}</div>
                                         <div class="pull-right" style="margin-top: -26px">
-                                            <button id="split-button " type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation();openPGConnModal(serverVal)" ng-if="serverVal.isOpen " class="btn btn-default" >Edit Connection</button>
+                                            <div class="btn-group" uib-dropdown >
+                                                <button id="split-button " type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); openPGConnModal(serverVal)" class="btn btn-default " ng-if="serverVal.isOpen " >Edit Connection</button>
+                                                <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation()" class="btn btn-default " ng-if="serverVal.isOpen " uib-dropdown-toggle>
+                                                    <span class="caret "></span>
+                                                    <span class="sr-only ">Split button!</span>
+                                                </button>
+                                                <ul uib-dropdown-menu role="menu " aria-labelledby="split-button ">
+                                                    <li><a  ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); deletePGConn(serverVal.sid, serverVal.gid)" href="">Delete</a></li>
+                                                </ul>
+                                            </div>
                                             <button class="btn btn-default" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation();connect_pg(serverVal.sid,serverVal.gid, pg_pwd, connection.savePwd)" ng-if="need_pwd && serverVal.isOpen ">Connect</button>
                                             <a ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); navToDetails(serverVal.server_name)" 
                                             class="btn btn-default" class="ng-binding" ng-if="serverVal.isOpen">Details</a>
@@ -100,7 +109,7 @@
                                 &nbsp;
                                 <div class="btn-group" uib-dropdown >
                                     <button id="split-button " type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); openGroupsModal($index)" class="btn btn-default " ng-if="group.group!='default'" >Edit Group</button>
-                                    <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation()" class="btn btn-default " ng-if="group.group!='default'"  uib-dropdown-toggle>
+                                    <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation()" class="btn btn-default " ng-if="group.group!='default'" uib-dropdown-toggle>
                                         <span class="caret "></span>
                                         <span class="sr-only ">Split button!</span>
                                     </button>
