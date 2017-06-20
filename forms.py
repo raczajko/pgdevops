@@ -32,7 +32,7 @@ class RegisterForm(RegisterForm):
    	checkAMI = check_ami()
 	if checkAMI.get('rc')!=2:
 		ami_form = True
-		ami_id = StringField('AMI Instance Id', validators=[Length(max=50)])
+		ami_id = StringField('AMI Instance ID', validators=[Length(max=50)])
 		def validate_ami_id(form, field):
 			validationData = check_ami(str(field.data))
 			if validationData['rc'] != 0:
