@@ -21,7 +21,9 @@ from pgadmin.model import db, Role, User, Server, ServerGroup, Process
 from pgadmin.utils.crypto import encrypt, decrypt, pqencryptpassword
 from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
+from pgadmin.utils.driver import get_driver
 import config
+from config import PG_DEFAULT_DRIVER
 from flask_restful import reqparse
 from datetime import datetime, timedelta
 import dateutil
@@ -665,6 +667,37 @@ class AddtoMetadata(Resource):
 
 
 api.add_resource(AddtoMetadata, '/api/add_to_metadata')
+
+
+class DeleteFromMetadata(Resource):
+    def post(self):
+        args = request.json
+        gid = args.get('gid')
+        sid = args.get('sid')
+        result = {}
+
+        servers = Server.query.filter_by(user_id=current_user.id, id=sid)
+
+        if servers is None:
+            result['error'] = 1
+            result['msg'] = 'The specified server could not be found. Does the user have permission to access the server?'
+
+        else:
+            try:
+                for s in servers:
+                    get_driver(PG_DEFAULT_DRIVER).delete_manager(s.id)
+                    db.session.delete(s)
+                db.session.commit()
+            except Exception as e:
+                result['error'] = 1
+                result['msg'] = e.message
+                return result
+
+        result['error'] = 0
+        result['msg'] = "Server deleted"
+        return result
+        
+api.add_resource(DeleteFromMetadata, '/api/delete_from_metadata')
 
 
 def get_process_status(process_log_dir):
