@@ -96,6 +96,20 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         }
     };
 
+    $rootScope.$on('openEditConn', function (argument, sid) {
+        var serverDetails = $($scope.pgList).filter(function(i,n){ return n.sid == sid })[0];
+        var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/addPGConnectionModal.html',
+                windowClass: 'modal',
+                controller: 'addPGConnectionModalController',
+                scope: $scope,
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+            modalInstance.pgList = $scope.pgList;
+            modalInstance.editConnData = serverDetails;
+    })
+
     var sessionPromise = PubSubService.getSession();
 
     sessionPromise.then(function (val) {

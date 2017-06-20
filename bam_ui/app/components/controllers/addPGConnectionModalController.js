@@ -79,6 +79,7 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
             	}
             	$rootScope.$emit('refreshPgList');
             	$uibModalInstance.dismiss('cancel');
+            	$rootScope.$emit('closePasswordModal');
             });
     }
 
@@ -89,6 +90,7 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
 
 	$scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');
+        $rootScope.$emit('closePasswordModal');
         for (var i = 0; i < subscriptions.length; i++) {
             session.unsubscribe(subscriptions[i]);
         }

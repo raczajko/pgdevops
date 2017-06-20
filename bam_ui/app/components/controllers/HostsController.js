@@ -735,6 +735,11 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $window.location.reload();
     };
 
+    $rootScope.$on('openEditConn', function (argument, sid) {
+        var serverDetails = $($scope.pgListRes).filter(function(i,n){ return n.sid == sid })[0];
+        $scope.openPGConnModal(serverDetails);
+    })
+
     $scope.openPGConnModal = function (argument) {
         if ($scope.awsRdsFeature) {
             var modalInstance = $uibModal.open({
@@ -789,12 +794,15 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         };
         var addToMetaData = $http.post($window.location.origin + '/api/delete_from_metadata', data);
             addToMetaData.then(function (argument) {
-                console.log(argument.data.msg);
-                $scope.alerts.push({
-                    msg: argument.data.msg,
-                    type: 'warning'
-                });
                 getPgList();
+                var type = "danger";
+                if (argument.data.error == 0) {
+                    type = "success";
+                }
+                $scope.alerts.push({
+                    msg: $sce.trustAsHtml(argument.data.msg),
+                    type: type
+                });
             });
     }
 
