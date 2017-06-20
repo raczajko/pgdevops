@@ -21,13 +21,11 @@ def check_ami(ami_id="pgdevops"):
 	try:
 		process = subprocess.check_output(pgcCmd,
 					  shell=True)
-		final_out = json.loads(process.strip().decode('ascii'))[0]
-		rc=process.returncode
-		msg=str(final_out['msg'])
 	except Exception as e:
-		final_out = json.loads(e.output.strip().decode('ascii'))[0]
 		rc = e.returncode
-		msg = str(final_out['msg'])
+		if rc>0:
+			final_out = json.loads(e.output.strip().decode('ascii'))[0]
+			msg = str(final_out['msg'])
 	return {"rc": rc, "msg": msg}
 
 class RegisterForm(RegisterForm):
