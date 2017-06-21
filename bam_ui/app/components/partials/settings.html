@@ -91,11 +91,31 @@
                 <div id="serversTableTbody">
                     <div ng-repeat="lab in lablist" class="row lab_row">
                         <div class="col-md-2">
-                            <img class="lab-img" ng-src="{{ lab.enabled=='on' && lab.enabled_image_url || lab.disabled_image_url}}" err-src="assets/img/component-logos/no_img.png">
+                            <div ng-if="lab.enabled=='on' && lab.lab=='dumprest'">
+                                <a ui-sref="components.backupRestoreView">
+                                    <img class="lab-img" ng-src="{{ lab.enabled=='on' && lab.enabled_image_url || lab.disabled_image_url}}" err-src="assets/img/component-logos/no_img.png">
+                                </a>
+                            </div>
+                            <div ng-if="lab.enabled=='on' && lab.lab=='multi-host-mgr'">
+                                <a ui-sref="components.hosts">
+                                    <img class="lab-img" ng-src="{{ lab.enabled=='on' && lab.enabled_image_url || lab.disabled_image_url}}" err-src="assets/img/component-logos/no_img.png">
+                                </a>
+                            </div>
+                            <div ng-if="(lab.lab!='dumprest' && lab.lab!='multi-host-mgr') || lab.enabled!='on'">
+                                <img class="lab-img" ng-src="{{ lab.enabled=='on' && lab.enabled_image_url || lab.disabled_image_url}}" err-src="assets/img/component-logos/no_img.png">
+                            </div>
                         </div>
                         <div class="col-md-8" style="padding-left: 35px;">
                             <div>
-                                <div><strong>{{lab.disp_name}}</strong></div>
+                                <div>
+                                    <strong ng-if="lab.enabled=='on' && lab.lab=='dumprest'">
+                                        <a ui-sref="components.backupRestoreView">{{lab.disp_name}}</a>
+                                    </strong>
+                                    <strong ng-if="lab.enabled=='on' && lab.lab=='multi-host-mgr'">
+                                        <a ui-sref="components.hosts">{{lab.disp_name}}</a>
+                                    </strong>
+                                    <strong ng-if="(lab.lab!='dumprest' && lab.lab!='multi-host-mgr') || lab.enabled!='on'">{{lab.disp_name}}</strong>
+                                </div>
                                 <div class="labDescription">{{lab.credit_to}}</div>
                             </div>
                             <div class="labDescription" ng-bind-html="lab.markdownDesc"></div>
