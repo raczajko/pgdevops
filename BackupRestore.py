@@ -22,12 +22,12 @@ class BackupRestore(object):
             filename = filename + ".sql"
         if '-v' not in adv_options and not (action == "restore" and format == 'p'):
             adv_options = adv_options + " -v"
-        pgc_cmd = pgc_cmd + " " + backup_directory + filename + ' ' + format + ' ' + adv_options + ' '+ ' --json'
+        pgc_cmd = pgc_cmd + " " + backup_directory + filename + ' ' + format + ' ' + adv_options
         if sshserver not in ["","localhost",None]:
             pgc_cmd = pgc_cmd + " --host " + sshserver
         if this_uname == "Windows":
             pgc_cmd = pgc_cmd.replace("\\", "\\\\")
-        process_status = detached_process(pgc_cmd, ctime)
+        process_status = detached_process(pgc_cmd, ctime, process_type='backrest')
         result['error'] = None
         result['status'] = process_status['status']
         result['log_dir'] = process_status['log_dir']

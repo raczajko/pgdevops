@@ -58,7 +58,7 @@ def get_current_time(format='%Y-%m-%d %H:%M:%S.%f %z'):
         tzinfo=pytz.utc
     ).strftime(format)
 
-def detached_process(p_cmd, p_ctime=None, report_file=None, stdin_str=None, is_local=False):
+def detached_process(p_cmd, p_ctime=None, report_file=None, stdin_str=None, is_local=False, process_type=None):
 
 
     executor = file_quote(os.path.join(
@@ -112,7 +112,8 @@ def detached_process(p_cmd, p_ctime=None, report_file=None, stdin_str=None, is_l
         env['stdin_str'] = stdin_str
     if report_file:
         env['report_file'] = report_file
-
+    if process_type:
+        env['process_type'] = process_type
     if IS_PY2:
         # We need environment variables & values in string
         env = convert_environment_variables(env)

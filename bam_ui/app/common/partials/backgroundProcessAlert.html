@@ -22,12 +22,13 @@
                    File : <a target="_blank" href="reports/{{generatedFile}}">{{generatedFileName}}</a>
                  </div>
                  <br>
+                 <div ng-if="cmdAllowedTypes.indexOf(process_type) != -1 && procCmd" class="bt-status">Command: {{procCmd}} <br></div>
                  <div ng-if="procStartTime" class="bt-start-time">Start time: {{procStartTime}} </div>
                  <div ng-if="procEndTime" class="bt-start-time">End time: {{procEndTime}} </div>
                  <div ng-if="procStatus" class="bt-status">Status: {{procStatus}}</div>
                  <div ng-if="error_msg" class="bt-status">Error: {{error_msg}}</div>
                  <div ng-if="procId && !procCompleted" class="bt-status">PID: {{procId}}</div>
-                 <!-- <div ng-if="procCmd" class="bt-status">Command: {{procCmd}}</div> -->
+
              </div>
          </div>
        </div>
