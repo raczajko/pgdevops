@@ -1,6 +1,5 @@
 angular.module('bigSQL.common').directive('backgroundProcessAlert', function (bamAjaxCall, $rootScope) {
 
-
     return {
         scope: {
             title: '@'
@@ -10,6 +9,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
         controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', '$timeout', function backgroundProcessAlertController($scope, $http, $window, $cookies, $rootScope, $timeout) {
             
             $scope.isbgProcessStarted = false;
+            $scope.cmdAllowedTypes = ['backrest'];
             // $scope.cancelbgProcess = false;
             function getBGStatus(process_log_id){
 
@@ -21,8 +21,12 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                     $scope.procStartTime = new Date(ret_data.data.start_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
                     $scope.taskID = process_log_id;
                     $scope.out_data = ret_data.data.out_data;
+                    $scope.process_type = ret_data.data.process_type;
                     $scope.procCmd = ret_data.data.cmd;
-                    if (ret_data.data.process_completed){ 
+                    if($scope.procCmd.indexOf("pgc ") != -1){
+                        $scope.procCmd = "pgc " + $scope.procCmd.split("pgc ")[1];
+                    }
+                    if (ret_data.data.process_completed){
                         $scope.procCompleted = true;
                         if(ret_data.data.process_failed){
                             $scope.procStatus = "Failed."

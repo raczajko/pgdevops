@@ -21,7 +21,9 @@ from pgadmin.model import db, Role, User, Server, ServerGroup, Process
 from pgadmin.utils.crypto import encrypt, decrypt, pqencryptpassword
 from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
+from pgadmin.utils.driver import get_driver
 import config
+from config import PG_DEFAULT_DRIVER
 from flask_restful import reqparse
 from datetime import datetime, timedelta
 import dateutil
@@ -527,6 +529,7 @@ class AddtoMetadata(Resource):
 
     def post(self):
         def add_to_pginstances(pg_arg):
+            server_id = None
             try:
                 component_name = pg_arg.get("component")
                 component_port = pg_arg.get("port", 5432)
@@ -534,8 +537,11 @@ class AddtoMetadata(Resource):
                 component_proj = pg_arg.get("project")
                 component_db = pg_arg.get("db", "postgres")
                 component_user = pg_arg.get("user", "postgres")
-                servergroup_id = 1
+                gid = pg_arg.get("gid")
+                sid = pg_arg.get("sid")
+                servergroup_id=1
                 is_rds = pg_arg.get("rds")
+                is_new =True
                 if is_rds:
                     servername = component_name
                     server_group_name = pg_arg.get("region", "AWS RDS")
@@ -571,39 +577,58 @@ class AddtoMetadata(Resource):
                                 result['msg'] = err_msg
                                 return result
                 else:
-                    servername = "{0}({1})".format(component_name, component_host)
-
-                    if component_host in ("localhost", ""):
-                        component_host = "localhost"
+                    if gid:
+                        servername=component_name
+                        servergroup_id=gid
+                        if sid:
+                            component_server = Server.query.filter_by(
+                                id=sid,
+                                user_id=current_user.id,
+                            ).first()
+                            is_new=False
+                            
+                    else:
                         servername = "{0}({1})".format(component_name, component_host)
-                    else:
-                        import util
-                        host_info = util.get_pgc_host(component_host)
-                        component_host = host_info[3]
-                    user_id = current_user.id
-                    servergroups = ServerGroup.query.filter_by(
-                        user_id=user_id
-                    ).order_by("id")
 
-                    if servergroups.count() > 0:
-                        servergroup = servergroups.first()
-                        servergroup_id = servergroup.id
-                    else:
-                        sg = ServerGroup(
-                            user_id=current_user.id,
-                            name="Servers")
-                        db.session.add(sg)
-                        db.session.commit()
-                        servergroup_id = sg.id
+                        if component_host in ("localhost", ""):
+                            component_host = "localhost"
+                            servername = "{0}({1})".format(component_name, component_host)
+                        else:
+                            import util
+                            host_info = util.get_pgc_host(component_host)
+                            component_host = host_info[3]
+                        if component_host == '':
+                            component_host = pg_arg.get("host", "localhost")
+                        user_id = current_user.id
+                        servergroups = ServerGroup.query.filter_by(
+                            user_id=user_id
+                        ).order_by("id")
 
-                
-                component_server = Server.query.filter_by(
-                    name=servername,
-                    host=component_host,
-                    servergroup_id=servergroup_id,
-                    port=component_port
-                )
-                if component_server.count() == 0:
+                        if servergroups.count() > 0:
+                             servergroup = servergroups.first()
+                             servergroup_id = servergroup.id
+                        else:
+                             sg = ServerGroup(
+                                 user_id=current_user.id,
+                                 name="Servers")
+                             db.session.add(sg)
+                             db.session.commit()
+                             servergroup_id = sg.id
+
+                            
+                        component_server = Server.query.filter_by(
+                            name=servername,
+                            host=component_host,
+                            servergroup_id=servergroup_id,
+                            port=component_port
+                        ).first()
+                        print (servergroup_id)
+                        if component_server:
+                            is_new=False
+                        else:
+                            is_new=True
+
+                if is_new:
                     svr = Server(user_id=current_user.id,
                                  servergroup_id=servergroup_id,
                                  name=servername,
@@ -617,11 +642,21 @@ class AddtoMetadata(Resource):
 
                     db_session.add(svr)
                     db_session.commit()
+                    server_id = svr.id
+                else:
+                    component_server.servergroup_id=servergroup_id
+                    component_server.name=servername
+                    component_server.host=component_host
+                    component_server.port=component_port
+                    component_server.maintenance_db=component_db
+                    component_server.username=component_user
+                    db_session.commit()
+
             except Exception as e:
-                print ("Failed while adding pg instance to metadata :")
+                print ("Failed while adding/updating pg instance in metadata :")
                 print (str(e))
                 pass
-
+            return server_id
         result = {}
         result['error'] = 0
         args = request.json
@@ -629,14 +664,45 @@ class AddtoMetadata(Resource):
         is_multiple = args.get("multiple")
         if is_multiple:
             for pg_data in args.get("multiple"):
-                add_to_pginstances(pg_data)
+                server_id = add_to_pginstances(pg_data)
         else:
-            add_to_pginstances(args)
-
+            server_id = add_to_pginstances(args)
+        result['sid'] = server_id
         return result
 
 
 api.add_resource(AddtoMetadata, '/api/add_to_metadata')
+
+
+class DeleteFromMetadata(Resource):
+    def post(self):
+        args = request.json
+        gid = args.get('gid')
+        sid = args.get('sid')
+        result = {}
+
+        servers = Server.query.filter_by(user_id=current_user.id, id=sid)
+
+        if servers is None:
+            result['error'] = 1
+            result['msg'] = 'The specified server could not be found. Does the user have permission to access the server?'
+
+        else:
+            try:
+                for s in servers:
+                    get_driver(PG_DEFAULT_DRIVER).delete_manager(s.id)
+                    db.session.delete(s)
+                db.session.commit()
+            except Exception as e:
+                result['error'] = 1
+                result['msg'] = e.message
+                return result
+
+        result['error'] = 0
+        result['msg'] = "Server deleted"
+        return result
+        
+api.add_resource(DeleteFromMetadata, '/api/delete_from_metadata')
 
 
 def get_process_status(process_log_dir):
@@ -664,9 +730,6 @@ def get_process_status(process_log_dir):
                 process_dict['out_data'] = err_data_content
             elif out_data_content:
                 process_dict['out_data'] = out_data_content
-
-
-
     return process_dict
 
 
@@ -778,6 +841,57 @@ class GenerateBadgerReports(Resource):
 
 api.add_resource(GenerateBadgerReports, '/api/generate_badger_reports')
 
+def validate_backup_fields(args):
+    if all(name in args for name in ('host','dbName','port','username','sshServer','backupDirectory','fileName','format','advOptions')):
+        return True
+    else:
+        return False
+class BackupRestoreDatabase(Resource):
+    def post(self):
+        result = {}
+        args = request.json
+        if not validate_backup_fields(args):
+            result['error'] = 1
+            result['msg'] = "Check the parameters provided."
+            return result
+        try:
+            from BackupRestore import BackupRestore
+            backuprestore = BackupRestore()
+            ctime = get_current_time(format='%y%m%d%H%M%S%f')
+            result = backuprestore.backup_restore(ctime,args['action'],args['host'],args['port'],args['username'],args['dbName'],
+                                 args['sshServer'],args['backupDirectory'],
+                                 args['fileName'],args['format'],args.get('advOptions',""), password=args.get('password',None))
+            process_log_dir = result['log_dir']
+            process_status = get_process_status(process_log_dir)
+            result['pid'] = process_status.get('pid')
+            result['exit_code'] = process_status.get('exit_code')
+            result['process_log_id'] = result["process_log_id"]
+            if process_status.get('exit_code') is None:
+                result['in_progress'] = True
+                try:
+                    j = Process(
+                        pid=int(result["process_log_id"]), command=result['cmd'],
+                        logdir=result["process_log_id"], desc=dumps("Backup Database" if args['action']=='backup' else "Restore Database"), user_id=current_user.id
+                    )
+                    db_session.add(j)
+                    db_session.commit()
+                except Exception as e:
+                    print str(e)
+                    pass
+            if result['error']:
+                result['error'] = 1
+                result['msg'] = result['error']
+            else:
+                result['error'] = 0
+                result['msg'] = 'Success'
+        except Exception as e:
+            import traceback
+            result['error'] = 1
+            result['msg'] = str(e)
+        time.sleep(1)
+        return result
+
+api.add_resource(BackupRestoreDatabase, '/api/backup_restore_db')
 
 class GetBgProcessList(Resource):
     @login_required
