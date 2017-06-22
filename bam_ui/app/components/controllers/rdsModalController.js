@@ -73,7 +73,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         $scope.addToMetadataMsg = htmlMessages.getMessage('add-to-pgadmin');
         var argsJson = [];
         for (var i = $scope.availList.length - 1; i >= 0; i--) {
-            if($scope.availList[i].selected){
+            if($scope.availList[i].selected && !$scope.availList[i].is_in_pglist){
                 var args = {};
                 args['db'] = $scope.availList[i].dbname;
                 args['port'] = $scope.availList[i].port;
