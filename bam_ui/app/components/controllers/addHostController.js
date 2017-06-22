@@ -14,8 +14,10 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	$scope.hostName = '';
 	$scope.pgcDir = '';
 	$scope.userName = '';
+	$scope.root_pgc_path="";
 
     $scope.create_btn = "Create";
+    $scope.sudo_password = {text: ''};
 	if($scope.editHost){
 		$scope.type = 'Edit';
 		$scope.create_btn = "Update";
@@ -41,12 +43,14 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
         		$scope.pgcDir = $scope.pgcDir.split('~/')[1];
         	}
 	        if(!$scope.editHost){
-	        	session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.connectionName, $scope.password, $scope.ssh_key]);
+	        	session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.connectionName, $scope.password, $scope.ssh_key, $scope.sudo_password.text]);
 	    	}else{
-	    		session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.connectionName, $scope.password, $scope.ssh_key, $scope.editHost.host_id]);
+	    		session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.connectionName, $scope.password, $scope.ssh_key, $scope.sudo_password.text, $scope.editHost.host_id]);
 	    	}
 	    	$scope.tryToConnect = true;
-	    	
+
+
+
 	    	session.subscribe("com.bigsql.onRegisterHost", function (data) {
 	    		$scope.registerResponse = data[0];
 	    		
@@ -87,6 +91,9 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     });
 
     $scope.next = function (argument) {
+    $scope.auth_err="";
+    $scope.not_sudoer="";
+    $scope.sudo_password.text="";
     	if($scope.firstPhase){
     		var data = {
              hostname:$scope.hostName,
@@ -114,8 +121,11 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	    			var jsonData = JSON.parse(argument)[0];
 	    			if (jsonData.state == 'success') {
 	    				$scope.isSudo =  jsonData.isSudo;
-	    				$scope.pgcDir = jsonData.pgc_home_path;
+	    				$scope.pgcDir = jsonData.pgc_path;
 	    				$scope.pgcVersion = jsonData.pgc_version;
+	    				$scope.root_pgc_path=jsonData.root_pgc_path;
+	    				$scope.auth_err=jsonData.auth_err;
+	    				$scope.not_sudoer=jsonData.not_sudoer;
 	    				/*if(!$scope.pgcDir){
 		    				if($scope.isSudo){
 		    					//$scope.serviceUser = 'Postgres';
@@ -158,6 +168,71 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 			        modalInstance.password = $scope.password;
 	            });
     	}
+    }
+
+    $scope.verify = function (argument) {
+    $scope.root_pgc_path="";
+    $scope.not_sudoer="";
+    $scope.auth_err="";
+    		var data = {
+             hostname:$scope.hostName,
+             username:$scope.userName
+            };
+            if ($scope.password){
+             data.password=$scope.password;
+            }
+
+            if ($scope.ssh_key){
+             data.ssh_key=$scope.ssh_key;
+            }
+
+            if($scope.sudo_password.text){
+                data.sudo_pwd = $scope.sudo_password.text;
+            }
+
+            if ($scope.password && $scope.ssh_key) {
+            	var msg = htmlMessages.getMessage('pwd-or-ssh-msg');
+            	$scope.alerts.push({
+	                msg : msg,
+	                type : 'danger'
+	            });
+            }else{
+            	$scope.tryToConnect = true;
+    			$scope.connectionError = false;
+            	var checkUser = bamAjaxCall.getCmdData('checkUser', data);
+	    		checkUser.then(function (argument) {
+	    			var jsonData = JSON.parse(argument)[0];
+	    			if (jsonData.state == 'success') {
+	    				$scope.isSudo =  jsonData.isSudo;
+	    				$scope.pgcDir = jsonData.pgc_path;
+	    				$scope.pgcVersion = jsonData.pgc_version;
+	    				$scope.root_pgc_path=jsonData.root_pgc_path;
+	    				$scope.auth_err=jsonData.auth_err;
+	    				$scope.not_sudoer=jsonData.not_sudoer
+	    				if($scope.auth_err){
+	    				    $scope.sudo_password.text="";
+	    				    $scope.sudo_password_auth_err="Authentication Failed.";
+	    				}
+	    				/*if(!$scope.pgcDir){
+		    				if($scope.isSudo){
+		    					//$scope.serviceUser = 'Postgres';
+		    					$scope.pgcDir = '/opt'
+		    				}else{
+		    					//$scope.serviceUser = $scope.userName;
+		    					$scope.pgcDir = '~/bigsql'
+		    				}
+		    			}*/
+	    				$scope.tryToConnect = false;
+	    				$scope.firstPhase = false;
+	    				$scope.secondPhase = true;
+	    			} else{
+		    			$scope.connectionError = true;
+		    			$scope.tryToConnect = false;
+	    				$scope.message = jsonData.msg;
+	    			}
+	    		})
+            }
+
     }
 
     $scope.back = function (argument) {

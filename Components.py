@@ -240,7 +240,7 @@ class ComponentAction(object):
             yield sleep(0.001)
 
     @inlineCallbacks
-    def registerHost(self, hostName, pgcDir, userName, name, password=None, key=None, update=None):
+    def registerHost(self, hostName, pgcDir, userName, name, password=None, key=None, sudo_pwd=None, update=None):
         """
         Method to Register remote host
         """
@@ -251,6 +251,8 @@ class ComponentAction(object):
             pgcCmd = pgcCmd + " --pwd=\"" + password + "\""
         if key:
             pgcCmd = pgcCmd + " --key=\"" + key + "\""
+        if sudo_pwd:
+            pgcCmd = pgcCmd + " --sudo_pwd=\"" + sudo_pwd + "\""
         if update:
             pgcCmd = pgcCmd + " --update=" + str(update)
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
