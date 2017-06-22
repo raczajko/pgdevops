@@ -7163,3 +7163,7 @@ fieldset
     right: 35px;
   }
 }
+
+.login_user_form fieldset {
+    padding: 10px;
+}
