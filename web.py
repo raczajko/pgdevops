@@ -377,11 +377,16 @@ class checkHostAccess(Resource):
     def get(self):
         host = request.args.get('hostname')
         check_sudo_password = request.args.get('pwd')
-        [pgc_home, pgc_user, pgc_passwd, pgc_host, pgc_host_name, pgc_ssh_key, pgc_host_info] = get_pgc_host(host)
+        pgc_host_info = util.get_pgc_host(host)
+        pgc_host = pgc_host_info[3]
+        pgc_user = pgc_host_info[1]
+        pgc_passwd = pgc_host_info[2]
+        pgc_ssh_key = pgc_host_info[5]
+
         from PgcRemote import PgcRemote
         json_dict = {}
         try:
-            remote = PgcRemote(host, pgc_user, password=pgc_passwd, ssh_key=pgc_ssh_key, sudo_pwd=check_sudo_password)
+            remote = PgcRemote(pgc_host, pgc_user, password=pgc_passwd, ssh_key=pgc_ssh_key, sudo_pwd=check_sudo_password)
             remote.connect()
             is_sudo = remote.has_root_access()
             json_dict['state'] = "success"
@@ -404,7 +409,13 @@ class initPGComp(Resource):
         json_dict = {}
         if password == None or username == None:
             import util
-            [pgc_home, ssh_username, ssh_password, ssh_host, ssh_host_name, ssh_key] = util.get_pgc_host(host)
+            pgc_host_info = util.get_pgc_host(host)
+            ssh_host = pgc_host_info[3]
+            ssh_username = pgc_host_info[1]
+            ssh_password = pgc_host_info[2]
+            ssh_key = pgc_host_info[5]
+            sudo_pwd = pgc_host_info[7]
+            is_sudo = pgc_host_info[6]
         try:
             remote = PgcRemote(ssh_host, ssh_username, password=ssh_password, ssh_key=ssh_key)
             remote.connect()
