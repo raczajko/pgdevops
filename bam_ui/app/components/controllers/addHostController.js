@@ -213,6 +213,9 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	    				    $scope.sudo_password.text="";
 	    				    $scope.sudo_password_auth_err="Authentication Failed.";
 	    				}
+	    				if($scope.not_sudoer){
+	    				    $scope.sudo_password.text="";
+	    				}
 	    				/*if(!$scope.pgcDir){
 		    				if($scope.isSudo){
 		    					//$scope.serviceUser = 'Postgres';
