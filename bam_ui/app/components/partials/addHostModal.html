@@ -11,7 +11,7 @@
         <i class="fa fa-spinner fa-pulse fa-2x"></i> &nbsp;<strong> Installing {{selectedPgComp.component}} on {{hostName}} </strong>
     </div>
     <div ng-if="connectionStatus">
-        <i class="fa fa-spinner fa-pulse fa-2x"></i> &nbsp;<strong>{{message}} </strong>
+        <i class="fa fa-spinner fa-pulse fa-2x"></i> &nbsp;<strong>{{message}}</strong>
     </div>
     <div ng-if="connectionError">
         <strong>{{message}}</strong>
@@ -70,11 +70,23 @@
                 <div class="col-md-12" ng-if="setupError">
                     <strong>{{message}}</strong>
                 </div>
+                <span ng-if="auth_err">
+                <label class="col-sm-4 col-form-label">sudo password</label>
+                    <div class="col-sm-8" class="form-control">
+                        <input type="password" ng-model="sudo_password.text" class="form-control" placeholder="password">
+                        <p ng-if="sudo_password_auth_err">{{sudo_password_auth_err}}</p>
+                        <p ng-if="root_pgc_path">Detected the PGC installed at {{ root_pgc_path }}.
+                            Provide the sudo password and verify if you have access.</p>
+
+                    </div>
+                </span>
+                <br>
                 <br>
                 <label class="col-sm-4 col-form-label">PGC_HOME Directory</label>
                 <div class="col-sm-8">
                     <input type="text" ng-model="pgcDir" class="form-control">
                     <p ng-if="pgcVersion">Detected the PGC version : {{ pgcVersion }} in the directory.</p>
+                    <p ng-if="not_sudoer">You are not in the sudoers file.</p>
                 </div>
 
             </div>
@@ -105,6 +117,7 @@
                 <div class="text-right">
                     <button class="btn btn-default" type="button" ng-click="cancel(); refreshHostManager()">Cancel</button>
                     <button class="btn btn-default" type="button" ng-show="secondPhase" ng-click="back()">Back</button>
+                    <button ng-show="secondPhase && auth_err" class="btn btn-default" type="button" ng-click="verify()">Verify</button>
                     <button ng-show="!secondPhase" class="btn btn-default" type="button" ng-click="next()" ng-disabled="!(hostName && userName && connectionName && connectionName) || (!pgInstall && thirdPhase) ">Connect</button>
                     <button ng-show="secondPhase" class="btn btn-default" type="button" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">{{ create_btn }}</button>
                     <!-- <button type="submit" ng-show="secondPhase" class="btn btn-primary" ng-disabled="!(hostName && pgcDir && userName && password && connectionName)" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Save</button> -->
