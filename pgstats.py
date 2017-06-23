@@ -42,6 +42,8 @@ class ConnectAPI(MethodView):
                     json_dict['state'] = "error"
                     json_dict['msg'] = "Server not available in metadata."
                     return jsonify(json_dict)
+                else:
+                    json_dict['discovery_id'] = pg_server.discovery_id
 
                 manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
                 conn = manager.connection()
@@ -138,6 +140,12 @@ class ConnStatusAPI(MethodView):
             sid = request.args.get('sid')
             gid = request.args.get('gid')
             json_dict = {}
+            pg_server = Server.query.filter_by(
+                id=sid,
+                servergroup_id=gid,
+                user_id=current_user.id
+            ).first()
+            json_dict['discovery_id']=pg_server.discovery_id
             try:
                 manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
                 conn = manager.connection()
