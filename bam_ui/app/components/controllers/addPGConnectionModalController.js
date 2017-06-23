@@ -67,7 +67,7 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
     	if ($scope.sid) {
     		data.sid=$scope.sid;
     	}
-    	var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', data);
+    	var addToMetaData = bamAjaxCall.postData('/api/add_to_metadata', data);
             addToMetaData.then(function (argument) {
             	if(!$scope.sid){
             		$scope.sid = argument.data.sid;

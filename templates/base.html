@@ -23,6 +23,8 @@
     <link rel="icon" type="image/png" href="assets/img/android-chrome-192x192.png" sizes="192x192">
     <link rel="icon" type="image/png" href="assets/img/favicon-96x96.png" sizes="96x96">
     <link rel="icon" type="image/png" href="assets/img/favicon-16x16.png" sizes="16x16">
+    <link rel="stylesheet" type="text/css" href="static/bigSQL.min.css">
+    <script src="static/m/modernizr.js"></script>
     <link rel="manifest" href="assets/img/manifest.json">
     <link rel="mask-icon" href="assets/img/safari-pinned-tab.svg" color="#5bbad5">
     <link rel="shortcut icon" href="assets/img/favicon.ico">
@@ -57,11 +59,33 @@
 <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade
     your browser</a> to improve your experience.</p>
 <![endif]-->
-
+<div class="wrapper" id="meta-wrapper">
 {% block body %}{% endblock %}
 <script>
             {% block init_script %}{% endblock %}
 
+</script>
+</div>
+<script>
+    var hasWebsockets = Modernizr.websockets;
+
+    if (!hasWebsockets) {
+        var badBrowserModal = '<div class="warning-modal-wrapper">' +
+            '    <div class="modal-popup">' +
+            '        <h1>Your browser is not supported</h1>' +
+            '        <p>You can use pgDevOps by BigSQL with a modern browser. Click on an icon to download one below.</p>' +
+            '        <div>' +
+            '        <a target="_blank" href="https://www.google.com/chrome/browser/desktop/index.html"><img class="chrome-icon" src="assets/img/chrome_logo.png" alt=""></a>' +
+            '        <a target="_blank" href="https://www.mozilla.org/en-US/firefox/new/"><img class="firefox-icon" src="assets/img/firefox_logo.png" alt=""></a>' +
+            '        <a target="_blank" href="https://www.microsoft.com/en-in/download/Internet-Explorer-11-for-Windows-7-details.aspx"><img class="ie11-icon" src="assets/img/ie11_logo.png" alt=""></a>' +
+            '        </div>' +
+            '    </div>' +
+            '</div>';
+
+
+        var el = document.getElementById("meta-wrapper");
+        el.innerHTML = badBrowserModal;
+    }
 </script>
 
 </body>

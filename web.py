@@ -335,27 +335,32 @@ class pgdgHostCommand(Resource):
         return data
 
 
-api.add_resource(pgdgHostCommand, '/api/pgdghost/<string:repo_id>/<string:pgc_cmd>/<string:comp>','/api/pgdghost/<string:repo_id>/<string:pgc_cmd>/<string:comp>/<string:host>')
+api.add_resource(pgdgHostCommand, '/api/pgdghost/<string:repo_id>/<string:pgc_cmd>/<string:comp>',
+                 '/api/pgdghost/<string:repo_id>/<string:pgc_cmd>/<string:comp>/<string:host>')
 
 
 class checkUser(Resource):
     def get(self):
+
         host = request.args.get('hostname')
         username = request.args.get('username')
         password = request.args.get('password')
         ssh_key = request.args.get('ssh_key')
+        sudo_pwd = request.args.get('sudo_pwd', None)
         from PgcRemote import PgcRemote
         json_dict = {}
         try:
-            remote = PgcRemote(host, username, password=password, ssh_key=ssh_key)
-            remote.connect()
-            is_sudo = remote.has_sudo()
+            remote = PgcRemote(host, username, password=password, ssh_key=ssh_key, sudo_pwd=sudo_pwd)
+            if not sudo_pwd:
+                remote.connect()
             json_dict['state'] = "success"
-            json_dict['isSudo'] = is_sudo
-            remote_pgc_path = remote.get_exixting_pgc_path()
-            json_dict['pgc_home_path'] = remote_pgc_path['pgc_path']
-            if remote_pgc_path.get('pgc_path_exists'):
-                json_dict['pgc_version'] = remote_pgc_path['pgc_version']
+            try:
+                remote_pgc_path = remote.get_exixting_pgc_path()
+                for key in remote_pgc_path.keys():
+                    json_dict[key] = remote_pgc_path[key]
+            except Exception as e:
+                print (str(e))
+                pass
             data = json.dumps([json_dict])
             remote.disconnect()
         except Exception as e:
@@ -372,11 +377,16 @@ class checkHostAccess(Resource):
     def get(self):
         host = request.args.get('hostname')
         check_sudo_password = request.args.get('pwd')
-        [pgc_home, pgc_user, pgc_passwd, pgc_host, pgc_host_name, pgc_ssh_key, pgc_host_info] = get_pgc_host(host)
+        pgc_host_info = util.get_pgc_host(host)
+        pgc_host = pgc_host_info[3]
+        pgc_user = pgc_host_info[1]
+        pgc_passwd = pgc_host_info[2]
+        pgc_ssh_key = pgc_host_info[5]
+
         from PgcRemote import PgcRemote
         json_dict = {}
         try:
-            remote = PgcRemote(host, pgc_user, password=pgc_passwd, ssh_key=pgc_ssh_key, sudo_pwd=check_sudo_password)
+            remote = PgcRemote(pgc_host, pgc_user, password=pgc_passwd, ssh_key=pgc_ssh_key, sudo_pwd=check_sudo_password)
             remote.connect()
             is_sudo = remote.has_root_access()
             json_dict['state'] = "success"
@@ -399,7 +409,13 @@ class initPGComp(Resource):
         json_dict = {}
         if password == None or username == None:
             import util
-            [pgc_home, ssh_username, ssh_password, ssh_host, ssh_host_name, ssh_key] = util.get_pgc_host(host)
+            pgc_host_info = util.get_pgc_host(host)
+            ssh_host = pgc_host_info[3]
+            ssh_username = pgc_host_info[1]
+            ssh_password = pgc_host_info[2]
+            ssh_key = pgc_host_info[5]
+            sudo_pwd = pgc_host_info[7]
+            is_sudo = pgc_host_info[6]
         try:
             remote = PgcRemote(ssh_host, ssh_username, password=ssh_password, ssh_key=ssh_key)
             remote.connect()
@@ -537,7 +553,9 @@ class AddtoMetadata(Resource):
                 servergroup_id=1
                 is_rds = pg_arg.get("rds")
                 is_new =True
+                discovery_id = "BigSQL PostgreSQL"
                 if is_rds:
+                    discovery_id = "RDS"
                     servername = component_name
                     server_group_name = pg_arg.get("region", "AWS RDS")
                     rds_serverGroup = ServerGroup.query.filter_by(
@@ -617,7 +635,6 @@ class AddtoMetadata(Resource):
                             servergroup_id=servergroup_id,
                             port=component_port
                         ).first()
-                        print (servergroup_id)
                         if component_server:
                             is_new=False
                         else:
@@ -633,7 +650,7 @@ class AddtoMetadata(Resource):
                                  username=component_user,
                                  ssl_mode='prefer',
                                  comment=component_proj,
-                                 discovery_id="BigSQL PostgreSQL")
+                                 discovery_id=discovery_id)
 
                     db_session.add(svr)
                     db_session.commit()
@@ -654,14 +671,25 @@ class AddtoMetadata(Resource):
             return server_id
         result = {}
         result['error'] = 0
-        args = request.json
+        args = request.json.get("params")
 
         is_multiple = args.get("multiple")
+        remote_host = args.get("remotehost")
         if is_multiple:
             for pg_data in args.get("multiple"):
                 server_id = add_to_pginstances(pg_data)
         else:
-            server_id = add_to_pginstances(args)
+            if remote_host:
+                components_list = pgc.get_data("status", pgc_host=remote_host)
+                for c in components_list:
+                    if c.get("category") == 1 and c.get("state") != "Not Initialized":
+                        comp_args = {}
+                        comp_args['component'] = c.get("component")
+                        comp_args['port'] = c.get("port")
+                        comp_args['host'] = remote_host
+                        server_id = add_to_pginstances(comp_args)
+            else:
+                server_id = add_to_pginstances(args)
         result['sid'] = server_id
         return result
 

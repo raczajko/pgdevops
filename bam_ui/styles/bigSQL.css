@@ -7174,4 +7174,8 @@ fieldset
 .file-img{
     color:#8cbfea;
 
+.init_login fieldset {
+    padding: 10px;
+    border: 1px solid #fff !important;
+    background-color: #fff;
 }
