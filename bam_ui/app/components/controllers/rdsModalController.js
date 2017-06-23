@@ -80,7 +80,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                 args['user'] = $scope.availList[i].master_user;
                 args['host'] = $scope.availList[i].address;
                 args['component'] = $scope.availList[i].instance;
-                args['project'] = 'aws-rds';
+                args['project'] = 'aws';
                 args['rds'] = true;
                 args['region'] = $scope.availList[i].region;
                 argsJson.push(args);

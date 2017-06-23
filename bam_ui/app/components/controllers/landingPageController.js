@@ -8,7 +8,7 @@ angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubS
   var getLablist = bamAjaxCall.getCmdData('lablist');
   getLablist.then(function function_name(lablist) {
       for (var i = lablist.length - 1; i >= 0; i--) {
-          if (lablist[i].lab == 'aws-rds' && lablist[i].enabled == 'on') {
+          if (lablist[i].lab == 'aws' && lablist[i].enabled == 'on') {
               var checkInitLogin = $http.get($window.location.origin + '/check_init_login')
               checkInitLogin.then(function (arg) {
                 if (arg.data) {
