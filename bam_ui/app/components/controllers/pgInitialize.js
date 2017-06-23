@@ -108,7 +108,7 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             }else{
                 args[0]['host'] = $scope.host;                
             }
-            var addToMetaData = $http.post($window.location.origin + '/api/add_to_metadata', args[0]);
+            var addToMetaData = bamAjaxCall.postData('/api/add_to_metadata', args[0]);
             addToMetaData.then(function (argument) {
                 startComp();
                 $uibModalInstance.dismiss('cancel');                        

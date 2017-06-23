@@ -56,8 +56,18 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	    		
 	    		var jsonData =  JSON.parse(data[0]);
 	    		if(jsonData[0].state == 'completed'){
-	    			$rootScope.$emit('addedHost'); 
-	    			$uibModalInstance.dismiss('cancel');
+	    			$rootScope.$emit('addedHost');
+	    			$scope.message = "Checking if any postgres components installed ...";
+	    			var data = {
+                        remotehost:$scope.connectionName,
+                        rds : false
+                    };
+                    var addToMetaData = bamAjaxCall.postData('/api/add_to_metadata', data);
+                        addToMetaData.then(function (argument) {
+                            $rootScope.$emit('refreshPgList');
+                            $uibModalInstance.dismiss('cancel');
+                        });
+
 	    			// var listData = bamAjaxCall.getCmdData('hostcmd/list/'+$scope.hostName);
 	    			// listData.then(function(data) {
 	    			// 	$scope.tryToConnect = false;

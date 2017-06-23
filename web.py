@@ -553,7 +553,9 @@ class AddtoMetadata(Resource):
                 servergroup_id=1
                 is_rds = pg_arg.get("rds")
                 is_new =True
+                discovery_id = "BigSQL PostgreSQL"
                 if is_rds:
+                    discovery_id = "RDS"
                     servername = component_name
                     server_group_name = pg_arg.get("region", "AWS RDS")
                     rds_serverGroup = ServerGroup.query.filter_by(
@@ -633,7 +635,6 @@ class AddtoMetadata(Resource):
                             servergroup_id=servergroup_id,
                             port=component_port
                         ).first()
-                        print (servergroup_id)
                         if component_server:
                             is_new=False
                         else:
@@ -649,7 +650,7 @@ class AddtoMetadata(Resource):
                                  username=component_user,
                                  ssl_mode='prefer',
                                  comment=component_proj,
-                                 discovery_id="BigSQL PostgreSQL")
+                                 discovery_id=discovery_id)
 
                     db_session.add(svr)
                     db_session.commit()
@@ -670,14 +671,25 @@ class AddtoMetadata(Resource):
             return server_id
         result = {}
         result['error'] = 0
-        args = request.json
+        args = request.json.get("params")
 
         is_multiple = args.get("multiple")
+        remote_host = args.get("remotehost")
         if is_multiple:
             for pg_data in args.get("multiple"):
                 server_id = add_to_pginstances(pg_data)
         else:
-            server_id = add_to_pginstances(args)
+            if remote_host:
+                components_list = pgc.get_data("status", pgc_host=remote_host)
+                for c in components_list:
+                    if c.get("category") == 1 and c.get("state") != "Not Initialized":
+                        comp_args = {}
+                        comp_args['component'] = c.get("component")
+                        comp_args['port'] = c.get("port")
+                        comp_args['host'] = remote_host
+                        server_id = add_to_pginstances(comp_args)
+            else:
+                server_id = add_to_pginstances(args)
         result['sid'] = server_id
         return result
 

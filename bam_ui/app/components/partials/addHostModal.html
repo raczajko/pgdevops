@@ -1,6 +1,6 @@
 <div class="modal-header">
-    <h4 ng-if="!thirdPhase" class="modal-title"> {{type}} PGC SSH Server</h4>
-    <h4 ng-if="thirdPhase" class="modal-title"> {{type}} PGC Server</h4>
+    <h4 ng-if="!thirdPhase" class="modal-title"> {{type}} SSH Host</h4>
+    <h4 ng-if="thirdPhase" class="modal-title"> {{type}} SSH Host</h4>
 </div>
 <div class="modal-body">
     <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>
@@ -75,7 +75,7 @@
                     <div class="col-sm-8" class="form-control">
                         <input type="password" ng-model="sudo_password.text" class="form-control" placeholder="password">
                         <p ng-if="sudo_password_auth_err">{{sudo_password_auth_err}}</p>
-                        <p ng-if="root_pgc_path">Detected the PGC installed at {{ root_pgc_path }}.
+                        <p ng-if="root_pgc_path">Detected PGC at {{ root_pgc_path }}.
                             Provide the sudo password and verify if you have access.</p>
 
                     </div>
