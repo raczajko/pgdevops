@@ -145,7 +145,8 @@ class ConnStatusAPI(MethodView):
                 servergroup_id=gid,
                 user_id=current_user.id
             ).first()
-            json_dict['discovery_id']=pg_server.discovery_id
+            if pg_server:
+                json_dict['discovery_id']=pg_server.discovery_id
             try:
                 manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
                 conn = manager.connection()
