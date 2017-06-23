@@ -63,7 +63,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="box-header with-border">
-                                <div class="col-md-12"><h4><strong>Backup Server</strong></h4></div>
+                                <div class="col-md-12"><h4><strong>Target Backup Server</strong></h4></div>
                             </div>
                             <br>
                             <div class="form-group">
@@ -74,10 +74,15 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group ">
                                 <label class="col-sm-4 control-label">Directory:<span class="requiredSymbol">*</span></label>
-                                <div class="col-sm-7">
-                                    <input type="text" ng-model="backup.directory" class="form-control" placeholder="Directory" required>
+                                <div class="col-sm-6" style="padding-right: 0px;">
+                                    <input type="text" ng-model="backup.directory" class="form-control" placeholder="Directory" required/>
+                                </div>
+                                <div class="input-group-btn col-md-2" style="padding-left: 0px;">
+                                    <button class="browse btn btn-primary btn-sm" type="button" ng-click="getFiles(backup.directory,'backup')">
+                                        <i class="glyphicon glyphicon-search" style="height:20px"></i>
+                                    </button>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -131,7 +136,7 @@
                     <form class="form-horizontal" id="restoreForm" ng-submit="startRestore()">
                         <div class="col-md-6" style="border-right: 1px solid #f4f4f4;">
                             <div class="box-header with-border">
-                                <div class="col-md-12"><h4><strong> Backup Server </strong></h4></div>
+                                <div class="col-md-12"><h4><strong>Source Backup Server </strong></h4></div>
                             </div>
                             <br>
                             <div class="form-group">
@@ -143,15 +148,20 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="col-sm-4 control-label">Directory:<span class="requiredSymbol">*</span></label>
-                                <div class="col-sm-7">
+                                <label class="col-sm-4 control-label">Backup File:<span class="requiredSymbol">*</span></label>
+                                <div class="col-sm-6" style="padding-right: 0px;">
                                     <input type="text" ng-model="restore.directory" class="form-control" placeholder="Directory" required>
+                                </div>
+                                <div class="input-group-btn col-md-2" style="padding-left: 0px;">
+                                    <button class="browse btn btn-primary btn-sm" type="button" ng-click="getFiles(backup.directory,'restore')">
+                                        <i class="glyphicon glyphicon-search" style="height:20px"></i>
+                                    </button>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">Filename:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
-                                    <input type="text" ng-model="restore.filename" class="form-control" placeholder="Filename" required>
+                                    <input type="text" ng-model="restore.filename" class="form-control" placeholder="Filename">
                                 </div>
                             </div>
                             <div class="form-group">

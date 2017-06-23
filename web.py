@@ -967,7 +967,7 @@ class GetBgProcessStatus(Resource):
         proc_status['process_log_id'] = process_log_id
         proc_status['process_failed'] = False
         proc_status['process_completed'] = True
-        proc_status['process_type'] = "badger"
+        #proc_status['process_type'] = "badger"
         if proc_status.get("exit_code") is None:
             proc_status['process_completed'] = False
             if proc_status.get('pid'):
@@ -987,6 +987,20 @@ class GetBgProcessStatus(Resource):
 
 api.add_resource(GetBgProcessStatus, '/api/bgprocess_status/<string:process_log_id>')
 
+@application.route('/api/dirlist', methods = ['POST'])
+def dirlist():
+    """
+        Method to get the list of directories available in remote server or local in specific directory.
+        :return: It yields json string for the list of components.
+    """
+    data = request.json
+    pgc_host = data.get("pgcHost")
+    base_dir = data.get("baseDir","/Users/naveen/*")
+    cmd = 'dirlist "'+base_dir + '"'
+    if pgc_host not in["","localhost"]:
+        cmd = cmd + ' --host '+pgc_host
+    result = pgc.get_data(cmd)
+    return json.dumps(result)
 
 @application.route('/list')
 def list():

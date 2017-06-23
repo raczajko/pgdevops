@@ -1,0 +1,21 @@
+<div class="modal-header">
+    <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <i class="fa fa-lg fa-close cursor_pointer"></i>
+    </div>
+    <h4 class="modal-title">{{title}}</h4>
+    <a ng-repeat="path in currentPath.split('/') track by $index" ng-if="$index > 0" ng-click="navigateBack($index,currentPath)">&nbsp;/{{path}}</a>
+</div>
+<div class="modal-body browse-window">
+  <div class="alert alert-danger" role="alert" ng-if="errorMsg">
+      {{errorMsg}}
+  </div>
+  <div class="row">
+      <div ng-repeat="file in files" ng-class="(file.type == 'd') ? 'directory' : 'file'" class="col-md-312" ng-dblclick="getFiles(file.name,file.type)" style="margin: 2px 2px 6px 6px;">
+          <span ng-class="(file.type == 'd') ? 'fa fa-folder-open fa-1x directory-img' : 'fa fa-file fa-1x file-img'">&nbsp;&nbsp;{{ getName(file.name) }}</span>
+      </div>
+  </div>
+</div>
+<div class="modal-footer">
+    <button type="submit" ng-click="selectFile(currentPath)" class="btn btn-primary">Select</button>
+    <button type="submit" ng-click="cancel()" class="btn btn-danger pull-right">Cancel</button>
+</div>

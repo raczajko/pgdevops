@@ -22,7 +22,6 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         }
         if(!$scope.backupRestoreFeature){
             var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
-            debugger
                 $scope.alerts.push({
                     msg: getMessage,
                     type: 'warning'
@@ -94,19 +93,19 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
      $scope.onSSHServerChange = function(sshServer,b_type){
         if(sshServer){
             if(b_type == 'backup'){
-                var cookieVal = $cookies.get('directory_'+sshServer);
+                var cookieVal = $cookies.get('directory_backup_'+sshServer);
                 if(cookieVal){
                     $scope.backup.directory = cookieVal;
                 }else{
-                    $scope.backup.directory = "";
+                    $scope.backup.directory = "/Users/naveen/sql/";
                 }
             }
             else if(b_type == 'restore'){
-                var cookieVal = $cookies.get('directory_'+sshServer);
+                var cookieVal = $cookies.get('directory_restore_'+sshServer);
                 if(cookieVal){
                     $scope.restore.directory = cookieVal;
                 }else{
-                    $scope.restore.directory = "";
+                    $scope.restore.directory = "/Users/naveen/sql/";
                 }
             }
         }
@@ -142,7 +141,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         });
 
         $scope.startBackup = function(){
-            $cookies.put('directory_'+$scope.backup.sshserver,$scope.backup.directory);
+            $cookies.put('directory_backup_'+$scope.backup.sshserver,$scope.backup.directory);
             var args = {
                 "action":"backup",
                 "host":$scope.dbHostName,
@@ -169,7 +168,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         };
 
         $scope.startRestore = function(){
-            $cookies.put('directory_'+$scope.restore.sshserver,$scope.restore.directory);
+            $cookies.put('directory_restore_'+$scope.restore.sshserver,$scope.restore.directory);
             var args = {
                 "action":"restore",
                 "host":$scope.restore.hostname,
@@ -178,7 +177,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                 "username":$scope.restore.user,
                 "sshServer":$scope.restore.sshserver,
                 "backupDirectory":$scope.restore.directory,
-                "fileName":$scope.restore.filename,
+                "fileName":'',
                 "format":$scope.restore.format,
                 "advOptions":$scope.restore.advoptions
             };
@@ -202,6 +201,35 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         $scope.closeAlert = function (index) {
             $scope.alerts.splice(index, 1);
         };
+
+        $scope.getFiles = function (directory,type){
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/browseModel.html',
+                controller: 'browseModalController',
+            });
+            if(type == 'backup'){
+                modalInstance.directory = $scope.backup.directory;
+                modalInstance.title = "SSH Directory Selecter";
+                modalInstance.remote_host = $scope.backup.sshserver;
+            }
+            else{
+                modalInstance.directory = $scope.restore.directory;
+                modalInstance.title = "SSH File Selecter";
+                modalInstance.remote_host = $scope.restore.sshserver;
+            }
+            modalInstance.b_type = type;
+
+        };
+
+        $rootScope.$on('fillFileName', function (argument,type, filename) {
+            if(type == 'backup'){
+                $scope.backup.directory = filename;
+            }
+            else{
+                $scope.restore.directory = filename;
+            }
+
+         });
 
         //need to destroy all the subscriptions on a template before exiting it
         $scope.$on('$destroy', function () {

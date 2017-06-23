@@ -7163,3 +7163,15 @@ fieldset
     right: 35px;
   }
 }
+
+.browse-window {
+    height:450px;
+    overflow:auto;
+}
+.directory-img{
+    color : rgba(162, 161, 53, 0.88);
+}
+.file-img{
+    color:#8cbfea;
+
+}
