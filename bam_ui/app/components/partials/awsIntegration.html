@@ -1,0 +1,17 @@
+<uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert($index)" class="uib-text">{{alert.msg}}</uib-alert>
+<section class="content-header">
+     <!-- <server-info-details title="AWS Integration"></server-info-details> -->
+     <div class="components-update-title-wrapper">
+	    <form class="form form-inline ">
+	        <h1 style="float:left; display: inline; padding-right: 10px;"><strong>AWS Configuration / Integration</strong></h1>
+	    </form>
+	</div>
+    <div id="pgcInfoText" class="pull-left"></div>
+</section>
+<section class="content">
+    <div class="row">
+    	<div style="display: table; margin: 0 auto;">
+            <button type="button" id="aws-refresh" class="btn btn-default pull-right" ng-click="discoverRds('aws', 'AWS Postgres RDS')">Discover RDS Instances</button>
+        </div>
+    </div>
+</section>

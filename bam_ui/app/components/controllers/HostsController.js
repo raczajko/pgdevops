@@ -205,7 +205,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         for (var i = argument.length - 1; i >= 0; i--) {
             if(argument[i].lab == "multi-host-mgr" && argument[i].enabled == "on"){
                 $scope.betaFeature = true;
-            }else if(argument[i].lab == "aws-rds" && argument[i].enabled == "on"){
+            }else if(argument[i].lab == "aws" && argument[i].enabled == "on"){
                 $scope.awsRdsFeature = true;   
             }
         }

@@ -69,7 +69,7 @@
                         <h4><strong> AWS Postgres RDS </strong></h4>
                     </div>
                     <div class="col-md-4" style="padding: 2px;">
-                        <button type="button" id="aws-refresh" class="btn btn-default pull-right" ng-click="changeSetting('aws-rds', '', 'AWS Postgres RDS')">Discover RDS Instances</button>
+                        <button type="button" id="aws-refresh" class="btn btn-default pull-right" ng-click="changeSetting('aws', '', 'AWS Postgres RDS')">Discover RDS Instances</button>
                     </div>
                 </div>
             </div>
@@ -101,7 +101,12 @@
                                     <img class="lab-img" ng-src="{{ lab.enabled=='on' && lab.enabled_image_url || lab.disabled_image_url}}" err-src="assets/img/component-logos/no_img.png">
                                 </a>
                             </div>
-                            <div ng-if="(lab.lab!='dumprest' && lab.lab!='multi-host-mgr') || lab.enabled!='on'">
+                            <div ng-if="lab.enabled=='on' && lab.lab=='aws'">
+                                <a ui-sref="components.awsIntegration">
+                                    <img class="lab-img" ng-src="{{ lab.enabled=='on' && lab.enabled_image_url || lab.disabled_image_url}}" err-src="assets/img/component-logos/no_img.png">
+                                </a>
+                            </div>
+                            <div ng-if="(lab.lab!='dumprest' && lab.lab!='multi-host-mgr' && lab.lab!='aws') || lab.enabled!='on'">
                                 <img class="lab-img" ng-src="{{ lab.enabled=='on' && lab.enabled_image_url || lab.disabled_image_url}}" err-src="assets/img/component-logos/no_img.png">
                             </div>
                         </div>
@@ -114,7 +119,10 @@
                                     <strong ng-if="lab.enabled=='on' && lab.lab=='multi-host-mgr'">
                                         <a ui-sref="components.hosts">{{lab.disp_name}}</a>
                                     </strong>
-                                    <strong ng-if="(lab.lab!='dumprest' && lab.lab!='multi-host-mgr') || lab.enabled!='on'">{{lab.disp_name}}</strong>
+                                    <strong ng-if="lab.enabled=='on' && lab.lab=='aws'">
+                                        <a ui-sref="components.awsIntegration">{{lab.disp_name}}</a>
+                                    </strong>
+                                    <strong ng-if="(lab.lab!='dumprest' && lab.lab!='multi-host-mgr' &&  lab.lab!='aws') || lab.enabled!='on'">{{lab.disp_name}}</strong>
                                 </div>
                                 <div class="labDescription">{{lab.credit_to}}</div>
                             </div>

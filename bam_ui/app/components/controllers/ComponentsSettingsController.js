@@ -175,7 +175,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             $scope.lablist = argument;
             for (var i = $scope.lablist.length - 1; i >= 0; i--) {
                 $scope.lablist[i]['markdownDesc'] = $sce.trustAsHtml($scope.lablist[i].short_desc);
-                if ($scope.lablist[i].lab == 'aws-rds' && $scope.lablist[i].enabled == 'on') {
+                if ($scope.lablist[i].lab == 'aws' && $scope.lablist[i].enabled == 'on') {
                     $scope.awsRdsTile = true;
                 }
             }
@@ -184,10 +184,10 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
 
     $scope.changeSetting = function (settingName, value, disp_name) {
         var getLablist = bamAjaxCall.getCmdData('lablist');
-        if (settingName == 'aws-rds' && value == 'off') {
+        if (settingName == 'aws' && value == 'off') {
             $scope.awsRdsTile = false;
         }
-        if (settingName == 'aws-rds' && (value == 'on' || value=='')) {
+        if (settingName == 'aws' && (value == 'on' || value=='')) {
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/rdsModal.html',
                 controller: 'rdsModalController',
