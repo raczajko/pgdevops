@@ -46,8 +46,12 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         $scope.loading = true;
         var connStatus = bamAjaxCall.getData(connect_api_url, data);
         connStatus.then(function (data) {
+            $scope.activeOverview = true;
             if (data.discovery_id=="RDS") {
                 session.call('com.bigsql.rdsInfo', [$scope.userInfo.email, $scope.currentPG.server_group, $scope.currentPG.server_name]);
+                $scope.showRDSdetails = true;
+            }else{
+                $scope.showRDSdetails = false;
             }
             if (data.state == 'success') {
                 $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
@@ -69,6 +73,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     }
     
     $scope.connChange = function (argument) {
+            $scope.loading = true;
             var validConnection = $($scope.pgList).filter(function(i,n){ return n.server_name == argument ;})
             if (validConnection.length == 0) {
                argument = $scope.pgList[0].server_name; 
@@ -149,7 +154,6 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                 
                 if ($scope.rdsInfo.length > 0) {
                     $scope.rdsInfoTabActive = true;
-                    $scope.activeOverview = false;
                 }
             }
             $scope.$apply();
