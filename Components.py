@@ -416,6 +416,23 @@ class Components(ComponentAction):
         returnValue(1)
 
     @inlineCallbacks
+    def rdsInfo(self, email, region, instance):
+        """
+        Method to get rds Instance Info
+        """
+        pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json --verbose --email " + email + " --region " + region + " --instance " + instance
+        process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        self.process = process
+        print pgcCmd
+        for line in iter(process.stdout.readline, ''):
+            ln = (line).rstrip('\n')
+            print ln
+            self.session.publish('com.bigsql.onRdsInfo', ln)
+            yield sleep(0.001)
+        self.process = ''
+        returnValue(1)
+
+    @inlineCallbacks
     def pgList(self, mail):
         """
         Method to get the pglist 

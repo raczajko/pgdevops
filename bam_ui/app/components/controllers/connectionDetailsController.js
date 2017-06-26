@@ -46,6 +46,13 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         $scope.loading = true;
         var connStatus = bamAjaxCall.getData(connect_api_url, data);
         connStatus.then(function (data) {
+            $scope.activeOverview = true;
+            if (data.discovery_id=="RDS") {
+                session.call('com.bigsql.rdsInfo', [$scope.userInfo.email, $scope.currentPG.server_group, $scope.currentPG.server_name]);
+                $scope.showRDSdetails = true;
+            }else{
+                $scope.showRDSdetails = false;
+            }
             if (data.state == 'success') {
                 $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
             }else{
@@ -66,6 +73,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     }
     
     $scope.connChange = function (argument) {
+            $scope.loading = true;
             var validConnection = $($scope.pgList).filter(function(i,n){ return n.server_name == argument ;})
             if (validConnection.length == 0) {
                argument = $scope.pgList[0].server_name; 
@@ -77,6 +85,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
             $scope.selectConn = argument;
             for (var i = $scope.pgList.length - 1; i >= 0; i--) {
                 if($scope.pgList[i].server_name == argument){
+                    $scope.currentPG = $scope.pgList[i];
                     $cookies.put('openConnection', argument);
                     $scope.loading = false;
                     $scope.connData = $scope.pgList[i];
@@ -128,6 +137,26 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
             $scope.loading = false;
             $scope.$apply();
 
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
+        session.subscribe("com.bigsql.onRdsInfo", function (data) {
+            var data = JSON.parse(data[0]);
+            if (data[0].state == "completed") {
+                $scope.rdsInfo = data[0].data[0];
+                if ($scope.rdsInfo.create_time) {
+                    $scope.rdsInfo.create_time = new Date($scope.rdsInfo.create_time);
+                }
+                if ($scope.rdsInfo.latest_restorable) {
+                    $scope.rdsInfo.latest_restorable = new Date($scope.rdsInfo.latest_restorable);
+                }
+                
+                if ($scope.rdsInfo.length > 0) {
+                    $scope.rdsInfoTabActive = true;
+                }
+            }
+            $scope.$apply();
         }).then(function (subscription) {
             subscriptions.push(subscription);
         });
