@@ -143,6 +143,8 @@ class AppSession(ApplicationSession):
 
         self.register(components.rdsList, 'com.bigsql.rdsList')
 
+        self.register(components.rdsInfo, 'com.bigsql.rdsInfo')
+
         self.register(components.pgList, 'com.bigsql.pgList')
 
         self.register(monitoring.activity, 'com.bigsql.activity')
