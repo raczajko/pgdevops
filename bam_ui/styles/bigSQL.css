@@ -6741,7 +6741,7 @@ span.new-comp-wrapper {
     margin-left: -2px;
     margin-right: 7px;
   }
-  
+
   .bgs-pgbadger-menu {
     background-image: url('../assets/img/pgbadger15.png');
     background-repeat: no-repeat;
@@ -7176,14 +7176,25 @@ fieldset
     height:450px;
     overflow:auto;
 }
+
 .directory-img{
     color : rgba(162, 161, 53, 0.88);
 }
+
 .file-img{
     color:#8cbfea;
+}
 
 .init_login fieldset {
     padding: 10px;
     border: 1px solid #fff !important;
     background-color: #fff;
+}
+
+#pgc-info-box > .form-group > .info-text > .greenText {
+  color: #008000;
+}
+
+#pgc-info-box > .form-group > .info-text > .redText {
+  color: red;
 }
