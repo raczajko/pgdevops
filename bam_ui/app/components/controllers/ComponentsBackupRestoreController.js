@@ -97,7 +97,8 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                 if(cookieVal){
                     $scope.backup.directory = cookieVal;
                 }else{
-                    $scope.backup.directory = "/Users/naveen/sql/";
+                    var defaultPath = $scope.getSSHDefault(sshServer);
+                    $scope.backup.directory = $scope.getSSHDefault(sshServer);
                 }
             }
             else if(b_type == 'restore'){
@@ -105,10 +106,20 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                 if(cookieVal){
                     $scope.restore.directory = cookieVal;
                 }else{
-                    $scope.restore.directory = "/Users/naveen/sql/";
+                    $scope.restore.directory = $scope.getSSHDefault(sshServer);
                 }
             }
         }
+     };
+
+     $scope.getSSHDefault = function(sshServer){
+        if(sshServer){
+            for(var i = 0; i < $scope.hosts.length; i++){
+                if(sshServer == $scope.hosts[i].name || ($scope.hosts[i].name == null && sshServer == $scope.hosts[i].host))
+                    return $scope.hosts[i].hostInfo['home'];
+            }
+        }
+        return "";
      };
 
      $scope.restoreDataBaseClick = function(){

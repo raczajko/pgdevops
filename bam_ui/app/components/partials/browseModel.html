@@ -11,7 +11,7 @@
   </div>
   <div class="row">
       <div ng-repeat="file in files" ng-class="(file.type == 'd') ? 'directory' : 'file'" class="col-md-312" ng-dblclick="getFiles(file.name,file.type)" style="margin: 2px 2px 6px 6px;">
-          <span ng-class="(file.type == 'd') ? 'fa fa-folder-open fa-1x directory-img' : 'fa fa-file fa-1x file-img'">&nbsp;&nbsp;{{ getName(file.name) }}</span>
+          <span ng-class="(file.type == 'd') ? 'fa fa-folder-open fa-1x directory-img' : 'fa fa-file fa-1x file-img'"></span>&nbsp;&nbsp;{{ getName(file.name) }}
       </div>
   </div>
 </div>
