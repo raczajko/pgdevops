@@ -299,7 +299,10 @@
                                         </div>
                                         <div class="form-group">
                                             <label class="col-sm-6 info-label">IOPS </label>
-                                            <span class="col-sm-6 info-text">
+                                            <span class="col-sm-6 info-text" ng-if="rdsInfo.iops==''">
+                                                disabled
+                                            </span>
+                                            <span class="col-sm-6 info-text" ng-if="rdsInfo.iops!=''">
                                                 {{rdsInfo.iops}}
                                             </span>
                                         </div>
