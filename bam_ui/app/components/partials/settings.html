@@ -59,7 +59,7 @@
                     </div>
                 </div>
                 <div class="box-body">
-                    <p class="col-md-12 col-xs-12 col-sm-12" ng-if="lastUpdateStatus" id="last-update-status">The last time you checked for updates was at {{lastUpdateStatus}}</p>
+                    <p class="col-md-12 col-xs-12 col-sm-12" ng-if="pgcInfo.last_update_readable" id="last-update-status">The last time you checked for updates was {{pgcInfo.last_update_readable}} ago </p>
                     <p class="col-md-12 col-xs-12 col-sm-12" ng-if="!lastUpdateStatus" ng-bind="lastUpdateNone"></p>
                 </div>
             </div>
