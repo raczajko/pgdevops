@@ -3,7 +3,7 @@
         <i class="fa fa-lg fa-close cursor_pointer"></i>
     </div>
     <h4 class="modal-title">{{title}}</h4>
-    <a ng-repeat="path in currentPath.split('/') track by $index" ng-if="$index > 0" ng-click="navigateBack($index,currentPath)">&nbsp;/{{path}}</a>
+    {{userName}}@{{hostIp}}:<a ng-repeat="path in currentPath.split('/') track by $index" ng-if="$index > 0" ng-click="navigateBack($index,currentPath)">&nbsp;/{{path}}</a>
 </div>
 <div class="modal-body browse-window">
   <div class="alert alert-danger" role="alert" ng-if="errorMsg">

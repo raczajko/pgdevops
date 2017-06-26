@@ -4,6 +4,8 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
     $scope.title = $uibModalInstance.title;
     $scope.type = $uibModalInstance.b_type;
     $scope.remoteHost = $uibModalInstance.remote_host;
+    $scope.hostIp = $uibModalInstance.host_ip;
+    $scope.userName = $uibModalInstance.user_name;
     $scope.cancel = function () {
             $uibModalInstance.dismiss('cancel');
     };

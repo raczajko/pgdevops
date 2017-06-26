@@ -98,7 +98,13 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                     $scope.backup.directory = cookieVal;
                 }else{
                     var defaultPath = $scope.getSSHDefault(sshServer);
-                    $scope.backup.directory = $scope.getSSHDefault(sshServer);
+                    var hostInfo = $scope.getSSHDefault(sshServer);
+                    if(hostInfo){
+                        $scope.backup.directory = hostInfo['hostInfo']["home"];
+                    }
+                    else{
+                        $scope.backup.directory = "";
+                    }
                 }
             }
             else if(b_type == 'restore'){
@@ -106,7 +112,11 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                 if(cookieVal){
                     $scope.restore.directory = cookieVal;
                 }else{
-                    $scope.restore.directory = $scope.getSSHDefault(sshServer);
+                    var hostInfo = $scope.getSSHDefault(sshServer);
+                    if(hostInfo)
+                        $scope.restore.directory = hostInfo['hostInfo']["home"];
+                    else
+                        $scope.restore.directory = "";
                 }
             }
         }
@@ -116,10 +126,10 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         if(sshServer){
             for(var i = 0; i < $scope.hosts.length; i++){
                 if(sshServer == $scope.hosts[i].name || ($scope.hosts[i].name == null && sshServer == $scope.hosts[i].host))
-                    return $scope.hosts[i].hostInfo['home'];
+                    return $scope.hosts[i];
             }
         }
-        return "";
+        return null;
      };
 
      $scope.restoreDataBaseClick = function(){
@@ -222,11 +232,21 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                 modalInstance.directory = $scope.backup.directory;
                 modalInstance.title = "SSH Directory Selecter";
                 modalInstance.remote_host = $scope.backup.sshserver;
+                var hostInfo = $scope.getSSHDefault($scope.backup.sshserver);
+                if(hostInfo){
+                    modalInstance.user_name = hostInfo['hostInfo']['user'];
+                    modalInstance.host_ip = hostInfo['host'];
+                }
             }
             else{
                 modalInstance.directory = $scope.restore.directory;
                 modalInstance.title = "SSH File Selecter";
                 modalInstance.remote_host = $scope.restore.sshserver;
+                var hostInfo = $scope.getSSHDefault($scope.backup.sshserver);
+                if(hostInfo){
+                    modalInstance.user_name = hostInfo['hostInfo']['user'];
+                    modalInstance.host_ip = hostInfo['host'];
+                }
             }
             modalInstance.b_type = type;
 
