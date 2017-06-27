@@ -32,10 +32,24 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     $rootScope.$on('updateVersion', function (argument, ver) {
         $scope.connVersion = ver;
         $scope.connectionStatus = true;
+        getUptime();
     });
 
     $scope.openPasswordModal = function (argument) {
         $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
+    }
+
+    function getUptime(argument) {
+        var connect_api_url = "/pgstats/uptime/";
+        var data = {
+             sid:$scope.connData.sid,
+             gid:$scope.connData.gid
+            };
+        var uptimeData = bamAjaxCall.getData(connect_api_url, data);
+        uptimeData.then(function (argument) {
+            debugger
+            $scope.up_time = argument.uptime;
+        })
     }
 
     function checkConnection(sid, gid) {
@@ -47,6 +61,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         $scope.loading = true;
         var connStatus = bamAjaxCall.getData(connect_api_url, data);
         connStatus.then(function (data) {
+            $scope.up_time = '';
             if (data.discovery_id=="RDS") {
                 session.call('com.bigsql.rdsInfo', [$scope.userInfo.email, $scope.currentPG.server_group, $scope.currentPG.server_name]);
                 $scope.showRDSdetails = true;
@@ -55,6 +70,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
             }
             if (data.state == 'success') {
                 $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
+                getUptime();
             }else{
                 var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
                 statusData.then(function (data){
@@ -244,6 +260,13 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                 };
             }
         })
+    }
+
+    $scope.changeOption = function (argument) {
+        if (argument=='') {
+            argument = 5000;
+        }
+        $rootScope.$emit('changeRefInterval', argument, $scope.connData.sid, $scope.connData.gid);
     }
 
     $scope.activityTabEvent = function () {

@@ -35,12 +35,12 @@
                         <li class="list-group-item">
                             <span class="pull-left"><b>Version</b></span> <span class="pull-right" ng-bind="connVersion" id="conn_version"></span>
                         </li>
-                        <li class="list-group-item">
-                            <span class="pull-left"><b>Uptime</b></span> <span class="pull-right" ng-bind="connData.up_time" id="conn_uptime"></span>
+                        <li class="list-group-item" ng-if="up_time">
+                            <span class="pull-left"><b>Uptime</b></span> <span class="pull-right" ng-bind="up_time" id="conn_uptime"></span>
                         </li>
                         <li class="list-group-item" id="li-pointer">
                             <span class="pull-left"><b>Refresh Interval </b>(sec)</span>
-                            <span class="pull-right"><select class="form-control" id="select-refresh-interval" ng-change="changeOption()" ng-model="opt.interval">
+                            <span class="pull-right"><select class="form-control" id="select-refresh-interval" ng-change="changeOption(opt.interval)" ng-model="opt.interval">
                             <option ng-repeat="option in optionList" value="{{option.value}}">{{option.label}}</option></select>
                             </span>
                         </li>

@@ -43,4 +43,4 @@ activity_query = """SELECT datname, state, pid, usename, client_addr::varchar,
                     FROM pg_stat_activity
                     ORDER BY 8 DESC"""
 
-up_time_query = "SELECT now() - pg_postmaster_start_time()"
+up_time_query = "SELECT extract(epoch from now())-extract(epoch from pg_postmaster_start_time())"

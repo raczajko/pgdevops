@@ -3,6 +3,7 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
     $scope.showGraphs = false;
     var cancelGraphsTimeout;
     $scope.connecting = false;
+    $scope.polling_inteval = 5000;
 
     $scope.transctionsPerSecondChart = {
         chart: {
@@ -204,7 +205,7 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
                         previous_data[sid]["rollback"]=argument.xact_rollback;
 
                     }
-                    cancelGraphsTimeout = $timeout(function() {stats(sid, gid)}, 5000);
+                    cancelGraphsTimeout = $timeout(function() {stats(sid, gid)}, $scope.polling_inteval);
             });
 
     };
@@ -265,7 +266,7 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
                         $scope.need_pwd=false;
                         $rootScope.$emit('updateVersion', argument.version.replace("PostgreSQL ", ""));
 
-                        $timeout(function() {stats(sid, gid)}, 2000);
+                        $timeout(function() {stats(sid, gid)}, $scope.polling_inteval);
                     }
             });
     };    
@@ -280,6 +281,15 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
         })
     }
 
+    $rootScope.$on('changeRefInterval', function (event, argument, sid, gid) {
+         $timeout.cancel(cancelGraphsTimeout);
+         $scope.polling_inteval = argument;
+         cancelGraphsTimeout = $timeout(function() {stats(sid, gid)}, $scope.polling_inteval);
+    })
+
+    $rootScope.$on('cancelPGStatusCall', function (argument) {
+        $scope.closeAllServers();
+    })
 
     $rootScope.$on('stopGraphCalls', function (argument) {
        $timeout.cancel(cancelGraphsTimeout); 

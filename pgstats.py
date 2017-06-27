@@ -254,7 +254,7 @@ class UptimeAPI(MethodView):
                 uptime = result[0]
                 cur.close()
                 import util
-                up_time = util.get_readable_time_diff(str(uptime.seconds), precision=2)
+                up_time = util.get_readable_time_diff(str(uptime).split('.')[0], precision=2)
                 json_dict['uptime'] = up_time
             except Exception as e:
                 errmsg = "ERROR: " + str(e)
