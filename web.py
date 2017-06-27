@@ -934,15 +934,15 @@ class GetBgProcessList(Resource):
                                         p.pid)
             if os.path.exists(proc_log_dir):
                 proc_status = get_process_status(proc_log_dir)
-                '''if p.acknowledge or proc_status.get("end_time") or p.end_time:
+                if p.acknowledge or proc_status.get("end_time") or p.end_time:
                     clean_up_old_process=True
-                    #db_session.delete(p)
+                    db_session.delete(p)
                     try:
                         import shutil
                         shutil.rmtree(proc_log_dir, True)
                     except Exception as e:
                         pass
-                    continue'''
+                    continue
                 proc_status['process_failed'] = False
                 proc_status['process_completed'] = True
                 if proc_status.get("exit_code") is None:
