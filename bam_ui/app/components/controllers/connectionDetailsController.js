@@ -8,7 +8,8 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     $scope.tpsGraph = {open:true} ;
     $scope.connGraph = {open:true};
     $scope.rowsGraph = {open:false}; 
-    $scope.connectionStatus = false; 
+    $scope.connectionStatus = false;
+    $scope.activeOverview = {show : true}; 
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -46,7 +47,6 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         $scope.loading = true;
         var connStatus = bamAjaxCall.getData(connect_api_url, data);
         connStatus.then(function (data) {
-            $scope.activeOverview = true;
             if (data.discovery_id=="RDS") {
                 session.call('com.bigsql.rdsInfo', [$scope.userInfo.email, $scope.currentPG.server_group, $scope.currentPG.server_name]);
                 $scope.showRDSdetails = true;
@@ -73,6 +73,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     }
     
     $scope.connChange = function (argument) {
+            $scope.activeOverview.show = true;
             $scope.loading = true;
             var validConnection = $($scope.pgList).filter(function(i,n){ return n.server_name == argument ;})
             if (validConnection.length == 0) {
@@ -90,7 +91,6 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                     $scope.loading = false;
                     $scope.connData = $scope.pgList[i];
                     checkConnection($scope.pgList[i].sid, $scope.pgList[i].gid);
-                    $scope.activeOverview = true;
                 }
             }
     }
