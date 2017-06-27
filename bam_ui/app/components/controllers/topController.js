@@ -12,6 +12,7 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
     var topRefresh;
     $scope.hostActive = {state: true};
     var previousTopData = "";
+    $scope.loading = true;
 
     function getTopCmdData() {
 
@@ -30,6 +31,7 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
         }
 
         infoData.then(function (data) {
+            $scope.loading = false;
             if (data.length > 0 && data[0].state) {
                 $scope.errorMsg = data[0].msg;
                 $scope.hostActive.state = false;
