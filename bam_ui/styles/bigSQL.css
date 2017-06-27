@@ -7198,3 +7198,16 @@ fieldset
 #pgc-info-box > .form-group > .info-text > .redText {
   color: red;
 }
+
+.greenText {
+  color: #008000;
+}
+
+.redText {
+  color: red;
+}
+
+.pg-conn-details-tab {
+  margin-left: 40%;
+  margin-top: 10%;
+}

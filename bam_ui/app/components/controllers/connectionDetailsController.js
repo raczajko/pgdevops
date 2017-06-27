@@ -73,7 +73,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     }
     
     $scope.connChange = function (argument) {
-            $scope.activeOverview.show = true;
+            $scope.rdsDetailsLoading = true;
             $scope.loading = true;
             var validConnection = $($scope.pgList).filter(function(i,n){ return n.server_name == argument ;})
             if (validConnection.length == 0) {
@@ -143,17 +143,12 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
 
         session.subscribe("com.bigsql.onRdsInfo", function (data) {
             var data = JSON.parse(data[0]);
+            $scope.rdsDataNotFound = false;
             if (data[0].state == "completed") {
                 $scope.rdsInfo = data[0].data[0];
-                if ($scope.rdsInfo.create_time) {
-                    $scope.rdsInfo.create_time = new Date($scope.rdsInfo.create_time);
-                }
-                if ($scope.rdsInfo.latest_restorable) {
-                    $scope.rdsInfo.latest_restorable = new Date($scope.rdsInfo.latest_restorable);
-                }
-                
-                if ($scope.rdsInfo.length > 0) {
-                    $scope.rdsInfoTabActive = true;
+                $scope.rdsDetailsLoading = false;
+                if (data[0].data.length < 1) {
+                    $scope.rdsDataNotFound = true;
                 }
             }
             $scope.$apply();
