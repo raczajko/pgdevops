@@ -283,8 +283,10 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
 
     $rootScope.$on('changeRefInterval', function (event, argument, sid, gid) {
          $timeout.cancel(cancelGraphsTimeout);
+         if (argument != '0') {
          $scope.polling_inteval = argument;
          cancelGraphsTimeout = $timeout(function() {stats(sid, gid)}, $scope.polling_inteval);
+         }
     })
 
     $rootScope.$on('cancelPGStatusCall', function (argument) {
