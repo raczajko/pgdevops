@@ -894,7 +894,8 @@ class BackupRestoreDatabase(Resource):
                 try:
                     j = Process(
                         pid=int(result["process_log_id"]), command=result['cmd'],
-                        logdir=result["process_log_id"], desc=dumps("Backup Database" if args['action']=='backup' else "Restore Database"), user_id=current_user.id
+                        logdir=result["process_log_id"], desc=dumps("Backup Database" if args['action']=='backup' else "Restore Database"),
+                        user_id=current_user.id
                     )
                     db_session.add(j)
                     db_session.commit()
@@ -920,7 +921,10 @@ class GetBgProcessList(Resource):
     @login_required
     def get(self, process_type=None):
         result={}
-        processes = Process.query.filter_by(user_id=current_user.id, desc=dumps("pgBadger Report"))
+        if process_type:
+            processes = Process.query.filter_by(user_id=current_user.id, desc=dumps(process_type)).all()
+        else:
+            processes = Process.query.filter_by(user_id=current_user.id).all()
         clean_up_old_process=False
         for p in processes:
             result['process'] = []
