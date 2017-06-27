@@ -52,6 +52,22 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         }
      });
 
+     function checkBGprocess(argument) {
+        var getbgProcess = bamAjaxCall.getCmdData('bgprocess_list/Backup Database');
+        getbgProcess.then(function (argument) {
+            if (argument.process) {
+                for (var i = argument.process.length - 1; i >= 0; i--) {
+                    if (!argument.process[i].process_completed) {
+                        $scope.showBackupBgProcess = true;
+                        $rootScope.$emit('backgroundProcessStarted', argument.process[i].process_log_id);
+                    }
+                }
+            }
+        })
+    }
+
+    checkBGprocess();
+
      $scope.onFormatChange = function(format, b_type){
         if(format == 'p' && b_type == 'restore'){
             $scope.restore.advoptions = "";

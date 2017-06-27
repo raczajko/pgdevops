@@ -832,7 +832,7 @@ class GenerateBadgerReports(Resource):
                 try:
                     j = Process(
                         pid=int(report_file["process_log_id"]), command=report_file['cmd'],
-                        logdir=process_log_dir, desc=dumps("pgBadger Report"), user_id=current_user.id
+                        logdir=process_log_dir, desc="pgBadger Report", user_id=current_user.id
                     )
                     db_session.add(j)
                     db_session.commit()
@@ -895,7 +895,7 @@ class BackupRestoreDatabase(Resource):
                 try:
                     j = Process(
                         pid=int(result["process_log_id"]), command=result['cmd'],
-                        logdir=result["process_log_id"], desc=dumps("Backup Database" if args['action']=='backup' else "Restore Database"),
+                        logdir=result["process_log_id"], desc="Backup Database",# if args['action']=='backup' else "Restore Database",
                         user_id=current_user.id
                     )
                     db_session.add(j)
@@ -923,7 +923,7 @@ class GetBgProcessList(Resource):
     def get(self, process_type=None):
         result={}
         if process_type:
-            processes = Process.query.filter_by(user_id=current_user.id, desc=dumps(process_type)).all()
+            processes = Process.query.filter_by(user_id=current_user.id, desc=process_type).all()
         else:
             processes = Process.query.filter_by(user_id=current_user.id).all()
         clean_up_old_process=False
@@ -934,15 +934,15 @@ class GetBgProcessList(Resource):
                                         p.pid)
             if os.path.exists(proc_log_dir):
                 proc_status = get_process_status(proc_log_dir)
-                if p.acknowledge or proc_status.get("end_time") or p.end_time:
+                '''if p.acknowledge or proc_status.get("end_time") or p.end_time:
                     clean_up_old_process=True
-                    db_session.delete(p)
+                    #db_session.delete(p)
                     try:
                         import shutil
                         shutil.rmtree(proc_log_dir, True)
                     except Exception as e:
                         pass
-                    continue
+                    continue'''
                 proc_status['process_failed'] = False
                 proc_status['process_completed'] = True
                 if proc_status.get("exit_code") is None:
