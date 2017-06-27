@@ -411,6 +411,7 @@ class initPGComp(Resource):
             import util
             pgc_host_info = util.get_pgc_host(host)
             ssh_host = pgc_host_info[3]
+            ssh_host_name = pgc_host_info[4]
             ssh_username = pgc_host_info[1]
             ssh_password = pgc_host_info[2]
             ssh_key = pgc_host_info[5]
