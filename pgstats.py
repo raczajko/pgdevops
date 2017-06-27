@@ -231,6 +231,40 @@ class StatsAPI(MethodView):
 pgstats.add_url_rule('/stats/', view_func=StatsAPI.as_view('stats'))
 
 
+class UptimeAPI(MethodView):
+    def get(self):
+        json_dict = {}
+        if not current_user:
+            json_dict['state'] = "error"
+            json_dict['msg'] = "Access denied."
+            return jsonify(json_dict)
+        sid = request.args.get('sid')
+        gid = request.args.get('gid')
+        manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
+        conn = manager.connection()
+
+        json_dict = {}
+        if not conn.connected():
+            return jsonify({'msg': 'Connection is closed.', 'state':"error"})
+        else:
+            try:
+                cur = conn.conn.cursor()
+                cur.execute(up_time_query)
+                result = cur.fetchone()
+                uptime = result[0]
+                cur.close()
+                import util
+                up_time = util.get_readable_time_diff(str(uptime.seconds), precision=2)
+                json_dict['uptime'] = up_time
+            except Exception as e:
+                errmsg = "ERROR: " + str(e)
+                json_dict['state'] = "error"
+                json_dict['msg'] = errmsg
+            return jsonify(json_dict)
+
+pgstats.add_url_rule('/uptime/', view_func=UptimeAPI.as_view('uptime'))
+
+
 class ActivityAPI(MethodView):
 
     def get(self):
