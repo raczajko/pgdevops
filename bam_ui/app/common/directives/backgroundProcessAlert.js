@@ -47,7 +47,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                         $scope.generatedFileName = '';
                         $scope.procCompleted = false;
                         $scope.procStatus = "Running...."
-                        setTimeout(function() {getBGStatus(process_log_id) },5000);
+                        setTimeout(function() {getBGStatus(process_log_id) },2000);
                     }
 
                     $timeout(function() {
@@ -63,7 +63,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
             document.getElementById('btask-tab-pullout').onclick = function() {
               this.__toggle = !this.__toggle;
               var target = document.getElementById('btask-console-hidden');
-              if( this.__toggle) {
+              if( !this.__toggle) {
                   target.style.display = "block";
                   this.firstElementChild.classList.remove("fa-chevron-left");
                   this.firstElementChild.classList.add("fa-chevron-right");

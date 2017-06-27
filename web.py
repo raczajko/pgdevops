@@ -748,7 +748,7 @@ def get_process_status(process_log_dir):
                 out_data_content = out_data.readlines()
                 out_data_content = "".join(out_data_content).replace("\r", "\n").strip()
             if err_data_content and out_data_content:
-                process_dict['out_data'] = '\n'.join([err_data_content, out_data_content])
+                process_dict['out_data'] = '\n'.join([out_data_content, err_data_content])
             elif err_data_content:
                 process_dict['out_data'] = err_data_content
             elif out_data_content:

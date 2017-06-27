@@ -1,8 +1,10 @@
 <div class="modal-header">
-    <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
-        <i class="fa fa-lg fa-close cursor_pointer"></i>
+    <div  class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <button type="submit" ng-click="selectFile(currentPath)" class="btn btn-primary">Select</button>&nbsp;&nbsp;&nbsp;
+        <i class="fa fa-lg fa-close cursor_pointer" ng-click="cancel()"></i>
     </div>
     <h4 class="modal-title">{{title}}</h4>
+
     {{userName}}@{{hostIp}}:<a ng-repeat="path in currentPath.split('/') track by $index" ng-if="$index > 0" ng-click="navigateBack($index,currentPath)" style="cursor: pointer;">&nbsp;/{{path}}</a>
 </div>
 <div class="modal-body browse-window">
@@ -16,6 +18,6 @@
   </div>
 </div>
 <div class="modal-footer">
-    <button type="submit" ng-click="selectFile(currentPath)" class="btn btn-primary">Select</button>
-    <button type="submit" ng-click="cancel()" class="btn btn-danger pull-right">Cancel</button>
+    <!--<button type="submit" ng-click="selectFile(currentPath)" class="btn btn-primary">Select</button>
+    <button type="submit" ng-click="cancel()" class="btn btn-danger pull-right">Cancel</button>-->
 </div>
