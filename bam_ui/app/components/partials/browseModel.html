@@ -3,15 +3,15 @@
         <i class="fa fa-lg fa-close cursor_pointer"></i>
     </div>
     <h4 class="modal-title">{{title}}</h4>
-    {{userName}}@{{hostIp}}:<a ng-repeat="path in currentPath.split('/') track by $index" ng-if="$index > 0" ng-click="navigateBack($index,currentPath)">&nbsp;/{{path}}</a>
+    {{userName}}@{{hostIp}}:<a ng-repeat="path in currentPath.split('/') track by $index" ng-if="$index > 0" ng-click="navigateBack($index,currentPath)" style="cursor: pointer;">&nbsp;/{{path}}</a>
 </div>
 <div class="modal-body browse-window">
   <div class="alert alert-danger" role="alert" ng-if="errorMsg">
       {{errorMsg}}
   </div>
   <div class="row">
-      <div ng-repeat="file in files" ng-class="(file.type == 'd') ? 'directory' : 'file'" class="col-md-312" ng-dblclick="getFiles(file.name,file.type)" style="margin: 2px 2px 6px 6px;">
-          <span ng-class="(file.type == 'd') ? 'fa fa-folder-open fa-1x directory-img' : 'fa fa-file fa-1x file-img'"></span>&nbsp;&nbsp;{{ getName(file.name) }}
+      <div ng-repeat="file in files" ng-class="(file.type == 'd') ? 'directory' : 'file'" class="col-md-12" ng-dblclick="getFiles(file.name,file.type)" style="margin: 2px 2px 6px 6px;cursor: default;">
+          <div class="col-sm-8"><span ng-class="(file.type == 'd') ? 'fa fa-folder-open fa-1x directory-img' : 'fa fa-file fa-1x file-img'"></span>&nbsp;&nbsp;{{ getName(file.name) }}</div><div class="col-sm-4"> {{ file.last_seen }}</div>
       </div>
   </div>
 </div>
