@@ -177,6 +177,50 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         });
         });
 
+        $scope.checkFileExistense = function(){
+            if(!$scope.backup.directory.endsWith('/')){
+                $scope.backup.directory = $scope.backup.directory + '/';
+            }
+            var filename = $scope.backup.filename;
+            if(filename.lastIndexOf('.') == -1){
+              filename = filename + ".sql";
+            }
+            var exists = false;
+            var args = {
+               "baseDir": $scope.backup.directory + filename,
+               "pgcHost": $scope.backup.sshserver
+            };
+            var fileData = {}
+            var dirlist = $http.post($window.location.origin + '/api/dirlist', args);
+            dirlist.then(function (argument) {
+                for (var i = 0; i < argument.data[0].data.length ; i++) {
+                    if(argument.data[0].data[i].name == $scope.backup.directory + filename){
+                        exists = true;
+                        fileData['name'] = filename;
+                        fileData['last_accessed'] = argument.data[0].data[i].last_accessed;
+                    }
+                }
+                if(exists){
+                    //var confirmStatus = confirm("Do you want to override !");
+                    var modalInstance = $uibModal.open({
+                        templateUrl: '../app/components/partials/confirmOverrideModel.html',
+                        controller: 'confirmOverrideModalController',
+                    });
+
+                    var returnHtmlText = "<div class='row'>";
+                    returnHtmlText = returnHtmlText + "<div class='col-md-12'>";
+                    returnHtmlText = returnHtmlText + "<div class='col-sm-8' style='padding-left: 20px;'><b>Name</b></div><div class='col-sm-4' style='padding-left: 20px;'><b>Last Accessed</b></div></div>";
+                    returnHtmlText = returnHtmlText + "<div class='col-md-12' style='margin: 2px 2px 6px 6px;cursor: default;'>";
+                    returnHtmlText = returnHtmlText + "<div class='col-sm-8'><span class='fa fa-file fa-1x file-img'></span>&nbsp;&nbsp;"+fileData['name']+"</div><div class='col-sm-4'>"+fileData['last_accessed']+"</div></div>";
+                    modalInstance.fileData = $sce.trustAsHtml(returnHtmlText);
+                    modalInstance.modalTitle = $sce.trustAsHtml("<b> Are you sure do you want to override?</b><br>");
+                }
+                else{
+                    $scope.startBackup();
+                }
+            });
+
+        }
         $scope.startBackup = function(){
             $cookies.put('directory_backup_'+$scope.backup.sshserver,$scope.backup.directory);
             var args = {
@@ -275,6 +319,10 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             else{
                 $scope.restore.directory = filename;
             }
+
+         });
+         $rootScope.$on('initStartBackup', function () {
+            $scope.startBackup();
 
          });
 
