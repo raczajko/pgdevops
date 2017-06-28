@@ -32,7 +32,7 @@ db_list_query = """SELECT d.datname,
                           u.usename as owner
                     FROM pg_database d
                     JOIN pg_user u ON (d.datdba = u.usesysid)
-                   WHERE d.datname NOT IN ('template0','template1')
+                   WHERE d.datname NOT IN ('template0','template1','rdsadmin')
                    ORDER BY 1"""
 
 activity_query = """SELECT datname, state, pid, usename, client_addr::varchar,
