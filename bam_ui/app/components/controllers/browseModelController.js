@@ -33,7 +33,7 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
     });
 
     $scope.getFiles = function(filename,type){
-        if(type == 'd'){
+        if(['d','.'].indexOf(type) != -1){
             if(!filename.endsWith('/')){
                 var temp_filename = filename + "/*";
             }

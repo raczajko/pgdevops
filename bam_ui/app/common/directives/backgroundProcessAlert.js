@@ -30,7 +30,6 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                         $scope.procCompleted = true;
                         if(ret_data.data.process_failed){
                             $scope.procStatus = "Failed."
-                            $scope.procEndTime = '';
                             $scope.generatedFile = '';
                             $scope.generatedFileName = '';
                             $scope.error_msg = ret_data.data.error_msg;
@@ -38,8 +37,8 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                             $scope.procStatus = "Completed."
                             $scope.generatedFile = ret_data.data.file;
                             $scope.generatedFileName = ret_data.data.report_file;
-                            $scope.procEndTime = new Date(ret_data.data.end_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
                         }
+                        $scope.procEndTime = new Date(ret_data.data.end_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
                         $rootScope.$emit("refreshBadgerReports");
                     } else{
                         $scope.procEndTime = '';
