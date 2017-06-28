@@ -158,24 +158,24 @@
                                     <p><strong>PGC : </strong>{{ host.hostInfo.version }} {{ host.hostInfo.home }}</p>
 
                                     <p>
-                                    <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('CPU Load')">
+                                    <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12" ng-click="openGraphModal('CPU Load')">
                                         <div class="host-perf-viz">
                                                 <h5>CPU Load</h5>
                                             <nvd3 options="cpuChart" data="cpuData" showLegend="false"></nvd3>
                                         </div>
                                     </div>
-                                    <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('Disk IO')">
+                                    <div style="padding:0;" class="col-md-12 col-sm-12 col-xs-12" ng-click="openGraphModal('Disk IO')">
                                         <div class="host-perf-viz">
                                                 <h5>Disk IO</h5>
                                             <nvd3 options="ioChart" data="diskIO" showLegend="false"></nvd3>
                                         </div>
                                     </div>
-                                    <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('Network IO')">
+                                    <!-- <div style="padding:0;" class="col-md-4 col-sm-6 col-xs-12" ng-click="openGraphModal('Network IO')">
                                         <div class="host-perf-viz">
                                                 <h5>Network IO</h5>
                                             <nvd3 options="networkChart" data="NetworkIO" showLegend="false"></nvd3>
                                         </div>
-                                    </div>
+                                    </div> -->
                                     </p>
                                 </div>
 
@@ -219,9 +219,9 @@
                                                         </div>
                                                     </td>
                                                     <td class="col-md-6 col-xs-6" style="white-space: nowrap;">
-                                                        <i ng-class="statusColors[comp.state]" style="margin-top:2px;margin-right:10px" class="fa fa-stop fa-2x pull-left" ng-hide="comp.showingSpinner"></i>
-                                                        <div style="margin-top: 5px" ng-show="comp.port && !comp.showingSpinner">{{ comp.state }} on port {{ comp.port }}</div>
-                                                        <div style="margin-top: 5px" ng-show="!comp.port">{{ comp.state }}</div>
+                                                        <!-- <i ng-class="statusColors[comp.state]" style="margin-top:2px;margin-right:10px" class="fa fa-stop fa-2x pull-left" ng-hide="comp.showingSpinner"></i> -->
+                                                        <div style="margin-top: 5px" ng-show="comp.port && !comp.showingSpinner" ng-class="{'greenText' : comp.state == 'Running', 'redText' : comp.state != 'Running'}">{{ comp.state }} on port {{ comp.port }}</div>
+                                                        <div style="margin-top: 5px; color: #FF8C00;" ng-show="!comp.port">{{ comp.state }}</div>
                                                         <span ng-show="comp.showingSpinner">
                                                             <i class='fa fa-spinner fa-2x  fa-pulse'></i>
                                                         </span>
