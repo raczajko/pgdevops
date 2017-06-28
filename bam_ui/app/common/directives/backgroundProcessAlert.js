@@ -6,7 +6,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
         },
         restrict: 'E',
         templateUrl: '../app/common/partials/backgroundProcessAlert.html',
-        controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', '$timeout', function backgroundProcessAlertController($scope, $http, $window, $cookies, $rootScope, $timeout) {
+        controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', '$timeout', '$uibModal', '$sce', function backgroundProcessAlertController($scope, $http, $window, $cookies, $rootScope, $timeout, $uibModal, $sce) {
             
             $scope.isbgProcessStarted = false;
             $scope.cmdAllowedTypes = ['backrest'];
@@ -33,6 +33,17 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                             $scope.generatedFile = '';
                             $scope.generatedFileName = '';
                             $scope.error_msg = ret_data.data.error_msg;
+                            if(ret_data.data.component_required){
+                                var modalInstance = $uibModal.open({
+                                    templateUrl: '../app/components/partials/confirmOverrideModel.html',
+                                    controller: 'confirmOverrideModalController',
+                                });
+                                modalInstance.modalTitle = $sce.trustAsHtml("pg_dump must match source DB version");
+                                modalInstance.modelBody = $sce.trustAsHtml("Requires: "+ret_data.data.component_required);
+                                modalInstance.successText = "Install";
+                                modalInstance.failText = "Cancel";
+                                modalInstance.acceptMethod = "initComponentInstall";
+                            }
                         }else{
                             $scope.procStatus = "Completed."
                             $scope.generatedFile = ret_data.data.file;
@@ -73,6 +84,11 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                   this.firstElementChild.classList.remove("fa-chevron-right");
               }
             }
+
+            $rootScope.$on('initComponentInstall', function () {
+                debugger
+
+             });
 
             $scope.cancel = function (argument) {
                 $rootScope.$emit('hidebgProcess');

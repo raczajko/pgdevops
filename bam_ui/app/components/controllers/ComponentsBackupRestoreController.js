@@ -212,8 +212,11 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                     returnHtmlText = returnHtmlText + "<div class='col-sm-8' style='padding-left: 20px;'><b>Name</b></div><div class='col-sm-4' style='padding-left: 20px;'><b>Last Accessed</b></div></div>";
                     returnHtmlText = returnHtmlText + "<div class='col-md-12' style='margin: 2px 2px 6px 6px;cursor: default;'>";
                     returnHtmlText = returnHtmlText + "<div class='col-sm-8'><span class='fa fa-file fa-1x file-img'></span>&nbsp;&nbsp;"+fileData['name']+"</div><div class='col-sm-4'>"+fileData['last_accessed']+"</div></div>";
-                    modalInstance.fileData = $sce.trustAsHtml(returnHtmlText);
+                    modalInstance.modelBody = $sce.trustAsHtml(returnHtmlText);
                     modalInstance.modalTitle = $sce.trustAsHtml("<b> Are you sure do you want to override?</b><br>");
+                    modalInstance.acceptMethod = "initStartBackup";
+                    modalInstance.successText = "Yes";
+                    modalInstance.failText = "No";
                 }
                 else{
                     $scope.startBackup();
