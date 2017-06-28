@@ -28,7 +28,10 @@
         <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
         <span><h3>Loading...</h3></span>
     </div>
-    <div class="container-fluid" ng-if="!loading">
+    <div class="text-center" ng-if="timeoutMsg">
+        {{timeoutMsg}}
+    </div>
+    <div class="container-fluid" ng-if="!loading && !timeoutMsg">
         <div class="row">
             <div class="col-md-12" ng-if="hostActive.state">
                 <p ng-if="topProcess.state=='error'" class="text-danger">Error while running top command : {{ topProcess.msg }}</p>

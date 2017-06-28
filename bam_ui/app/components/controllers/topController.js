@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('topController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall) {
+angular.module('bigSQL.components').controller('topController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$sce', '$timeout', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $sce, $timeout, $interval, $rootScope, bamAjaxCall, htmlMessages) {
 
     var session;
     var subscriptions = [];
@@ -68,6 +68,14 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);
     };
+
+
+    $timeout(function() {
+        if ($scope.loading) {
+            $scope.loading=false;
+            $scope.timeoutMsg = $sce.trustAsHtml(htmlMessages.getMessage('unable-to-connect'));
+        };
+    }, 20000);
     /**
      Unsubscribe to all the apis on the template and scope destroy
      **/

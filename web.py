@@ -865,11 +865,14 @@ class GenerateBadgerReports(Resource):
 
 api.add_resource(GenerateBadgerReports, '/api/generate_badger_reports')
 
+
 def validate_backup_fields(args):
     if all(name in args for name in ('host','dbName','port','username','sshServer','backupDirectory','fileName','format','advOptions')):
         return True
     else:
         return False
+
+
 class BackupRestoreDatabase(Resource):
     def post(self):
         result = {}
@@ -917,6 +920,7 @@ class BackupRestoreDatabase(Resource):
         return result
 
 api.add_resource(BackupRestoreDatabase, '/api/backup_restore_db')
+
 
 class GetBgProcessList(Resource):
     @login_required
@@ -1000,6 +1004,13 @@ class GetBgProcessStatus(Resource):
         proc_status['process_log_id'] = process_log_id
         proc_status['process_failed'] = False
         proc_status['process_completed'] = True
+        if proc_status.get("exit_code")==2 and proc_status.get("process_type")=="backrest":
+            try:
+                out_data = proc_status.get("out_data").strip().split(":")
+                if out_data[0].strip() == "ERROR" and out_data[1].strip() == "component_required":
+                    proc_status['component_required'] = out_data[2].strip()
+            except Exception as e:
+                pass
         #proc_status['process_type'] = "badger"
         if proc_status.get("exit_code") is None:
             proc_status['process_completed'] = False
