@@ -7185,6 +7185,10 @@ fieldset
     color:#8cbfea;
 }
 
+.parent-img{
+    color:red;
+}
+
 .init_login fieldset {
     padding: 10px;
     border: 1px solid #fff !important;
