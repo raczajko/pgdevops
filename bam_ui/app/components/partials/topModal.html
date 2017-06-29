@@ -2,7 +2,7 @@
     <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
         <i class="fa fa-lg fa-close cursor_pointer"></i>
     </div>
-    <h2 class="modal-title" id="updateModalLabel"> Top ({{ host }}) </h2>
+    <h4 class="modal-title" id="updateModalLabel"> Top ({{ host }}) </h4>
 </div>
 <div ng-click="cancel()" class="close-modal" data-dismiss="modal" aria-hidden="true">
     <div class="lr">
@@ -29,7 +29,7 @@
         <span><h3>Loading...</h3></span>
     </div>
     <div class="text-center" ng-if="timeoutMsg">
-        {{timeoutMsg}}
+        <strong>{{timeoutMsg}}</strong>
     </div>
     <div class="container-fluid" ng-if="!loading && !timeoutMsg">
         <div class="row">
