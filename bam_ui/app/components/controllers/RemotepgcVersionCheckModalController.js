@@ -17,11 +17,13 @@ angular.module('bigSQL.components').controller('RemotepgcVersionCheckModalContro
         $scope.modalMsg = $sce.trustAsHtml(htmlMessages.getMessage('remote-pgc-ver-compatible').replace("{{host}}", $scope.host).replace("{{remote_pgc_ver}}", $scope.remote_pg_ver).replace("{{local_pgc_ver}}", $scope.local_pg_ver));
     }
 
+    $rootScope.$emit('stopStatusGraphs');
+
     function checkInfo(argument) {
         if ($scope.returnCode == 1){
-            var infoData = bamAjaxCall.getCmdData('info');
-        }else if($scope.returnCode == 2){
             var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+$scope.host);
+        }else if($scope.returnCode == 2){
+            var infoData = bamAjaxCall.getCmdData('info');
         }
     }
 

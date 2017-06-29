@@ -749,10 +749,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $scope.openPGConnModal(serverDetails);
     })
 
-    
     $rootScope.$on('comparePGVersion', function(argument, host) {
-        $interval.cancel(stopStatusCall);
-        clear();
         var comparePGVersion = bamAjaxCall.getCmdData('compatre_pg_versions/' + host);
         comparePGVersion.then(function (argument) {
             if (argument.result_code==1 || argument.result_code==2) {
@@ -768,6 +765,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 modalInstance.returnCode = argument.result_code;
             }
         })
+    });
+
+    $rootScope.$on('stopStatusGraphs', function (argument) {
+        $interval.cancel(stopPGCall);
+        $interval.cancel(stopStatusCall);
+        clear();
     })
 
     $scope.openPGConnModal = function (argument) {
