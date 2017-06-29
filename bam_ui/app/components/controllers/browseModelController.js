@@ -6,11 +6,12 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
     $scope.remoteHost = $uibModalInstance.remote_host;
     $scope.hostIp = $uibModalInstance.host_ip;
     $scope.userName = $uibModalInstance.user_name;
+    $scope.pgcHome = $uibModalInstance.pgc_home;
     $scope.cancel = function () {
             $uibModalInstance.dismiss('cancel');
     };
     if(!$scope.directory){
-        $scope.directory = "/Users/naveen/sql/"
+        $scope.directory = $scope.pgcHome;
     }
     $scope.backLink = $scope.directory;
     $scope.currentPath = $scope.directory;

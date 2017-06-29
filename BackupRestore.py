@@ -18,8 +18,8 @@ class BackupRestore(object):
         pgc_cmd = pgc_cmd + dbname + " " + host + " " + port + " " + username
         if password:
             pgc_cmd = pgc_cmd + " --pwd " + password
-        if "" != filename and os.path.splitext(filename)[-1] == "":
-            filename = filename + ".sql"
+        '''if "" != filename and os.path.splitext(filename)[-1] == "":
+            filename = filename + ".sql"'''
         if '-v' not in adv_options and not (action == "restore" and format == 'p'):
             adv_options = adv_options + " -v"
         pgc_cmd = pgc_cmd + ' "' + backup_directory + filename + '" ' + format + ' ' + adv_options

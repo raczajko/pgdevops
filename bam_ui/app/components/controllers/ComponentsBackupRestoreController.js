@@ -182,9 +182,6 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                 $scope.backup.directory = $scope.backup.directory + '/';
             }
             var filename = $scope.backup.filename;
-            if(filename.lastIndexOf('.') == -1){
-              filename = filename + ".sql";
-            }
             var exists = false;
             var args = {
                "baseDir": $scope.backup.directory + filename,
@@ -213,7 +210,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                     returnHtmlText = returnHtmlText + "<div class='col-md-12' style='margin: 2px 2px 6px 6px;cursor: default;'>";
                     returnHtmlText = returnHtmlText + "<div class='col-sm-8'><span class='fa fa-file fa-1x file-img'></span>&nbsp;&nbsp;"+fileData['name']+"</div><div class='col-sm-4'>"+fileData['last_accessed']+"</div></div>";
                     modalInstance.modelBody = $sce.trustAsHtml(returnHtmlText);
-                    modalInstance.modalTitle = $sce.trustAsHtml("<b> Are you sure do you want to override?</b><br>");
+                    modalInstance.modalTitle = $sce.trustAsHtml("<b> Selected file for backup already exists, do you want to override?</b><br>");
                     modalInstance.acceptMethod = "initStartBackup";
                     modalInstance.successText = "Yes";
                     modalInstance.failText = "No";
@@ -299,16 +296,18 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                 if(hostInfo){
                     modalInstance.user_name = hostInfo['hostInfo']['user'];
                     modalInstance.host_ip = hostInfo['host'];
+                    modalInstance.pgc_home = hostInfo['hostInfo']['home'];
                 }
             }
             else{
                 modalInstance.directory = $scope.restore.directory;
                 modalInstance.title = "SSH File Selecter";
                 modalInstance.remote_host = $scope.restore.sshserver;
-                var hostInfo = $scope.getSSHDefault($scope.backup.sshserver);
+                var hostInfo = $scope.getSSHDefault($scope.restore.sshserver);
                 if(hostInfo){
                     modalInstance.user_name = hostInfo['hostInfo']['user'];
                     modalInstance.host_ip = hostInfo['host'];
+                    modalInstance.pgc_home = hostInfo['hostInfo']['home'];
                 }
             }
             modalInstance.b_type = type;
