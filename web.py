@@ -921,6 +921,23 @@ class BackupRestoreDatabase(Resource):
 
 api.add_resource(BackupRestoreDatabase, '/api/backup_restore_db')
 
+class ComparePGVersions(Resource):
+    def get(self, host):
+        result={}
+        local_pg_ver = pgc.get_data('info')[0]['version']
+        result['local_pg_ver'] = local_pg_ver
+        remote_pg_ver = pgc.get_data('info', pgc_host=host)[0]['version']
+        result['remote_pg_ver'] = remote_pg_ver
+        if local_pg_ver == remote_pg_ver:
+            result_code = 0
+        elif local_pg_ver > remote_pg_ver:
+            result_code = 1
+        elif local_pg_ver < remote_pg_ver:
+            result_code = 2
+        result['result_code'] = result_code
+        return result
+
+api.add_resource(ComparePGVersions, '/api/compatre_pg_versions/<string:host>')
 
 class GetBgProcessList(Resource):
     @login_required
