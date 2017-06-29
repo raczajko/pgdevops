@@ -62,10 +62,10 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
                         remotehost:$scope.connectionName,
                         rds : false
                     };
-                    $rootScope.$emit('comparePGVersion', $scope.connectionName);
                     var addToMetaData = bamAjaxCall.postData('/api/add_to_metadata', data);
                         addToMetaData.then(function (argument) {
                             $rootScope.$emit('refreshPgList');
+                            $rootScope.$emit('comparePGVersion', $scope.connectionName);
                             $uibModalInstance.dismiss('cancel');
                         });
 
