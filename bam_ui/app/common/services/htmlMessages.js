@@ -10,7 +10,12 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'no-rds' : 'There are no RDS Instances found.',
         'email-response' : 'Thanks for your valuable feedback, we will get back to you shortly.',
         'pgDevOps-rds-init-msg' : 'pgDevOps detected that you are in AWS environment.<br> Do you want us to discover your RDS instances if there are any?',
-        'unable-to-connect' : 'Unable to connect SSH host, due to session timeout'
+        'unable-to-connect' : 'Unable to connect SSH host due to session timeout.',
+        'remote-pgc-ver-compatible' : 'PGC version on SSH server <strong>{{host}}</strong> is {{remote_pgc_ver}} and on pgDevOps is {{local_pgc_ver}}',
+        'pgc-ver-incompatible' : 'PGC version incompatible',
+        'rds-not-available' : 'Instances is not available',
+        'update-pgc-host-msg' : 'Updating PGC on host {{host}}',
+        'update-pgc-host-completed' : 'PGC update completed successfully'
     };
 
     return {

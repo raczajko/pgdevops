@@ -7,11 +7,14 @@ angular.module('bigSQL.components').controller('confirmOverrideModalController',
     	session = val;
     });
 
-    $scope.fileData = $uibModalInstance.fileData;
+    $scope.modelBody = $uibModalInstance.modelBody;
     $scope.modalTitle = $uibModalInstance.modalTitle;
+    $scope.acceptMethod = $uibModalInstance.acceptMethod;
+    $scope.successText = $uibModalInstance.successText;
+    $scope.failText = $uibModalInstance.failText;
 
     $scope.acceptOverride = function(){
-        $rootScope.$emit("initStartBackup");
+        $rootScope.$emit($scope.acceptMethod);
         $scope.cancel();
     }
     $scope.cancel = function () {

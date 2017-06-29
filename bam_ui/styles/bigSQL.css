@@ -7215,3 +7215,16 @@ fieldset
   margin-left: 40%;
   margin-top: 10%;
 }
+
+.ellipses-4x{
+    text-overflow: ellipsis;
+    width: 330px;
+    white-space: nowrap;
+    overflow: hidden;
+    direction: rtl;
+    text-align: left;
+    display: inline-block;
+    height: 22px;
+    padding: 4px 0px 0px 24px;
+    color:#0a21e2;
+}

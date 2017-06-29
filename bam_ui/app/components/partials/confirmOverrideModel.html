@@ -2,9 +2,10 @@
     <span ng-bind-html="modalTitle"></span>
 </div>
 <div class="modal-body">
-<span ng-bind-html="fileData"></span>
+<span ng-bind-html="modelBody"></span>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-danger" type="button" ng-click="cancel()">No</button>
-    <button type="submit" class="btn btn-success" ng-click="acceptOverride()">Yes</button>
+    <button type="submit" class="btn btn-success" ng-click="acceptOverride()">{{successText}}</button>
+    <button class="btn btn-danger" type="button" ng-click="cancel()">{{failText}}</button>
+
 </div>
