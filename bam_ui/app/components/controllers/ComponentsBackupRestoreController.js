@@ -328,6 +328,16 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
 
          });
 
+         $rootScope.$on('getSelectedHost', function (b_type) {
+            if(b_type == 'backup'){
+                $rootScope.selectedHost = $scope.backup.sshserver;
+            }
+            else{
+                $rootScope.selectedHost =$scope.restore.sshserver;
+            }
+
+         });
+
         //need to destroy all the subscriptions on a template before exiting it
         $scope.$on('$destroy', function () {
             for (var i = 0; i < subscriptions.length; i++) {

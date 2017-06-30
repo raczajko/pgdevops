@@ -38,11 +38,19 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                                     templateUrl: '../app/components/partials/confirmOverrideModel.html',
                                     controller: 'confirmOverrideModalController',
                                 });
-                                modalInstance.modalTitle = $sce.trustAsHtml("pg_dump must match source DB version");
-                                modalInstance.modelBody = $sce.trustAsHtml("Requires: "+ret_data.data.component_required);
+                                if($scope.procCmd.indexOf("pgc dbrestore") != -1){
+                                    modalInstance.modalTitle = $sce.trustAsHtml("pg_restore must match source DB version");
+                                    $rootScope.$emit("getSelectedHost","restore");
+                                }
+                                else{
+                                    modalInstance.modalTitle = $sce.trustAsHtml("pg_dump must match source DB version");
+                                    $rootScope.$emit("getSelectedHost","backup");
+                                }
+                                modalInstance.modelBody = $sce.trustAsHtml("Host " + $rootScope.selectedHost +" Requires: "+ret_data.data.component_required);
                                 modalInstance.successText = "Install";
                                 modalInstance.failText = "Cancel";
                                 modalInstance.acceptMethod = "initComponentInstall";
+                                modalInstance.sshHost = $rootScope.selectedHost;
                                 $rootScope.$emit('hidebgProcess');
                             }
                         }else{

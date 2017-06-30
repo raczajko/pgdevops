@@ -83,10 +83,11 @@ angular.module('bigSQL.components').controller('confirmOverrideModalController',
     $scope.acceptMethod = $uibModalInstance.acceptMethod;
     $scope.successText = $uibModalInstance.successText;
     $scope.failText = $uibModalInstance.failText;
+    $scope.sshHost = $uibModalInstance.sshHost;
 
     $scope.acceptOverride = function(){
         if($scope.acceptMethod == "initComponentInstall"){
-            $scope.installComponentBackground('pg95','localhost');
+            $scope.installComponentBackground('pg95',$scope.sshHost);
         }else{
             $rootScope.$emit($scope.acceptMethod);
             $scope.cancel();
