@@ -272,6 +272,10 @@ def execute():
     process_stdout = ProcessLogger('out')
     process_stderr = ProcessLogger('err')
     process = None
+    final_cmd = command[0]
+
+    if "EXCLUDE_STR" in os.environ:
+        final_cmd = final_cmd.replace(os.environ.get("EXCLUDE_STR",""),"")
 
     try:
         # update start_time
@@ -281,7 +285,7 @@ def execute():
                 'stdout': process_stdout.log,
                 'stderr': process_stderr.log,
                 'parent_pid': os.getpid(),
-                'cmd': command[0],
+                'cmd': final_cmd,
                 'report_file': os.environ['report_file'],
                 'process_type':os.environ.get('process_type','badger')
             })
@@ -291,7 +295,7 @@ def execute():
                 'stdout': process_stdout.log,
                 'stderr': process_stderr.log,
                 'parent_pid': os.getpid(),
-                'cmd': command[0],
+                'cmd': final_cmd,
                 'process_type': os.environ.get('process_type', 'badger')
             })
 

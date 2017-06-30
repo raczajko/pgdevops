@@ -958,7 +958,7 @@ class GetBgProcessList(Resource):
                 elif proc_status.get("exit_code") != 0:
                     proc_status['process_failed'] = True
                 proc_status['process_log_id'] = p.pid
-                proc_status['process_type'] = "badger"
+                #proc_status['process_type'] = "badger"
                 if proc_status.get('report_file'):
                     proc_status['file'] = "badger/" + proc_status.get('report_file')
                     proc_status['report_file'] = proc_status.get('report_file')

@@ -6,8 +6,8 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
         },
         restrict: 'E',
         templateUrl: '../app/common/partials/backgroundProcessAlert.html',
-        controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', '$timeout', '$uibModal', '$sce', function backgroundProcessAlertController($scope, $http, $window, $cookies, $rootScope, $timeout, $uibModal, $sce) {
-            
+        controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', '$timeout', '$uibModal', '$sce','PubSubService', function backgroundProcessAlertController($scope, $http, $window, $cookies, $rootScope, $timeout, $uibModal, $sce, PubSubService) {
+
             $scope.isbgProcessStarted = false;
             $scope.cmdAllowedTypes = ['backrest'];
             // $scope.cancelbgProcess = false;
@@ -43,6 +43,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                                 modalInstance.successText = "Install";
                                 modalInstance.failText = "Cancel";
                                 modalInstance.acceptMethod = "initComponentInstall";
+                                $rootScope.$emit('hidebgProcess');
                             }
                         }else{
                             $scope.procStatus = "Completed."
@@ -85,11 +86,12 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
               }
             }
 
-            $rootScope.$on('initComponentInstall', function () {
+            /*$rootScope.$on('initComponentInstall', function () {
                 debugger
-
+                $scope.installComponentBackground('pg95','localhost');
+                debugger
              });
-
+*/
             $scope.cancel = function (argument) {
                 $rootScope.$emit('hidebgProcess');
                 var bgReportAcknowledge = $http.put($window.location.origin + '/admin/misc/bgprocess/'+ argument);
