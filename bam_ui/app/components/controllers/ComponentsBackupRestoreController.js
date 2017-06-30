@@ -182,6 +182,9 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                 $scope.backup.directory = $scope.backup.directory + '/';
             }
             var filename = $scope.backup.filename;
+            if($scope.backup.format == 'p'){
+                debugger
+            }
             var exists = false;
             var args = {
                "baseDir": $scope.backup.directory + filename,
@@ -328,7 +331,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
 
          });
 
-         $rootScope.$on('getSelectedHost', function (b_type) {
+         $rootScope.$on('getSelectedHost', function (argument, b_type) {
             if(b_type == 'backup'){
                 $rootScope.selectedHost = $scope.backup.sshserver;
             }
