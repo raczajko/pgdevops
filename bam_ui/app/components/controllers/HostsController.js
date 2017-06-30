@@ -749,6 +749,30 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $scope.openPGConnModal(serverDetails);
     })
 
+    $rootScope.$on('comparePGVersion', function(argument, host) {
+        var comparePGVersion = bamAjaxCall.getCmdData('compatre_pg_versions/' + host);
+        comparePGVersion.then(function (argument) {
+            if (argument.result_code==1 || argument.result_code==2) {
+                var modalInstance = $uibModal.open({
+                    templateUrl: '../app/components/partials/RemotepgcVersionCheckModal.html',
+                    windowClass: 'modal',
+                    controller: 'RemotepgcVersionCheckModalController',
+                    scope: $scope
+                });
+                modalInstance.host = host;
+                modalInstance.local_pg_ver = argument.local_pg_ver;
+                modalInstance.remote_pg_ver = argument.remote_pg_ver;
+                modalInstance.returnCode = argument.result_code;
+            }
+        })
+    });
+
+    $rootScope.$on('stopStatusGraphs', function (argument) {
+        $interval.cancel(stopPGCall);
+        $interval.cancel(stopStatusCall);
+        clear();
+    })
+
     $scope.openPGConnModal = function (argument) {
         if ($scope.awsRdsFeature) {
             var modalInstance = $uibModal.open({

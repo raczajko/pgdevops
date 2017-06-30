@@ -70,7 +70,7 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
     	var addToMetaData = bamAjaxCall.postData('/api/add_to_metadata', data);
             addToMetaData.then(function (argument) {
             	if(!$scope.sid){
-            		$scope.sid = argument.data.sid;
+            		$scope.sid = argument.sid;
             	}
             	if ($scope.savePassword) {
             		$rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, $scope.password, true);
