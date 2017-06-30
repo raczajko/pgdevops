@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'bamAjaxCall', '$uibModal', '$sce', '$cookies', '$http', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal, $sce, $cookies, $http) {
+angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'bamAjaxCall', '$uibModal', '$sce', '$cookies', '$http', 'userInfoService', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal, $sce, $cookies, $http, userInfoService) {
 
     $scope.alerts = [];
     var subscriptions = [];
@@ -286,9 +286,37 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
             }
         });
 
+        $scope.showTuneData = false;
+    
+        $scope.showTuningSet = function (argument) {
+            $scope.showTuneData = !$scope.showTuneData;
+        }
+
         $scope.securityTabEvent = function (args) {
             session.call('com.bigsql.read_pg_hba_conf', [$stateParams.component]);
         };
+
+        $scope.performanceTabEvent = function (args) {
+            $scope.sshPgcInfo = '';
+            if ($scope.currentHost == "" || $scope.currentHost == "localhost") {
+                var sshHostInfo = bamAjaxCall.getCmdData('info');
+            }else{
+                var sshHostInfo = bamAjaxCall.getCmdData('hostcmd/info/'+$scope.currentHost);  
+            }
+            sshHostInfo.then(function (argument) {
+                    $scope.sshPgcInfo = argument[0];
+                })
+            var userInfo = userInfoService.getUserInfo();
+            userInfo.then(function (data) {
+                $scope.currentUserMail = data.email;
+                session.call('com.bigsql.dbtune', [ $scope.currentUserMail, $stateParams.component])
+            })
+        };
+
+        session.subscribe('com.bigsql.onDbTune', function (data) {
+            var tuneData = JSON.parse(data);
+            $scope.tuneResult = tuneData.tune_result;
+        })
 
         session.subscribe('com.bigsql.onPGhba', function (data) {
             if (data[0].component == $stateParams.component) {
@@ -434,6 +462,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 } else if (data.state == 'unpack') {
                     session.call('com.bigsql.infoComponent', [$stateParams.component]);
                     $scope.component.status = 'NotInitialized';
+                    delete $scope.component.installationStart;
+                    delete $scope.component.installationRunning;
+                    delete $scope.component.installation;
                     $scope.openInitPopup($stateParams.component);
                 } else if (data.state == 'update'){
                     callInfo();

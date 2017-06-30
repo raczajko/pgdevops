@@ -262,6 +262,18 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         })
     }
 
+    $scope.performanceTabEvent = function (argument) {
+        if ($scope.showRDSdetails) {
+
+        }
+    }
+
+    $scope.showTuneData = false;
+    
+    $scope.showTuningSet = function (argument) {
+        $scope.showTuneData = !$scope.showTuneData;
+    }
+
     $scope.changeOption = function (argument) {
         if (argument=='') {
             argument = 5000;
