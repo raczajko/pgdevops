@@ -7239,6 +7239,5 @@ fieldset
 
 .DBTuneSSHInfo {
     padding: 10px;
-    border-style: inset;
-    height: 155px;
+    border: 1px solid rgb(212,212,212);
 }

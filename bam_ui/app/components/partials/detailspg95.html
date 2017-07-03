@@ -353,9 +353,9 @@
                                             pgBadger Console
                                         </a>
 
-                                        <a class="btn btn-lg btn-default" ng-click="showTuningSet()">
+                                        <a class="btn btn-lg btn-default" ng-click="showTuningSet()" style="margin-left:10px;">
                                             <i class="bgs bgs-lg bgs-dbtune pull-left"></i> 
-                                            Tunning Service
+                                            Tuning Service
                                         </a>
                                     </div>
                                     <div style="padding-top: 20px;" class="col-md-12 col-sm-12 col-xs-12" ng-if="showTuneData">
@@ -376,27 +376,27 @@
                                                             <button class="btn-primary btn center-block">Submit</button>
                                                         </div>
                                                         <div class="col-md-8 col-sm-8 col-xs-8">
-                                                           <div class="DBTuneSSHInfo">
-                                                                <form class="form-horizontal" ng-if="sshPgcInfo" id="pgc-info-box">
-                                                                    <div class="form-group">
-                                                                        <div class="col-sm-3"> <strong> PGC </strong></div>
-                                                                        <div class="col-sm-9 info-text">:  v{{sshPgcInfo.version}} &nbsp; {{sshPgcInfo.home}}</div>
-                                                                    </div>
+                                                           <div class="DBTuneSSHInfo" ng-if="sshPgcInfo">
+                                                                <form class="form-horizontal" id="pgc-info-box">
+                                                                    <!--<div class="form-group">-->
+                                                                        <!--<div class="col-sm-3"> <strong> PGC </strong></div>-->
+                                                                        <!--<div class="col-sm-9 info-text">:  v{{sshPgcInfo.version}} &nbsp; {{sshPgcInfo.home}}</div>-->
+                                                                    <!--</div>-->
                                                                     <div class="form-group">
                                                                         <div class="col-sm-3"> <strong> User &amp; Host </strong> </div>
                                                                         <div class="col-sm-9 info-text">:  {{sshPgcInfo.user}} &nbsp; {{sshPgcInfo.host}}</div>
                                                                     </div>
                                                                     <div class="form-group">
                                                                         <div class="col-sm-3"> <strong> Platform </strong> </div>
-                                                                        <div class="col-sm-9 info-text">:  {{sshPgcInfo.platform}} &nbsp;|&nbsp; {{sshPgcInfo.os}} &nbsp;|&nbsp; python {{sshPgcInfo.python_ver}} &nbsp;|&nbsp; pip {{sshPgcInfo.pip_ver}}</div>
+                                                                        <div class="col-sm-9 info-text">:  {{sshPgcInfo.platform}} &nbsp;|&nbsp; {{sshPgcInfo.os}}</div>
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <div class="col-sm-3"> <strong> Hardware </strong> </div>
-                                                                        <div class="col-sm-9 info-text">:  {{sshPgcInfo.mem}} GB, {{sshPgcInfo.cores}} x {{sshPgcInfo.cpu}}</div>
+                                                                        <div class="col-sm-3"> <strong> Memory </strong> </div>
+                                                                        <div class="col-sm-9 info-text">:  {{sshPgcInfo.mem}} GB</div>
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <div class="col-sm-3"> <strong> Repo URL </strong> </div>
-                                                                        <div class="col-sm-9 info-text">:  {{sshPgcInfo.repo}}</div>
+                                                                        <div class="col-sm-3"> <strong> CPU </strong> </div>
+                                                                        <div class="col-sm-9 info-text">:  {{sshPgcInfo.cores}} x {{sshPgcInfo.cpu}}</div>
                                                                     </div>
                                                                 </form>
                                                            </div> 

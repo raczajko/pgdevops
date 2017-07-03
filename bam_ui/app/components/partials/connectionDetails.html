@@ -438,50 +438,41 @@
                                                             <button class="btn-primary btn center-block">Submit</button>
                                                         </div>
                                                         <div class="col-md-8 col-sm-8 col-xs-8">
-                                                           <div class="DBTuneSSHInfo">
+                                                           <div class="DBTuneSSHInfo" ng-if="!rdsDetailsLoading">
                                                                 <div class="box box-primary">
                                                                     <div class="box-header"> <strong>PostgreSQL properties </strong></div>
                                                                     <div class="box-body">
-                                                                        <div class="row" style="padding-top: 10px;">
-                                                                            <div class="col-md-6 col-xs-6 col-sm-6">
-                                                                                <fieldset class="form-group">
-                                                                                    <div class="form-check">
-                                                                                      <label class="form-check-label">
-                                                                                        <input type="radio" class="form-check-input" name="instanceType" ng-checked="showRDSdetails" ng-disabled="!showRDSdetails">
-                                                                                        RDS
-                                                                                      </label>
+                                                                        <div class="row" style="padding: 10px;">
+                                                                            <div>
+                                                                                <form class="form-horizontal" id="pgc-info-box">
+                                                                                    <div class="form-group">
+                                                                                        <div class="col-sm-4"> <strong> Instance Class </strong></div>
+                                                                                        <div class="col-sm-8 info-text">:  {{rdsInfo.db_class}}</div>
                                                                                     </div>
-                                                                                    <div class="form-check">
-                                                                                    <label class="form-check-label">
-                                                                                        <input type="radio" class="form-check-input" name="instanceType" ng-checked="!showRDSdetails" ng-disabled="showRDSdetails">
-                                                                                        Host
-                                                                                      </label>
+                                                                                    <div class="form-group">
+                                                                                        <div class="col-sm-4"> <strong> Storage Type  </strong> </div>
+                                                                                        <div class="col-sm-8 info-text">:  {{rdsInfo.storage_type}}</div>
                                                                                     </div>
-                                                                                </fieldset>
-                                                                            </div>
-                                                                            <div class="col-md-6 col-xs-6 col-sm-6">
-                                                                              <div class="col-md-12">
-                                                                                    <div class="col-md-4">
-                                                                                      <label style="white-space: nowrap;">
-                                                                                        RAM (GB)
-                                                                                      </label>
+                                                                                    <div class="form-group">
+                                                                                        <div class="col-sm-4"> <strong> IOPS </strong> </div>
+                                                                                        <span class="col-sm-8 info-text" ng-if="rdsInfo.iops==''">
+                                                                                                       : disabled
+                                                                                        </span>
+                                                                                        <span class="col-sm-8 info-text" ng-if="rdsInfo.iops!=''">
+                                                                                            : {{rdsInfo.iops}}
+                                                                                        </span>
                                                                                     </div>
-                                                                                    <div class="col-md-8">
-                                                                                        <input type="number" class="form-control" name="">
+                                                                                    <div class="form-group">
+                                                                                        <div class="col-sm-4"> <strong> Storage </strong> </div>
+                                                                                        <div class="col-sm-8 info-text">:  {{rdsInfo.storage_allocated}} GB</div>
                                                                                     </div>
-                                                                                </div>
-                                                                                <br />
-                                                                                <br />
-                                                                                <div class="col-md-12">
-                                                                                    <div class="col-md-4">
-                                                                                      <label style="white-space: nowrap;">
-                                                                                        # CPU
-                                                                                      </label>
+                                                                                    <div class="form-group">
+                                                                                        <label class="col-sm-4">Encryption Enabled </label>
+                                                                                        <span class="col-sm-8 info-text">
+                                                                                            <div ng-class="{ 'greenText' : rdsInfo.storage_encrypted == 'True' , 'redText' : rdsInfo.storage_encrypted == 'False'}">: {{rdsInfo.storage_encrypted == "True" ? "Yes":"No"}}</div>
+                                                                                        </span>
                                                                                     </div>
-                                                                                    <div class="col-md-8">
-                                                                                        <input type="number" class="form-control" name="">
-                                                                                    </div>
-                                                                                </div>
+                                                                                </form>
                                                                             </div>
                                                                         </div>
                                                                     </div>
