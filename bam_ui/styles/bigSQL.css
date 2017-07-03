@@ -6734,6 +6734,14 @@ span.new-comp-wrapper {
     margin-right: 7px;
   }
 
+  .bgs-dbtune {
+    background-image: url('../assets/img/dbtune.png');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    margin-left: -2px;
+    margin-right: 7px;
+  }
+
   .bgs-aws-menu {
     background-image: url('../assets/img/aws.png');
     background-repeat: no-repeat;
@@ -7227,4 +7235,9 @@ fieldset
     height: 22px;
     padding: 4px 0px 0px 24px;
     color:#0a21e2;
+}
+
+.DBTuneSSHInfo {
+    padding: 10px;
+    border: 1px solid rgb(212,212,212);
 }
