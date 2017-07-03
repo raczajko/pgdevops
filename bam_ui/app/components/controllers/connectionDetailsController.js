@@ -91,6 +91,8 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     $scope.connChange = function (argument) {
             $scope.rdsDetailsLoading = true;
             $scope.loading = true;
+            $scope.showTuneData = false;
+            $scope.rdsInfo = [];
             var validConnection = $($scope.pgList).filter(function(i,n){ return n.server_name == argument ;})
             if (validConnection.length == 0) {
                argument = $scope.pgList[0].server_name; 
@@ -260,6 +262,18 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                 };
             }
         })
+    }
+
+    $scope.performanceTabEvent = function (argument) {
+        if ($scope.showRDSdetails) {
+
+        }
+    }
+
+    $scope.showTuneData = false;
+    
+    $scope.showTuningSet = function (argument) {
+        $scope.showTuneData = !$scope.showTuneData;
     }
 
     $scope.changeOption = function (argument) {
