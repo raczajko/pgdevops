@@ -183,7 +183,9 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             }
             var filename = $scope.backup.filename;
             if($scope.backup.format == 'p'){
-                debugger
+                if((filename.split('.')).length == 1){
+                    filename = filename + ".sql";
+                }
             }
             var exists = false;
             var args = {
