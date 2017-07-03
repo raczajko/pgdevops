@@ -69,12 +69,36 @@
 <script>
     var hasWebsockets = Modernizr.websockets;
 
+    function get_browser() {
+        var ua=navigator.userAgent,tem,M=ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+        if(/trident/i.test(M[1])){
+            tem=/\brv[ :]+(\d+)/g.exec(ua) || [];
+            return {name:'IE',version:(tem[1]||'')};
+            }
+        if(M[1]==='Chrome'){
+            tem=ua.match(/\bOPR|Edge\/(\d+)/)
+            if(tem!=null)   {return {name:'Opera', version:tem[1]};}
+            }
+        M=M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
+        if((tem=ua.match(/version\/(\d+)/i))!=null) {M.splice(1,1,tem[1]);}
+        return {
+          name: M[0],
+          version: M[1]
+        };
+     }
+
+    var req_ver = {'MSIE': 'MSIE11 +', 'Chrome':'57 +', 'Firefox' : '46 +', 'Edge' : '40 +', 'Safari' : '10 +'}
+
     if (!hasWebsockets) {
+
+        var browser=get_browser();
         var badBrowserModal = '<div class="warning-modal-wrapper">' +
             '    <div class="modal-popup">' +
-            '        <h1>Your browser is not supported</h1>' +
-            '        <p>You can use pgDevOps by BigSQL with a modern browser. Click on an icon to download one below.</p>' +
+            '        <h1>Your browser version is not supported</h1>' +
+            '        <p>You can use pgDevOps by BigSQL with a updated browser. Click on an icon to download one below.</p>' +
             '        <div>' +
+            '        <div>Current version : <span id="browser_ver"></span></div>' +
+            '        <div>Required version : <span id="req_browser_ver"></span></div>' +
             '        <a target="_blank" href="https://www.google.com/chrome/browser/desktop/index.html"><img class="chrome-icon" src="assets/img/chrome_logo.png" alt=""></a>' +
             '        <a target="_blank" href="https://www.mozilla.org/en-US/firefox/new/"><img class="firefox-icon" src="assets/img/firefox_logo.png" alt=""></a>' +
             '        <a target="_blank" href="https://www.microsoft.com/en-in/download/Internet-Explorer-11-for-Windows-7-details.aspx"><img class="ie11-icon" src="assets/img/ie11_logo.png" alt=""></a>' +
@@ -85,6 +109,10 @@
 
         var el = document.getElementById("meta-wrapper");
         el.innerHTML = badBrowserModal;
+        var browser_ver = document.getElementById("browser_ver");
+        browser_ver.innerHTML = browser.name + " " + browser.version;
+        var req_browser_ver = document.getElementById("req_browser_ver");
+        req_browser_ver.innerHTML = req_ver[browser.name];
     }
 </script>
 
