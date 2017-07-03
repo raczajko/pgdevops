@@ -469,7 +469,7 @@
                                                                                     <div class="form-group">
                                                                                         <label class="col-sm-4">Encryption Enabled </label>
                                                                                         <span class="col-sm-8 info-text">
-                                                                                            <div ng-class="{ 'greenText' : rdsInfo.storage_encrypted == 'True' , 'redText' : rdsInfo.storage_encrypted == 'False'}">: {{rdsInfo.storage_encrypted == "True" ? "Yes":"No"}}</div>
+                                                                                            <div>: <span ng-class="{ 'greenText' : rdsInfo.storage_encrypted == 'True' , 'redText' : rdsInfo.storage_encrypted == 'False'}"> {{rdsInfo.storage_encrypted == "True" ? "Yes":"No"}}</span> </div>
                                                                                         </span>
                                                                                     </div>
                                                                                 </form>
