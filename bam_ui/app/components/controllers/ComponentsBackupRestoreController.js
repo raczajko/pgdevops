@@ -89,10 +89,10 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             var i;
             for(i = 0; i < $scope.pgListRes.length; i++){
                 if($scope.pgListRes[i].host == pgc && b_type == 'backup'){
-                    $scope.dbHostName = $scope.pgListRes[i].host;
-                    $scope.dbPort = $scope.pgListRes[i].port;
-                    $scope.dbName = $scope.pgListRes[i].db;
-                    $scope.dbUser = $scope.pgListRes[i].db_user;
+                    $scope.backup.hostname = $scope.pgListRes[i].host;
+                    $scope.backup.port = $scope.pgListRes[i].port;
+                    $scope.backup.dbname = $scope.pgListRes[i].db;
+                    $scope.backup.user = $scope.pgListRes[i].db_user;
                 }
                 else if($scope.pgListRes[i].host == pgc && b_type == 'restore'){
                     $scope.restore.hostname = $scope.pgListRes[i].host;
@@ -167,9 +167,9 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             var data = JSON.parse(data);
             $scope.pgListRes = data;
             if(data.length > 0){
-                $scope.dbPGC = data[0].host;
+                $scope.backup.pgc = data[0].host;
                 $scope.restore.pgc = data[0].host;
-                $scope.onPGCChange($scope.dbPGC,'backup');
+                $scope.onPGCChange($scope.backup.pgc,'backup');
                 $scope.$apply();
             }
         }).then(function (subscription) {
@@ -230,10 +230,10 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             $cookies.put('directory_backup_'+$scope.backup.sshserver,$scope.backup.directory);
             var args = {
                 "action":"backup",
-                "host":$scope.dbHostName,
-                "dbName":$scope.dbName,
-                "port":$scope.dbPort,
-                "username":$scope.dbUser,
+                "host":$scope.backup.hostname,
+                "dbName":$scope.backup.dbname,
+                "port":$scope.backup.port,
+                "username":$scope.backup.user,
                 "sshServer":$scope.backup.sshserver,
                 "backupDirectory":$scope.backup.directory,
                 "fileName":$scope.backup.filename,
