@@ -782,7 +782,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     })
 
     $scope.openPGConnModal = function (argument) {
-        $cookies.put('previousOpendPG', argument.sid);
+        if(argument){
+            $cookies.put('previousOpendPG', argument.sid);
+        }
         if ($scope.awsRdsFeature || argument) {
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/addPGConnectionModal.html',
