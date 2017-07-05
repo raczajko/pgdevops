@@ -47,7 +47,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
             };
         var uptimeData = bamAjaxCall.getData(connect_api_url, data);
         uptimeData.then(function (argument) {
-            debugger
+
             $scope.up_time = argument.uptime;
         })
     }
@@ -159,6 +159,12 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
             subscriptions.push(subscription);
         });
 
+        session.subscribe("com.bigsql.onRdsMetaList", function (data) {
+            $scope.instanceMetaList = JSON.parse(data[0]);
+            $rootScope.instanceMetaList = JSON.parse(data);
+            $scope.$apply();
+        })
+
         session.subscribe("com.bigsql.onRdsInfo", function (data) {
             var data = JSON.parse(data[0]);
             $scope.rdsDataNotFound = false;
@@ -169,6 +175,8 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                     $scope.rdsDataNotFound = true;
                 }
             }
+
+            session.call('com.bigsql.rdsMetaList', [$scope.rdsInfo.db_class])
             $scope.$apply();
         }).then(function (subscription) {
             subscriptions.push(subscription);

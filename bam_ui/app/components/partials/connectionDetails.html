@@ -211,7 +211,8 @@
                                         <div class="form-group">
                                             <label class="col-sm-5 info-label">Automated Backups </label>
                                             <span class="col-sm-7 info-text">
-                                                <span class="greenText">{{rdsInfo.backup_retention}} days</span>
+                                                <span class="greenText" ng-if="rdsInfo.backup_retention">Enabled ({{rdsInfo.backup_retention}} days)</span>
+                                                <span class="redText" ng-if="!rdsInfo.backup_retention">Disabled</span>
                                             </span>
                                         </div>
                                         <div class="form-group">
@@ -296,7 +297,7 @@
                                         <div class="form-group">
                                             <label class="col-sm-6 info-label">Instance Class </label>
                                             <span class="col-sm-6 info-text">
-                                                {{rdsInfo.db_class}} &nbsp;<span ng-if="rdsInfo.db_class"></span>
+                                                {{rdsInfo.db_class}} &nbsp;<i tooltip-append-to-body="true" uib-tooltip-template="'../app/components/partials/instanceMetaList.html'" class="fa fa-info-circle" aria-hidden="true"></i><span ng-if="rdsInfo.db_class"></span>
                                             </span>
                                         </div>
                                         <div class="form-group">
@@ -323,7 +324,7 @@
                                         <div class="form-group">
                                             <label class="col-sm-6 info-label">Encryption Enabled </label>
                                             <span class="col-sm-6 info-text">
-                                                <div ng-class="{ 'greenText' : rdsInfo.storage_encrypted == 'True' , 'redText' : rdsInfo.storage_encrypted == 'False'}">{{rdsInfo.storage_encrypted == "True" ? "Yes":"No"}}</div>
+                                                <div>{{rdsInfo.storage_encrypted == "True" ? "Yes":"No"}}</div>
                                             </span>
                                         </div>
                                     </form>
@@ -450,6 +451,22 @@
                                                                                         <div class="col-sm-8 info-text">:  {{rdsInfo.db_class}}</div>
                                                                                     </div>
                                                                                     <div class="form-group">
+                                                                                        <div class="col-sm-4"> <strong> vCPU </strong></div>
+                                                                                        <div class="col-sm-8 info-text">: {{instanceMetaList[0].v_cpu}} </div>
+                                                                                    </div>
+                                                                                    <div class="form-group">
+                                                                                        <div class="col-sm-4"> <strong> Memory </strong></div>
+                                                                                        <div class="col-sm-8 info-text">: {{instanceMetaList[0].memory}} GB </div>
+                                                                                    </div>
+                                                                                    <div class="form-group">
+                                                                                        <div class="col-sm-4"> <strong> EBS Optimized </strong></div>
+                                                                                        <div class="col-sm-8 info-text">:  </div>
+                                                                                    </div>
+                                                                                    <div class="form-group">
+                                                                                        <div class="col-sm-4"> <strong> Network Performance </strong></div>
+                                                                                        <div class="col-sm-8 info-text">: {{instanceMetaList[0].network_performance}} </div>
+                                                                                    </div>
+                                                                                    <div class="form-group">
                                                                                         <div class="col-sm-4"> <strong> Storage Type  </strong> </div>
                                                                                         <div class="col-sm-8 info-text">:  {{rdsInfo.storage_type}}</div>
                                                                                     </div>
@@ -465,12 +482,6 @@
                                                                                     <div class="form-group">
                                                                                         <div class="col-sm-4"> <strong> Storage </strong> </div>
                                                                                         <div class="col-sm-8 info-text">:  {{rdsInfo.storage_allocated}} GB</div>
-                                                                                    </div>
-                                                                                    <div class="form-group">
-                                                                                        <label class="col-sm-4">Encryption Enabled </label>
-                                                                                        <span class="col-sm-8 info-text">
-                                                                                            <div>: <span ng-class="{ 'greenText' : rdsInfo.storage_encrypted == 'True' , 'redText' : rdsInfo.storage_encrypted == 'False'}"> {{rdsInfo.storage_encrypted == "True" ? "Yes":"No"}}</span> </div>
-                                                                                        </span>
                                                                                     </div>
                                                                                 </form>
                                                                             </div>

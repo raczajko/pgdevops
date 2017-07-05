@@ -1,0 +1,33 @@
+<div ng-controller="instanceMetaListController">
+    <div>
+        <div><strong> Details :  {{metaListData.instance}}</strong></div>
+    </div>
+    <div class="box-body">
+    <form class="form-horizontal" id="pgc-info-box">
+        <div class="form-group">
+            <label class="col-sm-9">vCPU </label>
+            <span class="col-sm-3">
+                <span>{{metaListData.v_cpu}}</span>
+            </span>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-9">Memory </label>
+            <span class="col-sm-3">
+                <span>{{metaListData.memory}}</span>
+            </span>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-9" style="white-space:pre;">EBS Optimized </label>
+            <span class="col-sm-3">
+                <span></span>
+            </span>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-9" style="white-space:pre;">Network Performanace </label>
+            <span class="col-sm-3">
+                <span> {{metaListData.network_performance}}</span>
+            </span>
+        </div>
+    </form>
+    </div>
+</div>
