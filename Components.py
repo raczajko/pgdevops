@@ -420,7 +420,7 @@ class Components(ComponentAction):
         """
         Method to get rds Instance Info
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json --verbose --email " + email + " --region " + region + " --instance " + instance
+        pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json  --region " + region + " --instance " + instance
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.process = process
         print pgcCmd
