@@ -296,7 +296,7 @@
                                     <form class="form-horizontal" id="pgc-info-box">
                                         <div class="form-group">
                                             <label class="col-sm-6 info-label">Instance Class </label>
-                                            <span class="col-sm-6 info-text">
+                                            <span class="col-sm-6 info-text" id="rds-meta-info">
                                                 {{rdsInfo.db_class}} &nbsp;<i tooltip-append-to-body="true" uib-tooltip-template="'../app/components/partials/instanceMetaList.html'" class="fa fa-info-circle" aria-hidden="true"></i><span ng-if="rdsInfo.db_class"></span>
                                             </span>
                                         </div>
@@ -452,7 +452,7 @@
                                                                                     </div>
                                                                                     <div class="form-group">
                                                                                         <div class="col-sm-4"> <strong> vCPU </strong></div>
-                                                                                        <div class="col-sm-8 info-text">: {{instanceMetaList[0].v_cpu}} </div>
+                                                                                        <div class="col-sm-8 info-text">: {{instanceMetaList[0].v_cpu}} vCPU</div>
                                                                                     </div>
                                                                                     <div class="form-group">
                                                                                         <div class="col-sm-4"> <strong> Memory </strong></div>
@@ -460,7 +460,7 @@
                                                                                     </div>
                                                                                     <div class="form-group">
                                                                                         <div class="col-sm-4"> <strong> EBS Optimized </strong></div>
-                                                                                        <div class="col-sm-8 info-text">:  </div>
+                                                                                        <div class="col-sm-8 info-text">: No </div>
                                                                                     </div>
                                                                                     <div class="form-group">
                                                                                         <div class="col-sm-4"> <strong> Network Performance </strong></div>

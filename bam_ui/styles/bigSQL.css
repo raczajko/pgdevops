@@ -7241,3 +7241,25 @@ fieldset
     padding: 10px;
     border: 1px solid rgb(212,212,212);
 }
+
+#rds-meta-info-box > .form-group {
+  margin-bottom: 0px;
+}
+
+#rds-meta-info-box > .form-group > .info-label {
+  margin-top: 0px;
+  text-align: right;
+  margin-bottom: 0px;
+  white-space: pre;
+
+}
+
+#rds-meta-info-box > .form-group > .info-text {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  text-align: left;
+}
+
+.tooltip-inner {
+    max-width: 300px;
+}
