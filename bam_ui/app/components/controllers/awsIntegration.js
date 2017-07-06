@@ -14,4 +14,14 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
 	    modalInstance.disp_name = disp_name;
 	}
 
+
+	$scope.createNewRds = function(){
+        var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/createNewRds.html',
+                controller: 'createNewRdsController',
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+    }
+
 }])
