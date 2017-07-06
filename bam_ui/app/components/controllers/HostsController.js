@@ -199,12 +199,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }];
 
     var getLabList = bamAjaxCall.getCmdData('lablist');
-    $scope.betaFeature = false;
+    $scope.multiHostlab = false;
     $scope.awsRdsFeature = false;
     getLabList.then(function (argument) {
         for (var i = argument.length - 1; i >= 0; i--) {
             if(argument[i].lab == "multi-host-mgr" && argument[i].enabled == "on"){
-                $scope.betaFeature = true;
+                $scope.multiHostlab = true;
             }else if(argument[i].lab == "aws" && argument[i].enabled == "on"){
                 $scope.awsRdsFeature = true;   
             }
@@ -785,7 +785,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         if(argument){
             $cookies.put('previousOpendPG', argument.sid);
         }
-        if ($scope.awsRdsFeature || argument) {
+        if ($scope.multiHostlab || argument) {
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/addPGConnectionModal.html',
                 windowClass: 'modal',
@@ -807,7 +807,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
 
     $scope.open = function (p_idx, idx) {
-            if ($scope.betaFeature) {
+            if ($scope.multiHostlab) {
                 $scope.editHost = '';
                 if(idx >= 0){
                     $scope.editHost = $scope.groupsList[p_idx].hosts[idx];
@@ -851,7 +851,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     }
 
     $scope.openGroupsModal = function (idx) {
-            if($scope.betaFeature){
+            if($scope.multiHostlab){
                 var modalInstance = $uibModal.open({
                     templateUrl: '../app/components/partials/addServerGroupsModal.html',
                     windowClass: 'modal',
