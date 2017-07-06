@@ -7,10 +7,21 @@
         <div ng-bind-html="alert.msg"></div>
     </div>
 <section class="content-header">
-    <h1 class="components-update-title-wrapper">
-        Job Manager
-    </h1>
-
+    <div class="row">
+        <div class="col-sm-2">
+            <h3 class="components-update-title-wrapper">
+                Job Manager
+            </h3>
+        </div>
+        <div class="col-sm-4">
+            <h3 class="components-update-title-wrapper">
+             <select class="form-control" id="processType" ng-model="processType" ng-change="jobTypeChange(processType)">
+                <option ng-repeat="job in jobTypes" value="{{ job.type_value }}"><h3>{{ job.type }}</h3> </option>
+            </select>
+            </h3>
+        </div>
+        <div class="col-sm-4"></div>
+    </div>
 </section>
 <section class="content">
     <span ng-if="errorData" style="text-align: center;"> <h4>{{errorData}}</h4> </span>
@@ -45,7 +56,7 @@
                         <div class="col-sm-1" style="text-align:center;">
                             <img ng-src="{{ process.process_completed == true && process.process_failed == false ? '/assets/img/success.png' : process.process_completed == false ? '/assets/img/success.png' : '/assets/img/fail.png'}}"
                             ng-class="(process.process_completed == true && process.process_failed == false) ? 'process-success' : (process.process_completed == false) ? 'process-success blink-image' : 'process-fail'"
-                            >
+                            style="height:22px;width:22px;">
                             </img>
 
 

@@ -3,6 +3,23 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
     $scope.loading = true;
     $scope.showBackupBgProcess = false;
     $scope.showBackupProcess = true;
+    $scope.processType = 'all';
+    $scope.jobTypes = [{
+                'type':'All Jobs',
+                'type_value': 'all'
+            },
+            {
+                'type':'Backup',
+                'type_value': 'backup'
+            },
+            {
+                'type':'Restore',
+                'type_value': 'restore'
+            },
+            {
+                'type':'Badger',
+                'type_value': 'pgBadger Report'
+            }];
     function getBGprocessList(type) {
         var getbgProcess = bamAjaxCall.getCmdData('bgprocess_list'+type);
         getbgProcess.then(function (argument) {
@@ -22,6 +39,16 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
         }
         return status;
     };
+
+    $scope.jobTypeChange = function(type){
+        debugger
+        if(type == "all"){
+            getBGprocessList('');
+        }
+        else{
+            getBGprocessList('/'+type);
+        }
+    };
     $scope.getTruncatedCmd = function(cmd){
         if(cmd.indexOf("pgc ") != -1 || cmd.indexOf("pgbadger ") != -1){
             var cmd_list = cmd.split(" ");
@@ -39,11 +66,11 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
         return cmd;
     };
     $scope.is_in_array = function(s,data) {
-    for (var i = 0; i < data.length; i++) {
-        if (data[i].toLowerCase().indexOf(s) != -1) return i;
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].toLowerCase().indexOf(s) != -1) return i;
+        }
+        return -1;
     }
-    return -1;
-}
     $scope.showConsoleOutput = function(log_id){
         $scope.showBackupBgProcess = false;
         $scope.showBackupBgProcess = true;
