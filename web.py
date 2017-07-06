@@ -898,7 +898,7 @@ class BackupRestoreDatabase(Resource):
                 try:
                     j = Process(
                         pid=int(result["process_log_id"]), command=result['cmd'],
-                        logdir=result["process_log_id"], desc="Backup Database",# if args['action']=='backup' else "Restore Database",
+                        logdir=result["process_log_id"], desc=args['action'],
                         user_id=current_user.id
                     )
                     db_session.add(j)
