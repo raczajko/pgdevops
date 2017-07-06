@@ -145,6 +145,8 @@ class AppSession(ApplicationSession):
 
         self.register(components.rdsInfo, 'com.bigsql.rdsInfo')
 
+        self.register(components.createRds, 'com.bigsql.createRds')
+
         self.register(components.rdsMetaList, 'com.bigsql.rdsMetaList')
 
         self.register(components.dbtune, 'com.bigsql.dbtune')

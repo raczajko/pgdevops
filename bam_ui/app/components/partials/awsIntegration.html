@@ -10,8 +10,11 @@
 </section>
 <section class="content">
     <div class="row">
-    	<div style="display: table; margin: 0 auto;">
+    	<div style="display: table; margin: 0 auto;" class="col-md-6">
             <button type="button" id="aws-refresh" class="btn btn-default pull-right" ng-click="discoverRds('aws', 'AWS Postgres RDS')">Discover RDS Instances</button>
+        </div>
+        <div style="display: table; margin: 0 auto;" class="col-md-6 pull-left">
+            <button type="button" id="aws-refresh" class="btn btn-default" ng-click="createNewRds()">Create New RDS Instance</button>
         </div>
     </div>
 </section>

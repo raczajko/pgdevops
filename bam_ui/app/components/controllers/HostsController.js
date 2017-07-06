@@ -211,6 +211,24 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     })
 
+    $scope.createNewRds = function(){
+        if ($scope.awsRdsFeature) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/createNewRds.html',
+                controller: 'createNewRdsController',
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+        }else{
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+
+                $scope.alerts.push({
+                    msg: getMessage,
+                    type: 'warning'
+                });
+        }
+    }
+
     $scope.discoverRds = function (settingName, value, disp_name) {
         if ($scope.awsRdsFeature) {
             var modalInstance = $uibModal.open({
