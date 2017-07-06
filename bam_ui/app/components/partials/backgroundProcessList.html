@@ -1,0 +1,79 @@
+<script type="text/ng-template" id="alert.html">
+    <div class="alert" style="background-color:#fa39c3;color:white;" role="alert">
+        <div ng-transclude></div>
+    </div>
+</script>
+<div class="uib-text" uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert()" dismiss-on-timeout="8000">
+        <div ng-bind-html="alert.msg"></div>
+    </div>
+<section class="content-header">
+    <h1 class="components-update-title-wrapper">
+        Job Manager
+    </h1>
+
+</section>
+<section class="content">
+    <span ng-if="errorData" style="text-align: center;"> <h4>{{errorData}}</h4> </span>
+    <div ng-if="loading" style="position: absolute;width: 100px; height: 50px; top: 50%;left: 50%; margin-left: -50px; margin-top: -25px;">
+        <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+        <span><h3>Loading...</h3></span>
+    </div>
+    <div class="uib-text" uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert()" dismiss-on-timeout="8000">
+        <div ng-bind-html="alert.msg"></div>
+    </div>
+
+    <div class="hostmanager-accordian-wrapper" ng-if="!loading">
+        <div class="box container">
+            <!--<uib-accordion close-others="true">
+                <uib-accordion-group is-open="showBackupProcess">
+                    <uib-accordion-heading>
+                        <span class="host-uib-tab-heading">
+                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !showBackupProcess, 'fa fa-minus':showBackupProcess}"></i> &nbsp; <strong> Backup & Restore Process</strong>
+                        </span>
+                     -->
+                    <div class="row" style="padding-bottom: 6px;padding-top: 6px;">
+                        <div class="col-sm-1" style="text-align:center;"><b>Status</b></div>
+                        <div class="col-sm-2"><b>Start Time (EST)</b></div>
+                        <div class="col-sm-2"><b>Completed (EST)</b></div>
+                        <div class="col-sm-2"><b>Duration</b></div>
+                        <div class="col-sm-1"><b>Job Type</b></div>
+                        <div class="col-sm-4"><b>Command</b></div>
+
+                    </div>
+
+                    <div ng-repeat="process in processList" class="row">
+                        <div class="col-sm-1" style="text-align:center;">
+                            <img ng-src="{{ process.process_completed == true && process.process_failed == false ? '/assets/img/success.png' : process.process_completed == false ? '/assets/img/success.png' : '/assets/img/fail.png'}}"
+                            ng-class="(process.process_completed == true && process.process_failed == false) ? 'process-success' : (process.process_completed == false) ? 'process-success blink-image' : 'process-fail'"
+                            >
+                            </img>
+
+
+                        </div>
+
+                        <!--<div class="col-sm-1" uib-dropdown>
+                            <a ng-class="(process.process_completed == true && process.process_failed == false) ? 'fa fa-circle fa-2x process-success' : (process.process_completed == false) ? 'fa fa-circle fa-2x process-success blink-image' : 'fa fa-circle fa-2x process-fail'" uib-dropdown-toggle>
+                                <span class="caret "></span>
+                                <span class="sr-only ">Split button!</span>
+                            </a>
+                            <ul uib-dropdown-menu role="menu " aria-labelledby="split-button " style="padding-left:3px;">
+                                <li><a href="" ng-click="showConsoleOutput(process.process_log_id)">Console Output</a></li>
+                                <li><a href="">Configure</a></li>
+                                <li><a href="">Re Run</a></li>
+                            </ul>
+                        </div>-->
+                        <div class="col-sm-2">{{process.start_time.split('.')[0]}}</div>
+                        <div class="col-sm-2">{{process.end_time.split('.')[0]}}</div>
+                        <div class="col-sm-2">{{process.execution_time}}</div>
+                        <div class="col-sm-1">{{process.process_type}}</div>
+                        <div class="col-sm-5 ellipses-right-4x" tooltip-append-to-body="true" uib-tooltip="{{getTruncatedCmd(process.cmd)}}" tooltip-class="pgcCmdHover" style="cursor: pointer;"><a ng-click="showConsoleOutput(process.process_log_id)">{{getTruncatedCmd(process.cmd)}}</a></div>
+                    </div>
+                <!--</uib-accordion-group>
+
+            </uib-accordion>-->
+        </div>
+    </div>
+    <div ng-show="showBackupBgProcess">
+        <background-process-alert></background-process-alert>
+    </div>
+</section>

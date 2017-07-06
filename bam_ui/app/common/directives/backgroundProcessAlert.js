@@ -9,7 +9,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
         controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', '$timeout', '$uibModal', '$sce','PubSubService', function backgroundProcessAlertController($scope, $http, $window, $cookies, $rootScope, $timeout, $uibModal, $sce, PubSubService) {
 
             $scope.isbgProcessStarted = false;
-            $scope.cmdAllowedTypes = ['backrest'];
+            $scope.cmdAllowedTypes = ['backup','restore'];
             // $scope.cancelbgProcess = false;
             function getBGStatus(process_log_id){
 
@@ -23,7 +23,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                     $scope.out_data = ret_data.data.out_data;
                     $scope.process_type = ret_data.data.process_type;
                     $scope.procCmd = ret_data.data.cmd;
-                    if($scope.procCmd.indexOf("pgc ") != -1){
+                    if($scope.procCmd.indexOf("pgc dbdump") != -1 || $scope.procCmd.indexOf("pgc dbrestore") != -1){
                         $scope.procCmd = "pgc " + $scope.procCmd.split("pgc ")[1];
                     }
                     if (ret_data.data.process_completed){
@@ -102,7 +102,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
 */
             $scope.cancel = function (argument) {
                 $rootScope.$emit('hidebgProcess');
-                var bgReportAcknowledge = $http.put($window.location.origin + '/admin/misc/bgprocess/'+ argument);
+                //var bgReportAcknowledge = $http.put($window.location.origin + '/admin/misc/bgprocess/'+ argument);
                 // $scope.cancelbgProcess = true;
             }
 

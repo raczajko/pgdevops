@@ -115,7 +115,16 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
                 templateUrl: '../app/components/partials/backupRestore.html',
             }
         }
-    }).state('components.awsIntegration', {
+    }).state('components.backgroundProcessList', {
+        url: '/jobs',
+        views: {
+            "sub": {
+                controller: 'backgroundProcessListController',
+                templateUrl: '../app/components/partials/backgroundProcessList.html',
+            }
+        }
+     })
+    .state('components.awsIntegration', {
         url: '/awsIntegration',
         views: {
             "sub": {

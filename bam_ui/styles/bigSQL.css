@@ -6405,7 +6405,11 @@ table.settings-table-pgc-info > tbody > tr > td {
 .tooltip.logDataDirHover .tooltip-inner {
             word-wrap: break-word !important;
 }
-
+.tooltip.pgcCmdHover .tooltip-inner{
+    word-wrap: break-word;
+    max-width:80% !important;
+    text-align:left;
+}
 
 @media (min-width: 992px) and (max-width: 1199px) {
     .btn-group>.btn:first-child:not(:last-child):not(.dropdown-toggle) {
@@ -7240,4 +7244,80 @@ fieldset
 .DBTuneSSHInfo {
     padding: 10px;
     border: 1px solid rgb(212,212,212);
+}
+
+.process-success{
+    color : rgba(18, 99, 14, 0.88)
+}
+
+.process-fail{
+    color:#f03131;
+}
+
+/* Firefox old*/
+@-moz-keyframes blink {
+    0% {
+        opacity:1;
+    }
+    50% {
+        opacity:0;
+    }
+    100% {
+        opacity:1;
+    }
+}
+
+@-webkit-keyframes blink {
+    0% {
+        opacity:1;
+    }
+    50% {
+        opacity:0;
+    }
+    100% {
+        opacity:1;
+    }
+}
+/* IE */
+@-ms-keyframes blink {
+    0% {
+        opacity:1;
+    }
+    50% {
+        opacity:0;
+    }
+    100% {
+        opacity:1;
+    }
+}
+/* Opera and prob css3 final iteration */
+@keyframes blink {
+    0% {
+        opacity:1;
+    }
+    50% {
+        opacity:0;
+    }
+    100% {
+        opacity:1;
+    }
+}
+.blink-image {
+    -moz-animation: blink normal 2s infinite ease-in-out; /* Firefox */
+    -webkit-animation: blink normal 2s infinite ease-in-out; /* Webkit */
+    -ms-animation: blink normal 2s infinite ease-in-out; /* IE */
+    animation: blink normal 2s infinite ease-in-out; /* Opera and prob css3 final iteration */
+}
+
+.ellipses-right-4x{
+    text-overflow: ellipsis;
+    width: 330px;
+    white-space: nowrap;
+    overflow: hidden;
+    direction: ltr;
+    text-align: left;
+    display: inline-block;
+    height: 22px;
+    padding: 4px 0px 0px 24px;
+    color:#0a21e2;
 }

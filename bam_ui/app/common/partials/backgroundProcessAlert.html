@@ -17,7 +17,7 @@
        <div class="btask--body">
          <div class="row">
             <div class="col-md-12">
-                 <div ng-if="!procCompleted && process_type != 'backrest'" class="bt-state">Generating Report …</div>
+                 <div ng-if="!procCompleted && process_type != 'backup' && process_type != 'restore'" class="bt-state">Generating Report …</div>
                  <div ng-if="generatedFile" class="bt-status">
                    File : <a target="_blank" href="reports/{{generatedFile}}">{{generatedFileName}}</a>
                  </div>

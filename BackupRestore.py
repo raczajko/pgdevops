@@ -28,7 +28,7 @@ class BackupRestore(object):
             pgc_cmd = pgc_cmd + " --host " + sshserver
         if this_uname == "Windows":
             pgc_cmd = pgc_cmd.replace("\\", "\\\\")
-        process_status = detached_process(pgc_cmd, ctime, process_type='backrest', exclude_str=pwd_str)
+        process_status = detached_process(pgc_cmd, ctime, process_type=action, exclude_str=pwd_str)
         result['error'] = None
         result['status'] = process_status['status']
         result['log_dir'] = process_status['log_dir']

@@ -942,28 +942,40 @@ api.add_resource(ComparePGVersions, '/api/compatre_pg_versions/<string:host>')
 class GetBgProcessList(Resource):
     @login_required
     def get(self, process_type=None):
+        from sqlalchemy import desc
         result={}
         if process_type:
-            processes = Process.query.filter_by(user_id=current_user.id, desc=process_type).all()
+            processes = Process.query.filter_by(user_id=current_user.id, desc=process_type).order_by(db.func.COALESCE(Process.end_time,datetime.now()).desc()).all()
         else:
-            processes = Process.query.filter_by(user_id=current_user.id).all()
+            processes = Process.query.filter_by(user_id=current_user.id).order_by(db.func.COALESCE(Process.end_time,datetime.now()).desc()).all()
         clean_up_old_process=False
+        result['process'] = []
         for p in processes:
-            result['process'] = []
             proc_log_dir = os.path.join(config.SESSION_DB_PATH,
                                         "process_logs",
                                         p.pid)
             if os.path.exists(proc_log_dir):
                 proc_status = get_process_status(proc_log_dir)
+                print proc_log_dir
                 if p.acknowledge or proc_status.get("end_time") or p.end_time:
-                    clean_up_old_process=True
+                    '''clean_up_old_process=True
                     db_session.delete(p)
                     try:
                         import shutil
                         shutil.rmtree(proc_log_dir, True)
                     except Exception as e:
                         pass
-                    continue
+                    continue'''
+                    try:
+                        stime = dateutil.parser.parse(proc_status.get("start_time"))
+                        etime = dateutil.parser.parse(proc_status.get("end_time"))
+                        from utils import get_readable_time_diff
+                        execution_time = get_readable_time_diff((etime - stime).total_seconds())
+                        proc_status['execution_time'] = execution_time
+                    except Exception as e:
+                        print e
+                        pass
+                    pass
                 proc_status['process_failed'] = False
                 proc_status['process_completed'] = True
                 if proc_status.get("exit_code") is None:
@@ -1021,7 +1033,7 @@ class GetBgProcessStatus(Resource):
         proc_status['process_log_id'] = process_log_id
         proc_status['process_failed'] = False
         proc_status['process_completed'] = True
-        if proc_status.get("exit_code")==2 and proc_status.get("process_type")=="backrest":
+        if proc_status.get("exit_code")==2 and (proc_status.get("process_type")=="backup" or proc_status.get("process_type")=="restore") :
             try:
                 out_data = proc_status.get("out_data").strip().split(":")
                 if out_data[0].strip() == "ERROR" and out_data[1].strip() == "component_required":
