@@ -21,7 +21,9 @@
         <div class="form-group">
             <label class="col-sm-4 control-label">DB Instance Class :</label>
             <div class="col-sm-8">
-                <select class="form-control"  ng-change="typeChange(typeSelect.type)" ng-options="type.instance as type.instance for type in types" ng-model="typeSelect.type"></select>
+                <select class="form-control"  ng-change="typeChange(typeSelect.type)" ng-model="typeSelect.type">
+                    <option ng-repeat="type in types" value="{{ type.instance }}"> {{type.instance}} -- {{type.v_cpu}}(vCPU), {{type.memory}} GiB RAM  </option>
+                </select>
             </div>
         </div>
         <div class="form-group">
