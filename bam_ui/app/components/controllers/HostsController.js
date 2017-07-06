@@ -306,6 +306,14 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             }else{
                 $scope.showpgList = false;
             }
+            if($cookies.get('previousOpendPG')){
+                var cookieVal = $cookies.get('previousOpendPG');
+                for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
+                    if($scope.pgListRes[i].sid == cookieVal){
+                        $scope.pgListRes[i].isOpen = true;
+                    }
+                }
+            }
             getGroupsList();
         }).then(function (subscription) {
             subscriptions.push(subscription);
@@ -774,6 +782,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     })
 
     $scope.openPGConnModal = function (argument) {
+        if(argument){
+            $cookies.put('previousOpendPG', argument.sid);
+        }
         if ($scope.awsRdsFeature || argument) {
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/addPGConnectionModal.html',

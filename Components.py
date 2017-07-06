@@ -420,17 +420,28 @@ class Components(ComponentAction):
         """
         Method to get rds Instance Info
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json --verbose --email " + email + " --region " + region + " --instance " + instance
+        pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json  --region " + region + " --instance " + instance
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.process = process
         print pgcCmd
         for line in iter(process.stdout.readline, ''):
             ln = (line).rstrip('\n')
-            print ln
             self.session.publish('com.bigsql.onRdsInfo', ln)
             yield sleep(0.001)
         self.process = ''
         returnValue(1)
+
+    @inlineCallbacks
+    def rdsMetaList(self, instance=None):
+        """
+        Method to get rds Instance Info
+        """
+        pgcCmd = PGC_HOME + os.sep + "pgc --json metalist aws-rds "
+        if instance:
+            pgcCmd =  pgcCmd + " --instance " + instance
+        process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        data = process.communicate()
+        yield self.session.publish('com.bigsql.onRdsMetaList', data[0].strip('\n'))
 
     @inlineCallbacks
     def dbtune(self, email, comp):

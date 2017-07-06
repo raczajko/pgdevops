@@ -7321,3 +7321,24 @@ fieldset
     padding: 4px 0px 0px 24px;
     color:#0a21e2;
 }
+#rds-meta-info-box > .form-group {
+  margin-bottom: 0px;
+}
+
+#rds-meta-info-box > .form-group > .info-label {
+  margin-top: 0px;
+  text-align: right;
+  margin-bottom: 0px;
+  white-space: pre;
+
+}
+
+#rds-meta-info-box > .form-group > .info-text {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  text-align: left;
+}
+
+.tooltip-inner {
+    max-width: 300px;
+}

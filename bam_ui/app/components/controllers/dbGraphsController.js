@@ -232,7 +232,7 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
         $timeout.cancel(cancelGraphsTimeout);
     }
 
-    $scope.connect_pg = function(sid,gid, pwd, savePwd, returnData=false){
+    $scope.connect_pg = function(sid,gid, pwd, savePwd){
         var connect_api_url = "/pgstats/connect/";
         $scope.connecting = true;
         var data = {
@@ -247,9 +247,6 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
             statusData.then(function (argument) {
                     $scope.connecting = false;
                     $timeout.cancel(cancelGraphsTimeout);
-                    if(returnData){
-                        $rootScope.$emit('updateMetaData', argument);
-                    }
                     $rootScope.$emit('connectionData', argument);
                     clear();
                     if (argument.state=="error"){
@@ -279,8 +276,8 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
     })
 
     if(!$rootScope.$$listenerCount['getDBstatus']){
-        $rootScope.$on('getDBstatus', function (event, sid, gid, pwd, savePwd, returnData) {
-            $scope.connect_pg(sid, gid, pwd, savePwd, returnData);
+        $rootScope.$on('getDBstatus', function (event, sid, gid, pwd, savePwd) {
+            $scope.connect_pg(sid, gid, pwd, savePwd);
         })
     }
 
