@@ -450,7 +450,6 @@ class Components(ComponentAction):
         """
         new_json_obj = json.dumps(json_obj)
         pgcCmd = PGC_HOME + os.sep + "pgc --json create " + type + " " + region + " \'"+ str(new_json_obj) +" \'"
-        print (pgcCmd)
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = process.communicate()
         yield self.session.publish('com.bigsql.onCreateRds', data[0].strip('\n'))

@@ -472,6 +472,30 @@ class getRecentReports(Resource):
 
 api.add_resource(getRecentReports, '/api/getrecentreports/<string:report_type>')
 
+class CheckConn(Resource):
+    def post(self):
+        result = {}
+        args = request.json.get('params')
+        host = args.get('host')
+        user = args.get('username')
+        password = args.get('password')
+        dbname = args.get('dbname')
+        port = args.get('port')
+        try:
+            from PgInstance import PgInstance
+            remoteConn = PgInstance(str(host),str(user), str(dbname), int(port), str(password))
+            remoteConn.connect()
+            remoteConn.close()
+            result['error'] = 0
+            result['msg'] = 'Sucessfully Connected.'
+            return result
+        except Exception as e:
+            result['error'] = 1
+            result['msg'] = str(e)
+            return result
+
+
+api.add_resource(CheckConn, '/check_pg_conn')
 
 class GenerateReports(Resource):
     def post(self):

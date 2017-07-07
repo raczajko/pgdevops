@@ -46,6 +46,7 @@ class ConnectAPI(MethodView):
                     json_dict['discovery_id'] = pg_server.discovery_id
 
                 manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
+                manager.update(pg_server)
                 conn = manager.connection()
                 if conn.connected():
                     try:
