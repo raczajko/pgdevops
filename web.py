@@ -945,9 +945,11 @@ class GetBgProcessList(Resource):
         from sqlalchemy import desc
         result={}
         if process_type:
-            processes = Process.query.filter_by(user_id=current_user.id, desc=dumps(str(process_type))).order_by(db.func.COALESCE(Process.end_time,datetime.now()).desc(),Process.start_time.desc()).limit(100)
+            #processes = Process.query.filter_by(user_id=current_user.id, desc=dumps(str(process_type))).order_by(db.func.COALESCE(Process.end_time,datetime.now()).desc(),Process.start_time.desc()).limit(100)
+            processes = Process.query.filter_by(user_id=current_user.id, desc=dumps(str(process_type))).order_by(
+                Process.start_time.desc()).limit(100)
         else:
-            processes = Process.query.filter_by(user_id=current_user.id).order_by(db.func.COALESCE(Process.end_time,datetime.now()).desc(),Process.start_time.desc()).limit(100)
+            processes = Process.query.filter_by(user_id=current_user.id).order_by(Process.start_time.desc()).limit(100)
         clean_up_old_process=False
         result['process'] = []
         for p in processes:
