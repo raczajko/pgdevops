@@ -35,7 +35,7 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
             }
             $timeout(function() {
             $scope.getBGprocessList($scope.processType)
-            }, 3000);
+            }, 5000);
         })
     };
     $scope.getBGprocessList('');

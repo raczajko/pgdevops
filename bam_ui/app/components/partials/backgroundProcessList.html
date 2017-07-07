@@ -75,7 +75,7 @@
                         <div class="col-sm-2" ng-bind="getLocalTime(process.start_time) | date : 'yyyy-mm-dd HH:mm:ss'"></div>
                         <div class="col-sm-2" ng-bind="getLocalTime(process.end_time) | date : 'yyyy-mm-dd HH:mm:ss'"></div>
                         <div class="col-sm-2">{{process.execution_time}}</div>
-                        <div class="col-sm-4 ellipses-right-4x" tooltip-append-to-body="true" uib-tooltip="{{getTruncatedCmd(process.cmd)}}" tooltip-class="pgcCmdHover" style="cursor: pointer;width:500px;"><a ng-click="showConsoleOutput(process.process_log_id)">{{getTruncatedCmd(process.cmd)}}</a></div>
+                        <div class="col-sm-4 ellipses-right-4x" tooltip-append-to-body="true" uib-tooltip="{{getTruncatedCmd(process.cmd)}}" tooltip-placement="bottom" tooltip-class="pgcCmdHover" style="cursor: pointer;"><a ng-click="showConsoleOutput(process.process_log_id)">{{getTruncatedCmd(process.cmd)}}</a></div>
                     </div></div>
                 <!--</uib-accordion-group>
 
