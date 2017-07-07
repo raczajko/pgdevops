@@ -52,8 +52,8 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         }
      });
 
-     function checkBGprocess(argument) {
-        var getbgProcess = bamAjaxCall.getCmdData('bgprocess_list/Backup Database');
+     $scope.checkBGprocess = function (process_type) {
+        var getbgProcess = bamAjaxCall.getCmdData('bgprocess_list/'+process_type);
         getbgProcess.then(function (argument) {
             if (argument.process) {
                 for (var i = argument.process.length - 1; i >= 0; i--) {
@@ -66,7 +66,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         })
     }
 
-    checkBGprocess();
+    $scope.checkBGprocess('backup');
 
      $scope.onFormatChange = function(format, b_type){
         if(format == 'p' && b_type == 'restore'){
@@ -149,6 +149,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
      };
 
      $scope.restoreDataBaseClick = function(){
+        $scope.checkBGprocess('restore');
         $scope.onPGCChange($scope.restore.pgc,'restore');
         $scope.onSSHServerChange($scope.restore.sshserver,'restore');
      };

@@ -33,7 +33,7 @@ def get_readable_time_diff(amount, units='Secs', precision=0):
         return result
 
     if int(amount)==0:
-      return "0 Seconds"
+      return "0 Secs"
     rd = process_time(int(amount), units)
     cont = 0
     for u in rd:

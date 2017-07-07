@@ -15,7 +15,7 @@
         </div>
         <div class="col-sm-4">
             <h3 class="components-update-title-wrapper">
-             <select class="form-control" id="processType" ng-model="processType" ng-change="jobTypeChange(processType)">
+             <select class="form-control" id="processType" ng-model="processType" ng-change="getBGprocessList(processType)">
                 <option ng-repeat="job in jobTypes" value="{{ job.type_value }}"><h3>{{ job.type }}</h3> </option>
             </select>
             </h3>
@@ -44,14 +44,14 @@
                      -->
                     <div class="row" style="padding-bottom: 6px;padding-top: 6px;">
                         <div class="col-sm-1" style="text-align:center;"><b>Status</b></div>
-                        <div class="col-sm-2"><b>Start Time (EST)</b></div>
-                        <div class="col-sm-2"><b>Completed (EST)</b></div>
+                        <div class="col-sm-2"><b>Start Time</b></div>
+                        <div class="col-sm-2"><b>Completed</b></div>
                         <div class="col-sm-2"><b>Duration</b></div>
                         <div class="col-sm-1"><b>Job Type</b></div>
                         <div class="col-sm-4"><b>Command</b></div>
 
                     </div>
-
+                    <div style="height: 70vh;overflow: auto;">
                     <div ng-repeat="process in processList" class="row">
                         <div class="col-sm-1" style="text-align:center;">
                             <img ng-src="{{ process.process_completed == true && process.process_failed == false ? '/assets/img/success.png' : process.process_completed == false ? '/assets/img/success.png' : '/assets/img/fail.png'}}"
@@ -73,12 +73,12 @@
                                 <li><a href="">Re Run</a></li>
                             </ul>
                         </div>-->
-                        <div class="col-sm-2">{{process.start_time.split('.')[0]}}</div>
-                        <div class="col-sm-2">{{process.end_time.split('.')[0]}}</div>
+                        <div class="col-sm-2" ng-bind="getLocalTime(process.start_time) | date : 'yyyy-mm-dd HH:mm:ss'"></div>
+                        <div class="col-sm-2" ng-bind="getLocalTime(process.end_time) | date : 'yyyy-mm-dd HH:mm:ss'"></div>
                         <div class="col-sm-2">{{process.execution_time}}</div>
                         <div class="col-sm-1">{{process.process_type}}</div>
                         <div class="col-sm-5 ellipses-right-4x" tooltip-append-to-body="true" uib-tooltip="{{getTruncatedCmd(process.cmd)}}" tooltip-class="pgcCmdHover" style="cursor: pointer;"><a ng-click="showConsoleOutput(process.process_log_id)">{{getTruncatedCmd(process.cmd)}}</a></div>
-                    </div>
+                    </div></div>
                 <!--</uib-accordion-group>
 
             </uib-accordion>-->

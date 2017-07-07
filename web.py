@@ -832,7 +832,7 @@ class GenerateBadgerReports(Resource):
                 try:
                     j = Process(
                         pid=int(report_file["process_log_id"]), command=report_file['cmd'],
-                        logdir=process_log_dir, desc="pgBadger Report", user_id=current_user.id
+                        logdir=process_log_dir, desc=dumps("pgBadger Report"), user_id=current_user.id
                     )
                     db_session.add(j)
                     db_session.commit()
@@ -898,7 +898,7 @@ class BackupRestoreDatabase(Resource):
                 try:
                     j = Process(
                         pid=int(result["process_log_id"]), command=result['cmd'],
-                        logdir=result["process_log_id"], desc=args['action'],
+                        logdir=result["log_dir"], desc=dumps(str(args['action'])),
                         user_id=current_user.id
                     )
                     db_session.add(j)
@@ -945,9 +945,9 @@ class GetBgProcessList(Resource):
         from sqlalchemy import desc
         result={}
         if process_type:
-            processes = Process.query.filter_by(user_id=current_user.id, desc=process_type).order_by(db.func.COALESCE(Process.end_time,datetime.now()).desc()).all()
+            processes = Process.query.filter_by(user_id=current_user.id, desc=dumps(str(process_type))).order_by(db.func.COALESCE(Process.end_time,datetime.now()).desc(),Process.start_time.desc()).limit(100)
         else:
-            processes = Process.query.filter_by(user_id=current_user.id).order_by(db.func.COALESCE(Process.end_time,datetime.now()).desc()).all()
+            processes = Process.query.filter_by(user_id=current_user.id).order_by(db.func.COALESCE(Process.end_time,datetime.now()).desc(),Process.start_time.desc()).limit(100)
         clean_up_old_process=False
         result['process'] = []
         for p in processes:
@@ -956,7 +956,6 @@ class GetBgProcessList(Resource):
                                         p.pid)
             if os.path.exists(proc_log_dir):
                 proc_status = get_process_status(proc_log_dir)
-                print proc_log_dir
                 if p.acknowledge or proc_status.get("end_time") or p.end_time:
                     '''clean_up_old_process=True
                     db_session.delete(p)
@@ -966,15 +965,15 @@ class GetBgProcessList(Resource):
                     except Exception as e:
                         pass
                     continue'''
-                    try:
-                        stime = dateutil.parser.parse(proc_status.get("start_time"))
-                        etime = dateutil.parser.parse(proc_status.get("end_time"))
-                        from utils import get_readable_time_diff
-                        execution_time = get_readable_time_diff((etime - stime).total_seconds())
-                        proc_status['execution_time'] = execution_time
-                    except Exception as e:
-                        print e
-                        pass
+                    pass
+                try:
+                    stime = dateutil.parser.parse(proc_status.get("start_time"))
+                    etime = dateutil.parser.parse(proc_status.get("end_time",get_current_time()))
+                    from utils import get_readable_time_diff
+                    execution_time = get_readable_time_diff((etime - stime).total_seconds())
+                    proc_status['execution_time'] = execution_time
+                except Exception as e:
+                    print e
                     pass
                 proc_status['process_failed'] = False
                 proc_status['process_completed'] = True

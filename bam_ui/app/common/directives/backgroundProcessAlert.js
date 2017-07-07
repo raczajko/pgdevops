@@ -12,7 +12,6 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
             $scope.cmdAllowedTypes = ['backup','restore'];
             // $scope.cancelbgProcess = false;
             function getBGStatus(process_log_id){
-
             var bgReportStatus = $http.get($window.location.origin + '/api/bgprocess_status/'+ process_log_id);
 
                 bgReportStatus.then(function (ret_data){
@@ -23,7 +22,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                     $scope.out_data = ret_data.data.out_data;
                     $scope.process_type = ret_data.data.process_type;
                     $scope.procCmd = ret_data.data.cmd;
-                    if($scope.procCmd.indexOf("pgc dbdump") != -1 || $scope.procCmd.indexOf("pgc dbrestore") != -1){
+                    if($scope.procCmd && $scope.procCmd.indexOf("pgc dbdump") != -1 || $scope.procCmd.indexOf("pgc dbrestore") != -1){
                         $scope.procCmd = "pgc " + $scope.procCmd.split("pgc ")[1];
                     }
                     if (ret_data.data.process_completed){
