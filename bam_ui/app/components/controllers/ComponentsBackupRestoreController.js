@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsBackupRestoreController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', 'htmlMessages','$http', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce, htmlMessages,$http) {
+angular.module('bigSQL.components').controller('ComponentsBackupRestoreController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', 'htmlMessages','$http','$timeout', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce, htmlMessages,$http,$timeout) {
     var subscriptions = [];
     $scope.backup = {};
     $scope.backup.format = 'c';
@@ -53,20 +53,54 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
      });
 
      $scope.checkBGprocess = function (process_type) {
-        var getbgProcess = bamAjaxCall.getCmdData('bgprocess_list/'+process_type);
+        var getbgProcess = bamAjaxCall.getCmdData('bgprocess_list'+process_type);
         getbgProcess.then(function (argument) {
             if (argument.process) {
-                for (var i = argument.process.length - 1; i >= 0; i--) {
+                for (var i = 0; i < argument.process.length ; i++) {
                     if (!argument.process[i].process_completed) {
                         $scope.showBackupBgProcess = true;
                         $rootScope.$emit('backgroundProcessStarted', argument.process[i].process_log_id);
+                        break;
                     }
                 }
             }
         })
     }
 
-    $scope.checkBGprocess('backup');
+    $scope.checkBGprocess('');
+
+    $scope.runningJobs = function (process_type){
+        var getbgProcess = bamAjaxCall.getCmdData('bgprocess_list'+process_type);
+        var totalCount = 0;
+        var count = 0;
+        var backupCount = 0;
+        var restoreCount = 0;
+        getbgProcess.then(function (argument) {
+            if (argument.process) {
+                for (var i = 0; i < argument.process.length ; i++) {
+                    if (!argument.process[i].process_completed) {
+                        if(argument.process[i].process_type == 'backup'){
+                            backupCount ++;
+                        }
+                        else if(argument.process[i].process_type == 'restore'){
+                            restoreCount ++;
+                        }
+                        else{
+                            count ++;
+                        }
+                        totalCount ++;
+                    }
+                }
+            }
+            $rootScope.runningJobsCount = totalCount;
+            $rootScope.runningBackupJobsCount = backupCount;
+            $rootScope.runningRestoreJobsCount = restoreCount;
+            $timeout(function() {
+                $scope.runningJobs('')
+            }, 5000);
+        })
+    }
+    $scope.runningJobs('');
 
      $scope.onFormatChange = function(format, b_type){
         if(format == 'p' && b_type == 'restore'){
@@ -149,7 +183,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
      };
 
      $scope.restoreDataBaseClick = function(){
-        $scope.checkBGprocess('restore');
+        //$scope.checkBGprocess('');
         $scope.onPGCChange($scope.restore.pgc,'restore');
         $scope.onSSHServerChange($scope.restore.sshserver,'restore');
      };

@@ -7342,3 +7342,13 @@ fieldset
 .tooltip-inner {
     max-width: 300px;
 }
+
+a.notification{
+  position: relative;
+  background-size: contain;
+  text-decoration: none;
+}
+.num {
+  position: absolute;
+  color: red;
+}
