@@ -139,6 +139,7 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
             var statusData = bamAjaxCall.getData(connect_api_url, data);
             statusData.then(function (argument) {
                     if (argument.state=="error"){
+                        $timeout.cancel(cancelGraphsTimeout);
                         $scope.connect_err=argument.msg;
                         $scope.need_pwd=true;
                         $scope.version=false;
@@ -203,9 +204,8 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
                         previous_data[sid]['timeData']=timeData;
                         previous_data[sid]["commit"]=argument.xact_commit;
                         previous_data[sid]["rollback"]=argument.xact_rollback;
-
+                        cancelGraphsTimeout = $timeout(function() {stats(sid, gid)}, $scope.polling_inteval);
                     }
-                    cancelGraphsTimeout = $timeout(function() {stats(sid, gid)}, $scope.polling_inteval);
             });
 
     };
@@ -232,13 +232,14 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
         $timeout.cancel(cancelGraphsTimeout);
     }
 
-    $scope.connect_pg = function(sid,gid, pwd, savePwd){
+    $scope.connect_pg = function(sid,gid, pwd, savePwd, update){
         var connect_api_url = "/pgstats/connect/";
         $scope.connecting = true;
         var data = {
              sid:sid,
              gid:gid,
              save:savePwd,
+             update:update
             };
             if (pwd){
              data.pwd=pwd;
@@ -276,8 +277,8 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
     })
 
     if(!$rootScope.$$listenerCount['getDBstatus']){
-        $rootScope.$on('getDBstatus', function (event, sid, gid, pwd, savePwd) {
-            $scope.connect_pg(sid, gid, pwd, savePwd);
+        $rootScope.$on('getDBstatus', function (event, sid, gid, pwd, savePwd, update) {
+            $scope.connect_pg(sid, gid, pwd, savePwd, update);
         })
     }
 
@@ -316,7 +317,7 @@ angular.module('bigSQL.components').controller('dbGraphsController', ['$scope', 
             session.unsubscribe(subscriptions[i]);
         }
         clear();
-        $interval.cancel(refreshRate);
+        $timeout.cancel(cancelGraphsTimeout);
     });
 
 }]);

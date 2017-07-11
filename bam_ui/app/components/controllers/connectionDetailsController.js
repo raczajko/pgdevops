@@ -36,7 +36,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
     });
 
     $scope.openPasswordModal = function (argument) {
-        $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
+        $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '', '', false);
     }
 
     function getUptime(argument) {
@@ -69,7 +69,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                 $scope.showRDSdetails = false;
             }
             if (data.state == 'success') {
-                $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
+                $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '', '', false);
                 getUptime();
             }else{
                 var statusData = bamAjaxCall.getData("/pgstats/disconnectall/");
@@ -79,7 +79,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                     $scope.connectionStatus = false;
                     $rootScope.$emit('clearDBGraphs');
                     if ($scope.connData.has_pwd) {
-                        $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '');
+                        $rootScope.$emit('getDBstatus', $scope.connData.sid, $scope.connData.gid, '', '', false);
                     }else{
                         $scope.openPasswordModal();
                     }

@@ -6,12 +6,12 @@ angular.module('bigSQL.components').controller('passwordModalController', ['$sco
     $scope.connection = {savePwd : false};
 
     $scope.submitPassword = function (pwd) {
-        $rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, pwd, $scope.connection.savePwd);
+        $rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, pwd, $scope.connection.savePwd, false   );
         $scope.connect_err = '';
         $scope.connecting = true;
     }
         
-    $scope.openEditConn = function function_name(argument) {
+    $scope.openEditConn = function (argument) {
         $rootScope.$emit('openEditConn', $scope.sid);
         $uibModalInstance.dismiss('cancel');
     }
