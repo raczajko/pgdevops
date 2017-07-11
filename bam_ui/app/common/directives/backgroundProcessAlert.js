@@ -50,6 +50,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                                 modalInstance.failText = "Cancel";
                                 modalInstance.acceptMethod = "initComponentInstall";
                                 modalInstance.sshHost = $rootScope.selectedHost;
+                                modalInstance.component = ret_data.data.component_required;
                                 $rootScope.$emit('hidebgProcess');
                             }
                         }else{

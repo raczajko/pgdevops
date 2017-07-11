@@ -25,7 +25,6 @@ angular.module('bigSQL.components').controller('confirmOverrideModalController',
                 $scope.component.installationRunning = data;
                 $scope.component.progress = data.pct;
             }
-
             if (data.status == "complete" || data.status == "cancelled") {
 
                 if (data.status == "cancelled") {
@@ -84,10 +83,11 @@ angular.module('bigSQL.components').controller('confirmOverrideModalController',
     $scope.successText = $uibModalInstance.successText;
     $scope.failText = $uibModalInstance.failText;
     $scope.sshHost = $uibModalInstance.sshHost;
+    $scope.requiredComponent = $uibModalInstance.component;
 
     $scope.acceptOverride = function(){
         if($scope.acceptMethod == "initComponentInstall"){
-            $scope.installComponentBackground('pg95',$scope.sshHost);
+            $scope.installComponentBackground($scope.requiredComponent,$scope.sshHost);
         }else{
             $rootScope.$emit($scope.acceptMethod);
             $scope.cancel();
