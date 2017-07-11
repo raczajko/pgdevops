@@ -7342,3 +7342,27 @@ fieldset
 .tooltip-inner {
     max-width: 300px;
 }
+
+.create-rds-dev-test{
+    border: 1px solid rgb(212,212,212);
+    height: 110px;
+}
+
+.create-rds-prod{
+    border: 1px solid rgb(212,212,212);
+    height: 110px;
+}
+
+.create-rds-modal label{
+    font-size: 0.88em;
+    white-space: pre;
+}
+
+.create-rds-modal {
+    padding-top:2px;
+}
+
+.create-rds-cat-header {
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom:3px;
+}

@@ -432,13 +432,17 @@ class Components(ComponentAction):
         returnValue(1)
 
     @inlineCallbacks
-    def rdsMetaList(self, instance=None):
+    def rdsMetaList(self, _type, instance=None, region=None):
         """
         Method to get rds Instance Info
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc --json metalist aws-rds "
+        pgcCmd = PGC_HOME + os.sep + "pgc --json metalist"
+        if type:
+            pgcCmd = pgcCmd + " "+_type
         if instance:
             pgcCmd =  pgcCmd + " --instance " + instance
+        if region:
+            pgcCmd = pgcCmd + " --region=" + region
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = process.communicate()
         yield self.session.publish('com.bigsql.onRdsMetaList', data[0].strip('\n'))

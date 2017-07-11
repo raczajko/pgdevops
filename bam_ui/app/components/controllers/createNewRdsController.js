@@ -3,18 +3,36 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     var session;
     $scope.showErrMsg = false;
     $scope.creating = false;
-    var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
-    $scope.data = {};
 
+
+    $scope.loading = true;
+    $scope.firstStep = true;
+    $scope.secondStep = false;
+
+    $scope.data = {
+        'allocated_storage' : 5,
+        'port' : 5432,
+        'publicly' : 'no',
+        'storage_type' : 'General Purpose (SSD)',
+        'MultiAZ' : 'no',
+        'vpcGroup' : 'default',
+        'backup_retention' : 7,
+        'enableMon' : 'no',
+        'autoUpgrade' : 'yes',
+        'storage_encrypted' : 'no'
+    };
+
+    var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
     regions.then(function(data){
+        $scope.loading = false;
         $scope.regions = data;
-        $scope.regionSelect = { region : $scope.regions[0].region};
+        $scope.data.region = $scope.regions[0].region;
     });
 
     var types = bamAjaxCall.getCmdData('metalist/aws-rds')
     types.then(function(data){
         $scope.types = data;
-        $scope.typeSelect = {type : $scope.types[0].instance};
+        $scope.data.db_class = $scope.types[0].instance;
     });
 
 
@@ -22,6 +40,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     sessionPromise.then(function (val) {
     	session = val;
         session.subscribe("com.bigsql.onCreateRds", function(data){
+            debugger
           $scope.creating = false;
           var data = JSON.parse(data);
           if(data[0].state == 'error'){
@@ -31,7 +50,36 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
             $uibModalInstance.dismiss('cancel');
           }
         })
+
+        session.subscribe("com.bigsql.onRdsMetaList", function (data) {
+            $scope.loading = false;
+            var response = JSON.parse(data[0]);
+            if($scope.secondStep){
+                $scope.dbEngVersions = response;
+                $scope.data.EngineVersion = $scope.dbEngVersions[0].EngineVersion;
+            }else if($scope.thirdStep){
+                $scope.networkSec = JSON.parse(data[0])
+                $scope.vpc = { select : $scope.networkSec[0].vpc }
+                $scope.vpcChange();
+            }
+        });
     });
+
+    $scope.vpcChange = function(argument){
+        for (var i = 0; i < $scope.networkSec.length; ++i) {
+            if($scope.networkSec[i].vpc == $scope.vpc.select){
+                $scope.data.subnet_group = $scope.networkSec[i].subnet_group;
+                debugger
+                $scope.availableZones = $scope.networkSec[i].zones;
+                if($scope.availableZones.length > 0){
+                    $scope.data.zone = $scope.availableZones[0].name;
+                }
+                for (var j = 0; j < $scope.availableZones.length; ++j) {
+
+                }
+            };
+        }
+    }
 
     $scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');
@@ -40,19 +88,32 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     $scope.createRDS = function(){
         $scope.creating = true;
         $scope.showErrMsg = false;
-        var data = [{
-           "dbname": $scope.data.dbName,
-           "db_class": $scope.typeSelect.type,
-           "instance" : $scope.data.instance,
-           "master_user": $scope.data.userName,
-           "password": $scope.data.password,
-           "subnet_group": $scope.data.sbGroup,
-           "port": $scope.data.port,
-           "storage_type": $scope.data.storageType,
-           "allocated_storage": $scope.data.allocStorage
-           }];
-        debugger
-        session.call('com.bigsql.createRds', ['db', $scope.regionSelect.region, data])
+        var data = [];
+        data.push($scope.data);
+        session.call('com.bigsql.createRds', ['db', $scope.data.region, data])
+    }
+
+    $scope.next = function(region){
+        $scope.loading = true;
+        if($scope.firstStep){
+            session.call('com.bigsql.rdsMetaList', ['rds-versions', '', $scope.data.region])
+            $scope.firstStep = false;
+            $scope.secondStep = true;
+        }else{
+            session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region])
+            $scope.secondStep = false;
+            $scope.thirdStep = true;
+        }
+    }
+
+    $scope.previous = function(data){
+        if($scope.secondStep){
+            $scope.secondStep = false;
+            $scope.firstStep = true;
+        }else if($scope.thirdStep){
+            $scope.thirdStep = false;
+            $scope.secondStep = true;
+        }
     }
 
 
