@@ -100,7 +100,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             }, 5000);
         })
     }
-    $scope.runningJobs('');
+    //$scope.runningJobs('');
 
      $scope.onFormatChange = function(format, b_type){
         if(format == 'p' && b_type == 'restore'){
@@ -352,6 +352,11 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             }
             modalInstance.b_type = type;
 
+        };
+
+        $scope.navigate = function (path){
+            window.location = path;
+            window.location.reload();
         };
 
         $rootScope.$on('fillFileName', function (argument,type, filename) {
