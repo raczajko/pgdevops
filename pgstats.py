@@ -102,6 +102,8 @@ class ConnectAPI(MethodView):
                             errmsg = emsg[0]
                     if hasattr(str, 'decode'):
                         errmsg = errmsg.decode('utf-8')
+                    if errmsg.find("timeout expired") >= 0:
+                        errmsg = "Connection timed out."
                     json_dict['state'] = "error"
                     json_dict['msg'] = errmsg
                     if errmsg.find("password authentication failed")>=0:
