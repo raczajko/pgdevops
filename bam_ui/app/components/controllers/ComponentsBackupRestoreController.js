@@ -106,7 +106,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             }, 5000);
         })
     }
-    //$scope.runningJobs('');
+    $scope.runningJobs('');
 
      $scope.onFormatChange = function(format, b_type){
         if(format == 'p' && b_type == 'restore'){
