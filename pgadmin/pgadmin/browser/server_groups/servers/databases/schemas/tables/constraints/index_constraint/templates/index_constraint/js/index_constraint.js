@@ -1,11 +1,12 @@
-define(
-        ['jquery', 'underscore', 'underscore.string', 'pgadmin',
-        'pgadmin.browser', 'alertify', 'pgadmin.browser.collection'],
-function($, _, S, pgAdmin, pgBrowser, alertify) {
+define('pgadmin.node.{{node_type}}', [
+  'sources/gettext', 'jquery', 'underscore', 'underscore.string', 'pgadmin',
+  'pgadmin.browser', 'alertify', 'pgadmin.browser.collection'
+], function(gettext, $, _, S, pgAdmin, pgBrowser, alertify) {
 
   // Extend the browser's node class for index constraint node
   if (!pgBrowser.Nodes['{{node_type}}']) {
     pgAdmin.Browser.Nodes['{{node_type}}'] = pgBrowser.Node.extend({
+      getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
       type: '{{node_type}}',
       label: '{{ node_label }}',
       collection_type: 'coll-constraints',
@@ -20,7 +21,7 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
       hasDepends: true,
       hasStatistics: true,
       statsPrettifyFields: ['Index size'],
-      parent_type: 'table',
+      parent_type: ['table','partition'],
       canDrop: true,
       canDropCascade: true,
       Init: function() {
@@ -45,12 +46,28 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
         if (data && data.check == false)
           return true;
 
-        var t = pgBrowser.tree, i = item, d = itemData, parents = [];
+        var t = pgBrowser.tree, i = item, d = itemData, parents = [],
+          immediate_parent_table_found = false,
+          is_immediate_parent_table_partitioned = false;
+
         // To iterate over tree to check parent node
         while (i) {
-          // If it is schema then allow user to c reate table
+          // If table is partitioned table then return false
+          if (!immediate_parent_table_found && (d._type == 'table' || d._type == 'partition')) {
+            immediate_parent_table_found = true;
+            if ('is_partitioned' in d && d.is_partitioned) {
+                is_immediate_parent_table_partitioned = true;
+            }
+          }
+
+          // If it is schema then allow user to create table
           if (_.indexOf(['schema'], d._type) > -1) {
             {% if node_type == 'primary_key' %}
+
+            if (is_immediate_parent_table_partitioned) {
+              return false;
+            }
+
             // There should be only one primary key per table.
             var children = t.children(arguments[1], false),
               primary_key_found = false;
@@ -63,7 +80,7 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
             });
             return !primary_key_found;
             {% else %}
-            return true;
+            return !is_immediate_parent_table_partitioned;
             {% endif %}
           }
           parents.push(d._type);
@@ -74,7 +91,7 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
         if (_.indexOf(parents, 'catalog') > -1) {
           return false;
         } else {
-            return true;
+            return !is_immediate_parent_table_partitioned;
         }
       },
 
@@ -96,15 +113,15 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
 
         // Define the schema for the index constraint node
         schema: [{
-          id: 'name', label: '{{ _('Name') }}', type: 'text',
+          id: 'name', label: gettext('Name'), type: 'text',
           mode: ['properties', 'create', 'edit'], editable:true,
           cellHeaderClasses:'width_percent_40',
         },{
-          id: 'oid', label:'{{ _('OID') }}', cell: 'string',
+          id: 'oid', label: gettext('OID'), cell: 'string',
           type: 'text' , mode: ['properties'], editable: false,
           cellHeaderClasses:'width_percent_20',
         },{
-          id: 'comment', label:'{{ _('Comment') }}', cell: 'string',
+          id: 'comment', label: gettext('Comment'), cell: 'string',
           type: 'multiline', mode: ['properties', 'create', 'edit'],
           deps:['name'], disabled:function(m) {
             var name = m.get('name');
@@ -120,8 +137,8 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
             }
           }
         },{
-          id: 'columns', label: '{{ _('Columns') }}',
-          type: 'collection', group: '{{ _('Definition') }}',
+          id: 'columns', label: gettext('Columns'),
+          type: 'collection', group: gettext('Definition'),
           editable: false,
           cell: Backgrid.StringCell.extend({
             initialize: function() {
@@ -226,7 +243,7 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
                   multiple: true,
                   allowClear: true,
                   width: 'style',
-                  placeholder: '{{ _('Select the column(s)') }}',
+                  placeholder: gettext('Select the column(s)'),
                 }
               }
             ),
@@ -402,8 +419,8 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
               }
             }
           },{
-          id: 'spcname', label: '{{ _('Tablespace') }}',
-          type: 'text', group: '{{ _('Definition') }}',
+          id: 'spcname', label: gettext('Tablespace'),
+          type: 'text', group: gettext('Definition'),
           control: 'node-list-by-name', node: 'tablespace',
           deps: ['index'],
           select2:{allowClear:false},
@@ -426,8 +443,8 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
               }
           }
         },{
-          id: 'index', label: '{{ _('Index') }}',
-          type: 'text', group: '{{ _('Definition') }}',
+          id: 'index', label: gettext('Index'),
+          type: 'text', group: gettext('Definition'),
           control: Backform.NodeListByNameControl.extend({
           initialize:function() {
             if (_.isUndefined(this.model.top)) {
@@ -453,8 +470,8 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
             return !_.isUndefined(m.top.node_info['table']);
           }
         },{
-          id: 'fillfactor', label: '{{ _('Fill factor') }}', deps: ['index'],
-          type: 'int', group: '{{ _('Definition') }}', allowNull: true,
+          id: 'fillfactor', label: gettext('Fill factor'), deps: ['index'],
+          type: 'int', group: gettext('Definition'), allowNull: true,
           disabled: function(m) {
             // Disable if index is selected.
             var index = m.get('index');
@@ -468,8 +485,8 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
               }
             }
         },{
-          id: 'condeferrable', label: '{{ _('Deferrable?') }}',
-          type: 'switch', group: '{{ _('Definition') }}', deps: ['index'],
+          id: 'condeferrable', label: gettext('Deferrable?'),
+          type: 'switch', group: gettext('Definition'), deps: ['index'],
           disabled: function(m) {
             // If we are in table edit mode then
             if (_.has(m, 'top') && !_.isUndefined(m.top)
@@ -496,8 +513,8 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
             }
           }
         },{
-          id: 'condeferred', label: '{{ _('Deferred?') }}',
-          type: 'switch', group: '{{ _('Definition') }}',
+          id: 'condeferred', label: gettext('Deferred?'),
+          type: 'switch', group: gettext('Definition'),
           deps: ['condeferrable'],
           disabled: function(m) {
             // If we are in table edit mode then
@@ -537,7 +554,7 @@ function($, _, S, pgAdmin, pgBrowser, alertify) {
 
             if ((_.isUndefined(index) || String(index).replace(/^\s+|\s+$/g, '') == '') &&
                 (_.isUndefined(columns) || _.isNull(columns) || columns.length < 1)) {
-              var msg = '{{ _('Please specify columns for ') }}' + '{{ node_label }}';
+              var msg = gettext('Please specify columns for %(node)s', {node: '{{ node_label }}'});
               this.errorModel.set('columns', msg);
               return msg;
             }

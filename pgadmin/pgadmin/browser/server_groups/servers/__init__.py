@@ -8,7 +8,7 @@
 ##########################################################################
 
 import simplejson as json
-
+import re
 import pgadmin.browser.server_groups as sg
 from flask import render_template, request, make_response, jsonify, \
     current_app, url_for
@@ -128,24 +128,23 @@ class ServerModule(sg.ServerGroupPluginModule):
         scripts = []
 
         scripts.extend([{
-            'name': 'pgadmin.node.server',
-            'path': url_for('browser.index') + '%s/module' % self.node_type,
-            'when': self.script_load
-        },
-            {
-                'name': 'pgadmin.browser.server.privilege',
-                'path': url_for('browser.index') + 'server/static/js/privilege',
-                'when': self.node_type,
-                'deps': ['pgadmin.browser.node.ui']
-            },
-            {
-                'name': 'pgadmin.browser.server.variable',
-                'path': url_for('browser.index') + 'server/static/js/variable',
-                'when': self.node_type
-            }])
-
-        for module in self.submodules:
-            scripts.extend(module.get_own_javascripts())
+            'name': 'pgadmin.browser.server.privilege',
+            'path': url_for('%s.static'% self.name, filename='js/privilege'),
+            'when': self.node_type,
+            'is_template': False,
+            'deps': ['pgadmin.browser.node.ui']
+        }, {
+            'name': 'pgadmin.browser.server.variable',
+            'path': url_for('%s.static'% self.name, filename='js/variable'),
+            'when': self.node_type,
+            'is_template': False
+        },{
+            'name': 'pgadmin.server.supported_servers',
+            'path': url_for('browser.index') + 'server/supported_servers',
+            'is_template': True,
+            'when': self.node_type
+        }])
+        scripts.extend(sg.ServerGroupPluginModule.get_own_javascripts(self))
 
         return scripts
 
@@ -199,7 +198,7 @@ class ServerNode(PGChildNodeView):
         'dependency': [{'get': 'dependencies'}],
         'dependent': [{'get': 'dependents'}],
         'children': [{'get': 'children'}],
-        'module.js': [{}, {}, {'get': 'module_js'}],
+        'supported_servers.js': [{}, {}, {'get': 'supported_servers'}],
         'reload':
             [{'get': 'reload_configuration'}],
         'restore_point':
@@ -212,6 +211,26 @@ class ServerNode(PGChildNodeView):
             'delete': 'pause_wal_replay', 'put': 'resume_wal_replay'
         }]
     })
+    EXP_IP4 = "^\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."\
+            "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."\
+            "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."\
+            "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*$"
+    EXP_IP6 = '^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|'\
+           '(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|'\
+           '2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|'\
+           '(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|'\
+           ':((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|'\
+           '(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|'\
+           '2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|'\
+           '(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|'\
+           '[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|'\
+           '((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|'\
+           '(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|'\
+           '1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|'\
+           '((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$'
+    pat4 = re.compile(EXP_IP4)
+    pat6 = re.compile(EXP_IP6)
+
 
     def nodes(self, gid):
         res = []
@@ -354,6 +373,7 @@ class ServerNode(PGChildNodeView):
         config_param_map = {
             'name': 'name',
             'host': 'host',
+            'hostaddr': 'hostaddr',
             'port': 'port',
             'db': 'maintenance_db',
             'username': 'username',
@@ -379,13 +399,24 @@ class ServerNode(PGChildNodeView):
             request.data, encoding='utf-8'
         )
 
+        if 'hostaddr' in data and data['hostaddr'] != '':
+            if not self.pat4.match(data['hostaddr']):
+                if not self.pat6.match(data['hostaddr']):
+                    return make_json_response(
+                    success=0,
+                    status=400,
+                    errormsg=gettext('Host address not valid')
+                    )
+
+
+
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(sid)
         conn = manager.connection()
         connected = conn.connected()
 
         if connected:
             for arg in (
-                    'host', 'port', 'db', 'username', 'sslmode', 'role'
+                    'host', 'hostaddr', 'port', 'db', 'username', 'sslmode', 'role'
             ):
                 if arg in data:
                     return forbidden(
@@ -502,6 +533,7 @@ class ServerNode(PGChildNodeView):
                 'id': server.id,
                 'name': server.name,
                 'host': server.host,
+                'hostaddr': server.hostaddr,
                 'port': server.port,
                 'db': server.maintenance_db,
                 'username': server.username,
@@ -542,6 +574,15 @@ class ServerNode(PGChildNodeView):
                     )
                 )
 
+        if 'hostaddr' in data and data['hostaddr'] != '':
+            if not self.pat4.match(data['hostaddr']):
+                if not self.pat6.match(data['hostaddr']):
+                    return make_json_response(
+                        success=0,
+                        status=400,
+                        errormsg=gettext('Host address not valid')
+                    )
+
         server = None
 
         try:
@@ -550,6 +591,7 @@ class ServerNode(PGChildNodeView):
                 servergroup_id=data[u'gid'] if u'gid' in data else gid,
                 name=data[u'name'],
                 host=data[u'host'],
+                hostaddr=data[u'hostaddr'] if u'hostaddr' in data else None,
                 port=data[u'port'],
                 maintenance_db=data[u'db'],
                 username=data[u'username'],
@@ -561,7 +603,6 @@ class ServerNode(PGChildNodeView):
             db.session.commit()
 
             connected = False
-            icon = "icon-server-not-connected"
             user = None
             manager = None
 
@@ -663,21 +704,16 @@ class ServerNode(PGChildNodeView):
     def dependents(self, gid, sid):
         return make_json_response(data='')
 
-    def module_js(self, **kwargs):
+    def supported_servers(self, **kwargs):
         """
         This property defines (if javascript) exists for this node.
         Override this property for your own logic.
         """
-        username = 'postgres'
-        if config.SERVER_MODE is True:
-            username = current_user.email.split('@')[0]
 
         return make_response(
             render_template(
-                "servers/servers.js",
-                server_types=ServerType.types(),
-                _=gettext,
-                username=username,
+                "servers/supported_servers.js",
+                server_types=ServerType.types()
             ),
             200, {'Content-Type': 'application/x-javascript'}
         )
@@ -753,6 +789,8 @@ class ServerNode(PGChildNodeView):
                         _=gettext
                     )
                 )
+            else:
+                password = conn_passwd or server.password
         else:
             password = data['password'] if 'password' in data else None
             save_password = \

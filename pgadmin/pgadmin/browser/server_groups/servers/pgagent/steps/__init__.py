@@ -12,7 +12,7 @@
 import json
 from functools import wraps
 
-from flask import render_template, make_response, request
+from flask import render_template, request, jsonify
 from flask_babel import gettext
 from pgadmin.browser.collection import CollectionNodeModule
 from pgadmin.browser.utils import PGChildNodeView
@@ -64,11 +64,20 @@ class JobStepModule(CollectionNodeModule):
     @property
     def script_load(self):
         """
-        Load the module script for language, when any of the database nodes are initialized.
+        Load the module script for language, when any of the pga_job nodes
+        are initialized.
 
         Returns: node type of the server module.
         """
         return 'pga_job'
+
+    @property
+    def module_use_template_javascript(self):
+        """
+        Returns whether Jinja2 template is used for generating the javascript
+        module.
+        """
+        return False
 
 
 blueprint = JobStepModule(__name__)
@@ -78,18 +87,14 @@ class JobStepView(PGChildNodeView):
     """
     class JobStepView(PGChildNodeView)
 
-        A view class for JobStep node derived from PGChildNodeView. This class is
-        responsible for all the stuff related to view like updating language
-        node, showing properties, showing sql in sql pane.
+        A view class for JobStep node derived from PGChildNodeView.
+        This class is responsible for all the stuff related to view like
+        updating job step node, showing properties, showing sql in sql pane.
 
     Methods:
     -------
     * __init__(**kwargs)
       - Method is used to initialize the JobStepView and it's base view.
-
-    * module_js()
-      - This property defines (if javascript) exists for this node.
-        Override this property for your own logic
 
     * check_precondition()
       - This function will behave as a decorator which will checks
@@ -97,20 +102,29 @@ class JobStepView(PGChildNodeView):
         manager,conn & template_path properties to self
 
     * list()
-      - This function is used to list all the language nodes within that collection.
+      - This function is used to list all the job step nodes within that
+      collection.
 
     * nodes()
-      - This function will used to create all the child node within that collection.
-        Here it will create all the language node.
+      - This function will used to create all the child node within that
+      collection.
+        Here it will create all the job step node.
 
     * properties(gid, sid, jid, jstid)
-      - This function will show the properties of the selected language node
+      - This function will show the properties of the selected job step node
 
     * update(gid, sid, jid, jstid)
-      - This function will update the data for the selected language node
+      - This function will update the data for the selected job step node
 
     * msql(gid, sid, jid, jstid)
-      - This function is used to return modified SQL for the selected language node
+      - This function is used to return modified SQL for the selected
+      job step node
+
+    * sql(gid, sid, jid, jscid)
+      - Dummy response for sql panel
+
+    * delete(gid, sid, jid, jscid)
+      - Drops job step
     """
 
     node_type = blueprint.node_type
@@ -126,19 +140,20 @@ class JobStepView(PGChildNodeView):
 
     operations = dict({
         'obj': [
-            {'get': 'properties', 'put': 'update'},
+            {'get': 'properties', 'put': 'update', 'delete': 'delete'},
             {'get': 'list', 'post': 'create'}
         ],
         'nodes': [{'get': 'nodes'}, {'get': 'nodes'}],
         'msql': [{'get': 'msql'}, {'get': 'msql'}],
-        'stats': [{'get': 'statistics'}],
-        'module.js': [{}, {}, {'get': 'module_js'}]
+        'sql': [{'get': 'sql'}],
+        'stats': [{'get': 'statistics'}]
     })
 
     def _init_(self, **kwargs):
         """
         Method is used to initialize the JobStepView and its base view.
-        Initialize all the variables create/used dynamically like conn, template_path.
+        Initialize all the variables create/used dynamically like conn,
+        template_path.
 
         Args:
             **kwargs:
@@ -148,18 +163,6 @@ class JobStepView(PGChildNodeView):
         self.manager = None
 
         super(JobStepView, self).__init__(**kwargs)
-
-    def module_js(self):
-        """
-        This property defines whether javascript exists for this node.
-        """
-        return make_response(
-            render_template(
-                "pga_jobstep/js/pga_jobstep.js",
-                _=gettext
-            ),
-            200, {'Content-Type': 'application/x-javascript'}
-        )
 
     def check_precondition(f):
         """
@@ -196,7 +199,8 @@ SELECT EXISTS(
     @check_precondition
     def list(self, gid, sid, jid):
         """
-        This function is used to list all the language nodes within that collection.
+        This function is used to list all the job step nodes within
+        that collection.
 
         Args:
             gid: Server Group ID
@@ -221,8 +225,9 @@ SELECT EXISTS(
     @check_precondition
     def nodes(self, gid, sid, jid, jstid=None):
         """
-        This function is used to create all the child nodes within the collection.
-        Here it will create all the language nodes.
+        This function is used to create all the child nodes
+        within the collection.
+        Here it will create all the job step nodes.
 
         Args:
             gid: Server Group ID
@@ -277,7 +282,7 @@ SELECT EXISTS(
     @check_precondition
     def properties(self, gid, sid, jid, jstid):
         """
-        This function will show the properties of the selected language node.
+        This function will show the properties of the selected job step node.
 
         Args:
             gid: Server Group ID
@@ -307,7 +312,7 @@ SELECT EXISTS(
     @check_precondition
     def create(self, gid, sid, jid):
         """
-        This function will update the data for the selected language node.
+        This function will update the data for the selected job step node.
 
         Args:
             gid: Server Group ID
@@ -348,9 +353,15 @@ SELECT EXISTS(
         if not status:
             return internal_server_error(errormsg=res)
 
+        if len(res['rows']) == 0:
+            return gone(
+                errormsg=gettext(
+                    "Job step creation failed."
+                )
+            )
         row = res['rows'][0]
-        return make_json_response(
-            data=self.blueprint.generate_browser_node(
+        return jsonify(
+            node=self.blueprint.generate_browser_node(
                 row['jstid'],
                 row['jstjobid'],
                 row['jstname'],
@@ -361,7 +372,7 @@ SELECT EXISTS(
     @check_precondition
     def update(self, gid, sid, jid, jstid):
         """
-        This function will update the data for the selected language node.
+        This function will update the data for the selected job step node.
 
         Args:
             gid: Server Group ID
@@ -428,20 +439,43 @@ SELECT EXISTS(
         if not status:
             return internal_server_error(errormsg=res)
 
+        if len(res['rows']) == 0:
+            return gone(
+                errormsg=gettext(
+                    "Job step update failed."
+                )
+            )
         row = res['rows'][0]
-        return make_json_response(
-            self.blueprint.generate_browser_node(
-                row['jstid'],
-                row['jstjobid'],
+        return jsonify(
+            node=self.blueprint.generate_browser_node(
+                jstid,
+                jid,
                 row['jstname'],
                 icon="icon-pga_jobstep"
             )
         )
 
     @check_precondition
+    def delete(self, gid, sid, jid, jstid):
+        """Delete the Job step."""
+
+        status, res = self.conn.execute_void(
+            render_template(
+                "/".join([self.template_path, 'delete.sql']),
+                jid=jid, jstid=jstid, conn=self.conn
+            )
+        )
+        if not status:
+            return internal_server_error(errormsg=res)
+
+        return make_json_response(success=1)
+
+
+    @check_precondition
     def msql(self, gid, sid, jid, jstid=None):
         """
-        This function is used to return modified SQL for the selected language node.
+        This function is used to return modified SQL for the selected
+        job step node.
 
         Args:
             gid: Server Group ID
@@ -532,6 +566,21 @@ SELECT EXISTS(
 
         return make_json_response(
             data=res,
+            status=200
+        )
+
+    @check_precondition
+    def sql(self, gid, sid, jid, jstid):
+        """
+        Dummy response for sql route.
+        As we need to have msql tab for create and edit mode we can not
+        disable it setting hasSQL=false because we have a single 'hasSQL'
+        flag in JS to display both sql & msql tab
+        """
+        return ajax_response(
+            response=gettext(
+                "-- No SQL could be generated for the selected object."
+            ),
             status=200
         )
 

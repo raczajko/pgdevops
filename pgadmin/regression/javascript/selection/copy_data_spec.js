@@ -1,119 +1,145 @@
-define(
-  ["jquery",
-    "slickgrid/slick.grid",
-    "slickgrid/slick.rowselectionmodel",
-    "sources/selection/copy_data",
-    "sources/selection/clipboard",
-    "sources/selection/range_selection_helper"
-  ],
-  function ($, SlickGrid, RowSelectionModel, copyData, clipboard, RangeSelectionHelper) {
-    describe('copyData', function () {
-      var grid, sqlEditor;
+//////////////////////////////////////////////////////////////////////////
+//
+// pgAdmin 4 - PostgreSQL Tools
+//
+// Copyright (C) 2013 - 2017, The pgAdmin Development Team
+// This software is released under the PostgreSQL Licence
+//
+//////////////////////////////////////////////////////////////////////////
 
-      beforeEach(function () {
-        var data = [[1, "leopord", "12"],
-          [2, "lion", "13"],
-          [3, "puma", "9"]];
+import $ from 'jquery';
 
-        var columns = [{
-            name: "id",
-            pos: 0,
-            label: "id<br> numeric",
-            cell: "number",
-            can_edit: false,
-            type: "numeric"
-          }, {
-            name: "brand",
-            pos: 1,
-            label: "flavor<br> character varying",
-            cell: "string",
-            can_edit: false,
-            type: "character varying"
-          }, {
-            name: "size",
-            pos: 2,
-            label: "size<br> numeric",
-            cell: "number",
-            can_edit: false,
-            type: "numeric"
-          }
-          ]
-        ;
-        var gridContainer = $("<div id='grid'></div>");
-        $("body").append(gridContainer);
-        $("body").append("<button id='btn-paste-row' disabled></button>");
-        grid = new Slick.Grid("#grid", data, columns, {});
-        grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
-        sqlEditor = {slickgrid: grid};
-      });
+import Slick from 'slickgrid';
+import 'slickgrid.grid';
 
-      afterEach(function() {
-        $("body").remove('#grid');
-        $("body").remove('#btn-paste-row');
-      });
+import clipboard from '../../../pgadmin/static/js/selection/clipboard';
+import copyData from '../../../pgadmin/static/js/selection/copy_data';
+import RangeSelectionHelper from 'sources/selection/range_selection_helper';
+import XCellSelectionModel from 'sources/selection/xcell_selection_model';
+describe('copyData', function () {
+  var grid, sqlEditor, gridContainer, buttonPasteRow;
+  var SlickGrid;
 
-      describe("when rows are selected", function () {
-        beforeEach(function () {
-          grid.getSelectionModel().setSelectedRanges([
-            RangeSelectionHelper.rangeForRow(grid, 0),
-            RangeSelectionHelper.rangeForRow(grid, 2)]
-          );
-        });
+  beforeEach(function () {
+    SlickGrid = Slick.Grid;
+    var data = [{'id': 1, 'brand':'leopord', 'size':'12', '__temp_PK': '123'},
+                {'id': 2, 'brand':'lion', 'size':'13', '__temp_PK': '456'},
+                {'id': 3, 'brand':'puma', 'size':'9', '__temp_PK': '789'}],
+      dataView = new Slick.Data.DataView();
 
-        it("copies them", function () {
-          spyOn(clipboard, 'copyTextToClipboard');
+    var columns = [
+      {
+        id: 'row-header-column',
+        name: 'row header column name',
+        selectable: false,
+        display_name: 'row header column name',
+        column_type: 'text',
+      },
+      {
+        name: 'id',
+        field: 'id',
+        pos: 0,
+        label: 'id<br> numeric',
+        cell: 'number',
+        can_edit: false,
+        type: 'numeric',
+      }, {
+        name: 'brand',
+        field: 'brand',
+        pos: 1,
+        label: 'flavor<br> character varying',
+        cell: 'string',
+        can_edit: false,
+        type: 'character varying',
+      }, {
+        name: 'size',
+        field: 'size',
+        pos: 2,
+        label: 'size<br> numeric',
+        cell: 'number',
+        can_edit: false,
+        type: 'numeric',
+      },
+    ];
+    gridContainer = $('<div id="grid"></div>');
+    $('body').append(gridContainer);
+    buttonPasteRow = $('<button id="btn-paste-row" disabled></button>');
+    $('body').append(buttonPasteRow);
+    grid = new SlickGrid('#grid', dataView, columns, {});
+    dataView.setItems(data, '__temp_PK');
+    grid.setSelectionModel(new XCellSelectionModel());
+    sqlEditor = {slickgrid: grid};
+  });
 
-          copyData.apply(sqlEditor);
+  afterEach(function() {
+    grid.destroy();
+    gridContainer.remove();
+    buttonPasteRow.remove();
+  });
 
-          expect(sqlEditor.copied_rows.length).toBe(2);
+  describe('when rows are selected', function () {
+    beforeEach(function () {
+      grid.getSelectionModel().setSelectedRanges([
+        RangeSelectionHelper.rangeForRow(grid, 0),
+        RangeSelectionHelper.rangeForRow(grid, 2)]
+      );
+    });
 
-          expect(clipboard.copyTextToClipboard).toHaveBeenCalled();
-          expect(clipboard.copyTextToClipboard.calls.mostRecent().args[0]).toContain("1,'leopord','12'");
-          expect(clipboard.copyTextToClipboard.calls.mostRecent().args[0]).toContain("3,'puma','9'");
-        });
+    it('copies them', function () {
+      spyOn(clipboard, 'copyTextToClipboard');
 
-        describe("when the user can edit the grid", function () {
-          it("enables the paste row button", function () {
-            copyData.apply(_.extend({can_edit: true}, sqlEditor));
+      copyData.apply(sqlEditor);
 
-            expect($("#btn-paste-row").prop('disabled')).toBe(false);
-          });
-        });
-      });
+      expect(sqlEditor.copied_rows.length).toBe(2);
 
-      describe("when a column is selected", function () {
-        beforeEach(function () {
-          var firstColumn = new Slick.Range(0, 0, 2, 0);
-          grid.getSelectionModel().setSelectedRanges([firstColumn])
-        });
+      expect(clipboard.copyTextToClipboard).toHaveBeenCalled();
+      expect(clipboard.copyTextToClipboard.calls.mostRecent().args[0]).toContain('1,\'leopord\',\'12\'');
+      expect(clipboard.copyTextToClipboard.calls.mostRecent().args[0]).toContain('3,\'puma\',\'9\'');
+    });
 
-        it("copies text to the clipboard", function () {
-          spyOn(clipboard, 'copyTextToClipboard');
+    describe('when the user can edit the grid', function () {
+      it('enables the paste row button', function () {
+        copyData.apply(_.extend({can_edit: true}, sqlEditor));
 
-          copyData.apply(sqlEditor);
-
-          expect(clipboard.copyTextToClipboard).toHaveBeenCalled();
-
-          var copyArg = clipboard.copyTextToClipboard.calls.mostRecent().args[0];
-          var rowStrings = copyArg.split('\n');
-          expect(rowStrings[0]).toBe("1");
-          expect(rowStrings[1]).toBe("2");
-          expect(rowStrings[2]).toBe("3");
-        });
-
-        it("sets copied_rows to empty", function () {
-          copyData.apply(sqlEditor);
-
-          expect(sqlEditor.copied_rows.length).toBe(0);
-        });
-
-        describe("when the user can edit the grid", function () {
-          it("disables the paste row button", function () {
-            copyData.apply(_.extend({can_edit: true}, sqlEditor));
-
-            expect($("#btn-paste-row").prop('disabled')).toBe(true);
-          });
-        });
+        expect($('#btn-paste-row').prop('disabled')).toBe(false);
       });
     });
   });
+
+  describe('when a column is selected', function () {
+    beforeEach(function () {
+      var firstDataColumn = RangeSelectionHelper.rangeForColumn(grid, 1);
+      grid.getSelectionModel().setSelectedRanges([firstDataColumn]);
+    });
+
+    it('copies text to the clipboard', function () {
+      spyOn(clipboard, 'copyTextToClipboard');
+
+      copyData.apply(sqlEditor);
+
+      expect(clipboard.copyTextToClipboard).toHaveBeenCalled();
+
+      var copyArg = clipboard.copyTextToClipboard.calls.mostRecent().args[0];
+      var rowStrings = copyArg.split('\n');
+      expect(rowStrings[0]).toBe('1');
+      expect(rowStrings[1]).toBe('2');
+      expect(rowStrings[2]).toBe('3');
+    });
+
+    it('sets copied_rows to empty', function () {
+      copyData.apply(sqlEditor);
+
+      expect(sqlEditor.copied_rows.length).toBe(0);
+    });
+
+    describe('when the user can edit the grid', function () {
+      beforeEach(function () {
+        copyData.apply(_.extend({can_edit: true}, sqlEditor));
+      });
+
+      it('disables the paste row button', function () {
+        expect($('#btn-paste-row').prop('disabled')).toBe(true);
+      });
+    });
+  });
+});

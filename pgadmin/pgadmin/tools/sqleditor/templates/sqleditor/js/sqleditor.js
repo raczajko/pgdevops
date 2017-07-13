@@ -1,9 +1,19 @@
-define(
-  [
-    'jquery', 'underscore', 'underscore.string', 'alertify', 'pgadmin',
-    'backbone', 'backgrid', 'codemirror', 'pgadmin.misc.explain',
-    'sources/selection/grid_selector', 'sources/selection/clipboard',
+define([
+    'sources/gettext','sources/url_for', 'jquery', 'underscore', 'underscore.string', 'alertify',
+    'pgadmin', 'backbone', 'backgrid', 'codemirror', 'pgadmin.misc.explain',
+    'sources/selection/grid_selector',
+    'sources/selection/active_cell_capture',
+    'sources/selection/clipboard',
     'sources/selection/copy_data',
+    'sources/selection/range_selection_helper',
+    'sources/slickgrid/event_handlers/handle_query_output_keyboard_event',
+    'sources/selection/xcell_selection_model',
+    'sources/selection/set_staged_rows',
+    'sources/sqleditor_utils',
+    'sources/alerts/alertify_wrapper',
+
+    'sources/generated/history',
+    'sources/generated/reactComponents',
 
     'slickgrid', 'bootstrap', 'pgadmin.browser', 'wcdocker',
     'codemirror/mode/sql/sql', 'codemirror/addon/selection/mark-selection',
@@ -16,19 +26,17 @@ define(
     'codemirror/addon/search/search',
     'codemirror/addon/search/searchcursor',
     'codemirror/addon/search/jump-to-line',
-    'backgrid.sizeable.columns', 'slickgrid/slick.formatters',
-    'slick.pgadmin.formatters', 'slickgrid/slick.editors',
-    'slick.pgadmin.editors', 'slickgrid/plugins/slick.autotooltips',
-    'slickgrid/plugins/slick.cellrangedecorator',
-    'slickgrid/plugins/slick.cellrangeselector',
-    'slickgrid/plugins/slick.cellselectionmodel',
-    'slickgrid/plugins/slick.cellcopymanager',
-    'slickgrid/plugins/slick.rowselectionmodel',
-    'slickgrid/slick.grid'
-  ],
-  function(
-    $, _, S, alertify, pgAdmin, Backbone, Backgrid, CodeMirror, pgExplain, GridSelector, clipboard, copyData
-  ) {
+    'codemirror/addon/edit/matchbrackets',
+    'codemirror/addon/edit/closebrackets',
+
+    'backgrid.sizeable.columns',
+    'slick.pgadmin.formatters',
+    'slick.pgadmin.editors',
+], function(
+  gettext, url_for, $, _, S, alertify, pgAdmin, Backbone, Backgrid, CodeMirror,
+  pgExplain, GridSelector, ActiveCellCapture, clipboard, copyData, RangeSelectionHelper, handleQueryOutputKeyboardEvent,
+    XCellSelectionModel, setStagedRows,  SqlEditorUtils, AlertifyWrapper, HistoryBundle, reactComponents
+) {
     /* Return back, this has been called more than once */
     if (pgAdmin.SqlEditor)
       return pgAdmin.SqlEditor;
@@ -38,11 +46,6 @@ define(
     var wcDocker = window.wcDocker,
         pgBrowser = pgAdmin.Browser,
         Slick = window.Slick;
-
-    /* Get the function definition from
-     * http://stackoverflow.com/questions/1349404/generate-a-string-of-5-random-characters-in-javascript/35302975#35302975
-     */
-    function epicRandomString(b){for(var a=(Math.random()*eval("1e"+~~(50*Math.random()+50))).toString(36).split(""),c=3;c<a.length;c++)c==~~(Math.random()*c)+1&&a[c].match(/[a-z]/)&&(a[c]=a[c].toUpperCase());a=a.join("");a=a.substr(~~(Math.random()*~~(a.length/3)),~~(Math.random()*(a.length-~~(a.length/3*2)+1))+~~(a.length/3*2));if(24>b)return b?a.substr(a,b):a;a=a.substr(a,b);if(a.length==b)return a;for(;a.length<b;)a+=epicRandomString();return a.substr(0,b)};
 
     // Define key codes for shortcut keys
     var F5_KEY = 116,
@@ -56,6 +59,7 @@ define(
       initialize: function(opts) {
         this.$el = opts.el;
         this.handler = opts.handler;
+        this.handler['col_size'] = {};
       },
 
       // Bind all the events
@@ -104,15 +108,12 @@ define(
 
       // This function is used to render the template.
       render: function() {
-        var self = this;
+        var self = this,
+          filter = self.$el.find('#sql_filter');
 
         $('.editor-title').text(_.unescape(self.editor_title));
-
-        var filter = self.$el.find('#sql_filter');
-
         self.filter_obj = CodeMirror.fromTextArea(filter.get(0), {
             lineNumbers: true,
-            matchBrackets: true,
             indentUnit: 4,
             mode: "text/x-pgsql",
             foldOptions: {
@@ -125,7 +126,9 @@ define(
             gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
             extraKeys: pgBrowser.editor_shortcut_keys,
             tabSize: pgAdmin.Browser.editor_options.tabSize,
-            lineWrapping: pgAdmin.Browser.editor_options.wrapCode
+            lineWrapping: pgAdmin.Browser.editor_options.wrapCode,
+            autoCloseBrackets: pgAdmin.Browser.editor_options.insert_pair_brackets,
+            matchBrackets: pgAdmin.Browser.editor_options.brace_matching
         });
 
         // Create main wcDocker instance
@@ -133,7 +136,7 @@ define(
           '#editor-panel', {
           allowContextMenu: false,
           allowCollapse: false,
-          themePath: '{{ url_for("static", filename="css") }}',
+          themePath: url_for('static', {'filename': 'css'}),
           theme: 'webcabin.overrides.css'
         });
 
@@ -155,7 +158,6 @@ define(
 
         self.query_tool_obj = CodeMirror.fromTextArea(text_container.get(0), {
             lineNumbers: true,
-            matchBrackets: true,
             indentUnit: 4,
             styleSelectedText: true,
             mode: "text/x-pgsql",
@@ -170,23 +172,35 @@ define(
             extraKeys: pgBrowser.editor_shortcut_keys,
             tabSize: pgAdmin.Browser.editor_options.tabSize,
             lineWrapping: pgAdmin.Browser.editor_options.wrapCode,
-            scrollbarStyle: 'simple'
+            scrollbarStyle: 'simple',
+            autoCloseBrackets: pgAdmin.Browser.editor_options.insert_pair_brackets,
+            matchBrackets: pgAdmin.Browser.editor_options.brace_matching
+        });
+
+        // Refresh Code mirror on SQL panel resize to
+        // display its value properly
+        sql_panel_obj.on(wcDocker.EVENT.RESIZE_ENDED, function() {
+          setTimeout(function() {
+            if(self && self.query_tool_obj) {
+              self.query_tool_obj.refresh();
+            }
+          }, 200);
         });
 
         // Create panels for 'Data Output', 'Explain', 'Messages' and 'History'
         var data_output = new pgAdmin.Browser.Panel({
           name: 'data_output',
-          title: "{{ _('Data Output') }}",
+          title: gettext("Data Output"),
           width: '100%',
           height:'100%',
           isCloseable: false,
           isPrivate: true,
-          content: '<div id ="datagrid" class="sql-editor-grid-container"></div>'
+          content: '<div id ="datagrid" class="sql-editor-grid-container text-12"></div>'
         })
 
         var explain = new pgAdmin.Browser.Panel({
           name: 'explain',
-          title: "{{ _('Explain') }}",
+          title: gettext("Explain"),
           width: '100%',
           height:'100%',
           isCloseable: false,
@@ -196,7 +210,7 @@ define(
 
         var messages = new pgAdmin.Browser.Panel({
           name: 'messages',
-          title: "{{ _('Messages') }}",
+          title: gettext("Messages"),
           width: '100%',
           height:'100%',
           isCloseable: false,
@@ -206,7 +220,7 @@ define(
 
         var history = new pgAdmin.Browser.Panel({
           name: 'history',
-          title: "{{ _('History') }}",
+          title: gettext("History"),
           width: '100%',
           height:'100%',
           isCloseable: false,
@@ -239,11 +253,11 @@ define(
                   var data_store = self.handler.data_store;
                   if(data_store && (_.size(data_store.added) ||
                       _.size(data_store.updated))) {
-                    msg = "{{ _('The data has been modified, but not saved. Are you sure you wish to discard the changes?') }}";
+                    msg = gettext("The data has changed. Do you want to save changes?");
                     notify = true;
                   }
                 } else if(self.handler.is_query_tool && self.handler.is_query_changed) {
-                  msg = "{{ _('The query has been modified, but not saved. Are you sure you wish to discard the changes?') }}";
+                  msg = gettext("The text has changed. Do you want to save changes?");
                   notify = true;
                 }
                 if(notify) {return self.user_confirmation(p, msg);}
@@ -279,8 +293,7 @@ define(
               ctx = {
                 editor: editor,
                 // URL for auto-complete
-                url: "{{ url_for('sqleditor.index') }}" + "autocomplete/" +
-                  self.transId,
+                url: url_for('sqleditor.autocomplete', {'trans_id': self.transId}),
                 data: data,
                 // Get the line number in the cursor position
                 current_line: cur.line,
@@ -393,67 +406,62 @@ define(
       /* To prompt user for unsaved changes */
       user_confirmation: function(panel, msg) {
         // If there is anything to save then prompt user
-        alertify.confirm("{{ _('Unsaved changes') }}", msg,
-          function() {
-            // Do nothing as user do not want to save, just continue
-            window.onbeforeunload = null;
-            panel.off(wcDocker.EVENT.CLOSING);
-            window.top.pgAdmin.Browser.docker.removePanel(panel);
-          },
-          function() {
-            // Stop, User wants to save
-            // false value will prevent from panel to close
-            return true;
-          }
-        ).set('labels', {ok:'Yes', cancel:'No'});
+        var that = this;
+
+        alertify.confirmSave || alertify.dialog('confirmSave', function() {
+          return {
+            main: function(title, message) {
+                var content = '<div class="ajs-content">'
+                + gettext('The text has changed. Do you want to save changes?')
+                + '</div>';
+              this.setHeader(title);
+              this.setContent(message);
+            },
+            setup: function () {
+              return {
+                buttons: [
+                    {
+                      text: gettext('Save'),
+                      className: 'btn btn-primary',
+                    },{
+                      text: gettext('Don\'t save'),
+                      className: 'btn btn-danger',
+                    },{
+                      text: gettext('Cancel'),
+                      key: 27, // ESC
+                      invokeOnClose: true,
+                      className: 'btn btn-warning',
+                    }
+                ],
+                focus: {
+                      element: 0,
+                      select: false
+                },
+                options: {
+                    maximizable: false,
+                    resizable: false
+                }
+              };
+            },
+            callback: function (closeEvent) {
+              switch (closeEvent.index) {
+                case 0: // Save
+                  that.handler.close_on_save = true;
+                  that.handler._save(that, that.handler);
+                  break;
+                case 1: // Don't Save
+                  that.handler.close_on_save = false;
+                  that.handler.close();
+                  break;
+                case 2: //Cancel
+                  //Do nothing.
+                  break;
+              }
+            }
+          };
+        });
+        alertify.confirmSave(gettext("Save changes?"), msg);
         return false;
-      },
-
-      get_column_width: function (column_type, grid_width) {
-
-        switch(column_type) {
-          case "bigint":
-          case "bigint[]":
-          case "bigserial":
-          case "bit":
-          case "bit[]":
-          case "bit varying":
-          case "bit varying[]":
-          case "\"char\"":
-          case "decimal":
-          case "decimal[]":
-          case "double precision":
-          case "double precision[]":
-          case "int4range":
-          case "int4range[]":
-          case "int8range":
-          case "int8range[]":
-          case "integer":
-          case "integer[]":
-          case "money":
-          case "money[]":
-          case "numeric":
-          case "numeric[]":
-          case "numrange":
-          case "numrange[]":
-          case "oid":
-          case "oid[]":
-          case "real":
-          case "real[]":
-          case "serial":
-          case "smallint":
-          case "smallint[]":
-          case "smallserial":
-            return 80;
-          case "boolean":
-          case "boolean[]":
-            return 60;
-        }
-
-        /* In case of other data types we will calculate
-         * 20% of the total container width and return it.
-         */
-        return Math.round((grid_width * 20)/ 100)
       },
 
       /* Regarding SlickGrid usage in render_grid function.
@@ -497,7 +505,7 @@ define(
          - staged_rows:
            This will hold all the data which user copies/pastes/deletes in grid
          - deleted:
-           This will hold all the data which user delets in grid
+           This will hold all the data which user deletes in grid
 
        Events handling:
        ----------------
@@ -513,17 +521,8 @@ define(
            - We are using this event for Copy operation on grid
        */
 
-      // Get the item column value using a custom 'fieldIdx' column param
-      get_item_column_value: function (item, column) {
-        if (column.pos !== undefined) {
-          return item[column.pos];
-        } else {
-          return null;
-        }
-      },
-
       // This function is responsible to create and render the SlickGrid.
-      render_grid: function(collection, columns, is_editable) {
+      render_grid: function(collection, columns, is_editable, client_primary_key, rows_affected) {
         var self = this;
 
         // This will work as data store and holds all the
@@ -540,8 +539,9 @@ define(
         // To store primary keys before they gets changed
         self.handler.primary_keys_data = {};
 
-        // Add getItemMetadata into handler for later use
-        self.handler.data_view = collection;
+        self.client_primary_key = client_primary_key;
+
+        self.client_primary_key_counter = 0;
 
         // Remove any existing grid first
         if (self.handler.slickgrid) {
@@ -552,28 +552,57 @@ define(
           collection = [];
         }
 
-        var grid_columns = [];
+        var grid_columns = [],
+          table_name;
+        var column_size = self.handler['col_size'],
+          query = self.handler.query,
+          // Extract table name from query
+          table_list = query.match(/select.*from\s+(\w+)/i);
 
-        var grid_width = $($('#editor-panel').find('.wcFrame')[1]).width()
+        if (!table_list) {
+          table_name = SqlEditorUtils.getHash(query);
+        }
+        else {
+          table_name = table_list[1];
+        }
+
+        self.handler['table_name'] = table_name;
+        column_size[table_name] = column_size[table_name] || {};
+
+        var grid_width = $($('#editor-panel').find('.wcFrame')[1]).width();
         _.each(columns, function(c) {
             var options = {
               id: c.name,
               pos: c.pos,
               field: c.name,
               name: c.label,
+              display_name: c.display_name,
+              column_type: c.column_type,
               not_null: c.not_null,
               has_default_val: c.has_default_val
             };
 
-            // Get the columns width based on data type
-            options['width'] = self.get_column_width(c.type, grid_width);
+            // Get the columns width based on longer string among data type or
+            // column name.
+            var column_type = c.column_type.trim();
+            var label = c.name.length > column_type.length ? c.name : column_type;
+
+            if (_.isUndefined(column_size[table_name][c.name])) {
+              options['width'] = SqlEditorUtils.calculateColumnWidth(label);
+              column_size[table_name][c.name] = options['width'];
+            }
+            else {
+              options['width'] = column_size[table_name][c.name];
+            }
 
             // If grid is editable then add editor else make it readonly
             if(c.cell == 'Json') {
               options['editor'] = is_editable ? Slick.Editors.JsonText
                                               : Slick.Editors.ReadOnlyJsonText;
               options['formatter'] = Slick.Formatters.JsonString;
-            } else if(c.cell == 'number') {
+            } else if(c.cell == 'number' ||
+              $.inArray(c.type, ['oid', 'xid', 'real']) !== -1
+            ) {
               options['editor'] = is_editable ? Slick.Editors.CustomNumber
                                               : Slick.Editors.ReadOnlyText;
               options['formatter'] = Slick.Formatters.Numbers;
@@ -583,7 +612,7 @@ define(
               options['formatter'] = Slick.Formatters.Checkmark;
             } else {
               options['editor'] = is_editable ? Slick.Editors.pgText
-                                              : Slick.Editors.ReadOnlypgText;
+                                                : Slick.Editors.ReadOnlypgText;
               options['formatter'] = Slick.Formatters.Text;
             }
 
@@ -591,7 +620,12 @@ define(
         });
 
         var gridSelector = new GridSelector();
-        grid_columns = gridSelector.getColumnDefinitionsWithCheckboxes(grid_columns);
+        grid_columns = self.grid_columns = gridSelector.getColumnDefinitions(grid_columns);
+
+        if (rows_affected) {
+          // calculate with for header row column.
+        grid_columns[0]['width'] = SqlEditorUtils.calculateColumnWidth(rows_affected);
+        }
 
         var grid_options = {
           editable: true,
@@ -599,8 +633,7 @@ define(
           enableCellNavigation: true,
           enableColumnReorder: false,
           asyncEditorLoading: false,
-          autoEdit: false,
-          dataItemColumnValueExtractor: this.get_item_column_value
+          autoEdit: false
         };
 
         var $data_grid = self.$el.find('#datagrid');
@@ -608,17 +641,15 @@ define(
         var grid_height = $($('#editor-panel').find('.wcFrame')[1]).height() - 35;
         $data_grid.height(grid_height);
 
-        // Add our own custom primary key to keep track of changes
-        _.each(collection, function(row){
-          row['__temp_PK'] = epicRandomString(15);
-        });
+        var dataView = self.dataView = new Slick.Data.DataView(),
+            grid = self.grid = new Slick.Grid($data_grid, dataView, grid_columns, grid_options);
 
         // Add-on function which allow us to identify the faulty row after insert/update
         // and apply css accordingly
-        collection.getItemMetadata = function(i) {
-          var res = {},
-            cssClass = '',
-            data_store = self.handler.data_store;
+
+        dataView.getItemMetadata = function(i) {
+          var res = {}, cssClass = '',
+              data_store = self.handler.data_store;
 
           if (_.has(self.handler, 'data_store')) {
             if (i in data_store.added_index &&
@@ -641,11 +672,11 @@ define(
             cssClass += ' disabled_row';
           }
           return {'cssClasses': cssClass};
-        }
+        };
 
-        var grid = new Slick.Grid($data_grid, collection, grid_columns, grid_options);
         grid.registerPlugin( new Slick.AutoTooltips({ enableForHeaderCells: false }) );
-        grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+        grid.registerPlugin(new ActiveCellCapture());
+        grid.setSelectionModel(new XCellSelectionModel());
         grid.registerPlugin(gridSelector);
 
         var editor_data = {
@@ -654,89 +685,61 @@ define(
           columns: columns,
           grid: grid,
           selection: grid.getSelectionModel(),
-          editor: self
+          editor: self,
+          client_primary_key: self.client_primary_key
         };
 
         self.handler.slickgrid = grid;
 
         // Listener function to watch selected rows from grid
         if (editor_data.selection) {
-           editor_data.selection.onSelectedRangesChanged.subscribe(function(e, args) {
-             var collection = this.grid.getData(),
-               primary_key_list = _.keys(this.keys),
-               _tmp_keys = [],
-               _columns = this.columns,
-               rows_for_stage = {}, selected_rows_list = [];
-
-               // Only if entire row(s) are selected via check box
-               if(_.has(this.selection, 'getSelectedRows')) {
-                 selected_rows_list = this.selection.getSelectedRows();
-                 // We will map selected row primary key name with position
-                 // For each Primary key
-                 _.each(primary_key_list, function(p) {
-                   // For each columns search primary key position
-                   _.each(_columns, function(c) {
-                      if(c.name == p) {
-                        _tmp_keys.push(c.pos);
-                      }
-                   });
-                 });
-                 // Now assign mapped temp PK to PK
-                 primary_key_list =  _tmp_keys;
-
-                 // Check if selected is new row ?
-                 // Allow to delete if yes
-                 var cell_el = this.grid.getCellNode(selected_rows_list[0], 0),
-                  parent_el = $(cell_el).parent(),
-                  is_new_row = $(parent_el).hasClass('new_row');
-
-                 // Clear selection model if row primary keys is set to default
-                 var row_data = collection[selected_rows_list[0]];
-                 if (primary_key_list.length &&
-                     !_.has(row_data, primary_key_list) && !is_new_row) {
-                   this.selection.setSelectedRows([]);
-                   selected_rows_list = [];
-                 }
-               }
-
-              // Clear the object as no rows to delete
-              // and disable delete/copy rows button
-              var clear_staged_rows = function() {
-                rows_for_stage = {};
-                $("#btn-delete-row").prop('disabled', true);
-                $("#btn-copy-row").prop('disabled', true);
-              }
-
-              // If any row(s) selected ?
-              if(selected_rows_list.length) {
-                if(this.editor.handler.can_edit)
-                  // Enable delete rows and copy rows button
-                  $("#btn-delete-row").prop('disabled', false);
-                  $("#btn-copy-row").prop('disabled', false);
-                  // Collect primary key data from collection as needed for stage row
-                  _.each(selected_rows_list, function(row_index) {
-                    var row_data = collection[row_index],
-                      pkey_data = _.pick(row_data, primary_key_list);
-
-                    // Store Primary key data for selected rows
-                    if (!_.isUndefined(row_data) && !_.isUndefined(pkey_data)) {
-                      // check for invalid row
-                      rows_for_stage[row_data.__temp_PK] = _.pick(row_data, primary_key_list);
-                    }
-                  });
-              } else {
-                //clear staged rows
-                clear_staged_rows();
-              }
-              if (!Object.keys(rows_for_stage).length) {
-                clear_staged_rows();
-              }
-
-             // Update main data store
-             this.editor.handler.data_store.staged_rows = rows_for_stage;
-           }.bind(editor_data));
+            editor_data.selection.onSelectedRangesChanged.subscribe(
+                setStagedRows.bind(editor_data));
         }
 
+        grid.onColumnsResized.subscribe(function (e, args) {
+            var columns = this.getColumns();
+            _.each(columns, function(col, key) {
+                var column_size = self.handler['col_size'];
+                column_size[self.handler['table_name']][col['id']] = col['width'];
+            });
+        });
+
+        gridSelector.onBeforeGridSelectAll.subscribe(function(e, args) {
+          if (self.handler.has_more_rows) {
+            // this will prevent selection un-till we load all data
+            e.stopImmediatePropagation();
+            self.fetch_next_all(function() {
+              // since we've stopped event propagation we need to
+              // trigger onGridSelectAll manually with new event data.
+              gridSelector.onGridSelectAll.notify(args, new Slick.EventData());
+            });
+          }
+        });
+
+        gridSelector.onBeforeGridColumnSelectAll.subscribe(function(e, args) {
+          if (self.handler.has_more_rows) {
+            // this will prevent selection un-till we load all data
+            e.stopImmediatePropagation();
+            self.fetch_next_all(function() {
+              // since we've stopped event propagation we need to
+              // trigger onGridColumnSelectAll manually with new event data.
+              gridSelector.onGridColumnSelectAll.notify(args, new Slick.EventData());
+            });
+          }
+        });
+
+        // listen for row count change.
+        dataView.onRowCountChanged.subscribe(function (e, args) {
+          grid.updateRowCount();
+          grid.render();
+        });
+
+        // listen for rows change.
+        dataView.onRowsChanged.subscribe(function (e, args) {
+          grid.invalidateRows(args.rows);
+          grid.render();
+        });
 
         // Listener function which will be called before user updates existing cell
         // This will be used to collect primary key for that row
@@ -750,8 +753,8 @@ define(
               return false;
             }
 
-            if(self.handler.can_edit && before_data && '__temp_PK' in before_data) {
-              var _pk = before_data.__temp_PK,
+            if(self.handler.can_edit && before_data && self.client_primary_key in before_data) {
+              var _pk = before_data[self.client_primary_key],
                 _keys = self.handler.primary_keys,
                 current_pk = {}, each_pk_key = {};
 
@@ -763,60 +766,63 @@ define(
               // Fetch primary keys for the row before they gets modified
               var _columns = self.handler.columns;
               _.each(_keys, function(value, key) {
-                pos = _.where(_columns, {name: key})[0]['pos']
-                current_pk[pos] = before_data[pos];
+                current_pk[key] = before_data[key];
               });
               // Place it in main variable for later use
               self.handler.primary_keys_data[_pk] = current_pk
             }
         });
 
-        // Listener function for COPY/PASTE operation on grid
-        grid.onKeyDown.subscribe(function (e, args) {
-          var c = e.keyCode,
-            ctrlDown = e.ctrlKey||e.metaKey; // Mac support
-
-          //    (ctrlDown && c==67) return false // c
-          //    (ctrlDown && c==86) return false // v
-          //    (ctrlDown && c==88) return false // x
-
-
-          if (!ctrlDown && !(c==67 || c==86 || c==88)) {
-            return;  // Not a copy paste opration
+        grid.onKeyDown.subscribe(function(event, args) {
+          var KEY_A = 65;
+          var modifiedKey = event.keyCode;
+          var isModifierDown = event.ctrlKey || event.metaKey;
+          // Intercept Ctrl/Cmd + A key board event.
+          // As we might want to load all rows before selecting all.
+          if (isModifierDown && modifiedKey == KEY_A && self.handler.has_more_rows) {
+            self.fetch_next_all(function() {
+              handleQueryOutputKeyboardEvent(event, args);
+            });
+          } else {
+            handleQueryOutputKeyboardEvent(event, args);
           }
-
-          var grid = args.grid, column_info, column_values, value,
-            cell = args.cell, row = args.row;
-
-          // Copy operation (Only when if there is no row selected)
-          // When user press `Ctrl + c` on selected cell
-          if(ctrlDown && c==67) {
-            // May be single cell is selected
-            column_info = grid.getColumns()[cell]
-            // Fetch current row data from grid
-            column_values = grid.getDataItem(row, cell)
-            //  Get the value from cell
-            value = column_values[column_info.pos] || '';
-            // Copy this value to Clipboard
-            if(value)
-              clipboard.copyTextToClipboard(value);
-            // Go to cell again
-            grid.gotoCell(row, cell, false);
-          }
-
         });
-
 
         // Listener function which will be called when user updates existing rows
         grid.onCellChange.subscribe(function (e, args) {
           // self.handler.data_store.updated will holds all the updated data
-          var changed_column = args.grid.getColumns()[args.cell].pos, // Current field pos
+          var changed_column = args.grid.getColumns()[args.cell].field,
             updated_data = args.item[changed_column],                   // New value for current field
-            _pk = args.item.__temp_PK || null,                          // Unique key to identify row
+            _pk = args.item[self.client_primary_key] || null,                          // Unique key to identify row
             column_data = {},
             _type;
 
-           column_data[changed_column] = updated_data;
+          // Access to row/cell value after a cell is changed.
+          // The purpose is to remove row_id from temp_new_row
+          // if new row has primary key instead of [default_value]
+          // so that cell edit is enabled for that row.
+          var grid = args.grid,
+            row_data = grid.getDataItem(args.row),
+            is_primary_key = _.all(
+                _.values(
+                  _.pick(
+                      row_data, self.primary_keys
+                  )
+                ),
+                function(val) {
+                  return val != undefined
+                }
+              );
+
+          // temp_new_rows is available only for view data.
+          if (is_primary_key && self.handler.temp_new_rows) {
+            var index = self.handler.temp_new_rows.indexOf(args.row);
+            if (index > -1) {
+              self.handler.temp_new_rows.splice(index, 1);
+            }
+          }
+
+          column_data[changed_column] = updated_data;
 
           if(_pk) {
             // Check if it is in newly added row by user?
@@ -826,7 +832,6 @@ define(
                   column_data);
               //Find type for current column
               self.handler.data_store.added[_pk]['err'] = false
-              self.handler.data_store.added[_pk]['data_type'][changed_column] = _.where(this.columns, {pos: changed_column})[0]['type'];
             // Check if it is updated data from existing rows?
             } else if(_pk in self.handler.data_store.updated) {
               _.extend(
@@ -834,9 +839,6 @@ define(
                 column_data
               );
               self.handler.data_store.updated[_pk]['err'] = false
-
-             //Find type for current column
-             self.handler.data_store.updated[_pk]['data_type'][changed_column] = _.where(this.columns, {pos: changed_column})[0]['type'];
             } else {
               // First updated data for this primary key
               self.handler.data_store.updated[_pk] = {
@@ -844,67 +846,53 @@ define(
                 'primary_keys': self.handler.primary_keys_data[_pk]
               };
               self.handler.data_store.updated_index[args.row] = _pk;
-              // Find & add column data type for current changed column
-              var temp = {};
-              temp[changed_column] = _.where(this.columns, {pos: changed_column})[0]['type'];
-              self.handler.data_store.updated[_pk]['data_type'] = temp;
             }
           }
           // Enable save button
           $("#btn-save").prop('disabled', false);
         }.bind(editor_data));
 
-
-        // Listener function which will be called after cell is changed
-        grid.onActiveCellChanged.subscribe(function (e, args) {
-          // Access to row/cell value after a cell is changed.
-          // The purpose is to remove row_id from temp_new_row
-          // if new row has primary key instead of [default_value]
-          // so that cell edit is enabled for that row.
-          var grid = args.grid,
-            row_data = grid.getDataItem(args.row),
-            primary_key = row_data && row_data[0];
-
-          // temp_new_rows is available only for view data.
-          if (!_.isUndefined(primary_key) &&
-            self.handler.temp_new_rows
-          ) {
-            var index = self.handler.temp_new_rows.indexOf(args.row);
-            if (index > -1) {
-              self.handler.temp_new_rows.splice(index, 1);
-            }
-          }
-        });
-
         // Listener function which will be called when user adds new rows
         grid.onAddNewRow.subscribe(function (e, args) {
           // self.handler.data_store.added will holds all the newly added rows/data
-          var _key = epicRandomString(10),
-            column = args.column,
-            item = args.item, data_length = this.grid.getDataLength();
+          var column = args.column,
+            item = args.item, data_length = this.grid.getDataLength(),
+            _key = (self.client_primary_key_counter++).toString(),
+            dataView = this.grid.getData();
 
           // Add new row in list to keep track of it
           if (_.isUndefined(item[0])) {
             self.handler.temp_new_rows.push(data_length);
           }
 
+          // If copied item has already primary key, use it.
           if(item) {
-            item.__temp_PK = _key;
+            item[self.client_primary_key] = _key;
           }
-          collection.push(item);
+
+          dataView.addItem(item);
           self.handler.data_store.added[_key] = {'err': false, 'data': item};
           self.handler.data_store.added_index[data_length] = _key;
           // Fetch data type & add it for the column
           var temp = {};
-          temp[column.pos] = _.where(this.columns, {pos: column.pos})[0]['type'];
-          self.handler.data_store.added[_key]['data_type'] =  temp;
-          grid.invalidateRows([collection.length - 1]);
+          temp[column.name] = _.where(this.columns, {pos: column.pos})[0]['type'];
           grid.updateRowCount();
           grid.render();
+
           // Enable save button
           $("#btn-save").prop('disabled', false);
         }.bind(editor_data));
 
+        // Listen grid viewportChanged event to load next chunk of data.
+        grid.onViewportChanged.subscribe(function(e, args) {
+          var rendered_range = args.grid.getRenderedRange(),
+              data_len = args.grid.getDataLength();
+          // start fetching next batch of records before reaching to bottom.
+          if (self.handler.has_more_rows && !self.handler.fetching_rows && rendered_range.bottom > data_len - 100) {
+            // fetch asynchronous
+            setTimeout(self.fetch_next.bind(self));
+          }
+        })
         // Resize SlickGrid when window resize
         $( window ).resize( function() {
           // Resize grid only when 'Data Output' panel is visible.
@@ -927,6 +915,87 @@ define(
           if(self.data_output_panel.isVisible())
             self.grid_resize(grid);
         });
+
+        for (var i = 0; i < collection.length; i++) {
+          // Convert to dict from 2darray
+          var item = {};
+          for (var j = 1; j < grid_columns.length; j++) {
+            item[grid_columns[j]['field']] = collection[i][grid_columns[j]['pos']]
+          }
+
+          item[self.client_primary_key] = (self.client_primary_key_counter++).toString();
+          collection[i] = item;
+        }
+        dataView.setItems(collection, self.client_primary_key);
+      },
+      fetch_next_all: function(cb) {
+        this.fetch_next(true, cb);
+      },
+      fetch_next: function(fetch_all, cb) {
+        var self = this, url = '';
+
+        // This will prevent fetch operation if previous fetch operation is
+        // already in progress.
+        self.handler.fetching_rows = true;
+
+        $("#btn-flash").prop('disabled', true);
+
+        if (fetch_all) {
+          self.handler.trigger(
+            'pgadmin-sqleditor:loading-icon:show',
+            gettext('Fetching all records...')
+          );
+          url = url_for('sqleditor.fetch_all', {'trans_id': self.transId, 'fetch_all': 1});
+        } else {
+          url = url = url_for('sqleditor.fetch', {'trans_id': self.transId});
+        }
+
+        $.ajax({
+          url: url,
+          method: 'GET',
+          success: function(res) {
+            self.handler.has_more_rows = res.data.has_more_rows;
+            $("#btn-flash").prop('disabled', false);
+            self.handler.trigger('pgadmin-sqleditor:loading-icon:hide');
+            self.update_grid_data(res.data.result);
+            self.handler.fetching_rows = false;
+            if (typeof cb == "function") {
+              cb();
+            }
+          },
+          error: function(e) {
+            $("#btn-flash").prop('disabled', false);
+            self.handler.trigger('pgadmin-sqleditor:loading-icon:hide');
+            self.handler.has_more_rows = false;
+            self.handler.fetching_rows = false;
+            if (typeof cb == "function") {
+              cb();
+            }
+            if (e.readyState == 0) {
+              self.update_msg_history(false,
+                gettext('Not connected to the server or the connection to the server has been closed.')
+              );
+              return;
+            }
+          }
+        });
+      },
+
+      update_grid_data: function(data) {
+        this.dataView.beginUpdate();
+
+        for (var i = 0; i < data.length; i++) {
+          // Convert 2darray to dict.
+          var item = {};
+          for (var j = 1; j < this.grid_columns.length; j++) {
+            item[this.grid_columns[j]['field']] = data[i][this.grid_columns[j]['pos']]
+          }
+
+          item[this.client_primary_key] = (this.client_primary_key_counter++).toString();
+          this.dataView.addItem(item);
+        }
+
+        this.dataView.endUpdate();
       },
 
       /* This function is responsible to render output grid */
@@ -942,149 +1011,11 @@ define(
       render_history_grid: function() {
         var self = this;
 
-        // Remove any existing grid first
-        if (self.history_grid) {
-            self.history_grid.remove();
-        }
+        self.history_collection = new HistoryBundle.HistoryCollection([]);
 
-        var history_model = Backbone.Model.extend({
-          defaults: {
-            status: undefined,
-            start_time: undefined,
-            query: undefined,
-            row_affected: 0,
-            row_retrieved: 0,
-            total_time: undefined,
-            message: ''
-          }
-        });
-
-        var history_collection = self.history_collection = new (Backbone.Collection.extend({
-            model: history_model,
-            // comparator to sort the history in reverse order of the start_time
-            comparator: function(a, b) {
-              return -a.get('start_time').localeCompare(b.get('start_time'));
-            }
-        }));
-        var columns = [{
-            name: "status",
-            label: "",
-            cell: Backgrid.Cell.extend({
-              class: 'sql-status-cell',
-              render: function() {
-                this.$el.empty();
-                var $btn = $('<button></button>', {
-                  class: 'btn btn-circle'
-                }).appendTo(this.$el);
-                var $circleDiv = $('<i></i>', {class: 'fa'}).appendTo($btn);
-                if (this.model.get('status')) {
-                  $btn.addClass('btn-success');
-                  $circleDiv.addClass('fa-check');
-                } else {
-                  $btn.addClass('btn-danger');
-                  $circleDiv.addClass('fa-times');
-                }
-
-                return this;
-              },
-              editable: false
-            }),
-            editable: false
-          }, {
-            name: "start_time",
-            label: "Date",
-            cell: "string",
-            editable: false,
-            resizeable: true
-          }, {
-            name: "query",
-            label: "Query",
-            cell: "string",
-            editable: false,
-            resizeable: true
-          }, {
-            name: "row_affected",
-            label: "Rows affected",
-            cell: "integer",
-            editable: false,
-            resizeable: true
-          }, {
-            name: "total_time",
-            label: "Total Time",
-            cell: "string",
-            editable: false,
-            resizeable: true
-          }, {
-            name: "message",
-            label: "Message",
-            cell: "string",
-            editable: false,
-            resizeable: true
-        }];
-
-
-        // Create Collection of Backgrid columns
-        var columnsColl = new Backgrid.Columns(columns);
-        var $history_grid = self.$el.find('#history_grid');
-
-        var grid = self.history_grid = new Backgrid.Grid({
-            columns: columnsColl,
-            collection: history_collection,
-            className: "backgrid table-bordered presentation table backgrid-striped"
-        });
-
-        // Render the grid
-        $history_grid.append(grid.render().$el);
-
-        var sizeAbleCol = new Backgrid.Extension.SizeAbleColumns({
-          collection: history_collection,
-          columns: columnsColl,
-          grid: self.history_grid
-        });
-
-        $history_grid.find('thead').before(sizeAbleCol.render().el);
-
-        // Add resize handlers
-        var sizeHandler = new Backgrid.Extension.SizeAbleColumnsHandlers({
-          sizeAbleColumns: sizeAbleCol,
-          grid: self.history_grid,
-          saveColumnWidth: true
-        });
-
-        // sizeHandler should render only when table grid loaded completely.
-        setTimeout(function() {
-          $history_grid.find('thead').before(sizeHandler.render().el);
-        }, 1000);
-
-        // re render sizeHandler whenever history panel tab becomes visible
-        self.history_panel.on(wcDocker.EVENT.VISIBILITY_CHANGED, function(ev) {
-          $history_grid.find('thead').before(sizeHandler.render().el);
-        });
-
-        // Initialized table width 0 still not calculated
-        var table_width = 0;
-        // Listen to resize events
-        columnsColl.on('resize',
-          function(columnModel, newWidth, oldWidth, offset) {
-            var $grid_el = $history_grid.find('table'),
-                tbl_orig_width = $grid_el.width(),
-                offset = oldWidth - newWidth,
-                tbl_new_width = tbl_orig_width - offset;
-
-            if (table_width == 0) {
-              table_width = tbl_orig_width
-            }
-            // Table new width cannot be less than original width
-            if (tbl_new_width >= table_width) {
-              $($grid_el).css('width', tbl_new_width + 'px');
-            }
-            else {
-              // reset if calculated tbl_new_width is less than original
-              // table width
-              tbl_new_width = table_width;
-              $($grid_el).css('width', tbl_new_width + 'px');
-            }
-        });
+        var queryHistoryElement = reactComponents.React.createElement(
+          reactComponents.QueryHistory, {historyCollection: self.history_collection});
+        reactComponents.render(queryHistoryElement, $('#history_grid')[0]);
       },
 
       // Callback function for Add New Row button click.
@@ -1121,6 +1052,7 @@ define(
         this._stopEventPropogation(ev);
         this._closeDropDown(ev);
 
+        self.handler.close_on_save = false;
         // Trigger the save signal to the SqlEditorController class
         self.handler.trigger(
             'pgadmin-sqleditor:button:save',
@@ -1136,6 +1068,7 @@ define(
         this._stopEventPropogation(ev);
         this._closeDropDown(ev);
 
+        self.handler.close_on_save = false;
         // Trigger the save signal to the SqlEditorController class
         self.handler.trigger(
             'pgadmin-sqleditor:button:save',
@@ -1366,8 +1299,8 @@ define(
          */
         if (self.handler.is_query_changed) {
           alertify.confirm(
-            "{{ _('Unsaved changes') }}",
-            "{{ _('Are you sure you wish to discard the current changes?') }}",
+            gettext("Unsaved changes"),
+            gettext("Are you sure you wish to discard the current changes?"),
             function() {
               // Do nothing as user do not want to save, just continue
               self.query_tool_obj.setValue('');
@@ -1387,13 +1320,12 @@ define(
         this._stopEventPropogation(ev);
         this._closeDropDown(ev);
         // ask for confirmation only if anything to clear
-        if(!self.history_collection.length) { return; }
+        if(!self.history_collection.length()) { return; }
 
-        alertify.confirm("{{ _('Clear history') }}",
-          "{{ _('Are you sure you wish to clear the history?') }}",
+        alertify.confirm(gettext("Clear history"),
+          gettext("Are you sure you wish to clear the history?"),
           function() {
-            // Remove any existing grid first
-            if (self.history_grid) {
+            if (self.history_collection) {
               self.history_collection.reset();
             }
           },
@@ -1601,6 +1533,9 @@ define(
           self.explain_buffers = false;
           self.explain_timing = false;
           self.is_new_browser_tab = is_new_browser_tab;
+          self.has_more_rows = false;
+          self.fetching_rows = false;
+          self.close_on_save = false;
 
           // We do not allow to call the start multiple times.
           if (self.gridView)
@@ -1664,7 +1599,7 @@ define(
             self.gridView.query_tool_obj.setOption("readOnly", 'nocursor');
             var cm = self.gridView.query_tool_obj.getWrapperElement();
             if (cm) {
-              cm.className += ' cm_disabled';
+              cm.className += ' bg-gray-1 opacity-5';
             }
             self.disable_tool_buttons(true);
             self._execute_data_query();
@@ -1682,8 +1617,8 @@ define(
                 _.size(self.data_store.updated) ||
                 _.size(self.data_store.deleted))
             ) {
-                alertify.confirm("{{ _('Unsaved changes') }}",
-                  "{{ _('The data has been modified, but not saved. Are you sure you wish to discard the changes?') }}",
+                alertify.confirm(gettext("Unsaved changes"),
+                  gettext("The data has been modified, but not saved. Are you sure you wish to discard the changes?"),
                   function(){
                     // Do nothing as user do not want to save, just continue
                     self._run_query();
@@ -1708,21 +1643,23 @@ define(
           self.rows_to_disable = new Array();
           // Temporarily hold new rows added
           self.temp_new_rows = new Array();
+          self.has_more_rows = false;
+          self.fetching_rows = false;
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            "{{ _('Initializing query execution.') }}"
+            gettext("Initializing query execution.")
           );
 
           $("#btn-flash").prop('disabled', true);
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:message',
-              "{{ _('Waiting for the query execution to complete...') }}"
+            gettext("Waiting for the query execution to complete...")
           );
 
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "view_data/start/" + self.transId,
+            url: url_for('sqleditor.view_data_start', {'trans_id': self.transId}),
             method: 'GET',
             success: function(res) {
               if (res.data.status) {
@@ -1771,7 +1708,7 @@ define(
               self.trigger('pgadmin-sqleditor:loading-icon:hide');
               if (e.readyState == 0) {
                 self.update_msg_history(false,
-                  "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                  gettext("Not connected to the server or the connection to the server has been closed.")
                 );
                 return;
               }
@@ -1786,45 +1723,14 @@ define(
           });
         },
 
-        // This function makes the ajax call to fetch columns for last async query,
-        get_columns: function(poll_result) {
-          var self = this;
-          // Check the flag and decide if we need to fetch columns from server
-          // or use the columns data stored locally from previous call?
-          if (self.FETCH_COLUMNS_FROM_SERVER) {
-            $.ajax({
-              url: "{{ url_for('sqleditor.index') }}" + "columns/" + self.transId,
-              method: 'GET',
-              success: function(res) {
-                poll_result.colinfo = res.data.columns;
-                poll_result.primary_keys = res.data.primary_keys;
-                self.call_render_after_poll(poll_result);
-                // Set a flag to get columns to false & set the value for future use
-                self.FETCH_COLUMNS_FROM_SERVER = false;
-                self.COLUMNS_DATA = res;
-              },
-              error: function(e) {
-                var msg = e.responseText;
-                if (e.responseJSON != undefined && e.responseJSON.errormsg != undefined)
-                  msg = e.responseJSON.errormsg;
-                  alertify.error(msg, 5);
-              }
-            });
-          } else {
-            // Use the previously saved columns data
-            poll_result.colinfo = self.COLUMNS_DATA.data.columns;
-            poll_result.primary_keys = self.COLUMNS_DATA.data.primary_keys;
-            self.call_render_after_poll(poll_result);
-          }
-        },
-
         // This is a wrapper to call _render function
         // We need this because we have separated columns route & result route
         // We need to combine both result here in wrapper before rendering grid
         call_render_after_poll: function(res) {
           var self = this;
           self.query_end_time = new Date();
-          self.rows_affected = res.rows_affected;
+          self.rows_affected = res.rows_affected,
+          self.has_more_rows = res.has_more_rows;
 
           /* If no column information is available it means query
              runs successfully with no result to display. In this
@@ -1835,12 +1741,13 @@ define(
           else {
             // Show message in message and history tab in case of query tool
             self.total_time = self.get_query_run_time(self.query_start_time, self.query_end_time);
-            var msg = S("{{ _('Query returned successfully in %s.') }}").sprintf(self.total_time).value();
+            var msg = S(gettext("Query returned successfully in %s.")).sprintf(self.total_time).value();
             res.result += "\n\n" + msg;
             self.update_msg_history(true, res.result, false);
             // Display the notifier if the timeout is set to >= 0
             if (self.info_notifier_timeout >= 0) {
-              alertify.success(msg, self.info_notifier_timeout);
+              var alertifyWrapper = new AlertifyWrapper();
+              alertifyWrapper.success(msg, self.info_notifier_timeout);
             }
           }
 
@@ -1865,15 +1772,16 @@ define(
           setTimeout(
             function() {
               $.ajax({
-                url: "{{ url_for('sqleditor.index') }}" + "poll/" + self.transId,
+                url: url_for('sqleditor.poll', {'trans_id': self.transId}),
                 method: 'GET',
                 success: function(res) {
                   if (res.data.status === 'Success') {
                     self.trigger(
                       'pgadmin-sqleditor:loading-icon:message',
-                      "{{ _('Loading data from the database server and rendering...') }}"
+                      gettext("Loading data from the database server and rendering...")
                     );
-                    self.get_columns(res.data);
+
+                    self.call_render_after_poll(res.data);
                   }
                   else if (res.data.status === 'Busy') {
                     // If status is Busy then poll the result by recursive call to the poll function
@@ -1899,6 +1807,7 @@ define(
                 },
                 error: function(e) {
                   // Enable/Disable query tool button only if is_query_tool is true.
+                  self.resetQueryHistoryObject(self);
                   self.trigger('pgadmin-sqleditor:loading-icon:hide');
                   if (self.is_query_tool) {
                     self.disable_tool_buttons(false);
@@ -1907,7 +1816,7 @@ define(
 
                   if (e.readyState == 0) {
                     self.update_msg_history(false,
-                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                      gettext("Not connected to the server or the connection to the server has been closed.")
                     );
                     return;
                   }
@@ -1933,6 +1842,7 @@ define(
           var self = this;
           self.colinfo = data.col_info;
           self.primary_keys = data.primary_keys;
+          self.client_primary_key = data.client_primary_key;
           self.cell_selected = false;
           self.selected_model = null;
           self.changedModels = [];
@@ -1977,23 +1887,24 @@ define(
 
               self.trigger(
                 'pgadmin-sqleditor:loading-icon:message',
-                "{{ _('Loading data from the database server and rendering...') }}",
+                gettext("Loading data from the database server and rendering..."),
                 self
               );
 
               // Show message in message and history tab in case of query tool
               self.total_time = self.get_query_run_time(self.query_start_time, self.query_end_time);
-              self.update_msg_history(true, "", false);
-              var msg1 = S("{{ _('Total query runtime: %s.') }}").sprintf(self.total_time).value();
-              var msg2 = S("{{ _('%s rows retrieved.') }}").sprintf(self.rows_affected).value();
+              var msg1 = S(gettext("Successfully run. Total query runtime: %s.")).sprintf(self.total_time).value();
+              var msg2 = S(gettext("%s rows affected.")).sprintf(self.rows_affected).value();
 
               // Display the notifier if the timeout is set to >= 0
               if (self.info_notifier_timeout >= 0) {
-                alertify.success(msg1 + '<br />' + msg2, self.info_notifier_timeout);
+                var alertifyWrapper = new AlertifyWrapper();
+                alertifyWrapper.success(msg1 + ' ' + msg2, self.info_notifier_timeout);
               }
 
               var _msg = msg1 + '\n' + msg2;
 
+              self.update_msg_history(true, _msg, false);
               // If there is additional messages from server then add it to message
               if(!_.isNull(data.additional_messages) &&
                     !_.isUndefined(data.additional_messages)) {
@@ -2021,7 +1932,8 @@ define(
                 setTimeout(
                   function() {
                     self.gridView.render_grid(
-                      explain_data_array, self.columns, self.can_edit
+                      explain_data_array, self.columns, self.can_edit,
+                      self.client_primary_key
                     );
                     // Make sure - the 'Explain' panel is visible, before - we
                     // start rendering the grid.
@@ -2037,7 +1949,8 @@ define(
                 self.gridView.data_output_panel.focus();
                 setTimeout(
                   function() {
-                    self.gridView.render_grid(data.result, self.columns, self.can_edit);
+                    self.gridView.render_grid(data.result, self.columns,
+                    self.can_edit, self.client_primary_key, data.rows_affected);
                   }, 10
                 );
               }
@@ -2045,134 +1958,118 @@ define(
               // Hide the loading icon
               self.trigger('pgadmin-sqleditor:loading-icon:hide');
               $("#btn-flash").prop('disabled', false);
-            }.bind(self),
-            function() {
-              this.trigger('pgadmin-sqleditor:loading-icon:hide');
-              $("#btn-flash").prop('disabled', false);
             }.bind(self)
           );
         },
 
         // This function creates the columns as required by the backgrid
-        _fetch_column_metadata: function(data, cb, _fail) {
+        _fetch_column_metadata: function(data, cb) {
           var colinfo = data.colinfo,
               primary_keys = data.primary_keys,
               result = data.result,
               columns = [],
               self = this;
-
-          self.trigger(
-            'pgadmin-sqleditor:loading-icon:message',
-            "{{ _('Retrieving information about the columns returned...') }}"
-          );
-
-          // Make ajax call to fetch the pg types to map numeric data type
-          $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "fetch/types/" + self.transId,
-            method: 'GET',
-            success: function(res) {
-              if (res.data.status) {
-                // Store pg_types in an array
-                var pg_types = new Array();
-                _.each(res.data.result.rows, function(r) {
-                  pg_types[r.oid] = [r.typname];
-                });
-
-                // Create columns required by backgrid to render
-                _.each(colinfo, function(c) {
-                  var is_primary_key = false;
-
-                  // Check whether table have primary key
-                  if (_.size(primary_keys) > 0) {
-                    _.each(primary_keys, function (value, key) {
-                      if (key === c.name)
-                        is_primary_key = true;
-                    });
-                  }
-
-                  // To show column label and data type in multiline,
-                  // The elements should be put inside the div.
-                  // Create column label and type.
-                  var col_type = column_label = '';
-                  var type = pg_types[c.type_code] ?
-                               pg_types[c.type_code][0] :
-                               // This is the case where user might
-                               // have use casting so we will use type
-                               // returned by cast function
-                               pg_types[pg_types.length - 1][0] ?
-                                 pg_types[pg_types.length - 1][0] : 'unknown';
-
-                  if (!is_primary_key)
-                    col_type += ' ' + type;
-                  else
-                    col_type += ' [PK] ' + type;
-
-                  if (c.precision && c.precision >= 0 && c.precision != 65535) {
-                    col_type += ' (' + c.precision;
-                    col_type += c.scale && c.scale != 65535 ?
-                                ',' + c.scale + ')':
-                                ')';
-                  }
-
-                  // Identify cell type of column.
-                  switch(type) {
-                    case "json":
-                    case "json[]":
-                    case "jsonb":
-                    case "jsonb[]":
-                      col_cell = 'Json';
-                      break;
-                    case "smallint":
-                    case "integer":
-                    case "bigint":
-                    case "decimal":
-                    case "numeric":
-                    case "real":
-                    case "double precision":
-                      col_cell = 'number';
-                      break;
-                    case "boolean":
-                      col_cell = 'boolean';
-                      break;
-                    case "character":
-                    case "character[]":
-                    case "character varying":
-                    case "character varying[]":
-                      if (c.internal_size && c.internal_size >= 0 && c.internal_size != 65535) {
-                        // Update column type to display length on column header
-                        col_type += ' (' + c.internal_size + ')';
-                      }
-                      col_cell = 'string';
-                      break;
-                    default:
-                      col_cell = 'string';
-                  }
-
-                  column_label = c.display_name + '<br>' + col_type;
-
-                  var col = {
-                    'name': c.name,
-                    'pos': c.pos,
-                    'label': column_label,
-                    'cell': col_cell,
-                    'can_edit': self.can_edit,
-                    'type': type,
-                    'not_null': c.not_null,
-                    'has_default_val': c.has_default_val
-                  };
-                  columns.push(col);
-                });
-              }
-              else {
-               alertify.alert('Fetching Type Error', res.data.result);
-              }
-              self.columns = columns;
-              if (cb && typeof(cb) == 'function') {
-                cb();
-              }
-            },
-            fail: _fail
+          // Store pg_types in an array
+          var pg_types = new Array();
+          _.each(data.types, function(r) {
+            pg_types[r.oid] = [r.typname];
           });
+
+          // Create columns required by slick grid to render
+          _.each(colinfo, function(c) {
+            var is_primary_key = false;
+
+            // Check whether table have primary key
+            if (_.size(primary_keys) > 0) {
+              _.each(primary_keys, function (value, key) {
+                if (key === c.name)
+                  is_primary_key = true;
+              });
+            }
+
+            // To show column label and data type in multiline,
+            // The elements should be put inside the div.
+            // Create column label and type.
+            var col_type = column_label = '';
+            var type = pg_types[c.type_code] ?
+                         pg_types[c.type_code][0] :
+                         // This is the case where user might
+                         // have use casting so we will use type
+                         // returned by cast function
+                         pg_types[pg_types.length - 1][0] ?
+                           pg_types[pg_types.length - 1][0] : 'unknown';
+
+            if (!is_primary_key)
+              col_type += ' ' + type;
+            else
+              col_type += ' [PK] ' + type;
+
+            if (c.precision && c.precision >= 0 && c.precision != 65535) {
+              col_type += ' (' + c.precision;
+              col_type += c.scale && c.scale != 65535 ?
+                          ',' + c.scale + ')':
+                          ')';
+            }
+
+            // Identify cell type of column.
+            switch(type) {
+              case "json":
+              case "json[]":
+              case "jsonb":
+              case "jsonb[]":
+                col_cell = 'Json';
+                break;
+              case "smallint":
+              case "integer":
+              case "bigint":
+              case "decimal":
+              case "numeric":
+              case "real":
+              case "double precision":
+                col_cell = 'number';
+                break;
+              case "boolean":
+                col_cell = 'boolean';
+                break;
+              case "character":
+              case "character[]":
+              case "character varying":
+              case "character varying[]":
+                if (c.internal_size && c.internal_size >= 0 && c.internal_size != 65535) {
+                  // Update column type to display length on column header
+                  col_type += ' (' + c.internal_size + ')';
+                }
+                col_cell = 'string';
+                break;
+              default:
+                col_cell = 'string';
+            }
+
+            column_label = c.display_name + '<br>' + col_type;
+
+            var col = {
+              'name': c.name,
+              'display_name': c.display_name,
+              'column_type': col_type,
+              'pos': c.pos,
+              'label': column_label,
+              'cell': col_cell,
+              'can_edit': self.can_edit,
+              'type': type,
+              'not_null': c.not_null,
+              'has_default_val': c.has_default_val
+            };
+            columns.push(col);
+          });
+
+          self.columns = columns;
+          if (cb && typeof(cb) == 'function') {
+            cb();
+          }
+        },
+
+        resetQueryHistoryObject: function (history) {
+          history.total_time = '-';
         },
 
         // This function is used to raise appropriate message.
@@ -2183,22 +2080,21 @@ define(
 
           self.gridView.messages_panel.focus();
 
-          if (self.is_query_tool) {
-            if (clear_grid) {
-              // Delete grid
-              if (self.gridView.handler.slickgrid) {
-                self.gridView.handler.slickgrid.destroy();
+          if (clear_grid) {
+            // Delete grid
+            if (self.gridView.handler.slickgrid) {
+              self.gridView.handler.slickgrid.destroy();
 
-              }
-              // Misc cleaning
-              self.columns = undefined;
-              self.collection = undefined;
-
-              $('.sql-editor-message').text(msg);
-            } else {
-              $('.sql-editor-message').append(msg);
             }
+            // Misc cleaning
+            self.columns = undefined;
+            self.collection = undefined;
+
+            $('.sql-editor-message').text(msg);
+          } else {
+            $('.sql-editor-message').append(msg);
           }
+
           // Scroll automatically when msgs appends to element
           setTimeout(function(){
             $(".sql-editor-message").scrollTop($(".sql-editor-message")[0].scrollHeight);;
@@ -2208,11 +2104,13 @@ define(
             $("#btn-flash").prop('disabled', false);
             self.trigger('pgadmin-sqleditor:loading-icon:hide');
             self.gridView.history_collection.add({
-              'status' : status, 'start_time': self.query_start_time.toString(),
-              'query': self.query, 'row_affected': self.rows_affected,
-              'total_time': self.total_time, 'message':msg
+              'status' : status,
+              'start_time': self.query_start_time,
+              'query': self.query,
+              'row_affected': self.rows_affected,
+              'total_time': self.total_time,
+              'message':msg,
             });
-            self.gridView.history_collection.sort();
           }
         },
 
@@ -2221,7 +2119,8 @@ define(
           var self = this;
 
           // Calculate the difference in milliseconds
-          var difference_ms = miliseconds = end_time.getTime() - start_time.getTime();
+          var difference_ms, miliseconds;
+          difference_ms = miliseconds = end_time.getTime() - start_time.getTime();
           //take out milliseconds
           difference_ms = difference_ms/1000;
           var seconds = Math.floor(difference_ms % 60);
@@ -2249,26 +2148,20 @@ define(
         },
 
         rows_to_delete: function(data) {
-          var self = this;
-          var tmp_keys = [];
-          _.each(self.primary_keys, function(p, idx) {
-            // For each columns search primary key position
-            _.each(self.columns, function(c) {
-               if(c.name == idx) {
-                 tmp_keys.push(c.pos);
-               }
-            });
-          });
+          var self = this,
+            tmp_keys = self.primary_keys;
 
           // re-calculate rows with no primary keys
           self.temp_new_rows = [];
           data.forEach(function(d, idx) {
-            var p_keys_idx = _.pick(d, tmp_keys);
-            if (Object.keys(p_keys_idx).length == 0) {
+            var p_keys_list = _.pick(d, tmp_keys),
+              is_primary_key = Object.keys(p_keys_list).length ?
+                               p_keys_list[0] : undefined;
+
+            if (!is_primary_key) {
               self.temp_new_rows.push(idx);
             }
           });
-          data.getItemMetadata = self.data_view.getItemMetadata;
           self.rows_to_disable = _.clone(self.temp_new_rows);
         },
 
@@ -2279,69 +2172,74 @@ define(
               is_added = _.size(self.data_store.added),
               is_updated = _.size(self.data_store.updated);
 
-              // Remove newly added rows from staged rows as we don't want to send them on server
-              if(is_added) {
-                  _.each(self.data_store.added, function(val, key) {
-                    if(key in self.data_store.staged_rows) {
-                      // Remove the row from data store so that we do not send it on server
-                      deleted_keys.push(key);
-                      delete self.data_store.staged_rows[key];
-                      delete self.data_store.added[key]
-                    }
-                  });
+          // Remove newly added rows from staged rows as we don't want to send them on server
+          if(is_added) {
+            _.each(self.data_store.added, function(val, key) {
+              if(key in self.data_store.staged_rows) {
+                // Remove the row from data store so that we do not send it on server
+                deleted_keys.push(key);
+                delete self.data_store.staged_rows[key];
+                delete self.data_store.added[key];
+                delete self.data_store.added_index[key];
               }
+            });
+          }
+          // If only newly rows to delete and no data is there to send on server
+          // then just re-render the grid
+          if(_.size(self.data_store.staged_rows) == 0) {
+              var grid = self.slickgrid,
+              dataView = grid.getData(),
+              data = dataView.getItems(),
+              idx = 0;
 
-              // If only newly rows to delete and no data is there to send on server
-              // then just re-render the grid
-              if(_.size(self.data_store.staged_rows) == 0) {
-                var grid = self.slickgrid, data = grid.getData(), idx = 0;
-                  if(deleted_keys.length){
-                    // Remove new rows from grid data using deleted keys
-                   data = _.reject(data, function(d){
-                     return (d && _.indexOf(deleted_keys, d.__temp_PK) > -1)
-                   });
-                  }
-                  self.rows_to_delete.apply(self, [data]);
-                  grid.resetActiveCell();
-                  grid.setData(data, true);
-                  grid.setSelectedRows([]);
-                  grid.invalidate();
-                  // Nothing to copy or delete here
-                  $("#btn-delete-row").prop('disabled', true);
-                  $("#btn-copy-row").prop('disabled', true);
-                  if(_.size(self.data_store.added) || is_updated) {
-                    // Do not disable save button if there are
-                    // any other changes present in grid data
-                    $("#btn-save").prop('disabled', false);
-                  } else {
-                    $("#btn-save").prop('disabled', true);
-                  }
-                  alertify.success("{{ _('Row(s) deleted') }}");
+              grid.resetActiveCell();
+
+              dataView.beginUpdate();
+              for (var i = 0; i < deleted_keys.length; i++) {
+                dataView.deleteItem(deleted_keys[i]);
+              }
+              dataView.endUpdate();
+              self.rows_to_delete.apply(self, [dataView.getItems()]);
+              grid.resetActiveCell();
+              grid.setSelectedRows([]);
+              grid.invalidate();
+
+              // Nothing to copy or delete here
+              $("#btn-delete-row").prop('disabled', true);
+              $("#btn-copy-row").prop('disabled', true);
+              if(_.size(self.data_store.added) || is_updated) {
+                // Do not disable save button if there are
+                // any other changes present in grid data
+                $("#btn-save").prop('disabled', false);
               } else {
-                // There are other data to needs to be updated on server
-                if(is_updated) {
-                  alertify.alert("{{ _('Operation failed') }}",
-                    "{{ _('There are unsaved changes in grid, Please save them first to avoid inconsistency in data') }}"
-                  );
-                  return;
-                }
-                alertify.confirm("{{ _('Delete Row(s)') }}",
-                  "{{ _('Are you sure you wish to delete selected row(s)?') }}",
-                  function() {
-                    $("#btn-delete-row").prop('disabled', true);
-                    $("#btn-copy-row").prop('disabled', true);
-                    // Change the state
-                    self.data_store.deleted = self.data_store.staged_rows;
-                    self.data_store.staged_rows = {};
-                    // Save the changes on server
-                    self._save();
-                  },
-                  function() {
-                    // Do nothing as user canceled the operation.
-                  }
-                ).set('labels', {ok:'Yes', cancel:'No'});
+                $("#btn-save").prop('disabled', true);
               }
-
+              var alertifyWrapper = new AlertifyWrapper();
+              alertifyWrapper.success(gettext("Row(s) deleted"));
+          } else {
+            // There are other data to needs to be updated on server
+            if(is_updated) {
+              alertify.alert(gettext("Operation failed"),
+                    gettext("There are unsaved changes in grid, Please save them first to avoid inconsistency in data")
+                  );
+              return;
+            }
+            alertify.confirm(gettext("Delete Row(s)"),
+                  gettext("Are you sure you wish to delete selected row(s)?"),
+              function() {
+                $("#btn-delete-row").prop('disabled', true);
+                $("#btn-copy-row").prop('disabled', true);
+                // Change the state
+                self.data_store.deleted = self.data_store.staged_rows;
+                self.data_store.staged_rows = {};
+                // Save the changes on server
+                self._save();
+              },
+              function() {
+                // Do nothing as user canceled the operation.
+              }
+            ).set('labels', {ok: gettext("Yes"), cancel:gettext("No")});
+          }
         },
 
         /* This function will fetch the list of changed models and make
@@ -2381,14 +2279,14 @@ define(
             is_primary_error = false;
 
           if( !is_added && !is_updated && !is_deleted ) {
-                return;  // Nothing to save here
+            return;  // Nothing to save here
           }
 
           if (save_data) {
 
             self.trigger(
               'pgadmin-sqleditor:loading-icon:show',
-              "{{ _('Saving the updated data...') }}"
+              gettext("Saving the updated data...")
             );
 
             // Add the columns to the data so the server can remap the data
@@ -2397,33 +2295,45 @@ define(
 
             // Make ajax call to save the data
             $.ajax({
-              url: "{{ url_for('sqleditor.index') }}" + "save/" + self.transId,
+              url: url_for('sqleditor.save', {'trans_id': self.transId}),
               method: 'POST',
               contentType: "application/json",
               data: JSON.stringify(req_data),
               success: function(res) {
                 var grid = self.slickgrid,
-                  data = grid.getData();
+                    dataView = grid.getData(),
+                    data_length = dataView.getLength(),
+                    data = [];
                 if (res.data.status) {
+                    // Remove flag is_row_copied from copied rows
+                    _.each(data, function(row, idx) {
+                      if (row.is_row_copied) {
+                        delete row.is_row_copied;
+                      }
+                    });
+
+                    // Remove 2d copied_rows array
+                    if (grid.copied_rows) {
+                      delete grid.copied_rows;
+                    }
+
                     // Remove deleted rows from client as well
                     if(is_deleted) {
                       var rows = grid.getSelectedRows();
-                      /* In JavaScript sorting by default is lexical,
-                       * To make sorting numerical we need to pass function
-                       * After that we will Reverse the order of sorted array
-                       * so that when we remove it does not affect array index
-                       */
-                      if(data.length == rows.length) {
+                      if(data_length == rows.length) {
                         // This means all the rows are selected, clear all data
                         data = [];
+                        dataView.setItems(data, self.client_primary_key);
                       } else {
-                        rows = rows.sort(function(a,b){return a - b}).reverse();
-                        rows.forEach(function(idx) {
-                          data.splice(idx, 1);
-                        });
+                        dataView.beginUpdate();
+                        for (var i = 0; i < rows.length; i++) {
+                          item = grid.getDataItem(rows[i]);
+                          data.push(item);
+                          dataView.deleteItem(item[self.client_primary_key]);
+                        }
+                        dataView.endUpdate();
                       }
                       self.rows_to_delete.apply(self, [data]);
-                      grid.setData(data, true);
                       grid.setSelectedRows([]);
                     }
 
@@ -2436,6 +2346,7 @@ define(
                        self.rows_to_disable = _.clone(self.temp_new_rows);
                     }
 
+                    grid.setSelectedRows([]);
                     // Reset data store
                     self.data_store = {
                       'added': {},
@@ -2454,9 +2365,10 @@ define(
                   // Something went wrong while saving data on the db server
                   $("#btn-flash").prop('disabled', false);
                   $('.sql-editor-message').text(res.data.result);
-                  var err_msg = S("{{ _('%s.') }}").sprintf(res.data.result).value();
-                  alertify.notify(err_msg, 'error', 20);
-
+                  var err_msg = S(gettext("%s.")).sprintf(res.data.result).value();
+                  var alertifyWrapper = new AlertifyWrapper();
+                  alertifyWrapper.error(err_msg, 20);
+                  grid.setSelectedRows([]);
                   // To highlight the row at fault
                   if(_.has(res.data, '_rowid') &&
                       (!_.isUndefined(res.data._rowid)|| !_.isNull(res.data._rowid))) {
@@ -2478,20 +2390,28 @@ define(
 
                 // Update the sql results in history tab
                 _.each(res.data.query_result, function(r) {
-                  self.gridView.history_collection.add(
-                    {'status' : r.status, 'start_time': self.query_start_time.toString(),
-                    'query': r.sql, 'row_affected': r.rows_affected,
-                    'total_time': self.total_time, 'message': r.result
+                  self.gridView.history_collection.add({
+                    'status': r.status,
+                    'start_time': self.query_start_time,
+                    'query': r.sql,
+                    'row_affected': r.rows_affected,
+                    'total_time': self.total_time,
+                    'message': r.result,
                   });
                 });
                 self.trigger('pgadmin-sqleditor:loading-icon:hide');
 
                 grid.invalidate();
+                var alertifyWrapper = new AlertifyWrapper();
+                alertifyWrapper.success(gettext("Data saved successfully."));
+                if (self.close_on_save) {
+                  self.close();
+                }
               },
               error: function(e) {
                 if (e.readyState == 0) {
                   self.update_msg_history(false,
-                    "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                    gettext("Not connected to the server or the connection to the server has been closed.")
                   );
                   return;
                 }
@@ -2509,14 +2429,21 @@ define(
 
         // Find index of row at fault from grid data
         _find_rowindex: function(rowid) {
-          var self = this;
-          var grid = self.slickgrid,
-            data = grid.getData(), _rowid, count = 0, _idx = -1;
+          var self = this,
+            grid = self.slickgrid,
+            dataView = grid.getData(),
+            data = dataView.getItems(),
+            _rowid,
+            count = 0,
+            _idx = -1;
+
           // If _rowid is object then it's update/delete operation
           if(_.isObject(rowid)) {
               _rowid = rowid;
-          } else if (_.isString(rowid)) { // Insert opration
-            _rowid = { '__temp_PK': rowid };
+          } else if (_.isString(rowid)) { // Insert operation
+            var rowid = {};
+            rowid[self.client_primary_key]= rowid;
+            _rowid = rowid;
           } else {
             // Something is wrong with unique id
             return _idx;
@@ -2567,8 +2494,8 @@ define(
            * confirm with the user for unsaved changes.
            */
           if (self.is_query_changed) {
-            alertify.confirm("{{ _('Unsaved changes') }}",
-              "{{ _('Are you sure you wish to discard the current changes?') }}",
+            alertify.confirm(gettext("Unsaved changes"),
+              gettext("Are you sure you wish to discard the current changes?"),
               function() {
                 // User do not want to save, just continue
                 self._open_select_file_manager();
@@ -2602,7 +2529,7 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            "{{ _('Loading the file...') }}"
+            gettext("Loading the file...")
           );
           // set cursor to progress before file load
           var $busy_icon_div = $('.sql-editor-busy-fetching');
@@ -2610,7 +2537,7 @@ define(
 
           // Make ajax call to load the data from file
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "load_file/",
+            url: url_for('sqleditor.load_file'),
             method: 'POST',
             contentType: "application/json",
             data: JSON.stringify(data),
@@ -2633,7 +2560,8 @@ define(
             },
             error: function(e) {
               var errmsg = $.parseJSON(e.responseText).errormsg;
-              alertify.error(errmsg);
+              var alertifyWrapper = new AlertifyWrapper();
+              alertifyWrapper.error(errmsg);
               self.trigger('pgadmin-sqleditor:loading-icon:hide');
               // hide cursor
               $busy_icon_div.removeClass('show_progress');
@@ -2650,18 +2578,19 @@ define(
           }
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            "{{ _('Saving the queries in the file...') }}"
+            gettext("Saving the queries in the file...")
           );
 
           // Make ajax call to save the data to file
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "save_file/",
+            url: url_for('sqleditor.save_file'),
             method: 'POST',
             contentType: "application/json",
             data: JSON.stringify(data),
             success: function(res) {
               if (res.data.status) {
-                alertify.success("{{ _('File saved successfully.') }}");
+                var alertifyWrapper = new AlertifyWrapper();
+                alertifyWrapper.success(gettext("File saved successfully."));
                 self.gridView.current_file = e;
                 self.setTitle(self.gridView.current_file.replace(/^.*[\\\/]/g, ''));
                 // disable save button on file save
@@ -2672,6 +2601,9 @@ define(
                 self.is_query_changed = false;
               }
               self.trigger('pgadmin-sqleditor:loading-icon:hide');
+              if (self.close_on_save) {
+                self.close()
+              }
             },
             error: function(e) {
               self.trigger('pgadmin-sqleditor:loading-icon:hide');
@@ -2679,7 +2611,8 @@ define(
               var errmsg = $.parseJSON(e.responseText).errormsg;
               setTimeout(
                 function() {
-                  alertify.error(errmsg);
+                  var alertifyWrapper = new AlertifyWrapper();
+                  alertifyWrapper.error(errmsg);
                 }, 10
               );
             },
@@ -2738,11 +2671,6 @@ define(
         // This function will set the required flag for polling response data
         _init_polling_flags: function() {
           var self = this;
-          // Set a flag to get columns
-          self.FETCH_COLUMNS_FROM_SERVER = true;
-          // We will set columns data in this variable for future use once we fetch it
-          // from server
-          self.COLUMNS_DATA = {};
 
           // To get a timeout for polling fallback timer in seconds in
           // regards to elapsed time
@@ -2772,10 +2700,10 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            "{{ _('Loading the existing filter options...') }}"
+            gettext("Loading the existing filter options...")
           );
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "filter/get/" + self.transId,
+            url: url_for('sqleditor.get_filter', {'trans_id': self.transId}),
             method: 'GET',
             success: function(res) {
               self.trigger('pgadmin-sqleditor:loading-icon:hide');
@@ -2802,7 +2730,7 @@ define(
               var msg;
               if (e.readyState == 0) {
                 msg =
-                  "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                  gettext("Not connected to the server or the connection to the server has been closed.")
               } else {
                 msg = e.responseText;
                 if (e.responseJSON != undefined &&
@@ -2838,16 +2766,16 @@ define(
             return;
 
           // Add column position and it's value to data
-          data[column_info.field] = _values[column_info.pos] || '';
+          data[column_info.field] = _values[column_info.field] || '';
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            "{{ _('Applying the new filter...') }}"
+            gettext("Applying the new filter...")
           );
 
           // Make ajax call to include the filter by selection
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "filter/inclusive/" + self.transId,
+            url: url_for('sqleditor.inclusive_filter', {'trans_id': self.transId}),
             method: 'POST',
             contentType: "application/json",
             data: JSON.stringify(data),
@@ -2871,7 +2799,7 @@ define(
                 function() {
                   if (e.readyState == 0) {
                     alertify.alert('Filter By Selection Error',
-                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                      gettext("Not connected to the server or the connection to the server has been closed.")
                     );
                     return;
                   }
@@ -2908,16 +2836,16 @@ define(
             return;
 
           // Add column position and it's value to data
-          data[column_info.field] = _values[column_info.pos] || '';
+          data[column_info.field] = _values[column_info.field] || '';
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            "{{ _('Applying the new filter...') }}"
+            gettext("Applying the new filter...")
           );
 
           // Make ajax call to exclude the filter by selection.
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "filter/exclusive/" + self.transId,
+            url: url_for('sqleditor.exclusive_filter', {'trans_id': self.transId}),
             method: 'POST',
             contentType: "application/json",
             data: JSON.stringify(data),
@@ -2942,7 +2870,7 @@ define(
                 function() {
                   if (e.readyState == 0) {
                     alertify.alert('Filter Exclude Selection Error',
-                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                      gettext("Not connected to the server or the connection to the server has been closed.")
                     );
                     return;
                   }
@@ -2965,12 +2893,12 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            "{{ _('Removing the filter...') }}"
+            gettext("Removing the filter...")
           );
 
           // Make ajax call to exclude the filter by selection.
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "filter/remove/" + self.transId,
+            url: url_for('sqleditor.remove_filter', {'trans_id': self.transId}),
             method: 'POST',
             success: function(res) {
               self.trigger('pgadmin-sqleditor:loading-icon:hide');
@@ -2992,7 +2920,7 @@ define(
                 function() {
                   if (e.readyState == 0) {
                     alertify.alert('Remove Filter Error',
-                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                      gettext("Not connected to the server or the connection to the server has been closed.")
                     );
                     return;
                   }
@@ -3016,12 +2944,12 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            "{{ _('Applying the filter...') }}"
+            gettext("Applying the filter...")
           );
 
           // Make ajax call to include the filter by selection
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "filter/apply/" + self.transId,
+            url: url_for('sqleditor.apply_filter', {'trans_id': self.transId}),
             method: 'POST',
             contentType: "application/json",
             data: JSON.stringify(sql),
@@ -3047,7 +2975,7 @@ define(
                 function() {
                   if (e.readyState == 0) {
                     alertify.alert('Apply Filter Error',
-                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                      gettext("Not connected to the server or the connection to the server has been closed.")
                     );
                     return;
                   }
@@ -3071,67 +2999,68 @@ define(
         _paste_row: function() {
           var self = this, col_info = {},
             grid = self.slickgrid,
-            data = grid.getData();
-            // Deep copy
-            var copied_rows = $.extend(true, [], self.copied_rows),
-            _tmp_copied_row = {};
+            dataView = grid.getData(),
+            data = dataView.getItems(),
+            count = dataView.getLength(),
+            rows = grid.getSelectedRows().sort(
+              function (a, b) { return a - b; }
+            ),
+            copied_rows = rows.map(function (rowIndex) {
+              return data[rowIndex];
+            });
+
+            rows = rows.length == 0 ? self.last_copied_rows : rows
+
+            self.last_copied_rows = rows;
 
             // If there are rows to paste?
             if(copied_rows.length > 0) {
               // Enable save button so that user can
               // save newly pasted rows on server
               $("#btn-save").prop('disabled', false);
-              // Generate Unique key for each pasted row(s)
-              _.each(copied_rows, function(row) {
-                  var _pk = epicRandomString(8);
-                  row.__temp_PK = _pk;
-              });
 
-              var temp_func = self.data_view.getItemMetadata,
-                  count = Object.keys(data).length-1;
+              var arr_to_object = function (arr) {
+                var obj = {},
+                  count = typeof(arr) == 'object' ?
+                            Object.keys(arr).length: arr.length
 
-              _.each(copied_rows, function(row, idx) {
-                data[count] = row;
-                count++;
-              });
-
-              //update data_view
-              data.getItemMetadata = temp_func;
-              grid.setData(data, true);
-              grid.updateRowCount();
-              grid.setSelectedRows([]);
-              grid.invalidateAllRows();
-              grid.render();
-
-              // Fetch column name & its data type
-              _.each(self.columns, function(c) {
-                col_info[String(c.pos)] = c.type;
-              });
-
-              // insert these data in data_store as well to save them on server
-              for (var j = 0; j < copied_rows.length; j += 1) {
-                self.data_store.added[copied_rows[j].__temp_PK] = {
-                  'data_type': {},
-                  'data': {}
-                };
-                self.data_store.added[copied_rows[j].__temp_PK]['data_type'] = col_info;
-                // We need to convert it from array to dict so that server can
-                // understand the data properly
-                _.each(copied_rows[j], function(val, key) {
-                  // If value is array then convert it to string
-                  if(_.isArray(val)) {
-                    _tmp_copied_row[String(key)] = val.toString();
-                  // If value is object then stringify it
-                  } else if(_.isObject(val)) {
-                    _tmp_copied_row[j][String(key)] = JSON.stringify(val);
-                  } else {
-                    _tmp_copied_row[String(key)] = val;
+                _.each(arr, function(val, i){
+                  if (arr[i] !== undefined) {
+                    if(_.isObject(arr[i])) {
+                      obj[String(i)] = JSON.stringify(arr[i]);
+                    } else {
+                      obj[String(i)] = arr[i];
+                    }
                   }
                 });
-                self.data_store.added[copied_rows[j].__temp_PK]['data'] = _tmp_copied_row;
-                // reset the variable
-                _tmp_copied_row = {};
-              }
+                return obj;
+              };
+
+              // Generate Unique key for each pasted row(s)
+              // Convert array values to object to send to server
+              // Add flag is_row_copied to handle [default] and [null]
+              // for copied rows.
+              // Add index of copied row into temp_new_rows
+              // Trigger grid.onAddNewRow when a row is copied
+              // Reset selection
+
+              dataView.beginUpdate();
+              _.each(copied_rows, function(row) {
+                  var new_row = arr_to_object(row),
+                  _key = (self.gridView.client_primary_key_counter++).toString();
+                  new_row.is_row_copied = true;
+                  self.temp_new_rows.push(count);
+                  new_row[self.client_primary_key] = _key;
+                  dataView.addItem(new_row);
+                  self.data_store.added[_key] = {'err': false, 'data': new_row};
+                  self.data_store.added_index[count] = _key;
+                  count++;
+              });
+              dataView.endUpdate();
+              grid.updateRowCount();
+              // Pasted row/s always append so bring last row in view port.
+              grid.scrollRowIntoView(dataView.getLength());
+              grid.setSelectedRows([]);
             }
         },
 
@@ -3142,11 +3071,11 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            "{{ _('Setting the limit on the result...') }}"
+            gettext("Setting the limit on the result...")
           );
           // Make ajax call to change the limit
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "limit/" + self.transId,
+            url: url_for('sqleditor.set_limit', {'trans_id': self.transId}),
             method: 'POST',
             contentType: "application/json",
             data: JSON.stringify(limit),
@@ -3169,7 +3098,7 @@ define(
                 function() {
                   if (e.readyState == 0) {
                     alertify.alert('Change limit Error',
-                      "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                      gettext("Not connected to the server or the connection to the server has been closed.")
                     );
                     return;
                   }
@@ -3202,6 +3131,9 @@ define(
               sql = '',
               history_msg = '';
 
+          self.has_more_rows = false;
+          self.fetching_rows = false;
+
           /* If code is selected in the code mirror then execute
            * the selected part else execute the complete code.
            */
@@ -3216,7 +3148,7 @@ define(
 
           self.trigger(
             'pgadmin-sqleditor:loading-icon:show',
-            "{{ _('Initializing the query execution!') }}"
+            gettext("Initializing the query execution!")
           );
 
           $("#btn-flash").prop('disabled', true);
@@ -3234,7 +3166,7 @@ define(
           $("#btn-cancel-query").prop('disabled', false);
 
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "query_tool/start/" + self.transId,
+            url: url_for('sqleditor.query_tool_start', {'trans_id': self.transId}),
             method: 'POST',
             contentType: "application/json",
             data: JSON.stringify(sql),
@@ -3252,7 +3184,7 @@ define(
               if (res.data.status) {
                 self.trigger(
                   'pgadmin-sqleditor:loading-icon:message',
-                   "{{ _('Waiting for the query execution to complete...') }}"
+                  gettext("Waiting for the query execution to complete...")
                 );
 
                 self.can_edit = res.data.can_edit;
@@ -3279,7 +3211,7 @@ define(
 
               if (e.readyState == 0) {
                 self.update_msg_history(false,
-                  "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                  gettext("Not connected to the server or the connection to the server has been closed.")
                 );
                 return;
               }
@@ -3360,7 +3292,7 @@ define(
 
           $("#btn-cancel-query").prop('disabled', true);
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "cancel/" + self.transId,
+            url: url_for('sqleditor.cancel_transaction', {'trans_id': self.transId}),
             method: 'POST',
             contentType: "application/json",
             success: function(res) {
@@ -3377,7 +3309,7 @@ define(
 
               if (e.readyState == 0) {
                 alertify.alert('Cancel Query Error',
-                  "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                  gettext("Not connected to the server or the connection to the server has been closed.")
                 );
                 return;
               }
@@ -3411,7 +3343,7 @@ define(
            */
           if (!self.is_query_tool) {
             $.ajax({
-              url: "{{ url_for('sqleditor.index') }}" + "object/get/" + self.transId,
+              url: url_for('sqleditor.get_object_name', {'trans_id': self.transId}),
               method: 'GET',
               success: function(res) {
                 if (res.data.status) {
@@ -3422,7 +3354,7 @@ define(
               error: function(e) {
                 if (e.readyState == 0) {
                   alertify.alert('Get Object Name Error',
-                   "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                    gettext("Not connected to the server or the connection to the server has been closed.")
                   );
                   return;
                 }
@@ -3435,17 +3367,17 @@ define(
                 alertify.alert('Get Object Name Error', msg);
               }
             });
-           } else {
+          } else {
             var cur_time = new Date();
             var filename = 'data-' + cur_time.getTime() + '.csv';
             self._trigger_csv_download(sql, filename);
-           }
+          }
         },
         // Trigger query result download to csv.
         _trigger_csv_download: function(query, filename) {
           var self = this,
             link = $(this.container).find("#download-csv"),
-            url = "{{ url_for('sqleditor.index') }}" + "query_tool/download/" + self.transId;
+            url = url_for('sqleditor.query_tool_download', {'trans_id': self.transId});
 
           url +="?" + $.param({query:query, filename:filename});
           link.attr("src", url);
@@ -3464,7 +3396,7 @@ define(
 
           // Make ajax call to change the limit
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "auto_rollback/" + self.transId,
+            url: url_for('sqleditor.auto_rollback', {'trans_id': self.transId}),
             method: 'POST',
             contentType: "application/json",
             data: JSON.stringify(auto_rollback),
@@ -3475,7 +3407,7 @@ define(
             error: function(e) {
               if (e.readyState == 0) {
                 alertify.alert('Auto Rollback Error',
-                 "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                  gettext("Not connected to the server or the connection to the server has been closed.")
                 );
                 return;
               }
@@ -3503,7 +3435,7 @@ define(
 
           // Make ajax call to change the limit
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "auto_commit/" + self.transId,
+            url: url_for('sqleditor.auto_commit', {'trans_id': self.transId}),
             method: 'POST',
             contentType: "application/json",
             data: JSON.stringify(auto_commit),
@@ -3514,7 +3446,7 @@ define(
             error: function(e) {
               if (e.readyState == 0) {
                 alertify.alert('Auto Commit Error',
-                 "{{ _('Not connected to the server or the connection to the server has been closed.') }}"
+                  gettext("Not connected to the server or the connection to the server has been closed.")
                 );
                 return;
               }
@@ -3572,20 +3504,20 @@ define(
           };
 
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "query_tool/preferences/" + self.transId ,
+            url: url_for('sqleditor.query_tool_preferences', {'trans_id': self.transId}),
             method: 'PUT',
             contentType: "application/json",
             data: JSON.stringify(data),
             success: function(res) {
               if(res.success == undefined || !res.success) {
                 alertify.alert('Explain options error',
-                  "{{ _('Error occurred while setting verbose option in explain') }}"
+                  gettext("Error occurred while setting verbose option in explain")
                 );
               }
             },
             error: function(e) {
               alertify.alert('Explain options error',
-                  "{{ _('Error occurred while setting verbose option in explain') }}"
+                gettext("Error occurred while setting verbose option in explain")
               );
               return;
             }
@@ -3610,20 +3542,20 @@ define(
           };
 
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "query_tool/preferences/" + self.transId ,
+            url: url_for('sqleditor.query_tool_preferences', {'trans_id': self.transId}),
             method: 'PUT',
             contentType: "application/json",
             data: JSON.stringify(data),
             success: function(res) {
               if(res.success == undefined || !res.success) {
                 alertify.alert('Explain options error',
-                  "{{ _('Error occurred while setting costs option in explain') }}"
+                  gettext("Error occurred while setting costs option in explain")
                 );
               }
             },
             error: function(e) {
               alertify.alert('Explain options error',
-                  "{{ _('Error occurred while setting costs option in explain') }}"
+                gettext("Error occurred while setting costs option in explain")
               );
             }
           });
@@ -3647,20 +3579,20 @@ define(
           };
 
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "query_tool/preferences/" + self.transId ,
+            url: url_for('sqleditor.query_tool_preferences', {'trans_id': self.transId}),
             method: 'PUT',
             contentType: "application/json",
             data: JSON.stringify(data),
             success: function(res) {
               if(res.success == undefined || !res.success) {
                 alertify.alert('Explain options error',
-                  "{{ _('Error occurred while setting buffers option in explain') }}"
+                  gettext("Error occurred while setting buffers option in explain")
                 );
               }
             },
             error: function(e) {
               alertify.alert('Explain options error',
-                "{{ _('Error occurred while setting buffers option in explain') }}"
+                gettext("Error occurred while setting buffers option in explain")
               );
             }
           });
@@ -3683,20 +3615,20 @@ define(
           };
 
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "query_tool/preferences/" + self.transId ,
+            url: url_for('sqleditor.query_tool_preferences', {'trans_id': self.transId}),
             method: 'PUT',
             contentType: "application/json",
             data: JSON.stringify(data),
             success: function(res) {
               if(res.success == undefined || !res.success) {
                 alertify.alert('Explain options error',
-                  "{{ _('Error occurred while setting timing option in explain') }}"
+                  gettext("Error occurred while setting timing option in explain")
                 );
               }
             },
             error: function(e) {
               alertify.alert('Explain options error',
-                "{{ _('Error occurred while setting timing option in explain') }}"
+                gettext("Error occurred while setting timing option in explain")
               );
             }
           });
@@ -3757,7 +3689,7 @@ define(
               };
 
           $.ajax({
-            url: "{{ url_for('sqleditor.index') }}" + "query_tool/preferences/" + self.transId ,
+            url: url_for('sqleditor.query_tool_preferences', {'trans_id': self.transId}),
             method: 'GET',
             success: function(res) {
               if (res.data) {
@@ -3774,8 +3706,22 @@ define(
             error: function(e) {
               updateUI();
               alertify.alert('Get Preferences error',
-                "{{ _('Error occurred while getting query tool options ') }}"
+                gettext("Error occurred while getting query tool options ")
               );
+            }
+          });
+        },
+        close: function() {
+          var self= this;
+          _.each(window.top.pgAdmin.Browser.docker.findPanels('frm_datagrid'), function(panel) {
+            if(panel.isVisible()) {
+              window.onbeforeunload = null;
+              panel.off(wcDocker.EVENT.CLOSING);
+              // remove col_size object on panel close
+              if (!_.isUndefined(self.col_size)) {
+                delete self.col_size;
+              }
+              window.top.pgAdmin.Browser.docker.removePanel(panel);
             }
           });
         }

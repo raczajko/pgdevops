@@ -1,23 +1,25 @@
 // Check Constraint Module: Node
-define(
-  [
-   'jquery', 'underscore', 'underscore.string', 'pgadmin', 'pgadmin.browser',
-   'alertify', 'pgadmin.browser.collection'
-  ],
-function($, _, S, pgAdmin, pgBrowser, Alertify) {
+define('pgadmin.node.check_constraints', [
+  'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
+  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
+  'sources/alerts/alertify_wrapper',
+
+  'pgadmin.browser.collection'
+], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Alertify, AlertifyWrapper) {
 
   // Check Constraint Node
   if (!pgBrowser.Nodes['check_constraints']) {
     pgAdmin.Browser.Nodes['check_constraints'] = pgBrowser.Node.extend({
+      getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
       type: 'check_constraints',
-      label: '{{ _('Check') }}',
+      label: gettext('Check'),
       collection_type: 'coll-constraints',
       sqlAlterHelp: 'ddl-alter.html',
       sqlCreateHelp: 'ddl-constraints.html',
-      dialogHelp: '{{ url_for('help.static', filename='check_dialog.html') }}',
+      dialogHelp: url_for('help.static', {'filename': 'check_dialog.html'}),
       hasSQL: true,
       hasDepends: true,
-      parent_type: ['table'],
+      parent_type: ['table','partition'],
       Init: function() {
         // Avoid mulitple registration of menus
         if (this.initialized)
@@ -28,13 +30,13 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
         pgBrowser.add_menus([{
           name: 'create_check_constraints_on_coll', node: 'coll-constraints', module: this,
           applies: ['object', 'context'], callback: 'show_obj_properties',
-          category: 'create', priority: 5, label: '{{ _('Check...') }}',
+          category: 'create', priority: 5, label: gettext('Check...'),
           icon: 'wcTabIcon icon-check_constraints', data: {action: 'create', check: true},
           enable: 'canCreate'
         },{
           name: 'validate_check_constraint', node: 'check_constraints', module: this,
           applies: ['object', 'context'], callback: 'validate_check_constraint',
-          category: 'validate', priority: 4, label: '{{ _('Validate check constraint') }}',
+          category: 'validate', priority: 4, label: gettext('Validate check constraint'),
           icon: 'fa fa-link', enable : 'is_not_valid', data: {action: 'edit', check: true}
         }
         ]);
@@ -64,7 +66,8 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
             type:'GET',
             success: function(res) {
               if (res.success == 1) {
-                Alertify.success("{{ _('" + res.info + "') }}");
+                var alertifyWrapper = new AlertifyWrapper();
+                alertifyWrapper.success(res.info);
                 t.removeIcon(i);
                 data.valid = true;
                 data.icon = 'icon-check_constraints';
@@ -77,8 +80,8 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
               try {
                 var err = $.parseJSON(xhr.responseText);
                 if (err.success == 0) {
-                  msg = S('{{ _(' + err.errormsg + ')}}').value();
-                  Alertify.error("{{ _('" + err.errormsg + "') }}");
+                  var alertifyWrapper = new AlertifyWrapper();
+                  alertifyWrapper.error(err.errormsg);
                 }
               } catch (e) {}
               t.unload(i);
@@ -102,13 +105,13 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
         },
         // Check Constraint Schema
         schema: [{
-          id: 'name', label: '{{ _('Name') }}', type:'text', cell:'string',
+          id: 'name', label: gettext('Name'), type:'text', cell:'string',
           disabled: 'isDisabled'
         },{
-          id: 'oid', label:'{{ _('OID') }}', cell: 'string',
+          id: 'oid', label: gettext('OID'), cell: 'string',
           type: 'text' , mode: ['properties']
         },{
-          id: 'comment', label: '{{ _('Comment') }}', type: 'multiline', cell:
+          id: 'comment', label: gettext('Comment'), type: 'multiline', cell:
           'string', mode: ['properties', 'create', 'edit'],
           deps:['name'], disabled:function(m) {
             var name = m.get('name');
@@ -123,25 +126,37 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
             }
           }
         },{
-          id: 'consrc', label: '{{ _('Check') }}', type: 'multiline', cell:
-          'string', group: '{{ _('Definition') }}', mode: ['properties',
+          id: 'consrc', label: gettext('Check'), type: 'multiline', cell:
+          'string', group: gettext('Definition'), mode: ['properties',
           'create', 'edit'], disabled: function(m) {
             return ((_.has(m, 'handler') &&
               !_.isUndefined(m.handler) &&
               !_.isUndefined(m.get('oid'))) || (_.isFunction(m.isNew) && !m.isNew()));
           }, editable: false
         },{
-          id: 'connoinherit', label: '{{ _('No Inherit?') }}', type:
-          'switch', cell: 'boolean', group: '{{ _('Definition') }}', mode:
+          id: 'connoinherit', label: gettext('No Inherit?'), type:
+          'switch', cell: 'boolean', group: gettext('Definition'), mode:
           ['properties', 'create', 'edit'], min_version: 90200,
           disabled: function(m) {
+            // Disabled if table is a partitioned table.
+            if ((_.has(m , 'top') && !_.isUndefined(m.top) && m.top.get('is_partitioned')) ||
+                (_.has(m, 'node_info') && _.has(m.node_info, 'table') &&
+                _.has(m.node_info.table, 'is_partitioned') && m.node_info.table.is_partitioned)
+            ){
+              setTimeout(function(){
+                  m.set('connoinherit', false);
+              },10);
+
+              return true;
+            }
+
             return ((_.has(m, 'handler') &&
               !_.isUndefined(m.handler) &&
               !_.isUndefined(m.get('oid'))) || (_.isFunction(m.isNew) && !m.isNew()));
           }
         },{
-          id: 'convalidated', label: "{{ _("Don't validate?") }}", type: 'switch', cell:
-          'boolean', group: '{{ _('Definition') }}', min_version: 90200,
+          id: 'convalidated', label: gettext("Don't validate?"), type: 'switch', cell:
+          'boolean', group: gettext('Definition'), min_version: 90200,
           disabled: function(m) {
             if ((_.isFunction(m.isNew) && !m.isNew()) ||
                   (_.has(m, 'handler') &&
@@ -161,7 +176,7 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
               errmsg;
 
           if (_.isUndefined(this.get('consrc')) || String(this.get('consrc')).replace(/^\s+|\s+$/g, '') == '') {
-            err['consrc'] = '{{ _('Check cannot be empty!') }}';
+            err['consrc'] = gettext('Check cannot be empty!');
             errmsg = errmsg || err['consrc'];
           }
 

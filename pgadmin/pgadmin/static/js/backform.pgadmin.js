@@ -3,14 +3,15 @@
   // Set up Backform appropriately for the environment. Start with AMD.
   if (typeof define === 'function' && define.amd) {
     define([
-      'underscore', 'underscore.string', 'jquery', 'backbone', 'backform',
-      'backgrid', 'codemirror', 'pgadmin.backgrid', 'codemirror/mode/sql/sql',
-      'select2', 'pgadmin.browser.messages'
+      'sources/gettext', 'underscore', 'underscore.string', 'jquery',
+      'backbone', 'backform', 'backgrid', 'codemirror', 'pgadmin.backgrid',
+      'codemirror/mode/sql/sql', 'select2', 'codemirror/addon/edit/matchbrackets',
+      'codemirror/addon/edit/closebrackets'
       ],
-     function(_, S, $, Backbone, Backform, Backgrid, CodeMirror) {
+     function(gettext, _, S, $, Backbone, Backform, Backgrid, CodeMirror) {
       // Export global even in AMD case in case this script is loaded with
       // others that may still expect a global Backform.
-      return factory(root, _, S, $, Backbone, Backform, Backgrid, CodeMirror);
+      return factory(root, gettext, _, S, $, Backbone, Backform, Backgrid, CodeMirror);
     });
 
   // Next for Node.js or CommonJS. jQuery may not be needed as a module.
@@ -22,14 +23,15 @@
       Backgrid = require('backgrid') || root.Backgrid;
       CodeMirror = require('codemirror') || root.CodeMirror;
       pgAdminBackgrid = require('pgadmin.backgrid');
-      S = require('underscore.string');
-    factory(root, _, S, $, Backbone, Backform, Backgrid, CodeMirror);
+      S = require('underscore.string'),
+      gettext = require('sources/gettext');
+    factory(root, gettext, _, S, $, Backbone, Backform, Backgrid, CodeMirror);
 
   // Finally, as a browser global.
   } else {
-    factory(root, root._, root.s, (root.jQuery || root.Zepto || root.ender || root.$), root.Backbone, root.Backform, root.Backgrid, root.CodeMirror);
+    factory(root, root.gettext, root._, root.s, (root.jQuery || root.Zepto || root.ender || root.$), root.Backbone, root.Backform, root.Backgrid, root.CodeMirror);
   }
-}(this, function(root, _, S, $, Backbone, Backform, Backgrid, CodeMirror) {
+}(this, function(root, gettext, _, S, $, Backbone, Backform, Backgrid, CodeMirror) {
 
   var pgAdmin = (window.pgAdmin = window.pgAdmin || {});
 
@@ -57,7 +59,7 @@
     });
 
   var controlMapper = Backform.controlMapper = {
-    'int': ['uneditable-input', 'integer', 'integer'],
+    'int': ['uneditable-input', 'numeric', 'numeric'],
     'text': ['uneditable-input', 'input', 'string'],
     'numeric': ['uneditable-input', 'numeric', 'numeric'],
     'date': 'datepicker',
@@ -1021,16 +1023,16 @@
 
       var collection = this.model.get(data.name);
 
-      var cellEditing = function(args){
-        var self = this,
+      var cellEditing = function(args) {
+        var that = this,
           cell = args[0];
         // Search for any other rows which are open.
         this.each(function(m){
           // Check if row which we are about to close is not current row.
           if (cell.model != m) {
-            var idx = self.indexOf(m);
+            var idx = that.indexOf(m);
             if (idx > -1) {
-              var row = grid.body.rows[idx],
+              var row = self.grid.body.rows[idx],
                   editCell = row.$el.find(".subnode-edit-in-process").parent();
               // Only close row if it's open.
               if (editCell.length > 0){
@@ -1052,7 +1054,7 @@
       });
 
       // Render subNode grid
-      subNodeGrid = grid.render().$el;
+      subNodeGrid = self.grid.render().$el;
 
       // Combine Edit and Delete Cell
       if (data.canDelete && data.canEdit) {
@@ -1070,7 +1072,7 @@
                             data.canAddRow.apply(self, [self.model]) : true;
           if (canAddRow) {
               // Close any existing expanded row before adding new one.
-              _.each(grid.body.rows, function(row){
+              _.each(self.grid.body.rows, function(row){
                 var editCell = row.$el.find(".subnode-edit-in-process").parent();
                 // Only close row if it's open.
                 if (editCell.length > 0){
@@ -1099,7 +1101,7 @@
                 }
               }
 
-              $(grid.body.$el.find($("tr.new"))).removeClass("new")
+              $(self.grid.body.$el.find($("tr.new"))).removeClass("new")
               var m = new (data.model) (null, {
                 silent: true,
                 handler: collection,
@@ -1110,7 +1112,7 @@
               collection.add(m);
 
               var idx = collection.indexOf(m),
-                  newRow = grid.body.rows[idx].$el;
+                  newRow = self.grid.body.rows[idx].$el;
 
               newRow.addClass("new");
               $(newRow).pgMakeVisible('backform-tab');
@@ -1148,6 +1150,7 @@
   });
 
   var SubNodeCollectionControl = Backform.SubNodeCollectionControl = Backform.Control.extend({
+    row: Backgrid.Row,
     render: function() {
       var field = _.defaults(this.field.toJSON(), this.defaults),
           attributes = this.model.toJSON(),
@@ -1177,6 +1180,12 @@
       });
       // Show Backgrid Control
       grid = (data.subnode == undefined) ? "" : this.showGridControl(data);
+
+      // Clean up first
+      this.$el.removeClass(Backform.hiddenClassname);
+
+      if (!data.visible)
+        this.$el.addClass(Backform.hiddenClassname);
 
       this.$el.html(grid).addClass(field.name);
       this.updateInvalid();
@@ -1245,7 +1254,9 @@
             name: "pg-backform-delete", label: "",
             cell: Backgrid.Extension.DeleteCell,
             editable: false, cell_priority: -1,
-            canDeleteRow: data.canDeleteRow
+            canDeleteRow: data.canDeleteRow,
+            customDeleteMsg: data.customDeleteMsg,
+            customDeleteTitle: data.customDeleteTitle
           });
       }
 
@@ -1302,6 +1313,7 @@
       var grid = self.grid = new Backgrid.Grid({
           columns: gridSchema.columns,
           collection: collection,
+          row: this.row,
           className: "backgrid table-bordered"
       });
 
@@ -1404,7 +1416,9 @@
         readOnly: true,
         extraKeys: pgAdmin.Browser.editor_shortcut_keys,
         tabSize: pgAdmin.Browser.editor_options.tabSize,
-        lineWrapping: pgAdmin.Browser.editor_options.wrapCode
+        lineWrapping: pgAdmin.Browser.editor_options.wrapCode,
+        autoCloseBrackets: pgAdmin.Browser.editor_options.insert_pair_brackets,
+        matchBrackets: pgAdmin.Browser.editor_options.brace_matching
       });
 
       /*
@@ -1453,11 +1467,11 @@
             });
           } else {
             this.sqlCtrl.clearHistory();
-            this.sqlCtrl.setValue('-- ' + window.pgAdmin.Browser.messages.SQL_INCOMPLETE);
+            this.sqlCtrl.setValue('-- ' + gettext('Definition incomplete'));
           }
         } else {
           this.sqlCtrl.clearHistory();
-          this.sqlCtrl.setValue('-- ' + window.pgAdmin.Browser.messages.SQL_NO_CHANGE);
+          this.sqlCtrl.setValue('-- ' + gettext('Nothing changed'));
         }
         this.sqlCtrl.refresh.apply(this.sqlCtrl);
       }
@@ -1492,110 +1506,6 @@
       Backform.Control.__super__.remove.apply(this, arguments);
     }
 });
-
-  /*
-   * Integer input Control functionality just like backgrid
-   */
-  var IntegerControl = Backform.IntegerControl = Backform.InputControl.extend({
-    defaults: {
-      type: "number",
-      label: "",
-      min: undefined,
-      max: undefined,
-      maxlength: 255,
-      extraClasses: [],
-      helpMessage: null
-    },
-    template: _.template([
-      '<label class="<%=Backform.controlLabelClassName%>"><%=label%></label>',
-      '<div class="<%=Backform.controlsClassName%>">',
-      '  <input type="<%=type%>" class="<%=Backform.controlClassName%> <%=extraClasses.join(\' \')%>" name="<%=name%>" min="<%=min%>" max="<%=max%>"maxlength="<%=maxlength%>" value="<%-value%>" placeholder="<%-placeholder%>" <%=disabled ? "disabled" : ""%> <%=required ? "required" : ""%> />',
-      '  <% if (helpMessage && helpMessage.length) { %>',
-      '    <span class="<%=Backform.helpMessageClassName%>"><%=helpMessage%></span>',
-      '  <% } %>',
-      '</div>'
-    ].join("\n")),
-    events: {
-      "change input": "checkInt",
-      "focus input": "clearInvalid"
-    },
-    checkInt: function(e) {
-      var field = _.defaults(this.field.toJSON(), this.defaults),
-          attrArr = this.field.get("name").split('.'),
-          name = attrArr.shift(),
-          value = this.getValueFromDOM(),
-          min_value = field.min,
-          max_value = field.max,
-          isValid = true,
-          intPattern = new RegExp("^-?[0-9]*$"),
-          isMatched = intPattern.test(value);
-
-      // Below logic will validate input
-      if (!isMatched) {
-        isValid = false;
-        this.model.errorModel.unset(name);
-        this.model.errorModel.set(
-            name,
-            S(pgAdmin.Browser.messages.MUST_BE_INT).sprintf(
-              field.label
-              ).value()
-            );
-      }
-
-      // Below will check if entered value is in-between min & max range
-      if (isValid && (!_.isUndefined(min_value) && value < min_value)) {
-        isValid = false;
-        this.model.errorModel.unset(name);
-        this.model.errorModel.set(
-            name,
-            S(pgAdmin.Browser.messages.MUST_GR_EQ).sprintf(
-              field.label,
-              min_value
-              ).value()
-            );
-      }
-
-      if (isValid && (!_.isUndefined(max_value) && value > max_value)) {
-        isValid = false;
-        this.model.errorModel.unset(name);
-        this.model.errorModel.set(
-            name,
-            S(pgAdmin.Browser.messages.MUST_LESS_EQ).sprintf(
-              field.label,
-              max_value
-              ).value()
-            );
-      }
-
-      // After validation we need to set that value into model (only if all flags are true)
-      if (isValid) {
-        this.stopListening(this.model, "change:" + name, this.render);
-        this.model.errorModel.unset(name);
-        this.model.set(name, value);
-        this.listenTo(this.model, "change:" + name, this.render);
-        if (this.model.collection || this.model.handler) {
-          (this.model.collection || this.model.handler).trigger(
-             'pgadmin-session:model:valid', this.model, (this.model.collection || this.model.handler)
-            );
-        } else {
-          (this.model).trigger(
-             'pgadmin-session:valid', this.model.sessChanged(), this.model
-            );
-        }
-      } else {
-        if (this.model.collection || this.model.handler) {
-          (this.model.collection || this.model.handler).trigger(
-             'pgadmin-session:model:invalid', this.model.errorModel.get(name), this.model
-            );
-        } else {
-          (this.model).trigger(
-             'pgadmin-session:invalid', this.model.errorModel.get(name), this.model
-            );
-        }
-      }
-    }
-  });
-
    /*
    * Numeric input Control functionality just like backgrid
    */
@@ -1617,86 +1527,7 @@
       '    <span class="<%=Backform.helpMessageClassName%>"><%=helpMessage%></span>',
       '  <% } %>',
       '</div>'
-    ].join("\n")),
-    events: {
-      "change input": "checkNumeric",
-      "focus input": "clearInvalid"
-    },
-    checkNumeric: function(e) {
-      var field = _.defaults(this.field.toJSON(), this.defaults),
-          attrArr = this.field.get("name").split('.'),
-          name = attrArr.shift(),
-          value = this.getValueFromDOM(),
-          min_value = field.min,
-          max_value = field.max,
-          isValid = true,
-          intPattern = new RegExp("^-?[0-9]+(\.?[0-9]*)?$"),
-          isMatched = intPattern.test(value);
-
-      // Below logic will validate input
-      if (!isMatched) {
-        isValid = false;
-        this.model.errorModel.unset(name);
-        this.model.errorModel.set(
-            name,
-            S(pgAdmin.Browser.messages.MUST_BE_NUM).sprintf(
-              field.label
-              ).value()
-            );
-      }
-
-      // Below will check if entered value is in-between min & max range
-      if (isValid && (!_.isUndefined(min_value) && value < min_value)) {
-        isValid = false;
-        this.model.errorModel.unset(name);
-        this.model.errorModel.set(
-            name,
-            S(pgAdmin.Browser.messages.MUST_GR_EQ).sprintf(
-              field.label,
-              min_value
-              ).value()
-            );
-      }
-
-      if (isValid && (!_.isUndefined(max_value) && value > max_value)) {
-        isValid = false;
-        this.model.errorModel.unset(name);
-        this.model.errorModel.set(
-            name,
-            S(pgAdmin.Browser.messages.MUST_LESS_EQ).sprintf(
-              field.label,
-              max_value
-              ).value()
-            );
-      }
-
-      // After validation we need to set that value into model (only if all flags are true)
-      if (isValid) {
-        this.stopListening(this.model, "change:" + name, this.render);
-        this.model.errorModel.unset(name);
-        this.model.set(name, value);
-        this.listenTo(this.model, "change:" + name, this.render);
-        if (this.model.collection || this.model.handler) {
-          (this.model.collection || this.model.handler).trigger(
-             'pgadmin-session:model:valid', this.model, (this.model.collection || this.model.handler)
-            );
-        } else {
-          (this.model).trigger(
-             'pgadmin-session:valid', this.model.sessChanged(), this.model
-            );
-        }
-      } else {
-        if (this.model.collection || this.model.handler) {
-          (this.model.collection || this.model.handler).trigger(
-             'pgadmin-session:model:invalid', this.model.errorModel.get(name), this.model
-            );
-        } else {
-          (this.model).trigger(
-             'pgadmin-session:invalid', this.model.errorModel.get(name), this.model
-            );
-        }
-      }
-    }
+    ].join("\n"))
   });
 
   ///////
@@ -1753,7 +1584,7 @@
           _.indexOf(s.mode, mode) != -1)) {
           // Each field is kept in specified group, or in
           // 'General' category.
-          var group = s.group || pgBrowser.messages.GENERAL_CATEGORY,
+          var group = s.group || gettext('General'),
               control = s.control || Backform.getMappedControl(s.type, mode),
               cell =  s.cell || Backform.getMappedControl(s.type, 'cell');
 
@@ -1826,7 +1657,7 @@
       }
 
       if (!noSQL && node && node.hasSQL && (mode == 'create' || mode == 'edit')) {
-        groups[pgBrowser.messages.SQL_TAB] = [{
+        groups[gettext('SQL')] = [{
             name: 'sql',
             visible: true,
             disabled: false,
@@ -2196,10 +2027,12 @@
       self.sqlCtrl = CodeMirror.fromTextArea(
             (self.$el.find("textarea")[0]), {
             lineNumbers: true,
-            mode: "text/x-sql",
+            mode: "text/x-pgsql",
             extraKeys: pgAdmin.Browser.editor_shortcut_keys,
             tabSize: pgAdmin.Browser.editor_options.tabSize,
-            lineWrapping: pgAdmin.Browser.editor_options.wrapCode
+            lineWrapping: pgAdmin.Browser.editor_options.wrapCode,
+            autoCloseBrackets: pgAdmin.Browser.editor_options.insert_pair_brackets,
+            matchBrackets: pgAdmin.Browser.editor_options.brace_matching
           });
 
       // Disable editor
@@ -2269,7 +2102,7 @@
   // We will use this control just as a annotate in Backform
   var NoteControl = Backform.NoteControl = Backform.Control.extend({
     defaults: {
-      label: window.pgAdmin.Browser.messages.NOTE_CTRL_LABEL,
+      label: gettext("Note"),
       text: '',
       extraClasses: [],
       noteClass: 'backform_control_notes'

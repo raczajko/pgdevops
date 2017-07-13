@@ -19,12 +19,11 @@ from pgadmin.browser.server_groups.servers.databases.schemas.utils import \
     SchemaChildModule, parse_rule_definition, VacuumSettings
 from pgadmin.browser.utils import PGChildNodeView
 from pgadmin.utils.ajax import make_json_response, internal_server_error, \
-    make_response as ajax_response, bad_request
+    make_response as ajax_response, bad_request, gone
 from pgadmin.utils.driver import get_driver
 from pgadmin.browser.server_groups.servers.utils import parse_priv_from_db,\
     parse_priv_to_db
 from config import PG_DEFAULT_DRIVER
-from pgadmin.utils.ajax import gone
 
 """
     This module is responsible for generating two nodes
@@ -659,7 +658,10 @@ class ViewNode(PGChildNodeView, VacuumSettings):
             status, res = self.conn.execute_dict(SQL)
             if not status:
                 return None, internal_server_error(errormsg=res)
-
+            if len(res['rows']) == 0:
+                return None, gone(
+                    gettext("Could not find the view on the server.")
+                )
             old_data = res['rows'][0]
 
             if 'name' not in data:
@@ -894,15 +896,26 @@ class ViewNode(PGChildNodeView, VacuumSettings):
                     trigger['oid'], columns)
             res_rows = trigger_definition(res_rows)
 
-            res_rows['schema'] = res_rows['nspname']
-
             # It should be relname and not table, but in create.sql
             # (which is referred from many places) we have used
             # data.table and not data.relname so compatibility add new key as
             # table in res_rows.
             res_rows['table'] = res_rows['relname']
 
-            res_rows['tfunction'] = self.qtIdent(self.conn, res_rows['schema'], res_rows['tfunction'])
+            # Get trigger function with its schema name
+            SQL = render_template("/".join([self.trigger_temp_path,
+                                            'sql/#{0}#/get_triggerfunctions.sql'.format(self.manager.version)]),
+                                  tgfoid=res_rows['tgfoid'],
+                                  show_system_objects=self.blueprint.show_system_objects)
+
+            status, result = self.conn.execute_dict(SQL)
+            if not status:
+                return internal_server_error(errormsg=result)
+
+            # Update the trigger function which we have fetched with schema name
+            if 'rows' in result and len(result['rows']) > 0 and \
+                            'tfunctions' in result['rows'][0]:
+                res_rows['tfunction'] = result['rows'][0]['tfunctions']
 
             # Format arguments
             if len(res_rows['custom_tgargs']) > 1:
@@ -975,6 +988,10 @@ class ViewNode(PGChildNodeView, VacuumSettings):
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+        if len(res['rows']) == 0:
+            return gone(
+                gettext("Could not find the view on the server.")
+            )
 
         result = res['rows'][0]
         # sending result to formtter
@@ -1113,12 +1130,16 @@ class ViewNode(PGChildNodeView, VacuumSettings):
             "/".join([
                 self.template_path, 'sql/properties.sql'
             ]),
-            scid=scid, vid=vid,
+            scid=scid, vid=vid, did=did,
             datlastsysoid=self.datlastsysoid
         )
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+        if len(res['rows']) == 0:
+            return gone(
+                gettext("Could not find the view on the server.")
+            )
         data_view = res['rows'][0]
 
         SQL = render_template(
@@ -1170,12 +1191,17 @@ class ViewNode(PGChildNodeView, VacuumSettings):
             "/".join([
                 self.template_path, 'sql/properties.sql'
             ]),
-            scid=scid, vid=vid,
+            scid=scid, vid=vid, did=did,
             datlastsysoid=self.datlastsysoid
         )
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+        if len(res['rows']) == 0:
+            return gone(
+                gettext("Could not find the view on the server.")
+            )
+
         data_view = res['rows'][0]
 
         SQL = render_template(
@@ -1292,6 +1318,11 @@ class MViewNode(ViewNode, VacuumSettings):
             status, res = self.conn.execute_dict(SQL)
             if not status:
                 return None, internal_server_error(errormsg=res)
+            if len(res['rows']) == 0:
+                return None, gone(
+                    gettext("Could not find the materialized view on the server.")
+                )
+
             old_data = res['rows'][0]
 
             if 'name' not in data:
@@ -1480,6 +1511,10 @@ class MViewNode(ViewNode, VacuumSettings):
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+        if len(res['rows']) == 0:
+            return gone(
+                gettext("Could not find the materialized view on the server.")
+            )
 
         result = res['rows'][0]
 

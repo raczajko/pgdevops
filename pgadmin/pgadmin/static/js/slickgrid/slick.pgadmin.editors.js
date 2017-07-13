@@ -11,16 +11,111 @@
       "Editors": {
         "pgText": pgTextEditor,
         "JsonText": JsonTextEditor,
+        "CustomNumber": CustomNumberEditor,
         // Below editor will read only editors, Just to display data
         "ReadOnlyText": ReadOnlyTextEditor,
         "ReadOnlyCheckbox": ReadOnlyCheckboxEditor,
         "Checkbox": CheckboxEditor, // Override editor to implement checkbox with three states
         "ReadOnlypgText": ReadOnlypgTextEditor,
-        "ReadOnlyJsonText": ReadOnlyJsonTextEditor,
-        "CustomNumber": CustomNumberEditor
+        "ReadOnlyJsonText": ReadOnlyJsonTextEditor
       }
     }
   });
+
+  // return wrapper element
+  function getWrapper() {
+    return $("<div class='pg_text_editor' />");
+  }
+
+  // return textarea element
+  function getTextArea() {
+    return $("<textarea class='pg_textarea text-12' hidefocus rows=5'>");
+  }
+
+  // Generate and return editor buttons
+  function getButtons(editable) {
+    var $buttons = $("<div class='pg_buttons' />"),
+      label = editable ? 'Cancel': 'OK';
+      button_type = editable ? 'btn-danger' : 'btn-primary';
+
+    if (editable) {
+      var $save_button = $("<button class='btn btn-primary fa fa-lg fa-save long_text_editor pg-alertify-button'>Save</button>")
+          .appendTo($buttons);
+    }
+
+    $cancel_button = $("<button class='btn " + button_type + " fa fa-lg fa-times long_text_editor pg-alertify-button'>"+ label +"</button>")
+        .appendTo($buttons);
+    return $buttons;
+  }
+
+  /*
+   * This function handles the [default] and [null] values for cells
+   * if row is copied, otherwise returns the editor value.
+   * @param {args} editor object
+   * @param {item} row cell values
+   * @param {state} entered value
+   * @param {column_type} type of column
+   */
+  function setValue(args, item, state, column_type) {
+    // declare a 2-d array which tracks the status of each updated cell
+    // If a cell is edited for the 1st time and state is null,
+    // set cell value to [default] and update its status [row][cell] to 1.
+    // If same cell is edited again, and kept blank, set cell value to [null]
+
+    // If a row is copied
+    var grid = args.grid;
+    if (item.is_row_copied) {
+      if (!grid.copied_rows) {
+        grid.copied_rows = [[]];
+      }
+
+      var active_cell = grid.getActiveCell(),
+          row = active_cell['row'],
+          cell = active_cell['cell'],
+          last_value = item[args.column.pos],
+          last_value = (column_type === 'number') ?
+                        (_.isEmpty(last_value) || last_value) : last_value;
+
+      item[args.column.field] = state;
+      if (last_value && _.isNull(state) &&
+          (_.isUndefined(grid.copied_rows[row]) ||
+          _.isUndefined(grid.copied_rows[row][cell]))
+      ) {
+        item[args.column.field] = undefined;
+        if (grid.copied_rows[row] == undefined) grid.copied_rows[row] = [];
+        grid.copied_rows[row][cell] = 1;
+      }
+    }
+    else {
+      item[args.column.field] = state;
+    }
+  }
+
+  function calculateEditorPosition(position, $wrapper) {
+    var $edit_grid = $wrapper.parent().find('#datagrid');
+    var _elem_height = $edit_grid.height(),
+      is_hidden, _position;
+    // We cannot display editor partially visible so we will lift it above select column
+    if(position.top > _elem_height) {
+      is_hidden = position.bottom - _elem_height;
+    }
+
+    if(is_hidden) {
+      _position = position.top - is_hidden;
+    } else {
+      _position = position.top-7;
+    }
+    position.top = _position;
+
+    var grid_width = $edit_grid.width(),
+      popup_width = $wrapper.width() + 32;
+    popup_width += position.left;
+
+    if(popup_width > grid_width) {
+      position.left -= (popup_width - grid_width);
+    }
+    return position;
+  }
 
   // Text data type editor
   function pgTextEditor(args) {
@@ -31,18 +126,12 @@
     this.init = function () {
       var $container = $("body");
 
-      $wrapper = $("<DIV style='z-index:10000;position:absolute;background:white;padding:5px;border:3px solid gray; -moz-border-radius:10px; border-radius:10px;'/>")
-          .appendTo($container);
+      $wrapper = getWrapper().appendTo($container);
+      $input = getTextArea().appendTo($wrapper);
+      $buttons = getButtons(true).appendTo($wrapper);
 
-      $input = $("<TEXTAREA hidefocus rows=5 style='backround:white;width:250px;height:80px;border:0;outline:0'>")
-          .appendTo($wrapper);
-
-      $("<DIV style='text-align:right'><BUTTON class='btn btn-primary fa fa-lg fa-save long_text_editor pg-alertify-button'>Save</BUTTON>"
-         + "<BUTTON class='btn btn-danger fa fa-lg fa-times long_text_editor pg-alertify-button'>Cancel</BUTTON></DIV>")
-          .appendTo($wrapper);
-
-      $wrapper.find("button:first").bind("click", this.save);
-      $wrapper.find("button:last").bind("click", this.cancel);
+      $buttons.find("button:first").on("click", this.save);
+      $buttons.find("button:last").on("click", this.cancel);
       $input.bind("keydown", this.handleKeyDown);
 
       scope.position(args.position);
@@ -82,23 +171,11 @@
     };
 
     this.position = function (position) {
-      var _elem_height = $wrapper.parent().find('#datagrid').height(),
-      is_hidden, _position;
-      // We cannot display editor partially visible so we will lift it above select column
-      if(position.top > _elem_height) {
-        is_hidden = position.bottom - _elem_height;
-      }
-
-      if(is_hidden) {
-        _position = position.top - is_hidden;
-      } else {
-        _position = position.top - 5;
-      }
-
+      calculateEditorPosition(position, $wrapper);
       $wrapper
-          .css("top", _position)
-          .css("left", position.left - 5)
-    };
+        .css("top", position.top)
+        .css("left", position.left)
+    }
 
     this.destroy = function () {
       $wrapper.remove();
@@ -112,14 +189,14 @@
     this.loadValue = function (item) {
       var col = args.column;
 
-      if (_.isUndefined(item[args.column.pos]) && col.has_default_val) {
-        $input.val("");
+      if (_.isUndefined(item[args.column.field]) && col.has_default_val) {
+        $input.val(defaultValue = "");
       }
-      else if (item[args.column.pos] === "") {
-        $input.val("''");
+      else if (item[args.column.field] === "") {
+        $input.val(defaultValue = "''");
       }
       else {
-        $input.val(defaultValue = item[args.column.pos]);
+        $input.val(defaultValue = item[args.column.field]);
         $input.select();
       }
     };
@@ -146,7 +223,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.pos] = state;
+      setValue(args, item, state, 'text');
     };
 
     this.isValueChanged = function () {
@@ -186,18 +263,12 @@
     this.init = function () {
       var $container = $("body");
 
-      $wrapper = $("<DIV style='z-index:10000;position:absolute;background:white;padding:5px;border:3px solid gray; -moz-border-radius:10px; border-radius:10px;'/>")
-          .appendTo($container);
+      $wrapper = getWrapper().appendTo($container);
+      $input = getTextArea().appendTo($wrapper);
+      $buttons = getButtons(true).appendTo($wrapper);
 
-      $input = $("<TEXTAREA hidefocus rows=5 style='backround:white;width:250px;height:80px;border:0;outline:0'>")
-          .appendTo($wrapper);
-
-      $("<DIV style='text-align:right'><BUTTON class='btn btn-primary fa fa-lg fa-save long_text_editor pg-alertify-button'>Save</BUTTON>"
-         + "<BUTTON class='btn btn-danger fa fa-lg fa-times long_text_editor pg-alertify-button'>Cancel</BUTTON></DIV>")
-          .appendTo($wrapper);
-
-      $wrapper.find("button:first").bind("click", this.save);
-      $wrapper.find("button:last").bind("click", this.cancel);
+      $buttons.find("button:first").on("click", this.save);
+      $buttons.find("button:last").on("click", this.cancel);
       $input.bind("keydown", this.handleKeyDown);
 
       scope.position(args.position);
@@ -237,23 +308,11 @@
     };
 
     this.position = function (position) {
-      var _elem_height = $wrapper.parent().find('#datagrid').height(),
-      is_hidden, _position;
-      // We cannot display editor partially visible so we will lift it above select column
-      if(position.top > _elem_height) {
-        is_hidden = position.bottom - _elem_height;
-      }
-
-      if(is_hidden) {
-        _position = position.top - is_hidden;
-      } else {
-        _position = position.top - 5;
-      }
-
+      calculateEditorPosition(position, $wrapper);
       $wrapper
-          .css("top", position.top - 5)
-          .css("left", position.left - 5)
-    };
+        .css("top", position.top)
+        .css("left", position.left)
+    }
 
     this.destroy = function () {
       $wrapper.remove();
@@ -264,7 +323,7 @@
     };
 
     this.loadValue = function (item) {
-      var data = defaultValue = item[args.column.pos];
+      var data = defaultValue = item[args.column.field];
       if (data && typeof data === "object" && !Array.isArray(data)) {
         data = JSON.stringify(data);
       } else if (Array.isArray(data)) {
@@ -290,7 +349,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.pos] = state;
+      setValue(args, item, state, 'text');
     };
 
     this.isValueChanged = function () {
@@ -327,16 +386,11 @@
     this.init = function () {
       var $container = $("body");
 
-      $wrapper = $("<DIV style='z-index:10000;position:absolute;background:white;padding:5px;border:3px solid gray; -moz-border-radius:10px; border-radius:10px;'/>")
-          .appendTo($container);
+      $wrapper = getWrapper().appendTo($container);
+      $input = getTextArea().appendTo($wrapper);
+      $buttons = getButtons(false).appendTo($wrapper);
 
-      $input = $("<TEXTAREA hidefocus rows=5 style='backround:white;width:250px;height:80px;border:0;outline:0' readonly>")
-          .appendTo($wrapper);
-
-      $("<DIV style='text-align:right'><BUTTON class='btn btn-primary fa fa-lg fa-times long_text_editor pg-alertify-button'>Close</BUTTON></DIV>")
-       .appendTo($wrapper);
-
-      $wrapper.find("button:first").bind("click", this.cancel);
+      $buttons.find("button:first").on("click", this.cancel);
       $input.bind("keydown", this.handleKeyDown);
 
       scope.position(args.position);
@@ -374,23 +428,11 @@
     };
 
     this.position = function (position) {
-      var _elem_height = $wrapper.parent().find('#datagrid').height(),
-        is_hidden, _position;
-      // We cannot display editor partially visible so we will lift it above select column
-      if(position.top > _elem_height) {
-        is_hidden = position.bottom - _elem_height;
-      }
-
-      if(is_hidden) {
-        _position = position.top - is_hidden;
-      } else {
-        _position = position.top - 5;
-      }
-
+      calculateEditorPosition(position, $wrapper);
       $wrapper
-          .css("top", _position)
-          .css("left", position.left - 5)
-    };
+        .css("top", position.top)
+        .css("left", position.left)
+    }
 
     this.destroy = function () {
       $wrapper.remove();
@@ -401,7 +443,7 @@
     };
 
     this.loadValue = function (item) {
-      $input.val(defaultValue = item[args.column.pos]);
+      $input.val(defaultValue = item[args.column.field]);
       $input.select();
     };
 
@@ -410,7 +452,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.pos] = state;
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
@@ -437,7 +479,7 @@
   /* Override CheckboxEditor to implement checkbox with three states.
    * 1) checked=true
    * 2) unchecked=false
-   * 3) indeterminate=null/''
+   * 3) indeterminate=null
    */
   function CheckboxEditor(args) {
     var $select, el;
@@ -445,32 +487,37 @@
     var scope = this;
 
     this.init = function () {
-      $select = $("<INPUT type=checkbox value='true' class='editor-checkbox' hideFocus>");
+      $select = $("<input type=checkbox class='editor-checkbox' hideFocus>");
       $select.appendTo(args.container);
       $select.focus();
 
       // The following code is taken from https://css-tricks.com/indeterminate-checkboxes/
-      $select.data('checked', 0).bind("click", function (e) {
+      $select.bind("click", function (e) {
         el = $(this);
-        switch(el.data('checked')) {
+        el.prop('indeterminate', false);
+
+        var checkbox_status = el.data('checked');
+        // add new row > checkbox clicked
+        if (el.data('checked') == undefined) {
+          checkbox_status = 1;
+        }
+        switch(checkbox_status) {
           // unchecked, going indeterminate
           case 0:
-            el.data('checked', 1);
             el.prop('indeterminate', true);
+            el.data('checked', 2); // determines next checkbox status
             break;
 
           // indeterminate, going checked
           case 1:
-            el.data('checked', 2);
-            el.prop('indeterminate', false);
             el.prop('checked', true);
+            el.data('checked', 0);
             break;
 
           // checked, going unchecked
           default:
-            el.data('checked', 0);
-            el.prop('indeterminate', false);
             el.prop('checked', false);
+            el.data('checked', 1);
         }
       });
     };
@@ -484,16 +531,19 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.pos];
+      defaultValue = item[args.column.field];
       if (_.isNull(defaultValue)||_.isUndefined(defaultValue)) {
         $select.prop('indeterminate', true);
+        $select.data('checked', 2);
       }
       else {
-        defaultValue = !!item[args.column.pos];
+        defaultValue = !!item[args.column.field];
         if (defaultValue) {
           $select.prop('checked', true);
+          $select.data('checked', 0);
         } else {
           $select.prop('checked', false);
+          $select.data('checked', 1);
         }
       }
     };
@@ -506,11 +556,14 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.pos] = state;
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
-      return (this.serializeValue() !== defaultValue);
+      // var select_value = this.serializeValue();
+      var select_value = $select.data('checked');
+      return (!(select_value === 2 && (defaultValue == null || defaultValue == undefined))) &&
+            (select_value !== defaultValue);
     };
 
     this.validate = function () {
@@ -538,16 +591,11 @@
     this.init = function () {
       var $container = $("body");
 
-      $wrapper = $("<DIV style='z-index:10000;position:absolute;background:white;padding:5px;border:3px solid gray; -moz-border-radius:10px; border-radius:10px;'/>")
-          .appendTo($container);
+      $wrapper = getWrapper().appendTo($container);
+      $input = getTextArea().appendTo($wrapper);
+      $buttons = getButtons(false).appendTo($wrapper);
 
-      $input = $("<TEXTAREA hidefocus rows=5 style='backround:white;width:250px;height:80px;border:0;outline:0' readonly>")
-          .appendTo($wrapper);
-
-      $("<DIV style='text-align:right'><BUTTON class='btn btn-primary fa fa-lg fa-times long_text_editor pg-alertify-button'>Close</BUTTON></DIV>")
-       .appendTo($wrapper);
-
-      $wrapper.find("button:first").bind("click", this.cancel);
+      $buttons.find("button:first").on("click", this.cancel);
       $input.bind("keydown", this.handleKeyDown);
 
       scope.position(args.position);
@@ -585,23 +633,11 @@
     };
 
     this.position = function (position) {
-      var _elem_height = $wrapper.parent().find('#datagrid').height(),
-        is_hidden, _position;
-      // We cannot display editor partially visible so we will lift it above select column
-      if(position.top > _elem_height) {
-        is_hidden = position.bottom - _elem_height;
-      }
-
-      if(is_hidden) {
-        _position = position.top - is_hidden;
-      } else {
-        _position = position.top - 5;
-      }
-
+      calculateEditorPosition(position, $wrapper);
       $wrapper
-          .css("top", _position)
-          .css("left", position.left - 5)
-    };
+        .css("top", position.top)
+        .css("left", position.left)
+    }
 
     this.destroy = function () {
       $wrapper.remove();
@@ -612,7 +648,7 @@
     };
 
     this.loadValue = function (item) {
-      var data = defaultValue = item[args.column.pos];
+      var data = defaultValue = item[args.column.field];
       if (typeof data === "object" && !Array.isArray(data)) {
         data = JSON.stringify(data);
       } else if (Array.isArray(data)) {
@@ -635,7 +671,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.pos] = state;
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
@@ -689,7 +725,7 @@
     };
 
     this.loadValue = function (item) {
-      var value = item[args.column.pos];
+      var value = item[args.column.field];
 
       // Check if value is null or undefined
       if (value === undefined && typeof value === "undefined") {
@@ -739,31 +775,6 @@
       $select = $("<INPUT type=checkbox value='true' class='editor-checkbox' hideFocus disabled>");
       $select.appendTo(args.container);
       $select.focus();
-
-      // The following code is taken from https://css-tricks.com/indeterminate-checkboxes/
-      $select.data('checked', 0).bind("click", function (e) {
-        el = $(this);
-        switch(el.data('checked')) {
-          // unchecked, going indeterminate
-          case 0:
-            el.data('checked', 1);
-            el.prop('indeterminate', true);
-            break;
-
-          // indeterminate, going checked
-          case 1:
-            el.data('checked', 2);
-            el.prop('indeterminate', false);
-            el.prop('checked', true);
-            break;
-
-          // checked, going unchecked
-          default:
-            el.data('checked', 0);
-            el.prop('indeterminate', false);
-            el.prop('checked', false);
-        }
-      });
     };
 
     this.destroy = function () {
@@ -775,16 +786,19 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field];
-      if (_.isNull(defaultValue)||_.isUndefined(defaultValue)) {
+      defaultValue = item[args.column.pos];
+      if (_.isNull(defaultValue)|| _.isUndefined(defaultValue)) {
         $select.prop('indeterminate', true);
+        $select.data('checked', 2);
       }
       else {
-        defaultValue = !!item[args.column.field];
+        defaultValue = !!item[args.column.pos];
         if (defaultValue) {
           $select.prop('checked', true);
+          $select.data('checked', 0);
         } else {
           $select.prop('checked', false);
+          $select.data('checked', 1);
         }
       }
     };
@@ -797,11 +811,14 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      item[args.column.pos] = state;
     };
 
     this.isValueChanged = function () {
-      return (this.serializeValue() !== defaultValue);
+      // var select_value = this.serializeValue();
+      var select_value = $select.data('checked');
+      return (!(select_value === 2 && (defaultValue == null || defaultValue == undefined))) &&
+            (select_value !== defaultValue);
     };
 
     this.validate = function () {
@@ -841,7 +858,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.pos];
+      defaultValue = item[args.column.field];
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -855,7 +872,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.pos] = state;
+      setValue(args, item, state, 'number');
     };
 
     this.isValueChanged = function () {

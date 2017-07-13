@@ -44,6 +44,13 @@ class SettingsModule(PgAdminModule):
             ]
         }
 
+    def get_exposed_url_endpoints(self):
+        """
+        Returns:
+            list: a list of url endpoints exposed to the client.
+        """
+        return ['settings.store', 'settings.store_bulk', 'settings.reset_layout']
+
 
 blueprint = SettingsModule(MODULE_NAME, __name__)
 
@@ -82,8 +89,8 @@ def script():
                     mimetype="application/javascript")
 
 
-@blueprint.route("/store", methods=['POST'])
-@blueprint.route("/store/<setting>/<value>", methods=['GET'])
+@blueprint.route("/store", methods=['POST'], endpoint='store_bulk')
+@blueprint.route("/store/<setting>/<value>", methods=['PUT'], endpoint='store')
 @login_required
 def store(setting=None, value=None):
     """Store a configuration setting, or if this is a POST request and a
@@ -115,37 +122,7 @@ def store(setting=None, value=None):
                               result=request.form)
 
 
-@blueprint.route("/get", methods=['POST'])
-@blueprint.route("/get/<setting>", methods=['GET'])
-@blueprint.route("/get/<setting>/<default>", methods=['GET'])
-@login_required
-def get(setting=None, default=None):
-    """Get a configuration setting."""
-    if request.method == 'POST':
-        setting = request.form['setting']
-        default = request.form['default']
-
-    success = 1
-    errormsg = ''
-
-    try:
-        value = get_setting(setting, default)
-    except Exception as e:
-        success = 0
-        errormsg = e.message
-
-    try:
-        info = traceback.format_exc()
-    except Exception as e:
-        info = str(e)
-
-    return make_json_response(success=success,
-                              errormsg=errormsg,
-                              info=info,
-                              result=request.form)
-
-
-@blueprint.route("/reset_layout", methods=['DELETE'])
+@blueprint.route("/layout", methods=['DELETE'], endpoint='reset_layout')
 @login_required
 def reset_layout():
     """Reset configuration setting"""

@@ -1,17 +1,17 @@
-define('pgadmin.browser',
-        ['require', 'jquery', 'underscore', 'underscore.string', 'bootstrap',
-        'pgadmin', 'alertify', 'codemirror', 'sources/check_node_visibility',
-        'codemirror/mode/sql/sql', 'wcdocker',
-        'jquery.contextmenu', 'jquery.aciplugin', 'jquery.acitree',
-        'pgadmin.alertifyjs', 'pgadmin.browser.messages',
-        'pgadmin.browser.menu', 'pgadmin.browser.panel',
-        'pgadmin.browser.error', 'pgadmin.browser.frame',
-        'pgadmin.browser.node', 'pgadmin.browser.collection'
-
-       ],
-function(
-  require, $, _, S, Bootstrap, pgAdmin, Alertify,
-  CodeMirror, checkNodeVisibility
+define(
+  'pgadmin.browser', [
+    'sources/gettext', 'sources/url_for', 'require', 'jquery', 'underscore', 'underscore.string',
+    'bootstrap', 'pgadmin', 'alertify', 'codemirror',
+    'sources/check_node_visibility', 'codemirror/mode/sql/sql', 'wcdocker',
+    'jquery.contextmenu', 'jquery.aciplugin', 'jquery.acitree',
+    'pgadmin.alertifyjs', 'pgadmin.browser.messages',
+    'pgadmin.browser.menu', 'pgadmin.browser.panel',
+    'pgadmin.browser.error', 'pgadmin.browser.frame',
+    'pgadmin.browser.node', 'pgadmin.browser.collection',
+    'codemirror/addon/edit/matchbrackets', 'codemirror/addon/edit/closebrackets'
+  ], function(
+    gettext, url_for, require, $, _, S, Bootstrap, pgAdmin, Alertify,
+    CodeMirror, checkNodeVisibility
 ) {
 
   // Some scripts do export their object in the window only.
@@ -20,7 +20,7 @@ function(
   $ = $ || window.jQuery || window.$;
   Bootstrap = Bootstrap || window.Bootstrap;
 
-  pgAdmin.Browser = pgAdmin.Browser || {};
+  var pgBrowser = pgAdmin.Browser = pgAdmin.Browser || {};
 
   var panelEvents = {};
   panelEvents[wcDocker.EVENT.VISIBILITY_CHANGED] = function() {
@@ -56,7 +56,7 @@ function(
     function(b) {
       $('#tree').aciTree({
         ajax: {
-          url: '{{ url_for('browser.get_nodes') }}',
+          url: url_for('browser.nodes'),
           converters: {
             'text json': processTreeData,
           }
@@ -87,7 +87,7 @@ function(
   // Extend the browser class attributes
   _.extend(pgAdmin.Browser, {
     // The base url for browser
-    URL: '{{ url_for('browser.index') }}',
+    URL: url_for('browser.index'),
     // We do have docker of type wcDocker to take care of different
     // containers. (i.e. panels, tabs, frames, etc.)
     docker:null,
@@ -105,7 +105,7 @@ function(
       // Panel to keep the left hand browser tree
       'browser': new pgAdmin.Browser.Panel({
         name: 'browser',
-        title: '{{ _('Browser') }}',
+        title: gettext('Browser'),
         showTitle: true,
         isCloseable: false,
         isPrivate: true,
@@ -115,7 +115,7 @@ function(
       // Properties of the object node
       'properties': new pgAdmin.Browser.Panel({
         name: 'properties',
-        title: '{{ _('Properties') }}',
+        title: gettext('Properties'),
         icon: 'fa fa-cogs',
         width: 500,
         isCloseable: false,
@@ -130,7 +130,7 @@ function(
       // Statistics of the object
       'statistics': new pgAdmin.Browser.Panel({
         name: 'statistics',
-        title: '{{ _('Statistics') }}',
+        title: gettext('Statistics'),
         icon: 'fa fa-line-chart',
         width: 500,
         isCloseable: false,
@@ -141,7 +141,7 @@ function(
       // Reversed engineered SQL for the object
       'sql': new pgAdmin.Browser.Panel({
         name: 'sql',
-        title: '{{ _('SQL') }}',
+        title: gettext('SQL'),
         icon: 'fa fa-file-text-o',
         width: 500,
         isCloseable: false,
@@ -151,7 +151,7 @@ function(
       // Dependencies of the object
       'dependencies': new pgAdmin.Browser.Panel({
         name: 'dependencies',
-        title: '{{ _('Dependencies') }}',
+        title: gettext('Dependencies'),
         icon: 'fa fa-hand-o-up',
         width: 500,
         isCloseable: false,
@@ -162,7 +162,7 @@ function(
       // Dependents of the object
       'dependents': new pgAdmin.Browser.Panel({
         name: 'dependents',
-        title: '{{ _('Dependents') }}',
+        title: gettext('Dependents'),
         icon: 'fa fa-hand-o-down',
         width: 500,
         isCloseable: false,
@@ -178,7 +178,9 @@ function(
         showTitle: {% if panel_item.showTitle %}true{% else %}false{% endif %},
         isCloseable: {% if panel_item.isCloseable %}true{% else %}false{% endif %},
         isPrivate: {% if panel_item.isPrivate %}true{% else %}false{% endif %},
-        content: '{{ panel_item.content }}'{% if panel_item.events is not none %},
+        content: '{{ panel_item.content }}',
+        canHide: {% if panel_item.canHide %}true{% else %}false{% endif %}{% if panel_item.limit is not none %},
+        limit: {{ panel_item.limit }}{% endif %}{% if panel_item.events is not none %},
         events: {{ panel_item.events }} {% endif %}
       }){% endif %}{% endfor %}
     },
@@ -314,7 +316,7 @@ function(
         settings = { setting: "Browser/Layout", value: state };
         $.ajax({
           type: 'POST',
-          url: "{{ url_for('settings.store') }}",
+          url: url_for('settings.store_bulk'),
           data: settings
         });
       }
@@ -325,6 +327,9 @@ function(
         return;
       }
       obj.initialized = true;
+
+      // Cache preferences
+      obj.cache_preferences();
 
       // Initialize the Docker
       obj.docker = new wcDocker(
@@ -362,15 +367,17 @@ function(
 
         // Listen to panel attach/detach event so that last layout will be remembered
         _.each(obj.panels, function(panel, name) {
-          panel.panel.on(wcDocker.EVENT.ATTACHED, function() {
-            obj.save_current_layout(obj);
-          });
-          panel.panel.on(wcDocker.EVENT.DETACHED, function() {
-            obj.save_current_layout(obj);
-          });
-          panel.panel.on(wcDocker.EVENT.MOVE_ENDED, function() {
-            obj.save_current_layout(obj);
-          });
+          if (panel.panel) {
+            panel.panel.on(wcDocker.EVENT.ATTACHED, function() {
+              obj.save_current_layout(obj);
+            });
+            panel.panel.on(wcDocker.EVENT.DETACHED, function() {
+              obj.save_current_layout(obj);
+            });
+            panel.panel.on(wcDocker.EVENT.MOVE_ENDED, function() {
+              obj.save_current_layout(obj);
+            });
+          }
         });
       }
 
@@ -382,7 +389,9 @@ function(
             readOnly: true,
             extraKeys: pgAdmin.Browser.editor_shortcut_keys,
             tabSize: pgAdmin.Browser.editor_options.tabSize,
-            lineWrapping: pgAdmin.Browser.editor_options.wrapCode
+            lineWrapping: pgAdmin.Browser.editor_options.wrapCode,
+            autoCloseBrackets: pgAdmin.Browser.editor_options.insert_pair_brackets,
+            matchBrackets: pgAdmin.Browser.editor_options.brace_matching
           });
 
       setTimeout(function() {
@@ -454,14 +463,14 @@ function(
                             console.log(err);
 
                             obj.report_error(
-                              '{{ _('Error initializing script - ') }}' + s.path, err);
-                          }
+                              gettext('Error initializing script - ') + s.path, err);
+                            }
                         }
                       }, function() {
                         console.log("Error loading script - " + s.path);
                         console.log(arguments);
                         obj.report_error(
-                          '{{ _('Error loading script - ') }}' + s.path);
+                          gettext('Error loading script - ') + s.path);
                       }).bind(s);
                     }
                   });
@@ -552,7 +561,7 @@ function(
       // Ping the server every 5 minutes
       setInterval(function() {
         $.ajax({
-          url: '{{ url_for('misc.ping') }}',
+          url: url_for('misc.ping'),
           type:'POST',
           success: function() {},
           error: function() {}
@@ -573,16 +582,14 @@ function(
         } catch (e) {
           // Log this exception on console to understand the issue properly.
           console.log(e);
-          obj.report_error(
-            '{{ _('Error loading script - ') }}' + path);
+          obj.report_error(gettext('Error loading script - ') + path);
         }
         if (c)
         c.loaded += 1;
       }, function() {
         // Log the arguments on console to understand the issue properly.
         console.log(arguments);
-        obj.report_error(
-          '{{ _('Error loading script - ') }}' + path);
+        obj.report_error(gettext('Error loading script - ') + path);
       });
     },
     add_menu_category: function(
@@ -600,7 +607,7 @@ function(
 
     // This will hold preference data (Works as a cache object)
     // Here node will be a key and it's preference data will be value
-    node_preference_data: {},
+    preferences_cache: {},
 
     // Add menus of module/extension at appropriate menu
     add_menus: function(menus) {
@@ -752,20 +759,42 @@ function(
       }
     },
 
-    get_preference: function (module, preference_name) {
-      var preference = null;
+    // Get preference value from cache
+    get_preference: function(module, preference) {
+      var self = this;
+      // If cache is not yet loaded then keep checking
+      if(_.size(self.preferences_cache) == 0) {
+        var preference_data = setInterval(check_preference, 1000);
+
+        function check_preference() {
+          if(_.size(self.preferences_cache) > 0) {
+            clearInterval(preference_data);
+            return _.findWhere(self.preferences_cache, {'module': module, 'name': preference});
+          }
+        }
+      }
+      else {
+        return _.findWhere(self.preferences_cache, {'module': module, 'name': preference});
+      }
+    },
+
+    // Get and cache the preferences
+    cache_preferences: function () {
+      var self = this;
       $.ajax({
-        async: false,
-        url: "{{ url_for('preferences.preferences') }}" +"/"+ module +"/"+ preference_name,
+        url: url_for('preferences.get_all'),
         success: function(res) {
-          preference = res;
+          self.preferences_cache = res;
         },
         error: function(xhr, status, error) {
-
+          try {
+            var err = $.parseJSON(xhr.responseText);
+            Alertify.alert(gettext('Preference loading failed.'),
+              err.errormsg
+            );
+          } catch (e) {}
         }
       });
-
-      return preference;
     },
 
     _findTreeChildNode: function(_i, _d, _o) {
@@ -797,6 +826,10 @@ function(
                   _o.d = null;
                   _o.pI.push({coll: true, item: i, d: d});
 
+                  // Set load to false when the current collection node's inode is false
+                  if (!_o.t.isInode(i)) {
+                    _o.load = false;
+                  }
                   _o.b._findTreeChildNode(i, _d, _o);
                   return;
                 }
@@ -1107,7 +1140,8 @@ function(
             }
           }.bind(ctx),
           deleteNode = function() {
-            var pI = this.pI,
+            var self = this,
+                pI = this.pI,
                 findParent = function() {
                   if (pI.length) {
                     pI.pop();
@@ -1128,35 +1162,134 @@ function(
                   }
                 }.bind(this);
 
+            var _item_parent = (this.i
+                                    && this.t.hasParent(this.i)
+                                    && this.t.parent(this.i)) || null,
+                _item_grand_parent = _item_parent ?
+                                        (this.t.hasParent(_item_parent)
+                                          && this.t.parent(_item_parent))
+                                        : null;
+
             // Remove the current node first.
             if (
               this.i && this.d && this.old._id == this.d._id &&
               this.old._type == this.d._type
             ) {
-              this.t.remove(this.i);
+              var _parent = this.t.parent(this.i) || null;
 
-              // Find the parent
-              findParent();
-              var _parentData = this.d;
-              // Find the grand-parent, or the collection node of parent.
-              findParent();
+              // If there is no parent then just update the node
+              if(_parent.length == 0 && ctx.op == 'UPDATE') {
+                updateNode();
+              } else {
+                var postRemove = function() {
+                  // If item has parent but no grand parent
+                  if (_item_parent && !_item_grand_parent) {
+                    var parent = null;
+                    // We need to search in all parent siblings (eg: server groups)
+                    parents = this.t.siblings(this.i) || [];
+                    parents.push(this.i[0])
+                    _.each(parents, function (p) {
+                      var d = self.t.itemData($(p));
+                      // If new server group found then assign it parent
+                      if(d._id == self.new._pid) {
+                        parent = p;
+                        self.pI.push({coll: true, item: parent, d: d});
+                      }
+                    });
 
-              if (this.i) {
-                this.load = true;
+                    if (parent) {
+                      this.load = true;
 
-                this.success = function() {
-                  addItemNode();
+                      this.success = function() {
+                        addItemNode();
+                      }.bind(this);
+                      // We can refresh the collection node, but - let's not bother about
+                      // it right now.
+                      this.notFound = errorOut;
+
+                      var _d = {_id: this.new._pid, _type: self.d._type}
+                        parent = $(parent),
+                        loaded = this.t.wasLoad(parent),
+                        onLoad = function() {
+                          self.i = parent;
+                          self.d = self.d;
+                          self.pI.push({coll: false, item: parent, d: self.d});
+                          self.success();
+                          return;
+                        };
+
+                      if (!loaded && self.load) {
+                        self.t.open(parent, {
+                          success: onLoad,
+                            unanimated: true,
+                            fail: function() {
+                              var fail = self && self.o && self.o.fail;
+
+                              if (
+                                fail && typeof(fail) == 'function'
+                              ) {
+                                fail.apply(self.t, []);
+                              }
+                            }
+                          });
+                        } else {
+                          onLoad();
+                        }
+                      }
+                    return;
+                  } else {
+                    // This is for rest of the nodes
+                    var _parentData = this.d;
+                    // Find the grand-parent, or the collection node of parent.
+                    findParent();
+
+                    if (this.i) {
+                      this.load = true;
+
+                      this.success = function() {
+                        addItemNode();
+                      }.bind(this);
+                      // We can refresh the collection node, but - let's not bother about
+                      // it right now.
+                      this.notFound = errorOut;
+
+                      // Find the new parent
+                      this.b._findTreeChildNode(
+                        this.i, {_id: this.new._pid, _type: _parentData._type}, this
+                      );
+                    } else {
+                      addItemNode();
+                    }
+                    return;
+                  }
                 }.bind(this);
-                // We can refresh the collection node, but - let's not bother about
-                // it right now.
-                this.notFound = errorOut;
 
-                // Find the new parent
-                this.b._findTreeChildNode(
-                  this.i, {_id: this.new._pid, _type: _parentData._type}, this
-                );
-              }
-              return;
+                // If there is a parent then we can remove the node
+                this.t.remove(this.i, {
+                  success: function() {
+                    // Find the parent
+                    findParent();
+                    // If server group have no children then close it and set inode
+                    // and unload it so it can fetch new data on next expand
+                    if (_item_parent && !_item_grand_parent && _parent
+                          && self.t.children(_parent).length == 0) {
+                          self.t.setInode(_parent, {
+                            success: function() {
+                              self.t.unload(_parent, {success: function() {
+                                setTimeout(postRemove);
+                              }}
+                              );
+                            }
+                          });
+                    } else {
+                      setTimeout(postRemove);
+                    }
+                    return true;
+                  }
+                }
+              );
+            }
+
             }
             errorOut();
 
@@ -1221,22 +1354,17 @@ function(
                 node_data._id = _id = this.new._id;
               }
               if (this.new._id == _id) {
-                // Found the currect
-                _.extend(this.d, this.new._id);
+                // Found the current
+                _.extend(this.d, {
+                  '_id': this.new._id,
+                  '_label': this.new._label,
+                  'label': this.new.label
+                });
                 this.t.setLabel(ctx.i, {label: this.new.label});
                 this.t.addIcon(ctx.i, {icon: this.new.icon});
-                this.t.setId(ctx.id, {id: this.new.id});
-
-                // if label is different then we need to
-                // refresh parent so that node get properly
-                // placed in tree
-                if(this.d.label != this.new.label) {
-                  var p = this.t.parent(this.i);
-                  pgAdmin.Browser.onRefreshTreeNode(p);
-                }
-
-                self.t.openPath(self.i);
-                self.t.deselect(self.i);
+                this.t.setId(ctx.i, {id: this.new.id});
+                this.t.openPath(this.i);
+                this.t.deselect(this.i);
 
                 // select tree item after few milliseconds
                 setTimeout(function() {
@@ -1306,7 +1434,7 @@ function(
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label
+                              d._label, _new._label
                             ) == 1
                           )
                             return true;
@@ -1325,7 +1453,7 @@ function(
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label
+                              d._label, _new._label
                             ) != -1
                           )
                             return true;
@@ -1333,14 +1461,14 @@ function(
                           d = ctx.t.itemData(i);
                           if (
                             pgAdmin.natural_sort(
-                              d._label, _data._label
+                              d._label, _new._label
                             ) != 1
                           )
                             return true;
                           m = s + Math.round((e - s) / 2);
                           i = items.eq(m);
                           d = ctx.t.itemData(i);
-                          var res = pgAdmin.natural_sort(d._label, _data._label);
+                          var res = pgAdmin.natural_sort(d._label, _new._label);
                           if (res == 0)
                             return true;
 
@@ -1359,6 +1487,9 @@ function(
                     ctx.t.before(i, {
                       itemData: _new,
                       success: function() {
+                        var new_item = $(arguments[1].items[0]);
+                        ctx.t.openPath(new_item);
+                        ctx.t.select(new_item);
                         if (
                           ctx.o && ctx.o.success && typeof(ctx.o.success) == 'function'
                         ) {
@@ -1375,24 +1506,39 @@ function(
                       }
                     });
                   } else {
-                    ctx.t.append(ctx.i, {
-                      itemData: _new,
-                      success: function() {
-                        if (
-                          ctx.o && ctx.o.success && typeof(ctx.o.success) == 'function'
-                        ) {
-                          ctx.o.success.apply(ctx.t, [ctx.i, _old, _new]);
+                    var _appendNode = function() {
+                      ctx.t.append(ctx.i, {
+                        itemData: _new,
+                        success: function() {
+                          var new_item = $(arguments[1].items[0]);
+                          ctx.t.openPath(new_item);
+                          ctx.t.select(new_item);
+                          if (
+                            ctx.o && ctx.o.success && typeof(ctx.o.success) == 'function'
+                          ) {
+                            ctx.o.success.apply(ctx.t, [ctx.i, _old, _new]);
+                          }
+                        },
+                        fail: function() {
+                          console.log('Failed to append');
+                          if (
+                            ctx.o && ctx.o.fail && typeof(ctx.o.fail) == 'function'
+                          ) {
+                            ctx.o.fail.apply(ctx.t, [ctx.i, _old, _new]);
+                          }
                         }
-                      },
-                      fail: function() {
-                        console.log('Failed to append');
-                        if (
-                          ctx.o && ctx.o.fail && typeof(ctx.o.fail) == 'function'
-                        ) {
-                          ctx.o.fail.apply(ctx.t, [ctx.i, _old, _new]);
-                        }
-                      }
-                    });
+                      })
+                    };
+
+                    // If the current node's inode is false
+                    if (ctx.i && !ctx.t.isInode(ctx.i)) {
+                      ctx.t.setInode(ctx.i, {success: _appendNode});
+                    } else {
+                      // Handle case for node without parent i.e. server-group
+                      // or if parent node's inode is true.
+                      _appendNode();
+                    }
+
                   }
                 }.bind(ctx);
 
@@ -1435,7 +1581,17 @@ function(
       ctx.pI.push(_old);
       _new._label = _new.label;
       _new.label = _.escape(_new.label);
-      if (_old._pid != _new._pid) {
+
+      // We need to check if this is collection node and have
+      // children count, if yes then add count with label too
+      if(ctx.b.Nodes[_new._type].is_collection) {
+          if ('collection_count' in _old && _old['collection_count'] > 0) {
+            _new.label = _.escape(_new._label) +
+                ' <span>(' + _old['collection_count'] + ')</span>'
+          }
+      }
+
+      if (_old._pid != _new._pid || _old._label != _new._label) {
         ctx.op = 'RECREATE';
         traversePath();
       } else {
@@ -1564,7 +1720,7 @@ function(
                   }
 
                   Alertify.pgNotifier(
-                    error, xhr, "{{ _("Error retrieving details for the node.") }}",
+                    error, xhr, gettext("Error retrieving details for the node."),
                     function() {
                        console.log(arguments);
                     }
@@ -1613,6 +1769,201 @@ function(
         });
       } else {
         fetchNodeInfo(_i, d, n);
+      }
+    },
+
+    removeChildTreeNodesById: function(_parentNode, _collType, _childIds) {
+      var tree = pgBrowser.tree;
+      if(_parentNode && _collType) {
+        var children = tree.children(_parentNode),
+            idx = 0, size = children.length,
+            childNode, childNodeData;
+
+        _parentNode = null;
+
+        for (; idx < size; idx++) {
+          childNode = children.eq(idx);
+          childNodeData = tree.itemData(childNode);
+
+          if (childNodeData._type == _collType) {
+            _parentNode = childNode;
+            break;
+          }
+        }
+      }
+
+      if (_parentNode) {
+        var children = tree.children(_parentNode),
+            idx = 0, size = children.length,
+            childNode, childNodeData,
+            prevChildNode;
+
+        for (; idx < size; idx++) {
+          childNode = children.eq(idx);
+          childNodeData = tree.itemData(childNode);
+
+          if (_childIds.indexOf(childNodeData._id) != -1) {
+            pgBrowser.removeTreeNode(childNode, false, _parentNode);
+          }
+        }
+        return true;
+      }
+      return false;
+    },
+
+    removeTreeNode: function(_node, _selectNext, _parentNode) {
+      var tree = pgBrowser.tree,
+          nodeToSelect = null;
+
+      if (!_node)
+        return false;
+
+      if (_selectNext) {
+        nodeToSelect = tree.next(_node);
+        if (!nodeToSelect || !nodeToSelect.length) {
+          nodeToSelect = tree.prev(_node);
+
+          if (!nodeToSelect || !nodeToSelect.length) {
+            if (!_parentNode) {
+              nodeToSelect = tree.parent(_node);
+            } else {
+              nodeToSelect = _parentNode;
+            }
+          }
+        }
+        if (nodeToSelect)
+          tree.select(nodeToSelect);
+      }
+      tree.remove(_node);
+      return true;
+    },
+
+    findSiblingTreeNode: function(_node, _id) {
+      var tree = pgBrowser.tree,
+          parentNode = tree.parent(_node),
+          siblings = tree.children(parentNode),
+          idx = 0, nodeData, node;
+
+      for(; idx < siblings.length; idx++) {
+        node = siblings.eq(idx);
+        nodeData = tree.itemData(node);
+
+        if (nodeData && nodeData._id == _id)
+          return node;
+      }
+      return null;
+    },
+
+    findParentTreeNodeByType: function(_node, _parentType) {
+      var tree = pgBrowser.tree,
+          nodeData,
+          node = _node;
+
+      do {
+        nodeData = tree.itemData(node);
+        if (nodeData && nodeData._type == _parentType)
+          return node;
+        node = tree.hasParent(node) ? tree.parent(node) : null;
+      } while (node);
+
+      return null;
+    },
+
+    findChildCollectionTreeNode: function(_node, _collType) {
+      var tree = pgBrowser.tree,
+          nodeData, idx = 0,
+          node = _node,
+          children = _node && tree.children(_node);
+
+      if (!children || !children.length)
+        return null;
+
+      for(; idx < children.length; idx++) {
+        node = children.eq(idx);
+        nodeData = tree.itemData(node);
+
+        if (nodeData && nodeData._type == _collType)
+          return node;
+      }
+      return null;
+    },
+
+    addChildTreeNodes: function(_treeHierarchy, _node, _type, _arrayIds, _callback) {
+      var module = _type in pgBrowser.Nodes && pgBrowser.Nodes[_type],
+          childTreeInfo = _arrayIds.length && _.extend(
+            {}, _.mapObject(
+              _treeHierarchy, function(_val, _key) {
+                _val.priority -= 1; return _val;
+              })
+          ),
+          arrayChildNodeData = [],
+          fetchNodeInfo = function(_callback) {
+            if (!_arrayIds.length) {
+              if (_callback) {
+                _callback();
+              }
+              return;
+            }
+
+            var childDummyInfo = {
+                  '_id': _arrayIds.pop(), '_type': _type, 'priority': 0
+                },
+                childNodeUrl;
+            childTreeInfo[_type] = childDummyInfo;
+
+            childNodeUrl = module.generate_url(
+              null, 'nodes', childDummyInfo, true, childTreeInfo
+            );
+            console.debug("Fetching node information using: ", childNodeUrl);
+
+            $.ajax({
+              url: childNodeUrl,
+              dataType: "json",
+              success: function(res) {
+                if (res.success) {
+                  arrayChildNodeData.push(res.data);
+                }
+                fetchNodeInfo(_callback);
+              },
+              error: function(xhr, status, error) {
+                try {
+                  var err = $.parseJSON(xhr.responseText);
+                  if (err.success == 0) {
+                    var alertifyWrapper = new AlertifyWrapper();
+                    alertifyWrapper.error(err.errormsg);
+                  }
+                } catch (e) {}
+                fetchNodeInfo(_callback);
+              }
+            });
+          };
+
+
+      if (!module) {
+        console.warning(
+          "Developer: Couldn't find the module for the given child: ",
+          _.clone(arguments)
+        );
+        return;
+      }
+
+      if (pgBrowser.tree.wasLoad(_node) || pgBrowser.tree.isLeaf(_node)) {
+        fetchNodeInfo(function() {
+          console.log('Append this nodes:', arrayChildNodeData);
+          _.each(arrayChildNodeData, function(_nodData) {
+            pgBrowser.Events.trigger(
+              'pgadmin:browser:tree:add', _nodData, _treeHierarchy
+            );
+          });
+
+          if (_callback) {
+            _callback();
+          }
+        });
+      } else {
+        if (_callback) {
+          _callback();
+        }
       }
     },
 
@@ -1693,11 +2044,16 @@ function(
       "Ctrl-Alt-Left": "goGroupLeft",
       "Cmd-Alt-Left": "goGroupLeft",
       "Ctrl-Alt-Right": "goGroupRight",
-      "Cmd-Alt-Right": "goGroupRight"
+      "Cmd-Alt-Right": "goGroupRight",
+
+      // Allow user to delete Tab(s)
+      "Shift-Tab": "indentLess"
     },
     editor_options: {
       tabSize: '{{ editor_tab_size }}',
-      wrapCode: '{{ editor_wrap_code }}' == 'True'
+      wrapCode: '{{ editor_wrap_code }}' == 'True',
+      insert_pair_brackets: '{{ editor_insert_pair_brackets }}' == 'True',
+      brace_matching: '{{ editor_brace_matching }}' == 'True'
     }
 
   });

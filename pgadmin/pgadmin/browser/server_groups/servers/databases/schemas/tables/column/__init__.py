@@ -22,11 +22,13 @@ from pgadmin.browser.server_groups.servers.utils import parse_priv_from_db, \
     parse_priv_to_db
 from pgadmin.browser.utils import PGChildNodeView
 from pgadmin.utils.ajax import make_json_response, internal_server_error, \
-    make_response as ajax_response
+    make_response as ajax_response, gone
 from pgadmin.utils.driver import get_driver
-
 from config import PG_DEFAULT_DRIVER
-from pgadmin.utils.ajax import gone
+from pgadmin.utils import IS_PY2
+# If we are in Python3
+if not IS_PY2:
+    unicode = str
 
 
 class ColumnsModule(CollectionNodeModule):
@@ -341,20 +343,28 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             data['isdup'], data['attndims'], data['atttypmod']
         )
 
+        length = False
+        precision = False
+        if 'elemoid' in data:
+            length, precision, typeval = self.get_length_precision(data['elemoid'])
+
+        # Set length and precision to None
+        data['attlen'] = None
+        data['attprecision'] = None
+
         import re
+
         # If we have length & precision both
-        matchObj = re.search(r'(\d+),(\d+)', fulltype)
-        if matchObj:
-            data['attlen'] = matchObj.group(1)
-            data['attprecision'] = matchObj.group(2)
-        else:
+        if length and precision:
+            matchObj = re.search(r'(\d+),(\d+)', fulltype)
+            if matchObj:
+                data['attlen'] = matchObj.group(1)
+                data['attprecision'] = matchObj.group(2)
+        elif length:
             # If we have length only
             matchObj = re.search(r'(\d+)', fulltype)
             if matchObj:
                 data['attlen'] = matchObj.group(1)
-                data['attprecision'] = None
-            else:
-                data['attlen'] = None
                 data['attprecision'] = None
 
         # We need to fetch inherited tables for each table
@@ -688,6 +698,8 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             data['hasSqrBracket'] = self.hasSqrBracket
 
         SQL, name = self.get_sql(scid, tid, clid, data)
+        if not isinstance(SQL, (str, unicode)):
+            return SQL
         SQL = SQL.strip('\n').strip(' ')
         status, res = self.conn.execute_scalar(SQL)
         if not status:
@@ -733,6 +745,8 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
 
         try:
             SQL, name = self.get_sql(scid, tid, clid, data)
+            if not isinstance(SQL, (str, unicode)):
+                return SQL
 
             SQL = SQL.strip('\n').strip(' ')
             if SQL == '':
@@ -744,7 +758,7 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
-    def get_sql(self, scid, tid, clid, data):
+    def get_sql(self, scid, tid, clid, data, is_sql=False):
         """
         This function will genrate sql from model data
         """
@@ -758,7 +772,10 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             status, res = self.conn.execute_dict(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
-
+            if len(res['rows']) == 0:
+                return gone(
+                    gettext("Could not find the column on the server.")
+                )
             old_data = dict(res['rows'][0])
             # We will add table & schema as well
             old_data = self._formatter(scid, tid, clid, old_data)
@@ -810,7 +827,7 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
                                                   self.acl)
             # If the request for new object which do not have did
             SQL = render_template("/".join([self.template_path, 'create.sql']),
-                                  data=data, conn=self.conn)
+                                  data=data, conn=self.conn, is_sql=is_sql)
         return SQL, data['name'] if 'name' in data else old_data['name']
 
     @check_precondition
@@ -834,6 +851,10 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             status, res = self.conn.execute_dict(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
+            if len(res['rows']) == 0:
+                return gone(
+                    gettext("Could not find the column on the server.")
+                )
 
             data = dict(res['rows'][0])
             # We do not want to display length as -1 in create query
@@ -850,7 +871,9 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
             # We will add table & schema as well
             data = self._formatter(scid, tid, clid, data)
 
-            SQL, name = self.get_sql(scid, tid, None, data)
+            SQL, name = self.get_sql(scid, tid, None, data, is_sql=True)
+            if not isinstance(SQL, (str, unicode)):
+                return SQL
 
             sql_header = u"-- Column: {0}\n\n-- ".format(self.qtIdent(self.conn,
                                                                      data['schema'],
@@ -966,6 +989,10 @@ class ColumnsView(PGChildNodeView, DataTypeReader):
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+        if len(res['rows']) == 0:
+            return gone(
+                gettext("Could not find the column on the server.")
+            )
 
         data = dict(res['rows'][0])
         column = data['name']

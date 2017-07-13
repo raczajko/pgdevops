@@ -11,6 +11,7 @@ import subprocess
 import signal
 import random
 
+import time
 
 class AppStarter:
     """ Helper for starting the full pgadmin4 app and loading the page via

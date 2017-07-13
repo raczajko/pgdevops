@@ -14,15 +14,13 @@ from functools import wraps
 
 import pgadmin.browser.server_groups.servers.databases.schemas.domains \
     as domains
-from flask import render_template, make_response, request, jsonify
+from flask import render_template, request, jsonify
 from flask_babel import gettext
 from pgadmin.browser.collection import CollectionNodeModule
 from pgadmin.browser.utils import PGChildNodeView
 from pgadmin.utils.ajax import make_json_response, internal_server_error, \
-    make_response as ajax_response
+    make_response as ajax_response, gone
 from pgadmin.utils.driver import get_driver
-from pgadmin.utils.ajax import gone
-
 from config import PG_DEFAULT_DRIVER
 
 
@@ -88,6 +86,14 @@ class DomainConstraintModule(CollectionNodeModule):
             )
         ]
 
+    @property
+    def module_use_template_javascript(self):
+        """
+        Returns whether Jinja2 template is used for generating the javascript
+        module.
+        """
+        return False
+
 
 blueprint = DomainConstraintModule(__name__)
 
@@ -104,9 +110,6 @@ class DomainConstraintView(PGChildNodeView):
 
     Methods:
     -------
-
-    * module_js():
-      - Load JS file (domain_constraints.js) for this module.
 
     * check_precondition(f):
       - Works as a decorator.
@@ -172,8 +175,7 @@ class DomainConstraintView(PGChildNodeView):
         'msql': [{'get': 'msql'}, {'get': 'msql'}],
         'stats': [{'get': 'statistics'}],
         'dependency': [{'get': 'dependencies'}],
-        'dependent': [{'get': 'dependents'}],
-        'module.js': [{}, {}, {'get': 'module_js'}]
+        'dependent': [{'get': 'dependents'}]
     })
 
     def validate_request(f):
@@ -228,18 +230,6 @@ class DomainConstraintView(PGChildNodeView):
             return f(self, **kwargs)
 
         return wrap
-
-    def module_js(self):
-        """
-        Load JS file (domain_constraints.js) for this module.
-        """
-        return make_response(
-            render_template(
-                "domain_constraints/js/domain_constraints.js",
-                _=gettext
-            ),
-            200, {'Content-Type': 'application/x-javascript'}
-        )
 
     def check_precondition(f):
         """
@@ -340,7 +330,6 @@ class DomainConstraintView(PGChildNodeView):
             doid: Domain Id
             coid: Domain Constraint Id
         """
-        res = []
         SQL = render_template("/".join([self.template_path,
                                         'properties.sql']),
                               coid=coid)
@@ -366,7 +355,9 @@ class DomainConstraintView(PGChildNodeView):
                 status=200
             )
 
-        return gone(gettext("Could not find the specified domain constraint."))
+        return gone(
+            gettext("Could not find the specified domain constraint.")
+        )
 
     @check_precondition
     def properties(self, gid, sid, did, scid, doid, coid):
@@ -419,9 +410,9 @@ class DomainConstraintView(PGChildNodeView):
         """
         data = self.request
         try:
-            status, SQL = self.get_sql(gid, sid, data, scid, doid)
+            status, SQL, name = self.get_sql(gid, sid, data, scid, doid)
             if not status:
-                return internal_server_error(errormsg=SQL)
+                return SQL
 
             status, res = self.conn.execute_scalar(SQL)
 
@@ -526,7 +517,9 @@ class DomainConstraintView(PGChildNodeView):
             coid: Domain Constraint Id
         """
         data = self.request
-        status, SQL = self.get_sql(gid, sid, data, scid, doid, coid)
+        status, SQL, name = self.get_sql(gid, sid, data, scid, doid, coid)
+        if not status:
+            return SQL
 
         try:
             if SQL and status:
@@ -541,18 +534,13 @@ class DomainConstraintView(PGChildNodeView):
                 else:
                     icon = ''
 
-                return make_json_response(
-                    success=1,
-                    info="Domain Constraint updated",
-                    data={
-                        'id': coid,
-                        'doid': doid,
-                        'scid': scid,
-                        'sid': sid,
-                        'gid': gid,
-                        'did': did,
-                        'icon': icon
-                    }
+                return jsonify(
+                    node=self.blueprint.generate_browser_node(
+                        coid,
+                        doid,
+                        name,
+                        icon=icon
+                    )
                 )
             else:
                 return make_json_response(
@@ -594,6 +582,11 @@ class DomainConstraintView(PGChildNodeView):
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+        if len(res['rows']) == 0:
+            return gone(gettext(
+                "Could not find the specified domain constraint."
+                )
+            )
 
         data = res['rows'][0]
 
@@ -631,7 +624,7 @@ class DomainConstraintView(PGChildNodeView):
         """
         data = self.request
 
-        status, SQL = self.get_sql(gid, sid, data, scid, doid, coid)
+        status, SQL, name = self.get_sql(gid, sid, data, scid, doid, coid)
         if status and SQL:
             return make_json_response(
                 data=SQL,
@@ -661,6 +654,11 @@ class DomainConstraintView(PGChildNodeView):
 
                 if not status:
                     return False, internal_server_error(errormsg=res)
+                if len(res['rows']) == 0:
+                    return False, gone(gettext(
+                        "Could not find the specified domain constraint."
+                        )
+                    )
 
                 old_data = res['rows'][0]
 
@@ -674,9 +672,9 @@ class DomainConstraintView(PGChildNodeView):
                 SQL = render_template("/".join([self.template_path,
                                                 'create.sql']),
                                       data=data, domain=domain, schema=schema)
-            return True, SQL.strip('\n')
+            return True, SQL.strip('\n'), data['name'] if 'name' in data else old_data['name']
         except Exception as e:
-            return False, internal_server_error(errormsg=str(e))
+            return False, internal_server_error(errormsg=str(e)), None
 
     def _get_domain(self, doid):
         """

@@ -1,12 +1,10 @@
+// Grant Wizard
 define([
-      'jquery', 'underscore', 'underscore.string', 'alertify',
-      'pgadmin.browser', 'backbone', 'backgrid', 'pgadmin.browser.node',
-      'backgrid.select.all', 'backgrid.filter', 'pgadmin.browser.server.privilege',
-      'pgadmin.browser.wizard',
-      ],
-
-  // This defines Grant Wizard dialog
-  function($, _, S, alertify, pgBrowser, Backbone, Backgrid, pgNode) {
+  'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
+  'underscore.string', 'alertify', 'pgadmin.browser', 'backbone', 'backgrid',
+  'pgadmin.browser.node', 'backgrid.select.all', 'backgrid.filter',
+  'pgadmin.browser.server.privilege', 'pgadmin.browser.wizard',
+], function(gettext, url_for, $, _, S, alertify, pgBrowser, Backbone, Backgrid, pgNode) {
 
     // if module is already initialized, refer to that.
     if (pgBrowser.GrantWizard) {
@@ -63,7 +61,7 @@ define([
           errmsg,
           node = this.get('objects').toJSON();
         if (_.isEmpty(node)) {
-          err['selected'] = '{{ _("Please select any database object type.") }}';
+          err['selected'] = gettext('Please select any database object type.');
           errmsg = errmsg || err['selected'];
           this.errorModel.set('selected', errmsg);
           return errmsg;
@@ -176,7 +174,7 @@ define([
         var menus = [{
           name: 'grant_wizard_schema', module: this,
           applies: ['tools'], callback: 'start_grant_wizard',
-          priority: 14, label: '{{_("Grant Wizard...") }}',
+          priority: 14, label: gettext('Grant Wizard...'),
           icon: 'fa fa-unlock-alt', enable: menu_enabled
         }];
 
@@ -186,7 +184,7 @@ define([
             name: 'grant_wizard_schema_context_' + supported_nodes[idx],
             node: supported_nodes[idx], module: this,
             applies: ['context'], callback: 'start_grant_wizard',
-            priority: 14, label: '{{_("Grant Wizard...") }}',
+            priority: 14, label: gettext('Grant Wizard...'),
             icon: 'fa fa-unlock-alt', enable: menu_enabled
             });
         }
@@ -418,12 +416,12 @@ define([
 
               //Returns list of Acls defined for nodes
               get_json_data: function(gid, sid, did) {
-                var url = "{{ url_for('grant_wizard.index') }}" + "acl/" +
-                    S('%s/%s/%s/').sprintf(
-                        encodeURI(gid), encodeURI(sid), encodeURI(did)).value();
                 return $.ajax({
                   async: false,
-                  url: url,
+                  url: url_for(
+                    'grant_wizard.acl',
+                    {'sid': encodeURI(sid), 'did': encodeURI(did)}
+                  ),
                   dataType: 'jsonp'
                 });
 
@@ -465,23 +463,22 @@ define([
                 var privDict = JSON.parse(json_data.responseText);
 
                 // Collection url to fetch database object types for objects field
-                var baseUrl = "{{ url_for('grant_wizard.index') }}" + "properties/" +
-                    S('%s/%s/%s/%s/%s/').sprintf(
-                        encodeURI(gid), encodeURI(sid), encodeURI(did),
-                        encodeURI(node_id), encodeURI(node_type)).value();
-
+                var baseUrl = url_for(
+                      'grant_wizard.objects', {
+                        'sid': encodeURI(sid), 'did': encodeURI(did),
+                        'node_id': encodeURI(node_id),
+                        'node_type': encodeURI(node_type)
+                      }),
                     // Model's save url
-                    saveUrl = "{{ url_for('grant_wizard.index') }}" + "save/" +
-                        S('%s/%s/%s/').sprintf(
-                            encodeURI(gid), encodeURI(sid),
-                            encodeURI(did)).value(),
-
+                    saveUrl = url_for(
+                      'grant_wizard.apply', {
+                        'sid': encodeURI(sid), 'did': encodeURI(did)
+                      }),
                     // generate encoded url based on wizard type
-                    msql_url = this.msql_url = "/grant_wizard/msql/"+
-                      S('%s/%s/%s/').sprintf(
-                          encodeURI(gid), encodeURI(sid),
-                          encodeURI(did)).value(),
-
+                    msql_url = this.msql_url = url_for(
+                      'grant_wizard.modified_sql', {
+                        'sid': encodeURI(sid), 'did': encodeURI(did)
+                      }),
                     Coll = Backbone.Collection.extend({
                       model: DatabaseObjectModel,
                       url: baseUrl
@@ -489,19 +486,19 @@ define([
 
                     // Create instances of collection and filter
                     coll = this.coll = new Coll(),
+                    self = this;
 
-                    coll.comparator = function(model) {
-                      return model.get('object_type');
-                    }
+                coll.comparator = function(model) {
+                  return model.get('object_type');
+                }
 
-                    coll.sort();
-                    dbObjectFilter = this.dbObjectFilter = this.DbObjectFilter(coll);
+                coll.sort();
+                dbObjectFilter = this.dbObjectFilter = this.DbObjectFilter(coll);
 
                 /**
                   privArray holds objects selected which further helps
                   in creating privileges Model
                 */
-                var self = this;
                 self.privArray = [];
 
                 /**
@@ -583,11 +580,11 @@ define([
                   },
                   schema: [
                     {
-                      id: 'objects', label: '{{ _("Objects") }}', model: DatabaseObjectModel,
-                      type: 'collection', group: 'Objects'
+                      id: 'objects', label: gettext('Objects'), model: DatabaseObjectModel,
+                      type: 'collection', group: gettext('Objects')
                     },
                     {
-                      id: 'acl', label: '{{ _("Privileges") }}',
+                      id: 'acl', label: gettext('Privileges'),
                       model: pgAdmin.Browser.Node.PrivilegeRoleModel,
                       type: 'collection', canAdd: true,
                       canDelete: true, control: 'unique-col-collection'
@@ -773,7 +770,7 @@ define([
                             },
                             schema: [
                               {
-                                id: 'acl', label: '{{ _("Privileges") }}',
+                                id: 'acl', label: gettext('Privileges'),
                                 model: pgAdmin.Browser.Node.PrivilegeRoleModel.extend({
 
                                   // privileges are selected based on node clicked
@@ -979,7 +976,7 @@ define([
                           // Clear html dom elements of CodeMirror sql tab
                           self.sqlControl.unbind(); // Unbind all local event bindings
                           var cmElem = self.sqlControl.sqlCtrl.getWrapperElement();
-                          cmElem.remove();
+                          $(cmElem).remove();
                           self.sqlControl.sqlCtrl = undefined;
                         }
 
@@ -1065,7 +1062,9 @@ define([
                     show_header_maximize_btn: true,
                     disable_finish: true,
                     dialog_api: that,
-                    wizard_help: "{{ url_for('help.static', filename='grant_wizard.html') }}"
+                    wizard_help: url_for(
+                      'help.static', {'filename': 'grant_wizard.html'}
+                    )
                   },
 
                   // Callback for finish button
@@ -1089,7 +1088,7 @@ define([
                           alertify.pgNotifier(
                             "error", jqxhr,
                             S(
-                              "{{ _('Error saving properties: %s') }}"
+                              gettext("Error saving properties: %s")
                               ).sprintf(jqxhr.statusText).value()
                             );
 
@@ -1122,7 +1121,7 @@ define([
         }
 
         // Call Grant Wizard Dialog and set dimensions for wizard
-        alertify.wizardDialog(true).resizeTo('40%', '60%');
+        alertify.wizardDialog(true).resizeTo('55%', '75%');
       }
     };
 

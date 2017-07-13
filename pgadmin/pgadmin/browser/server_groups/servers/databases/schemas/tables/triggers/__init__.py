@@ -18,11 +18,13 @@ from flask_babel import gettext
 from pgadmin.browser.collection import CollectionNodeModule
 from pgadmin.browser.utils import PGChildNodeView
 from pgadmin.utils.ajax import make_json_response, internal_server_error, \
-    make_response as ajax_response
+    make_response as ajax_response, gone
 from pgadmin.utils.driver import get_driver
-
 from config import PG_DEFAULT_DRIVER
-from pgadmin.utils.ajax import gone
+from pgadmin.utils import IS_PY2
+# If we are in Python3
+if not IS_PY2:
+    unicode = str
 
 
 class TriggerModule(CollectionNodeModule):
@@ -464,7 +466,7 @@ class TriggerView(PGChildNodeView):
         columns = []
 
         for row in rset['rows']:
-            columns.append({'column': row['name']})
+            columns.append(row['name'])
 
         return columns
 
@@ -526,7 +528,7 @@ class TriggerView(PGChildNodeView):
         Returns:
             Formated arguments for function
         """
-        formatted_args = ["{0}".format(arg) for arg in args]
+        formatted_args = ["'{0}'".format(arg) for arg in args]
         return ', '.join(formatted_args)
 
 
@@ -570,7 +572,7 @@ class TriggerView(PGChildNodeView):
             # and convert it to string
             data['tgargs'] = self._format_args(data['custom_tgargs'])
 
-        if len(data['tgattr']) > 1:
+        if len(data['tgattr']) >= 1:
             columns = ', '.join(data['tgattr'].split(' '))
             data['columns'] = self._column_details(tid, columns)
 
@@ -734,6 +736,8 @@ class TriggerView(PGChildNodeView):
             data['table'] = self.table
 
             SQL, name = self.get_sql(scid, tid, trid, data)
+            if not isinstance(SQL, (str, unicode)):
+                return SQL
             SQL = SQL.strip('\n').strip(' ')
             status, res = self.conn.execute_scalar(SQL)
             if not status:
@@ -747,14 +751,32 @@ class TriggerView(PGChildNodeView):
             status, new_trid = self.conn.execute_scalar(SQL)
             if not status:
                 return internal_server_error(errormsg=new_trid)
+            # Fetch updated properties
+            SQL = render_template("/".join([self.template_path,
+                                            'properties.sql']),
+                                  tid=tid, trid=new_trid,
+                                  datlastsysoid=self.datlastsysoid)
+
+            status, res = self.conn.execute_dict(SQL)
+
+            if not status:
+                return internal_server_error(errormsg=res)
+
+            if len(res['rows']) == 0:
+                return gone(
+                    gettext("""Could not find the trigger in the table."""))
+
+            # Making copy of output for future use
+            data = dict(res['rows'][0])
 
             return jsonify(
                 node=self.blueprint.generate_browser_node(
                     new_trid,
                     tid,
                     name,
-                    icon="icon-%s" % self.node_type if self.is_trigger_enabled
-                    else "icon-%s-bad" % self.node_type
+                    icon="icon-%s" % self.node_type if
+                    data['is_enable_trigger'] else
+                    "icon-%s-bad" % self.node_type
                 )
             )
         except Exception as e:
@@ -786,7 +808,8 @@ class TriggerView(PGChildNodeView):
 
         try:
             sql, name = self.get_sql(scid, tid, trid, data)
-
+            if not isinstance(sql, (str, unicode)):
+                return sql
             sql = sql.strip('\n').strip(' ')
 
             if sql == '':
@@ -835,6 +858,10 @@ class TriggerView(PGChildNodeView):
             status, res = self.conn.execute_dict(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
+            if len(res['rows']) == 0:
+                return gone(
+                    gettext("""Could not find the trigger in the table.""")
+                )
 
             old_data = dict(res['rows'][0])
 
@@ -900,6 +927,8 @@ class TriggerView(PGChildNodeView):
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+        if len(res['rows']) == 0:
+            return gone(gettext("""Could not find the trigger in the table."""))
 
         data = dict(res['rows'][0])
         # Adding parent into data dict, will be using it while creating sql
@@ -968,6 +997,10 @@ class TriggerView(PGChildNodeView):
             status, res = self.conn.execute_dict(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
+            if len(res['rows']) == 0:
+                return gone(
+                    gettext("""Could not find the trigger in the table.""")
+                )
 
             o_data = dict(res['rows'][0])
 

@@ -49,6 +49,21 @@ class DataGridModule(PgAdminModule):
     def get_panels(self):
         return []
 
+    def get_exposed_url_endpoints(self):
+        """
+        Returns:
+            list: URL endpoints for backup module
+        """
+        return [
+            'datagrid.initialize_datagrid',
+            'datagrid.initialize_query_tool',
+            'datagrid.initialize_query_tool_with_did',
+            'datagrid.filter_validate',
+            'datagrid.filter',
+            'datagrid.panel',
+            'datagrid.close'
+        ]
+
 
 blueprint = DataGridModule(MODULE_NAME, __name__, static_url_path='/static')
 
@@ -67,7 +82,7 @@ def datagrid_css():
     )
 
 
-@blueprint.route("/filter")
+@blueprint.route("/filter", endpoint='filter')
 @login_required
 def show_filter():
     return render_template(MODULE_NAME + '/filter.html')
@@ -75,7 +90,7 @@ def show_filter():
 
 @blueprint.route(
     '/initialize/datagrid/<int:cmd_type>/<obj_type>/<int:sid>/<int:did>/<int:obj_id>',
-    methods=["PUT", "POST"]
+    methods=["PUT", "POST"], endpoint="initialize_datagrid"
 )
 @login_required
 def initialize_datagrid(cmd_type, obj_type, sid, did, obj_id):
@@ -112,6 +127,10 @@ def initialize_datagrid(cmd_type, obj_type, sid, did, obj_id):
         return internal_server_error(errormsg=str(msg))
 
     try:
+        # if object type is partition then it is nothing but a table.
+        if obj_type == 'partition':
+            obj_type = 'table'
+
         # Get the object as per the object type
         command_obj = ObjectRegistry.get_object(obj_type, conn_id=conn_id, sid=sid,
                                                 did=did, obj_id=obj_id, cmd_type=cmd_type,
@@ -143,7 +162,11 @@ def initialize_datagrid(cmd_type, obj_type, sid, did, obj_id):
                                     'newBrowserTab': new_browser_tab})
 
 
-@blueprint.route('/panel/<int:trans_id>/<is_query_tool>/<path:editor_title>', methods=["GET"])
+@blueprint.route(
+    '/panel/<int:trans_id>/<is_query_tool>/<path:editor_title>',
+    methods=["GET"],
+    endpoint='panel'
+)
 def panel(trans_id, is_query_tool, editor_title):
     """
     This method calls index.html to render the data grid.
@@ -182,21 +205,23 @@ def panel(trans_id, is_query_tool, editor_title):
     else:
         new_browser_tab = 'false'
 
-    return render_template("datagrid/index.html", _=gettext, uniqueId=trans_id,
-                           is_query_tool=is_query_tool,
-                           editor_title=editor_title, script_type_url=sURL,
-                           is_desktop_mode=app.PGADMIN_RUNTIME,
-                           is_linux=is_linux_platform,
-                           is_new_browser_tab=new_browser_tab)
+    return render_template(
+        "datagrid/index.html", _=gettext, uniqueId=trans_id,
+        is_query_tool=is_query_tool,
+        editor_title=editor_title, script_type_url=sURL,
+        is_desktop_mode=app.PGADMIN_RUNTIME,
+        is_linux=is_linux_platform,
+        is_new_browser_tab=new_browser_tab
+    )
 
 
 @blueprint.route(
     '/initialize/query_tool/<int:sid>/<int:did>',
-    methods=["POST"]
+    methods=["POST"], endpoint='initialize_query_tool_with_did'
 )
 @blueprint.route(
     '/initialize/query_tool/<int:sid>',
-    methods=["POST"]
+    methods=["POST"], endpoint='initialize_query_tool'
 )
 @login_required
 def initialize_query_tool(sid, did=None):
@@ -254,7 +279,7 @@ def initialize_query_tool(sid, did=None):
                                     'newBrowserTab': new_browser_tab})
 
 
-@blueprint.route('/close/<int:trans_id>', methods=["GET"])
+@blueprint.route('/close/<int:trans_id>', methods=["GET"], endpoint='close')
 def close(trans_id):
     """
     This method is used to close the asynchronous connection
@@ -294,7 +319,8 @@ def close(trans_id):
 
 
 @blueprint.route('/filter/validate/<int:sid>/<int:did>/<int:obj_id>',
-                 methods=["PUT", "POST"])
+                 methods=["PUT", "POST"], endpoint='filter_validate'
+                 )
 @login_required
 def validate_filter(sid, did, obj_id):
     """
@@ -326,6 +352,8 @@ def validate_filter(sid, did, obj_id):
 @login_required
 def script():
     """render the required javascript"""
-    return Response(response=render_template("datagrid/js/datagrid.js", _=gettext),
-                    status=200,
-                    mimetype="application/javascript")
+    return Response(
+        response=render_template("datagrid/js/datagrid.js", _=gettext),
+        status=200, mimetype="application/javascript"
+    )
+

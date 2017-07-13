@@ -4,11 +4,11 @@
 CREATE FOREIGN TABLE {{ conn|qtIdent(data.basensp, data.name) }}(
 {% if data.columns %}
 {% for c in data.columns %}
-    {{conn|qtIdent(c.attname)}} {{conn|qtTypeIdent(c.datatype) }}{% if c.typlen %}({{c.typlen}}{% if c.precision %}, {{c.precision}}{% endif %}){% endif %}{% if c.isArrayType %}[]{% endif %}{% if c.coloptions %}
+    {{conn|qtIdent(c.attname)}} {% if is_sql %}{{ c.fulltype }}{% else %}{{conn|qtTypeIdent(c.datatype) }}{% if c.typlen %}({{c.typlen}}{% if c.precision %}, {{c.precision}}{% endif %}){% endif %}{% if c.isArrayType %}[]{% endif %}{% endif %}{% if c.coloptions %}
 {% for o in c.coloptions %}{% if o.option and o.value %}
 {% if loop.first %} OPTIONS ({% endif %}{% if not loop.first %}, {% endif %}{{o.option}} {{o.value|qtLiteral}}{% if loop.last %}){% endif %}{% endif %}
 {% endfor %}{% endif %}{% if c.attnotnull %}
- NOT NULL{% else %} NULL{% endif %}{% if c.typdefault %}
+ NOT NULL{% else %} NULL{% endif %}{% if c.typdefault is defined and c.typdefault is not none %}
  DEFAULT {{c.typdefault}}{% endif %}{% if c.collname %}
  COLLATE {{c.collname}}{% endif %}
 {% if not loop.last %},

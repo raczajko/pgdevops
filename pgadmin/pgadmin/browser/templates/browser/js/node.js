@@ -1,10 +1,18 @@
-define(
-    ['jquery', 'underscore', 'underscore.string', 'pgadmin', 'pgadmin.browser.menu',
-     'backbone', 'alertify', 'pgadmin.browser.datamodel', 'backform',
-     'pgadmin.backform', 'wcdocker', 'pgadmin.alertifyjs'],
-function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
+define([
+  'sources/gettext', 'jquery', 'underscore', 'underscore.string', 'pgadmin',
+  'pgadmin.browser.menu', 'backbone', 'alertify', 'pgadmin.browser.datamodel',
+  'backform',
+  'sources/alerts/alertify_wrapper',
 
-  var wcDocker = window.wcDocker;
+  'pgadmin.backform', 'wcdocker', 'pgadmin.alertifyjs'
+], function(gettext, $, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform, AlertifyWrapper) {
+
+  var wcDocker = window.wcDocker,
+    keyCode = {
+      ENTER: 13,
+      ESCAPE: 27,
+      F1: 112
+    };
 
   // It has already been defined.
   // Avoid running this script again.
@@ -83,7 +91,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
       pgAdmin.Browser.add_menus([{
         name: 'refresh', node: self.type, module: self,
         applies: ['object', 'context'], callback: 'refresh',
-        priority: 1, label: '{{ _("Refresh...") }}',
+        priority: 1, label: gettext('Refresh...'),
         icon: 'fa fa-refresh'
       }]);
 
@@ -91,7 +99,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
         pgAdmin.Browser.add_menus([{
         name: 'show_obj_properties', node: self.type, module: self,
         applies: ['object', 'context'], callback: 'show_obj_properties',
-        priority: 999, label: '{{ _("Properties...") }}',
+        priority: 999, label: gettext('Properties...'),
         data: {'action': 'edit'}, icon: 'fa fa-pencil-square-o'
       }]);
       }
@@ -100,7 +108,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
         pgAdmin.Browser.add_menus([{
           name: 'delete_object', node: self.type, module: self,
           applies: ['object', 'context'], callback: 'delete_obj',
-          priority: 2, label: '{{ _("Delete/Drop") }}',
+          priority: 2, label: gettext('Delete/Drop'),
           data: {'url': 'drop'}, icon: 'fa fa-trash',
           enable: _.isFunction(self.canDrop) ?
             function() {
@@ -111,7 +119,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
           pgAdmin.Browser.add_menus([{
             name: 'delete_object_cascade', node: self.type, module: self,
             applies: ['object', 'context'], callback: 'delete_obj',
-            priority: 3, label: '{{ _("Drop Cascade") }}',
+            priority: 3, label: gettext('Drop Cascade'),
             data: {'url': 'delete'}, icon: 'fa fa-trash',
             enable: _.isFunction(self.canDropCascade) ?
               function() { return self.canDropCascade.apply(self, arguments); } : (!!self.canDropCascade)
@@ -125,7 +133,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
           pgAdmin.Browser.add_menus([{
             name: 'show_query_tool', node: self.type, module: self,
             applies: ['context'], callback: 'show_query_tool',
-            priority: 998, label: '{{ _("Query Tool...") }}',
+            priority: 998, label: gettext('Query Tool...'),
             icon: 'fa fa-bolt',
             enable: function(itemData, item, data) {
               if (itemData._type == 'database' && itemData.allowConn)
@@ -252,9 +260,17 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
           }
 
           var onSessionInvalid = function(msg) {
-
+            var alertMessage = '\
+              <div class="media error-in-footer bg-red-1 border-red-2 font-red-3 text-14">\
+                <div class="media-body media-middle">\
+                  <div class="alert-icon error-icon">\
+                    <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>\
+                  </div>\
+                    <div class="alert-text">' + msg + '</div>\
+                </div>\
+              </div>';
             if(!_.isUndefined(that.statusBar)) {
-              that.statusBar.html(msg).css("visibility", "visible");
+              that.statusBar.html(alertMessage).css("visibility", "visible");
             }
             callback(true);
 
@@ -294,10 +310,16 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
             });
           }
 
+          var setFocusOnEl = function() {
+            setTimeout(function() {
+              $(el).find('.tab-pane.active:first').find('input:first').focus();
+            }, 500);
+          };
+
           if (!newModel.isNew()) {
             // This is definetely not in create mode
             var msgDiv = '<div class="alert alert-info pg-panel-message pg-panel-properties-message">'+
-                pgBrowser.messages['LOADING_MESSAGE']+'</div>',
+                gettext("Retrieving data from the server...") + '</div>',
                 $msgDiv = $(msgDiv);
             var timer = setTimeout(function(ctx) {
               // notify user if request is taking longer than 1 second
@@ -306,6 +328,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
                 $msgDiv.appendTo(ctx);
               }
             }, 1000, ctx);
+
             newModel.fetch()
             .success(function(res, msg, xhr) {
               // clear timeout and remove message
@@ -315,9 +338,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
               // We got the latest attributes of the
               // object. Render the view now.
               view.render();
-              if (type != 'properties') {
-                $(el).focus();
-              }
+              setFocusOnEl();
               newModel.startNewSession();
             })
             .error(function(xhr, error, message) {
@@ -337,7 +358,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
                 Alertify.pgNotifier(
                   error, xhr,
                   S(
-                    "{{ _("Error retrieving properties - %s") }}"
+                    gettext("Error retrieving properties - %s")
                   ).sprintf(message || _label).value(),
                   function() {
                     console.log(arguments);
@@ -351,8 +372,9 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
             });
           } else {
             // Yay - render the view now!
-            $(el).focus();
+            // $(el).focus();
             view.render();
+            setFocusOnEl();
             newModel.startNewSession();
           }
         }
@@ -527,7 +549,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
           if (!d)
             return;
 
-          l = S('{{ _("Create - %s") }}').sprintf(
+          l = S( gettext('Create - %s')).sprintf(
               [this.label]).value();
           p = addPanel();
 
@@ -544,13 +566,13 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
              **/
             var mode = p.$container.attr('action-mode');
             if (mode) {
-              var msg = '{{ _('Are you sure want to stop editing the properties of %s "%s"?') }}';
+              var msg = gettext('Are you sure want to stop editing the properties of %s "%s"?');
               if (args.action == 'edit') {
-                msg = '{{ _('Are you sure want to reset the current changes and re-open the panel for %s "%s"?') }}';
+                msg = gettext('Are you sure want to reset the current changes and re-open the panel for %s "%s"?');
               }
 
               Alertify.confirm(
-                '{{ _('Edit in progress?') }}',
+                gettext('Edit in progress?'),
                 S(msg).sprintf(o.label.toLowerCase(), d.label).value(),
                 function() {
                   setTimeout(function() {
@@ -599,32 +621,33 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
         var msg, title;
         if (input.url == 'delete') {
 
-          msg = S('{{ _('Are you sure you want to drop %s "%s" and all the objects that depend on it?') }}')
+          msg = S( gettext('Are you sure you want to drop %s "%s" and all the objects that depend on it?'))
             .sprintf(obj.label.toLowerCase(), d.label).value();
-          title = S('{{ _('DROP CASCADE %s?') }}').sprintf(obj.label).value();
+          title = S( gettext('DROP CASCADE %s?')).sprintf(obj.label).value();
 
           if (!(_.isFunction(obj.canDropCascade) ?
                 obj.canDropCascade.apply(obj, [d, i]) : obj.canDropCascade)) {
-            Alertify.notify(
+                var alertifyWrapper = new AlertifyWrapper();
+                  alertifyWrapper.error(
                 S('The %s "%s" cannot be dropped!')
                 .sprintf(obj.label, d.label).value(),
-                'error',
                 10
                 );
             return;
           }
         } else {
-          msg = S('{{ _('Are you sure you want to drop %s "%s"?') }}')
+          msg = S( gettext('Are you sure you want to drop %s "%s"?'))
             .sprintf(obj.label.toLowerCase(), d.label).value();
-          title = S('{{ _('DROP %s?') }}').sprintf(obj.label).value();
+          title = S( gettext('DROP %s?')).sprintf(obj.label).value();
 
           if (!(_.isFunction(obj.canDrop) ?
-                obj.canDrop.apply(obj, [d, i]) : obj.canDrop)) {
-            Alertify.notify(
-                S('The %s "%s" cannot be dropped!')
-                .sprintf(obj.label, d.label).value(),
-                'error', 10
-                );
+              obj.canDrop.apply(obj, [d, i]) : obj.canDrop)) {
+            var alertifyWrapper = new AlertifyWrapper();
+            alertifyWrapper.error(
+              S('The %s "%s" cannot be dropped!')
+              .sprintf(obj.label, d.label).value(),
+              10
+            );
             return;
           }
         }
@@ -637,18 +660,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
                 if (res.success == 0) {
                   pgBrowser.report_error(res.errormsg, res.info);
                 } else {
-                  var n = t.next(i);
-                  if (!n || !n.length) {
-                    n = t.prev(i);
-                    if (!n || !n.length) {
-                      n = t.parent(i);
-                      t.setInode(n, true);
-                    }
-                  }
-                  t.remove(i);
-                  if (n.length) {
-                    t.select(n);
-                  }
+                  pgBrowser.removeTreeNode(i, true);
                 }
                 return true;
               },
@@ -662,7 +674,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
                   } catch (e) {}
                 }
                 pgBrowser.report_error(
-                    S('{{ _('Error dropping %s: "%s"') }}')
+                    S( gettext('Error dropping %s: "%s"'))
                       .sprintf(obj.label, objName)
                         .value(), msg);
               }
@@ -703,8 +715,9 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
           sql_url = 'sql';
         }
         // Open data grid & pass the URL for fetching
-        pgAdmin.DataGrid.show_query_tool.apply(
-          this, [obj.generate_url(i, sql_url, d, true), i]
+        pgAdmin.DataGrid.show_query_tool(
+          obj.generate_url(i, sql_url, d, true),
+          i, scriptType
         );
       },
 
@@ -719,9 +732,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
           return;
 
         // Here call data grid method to render query tool
-        pgAdmin.DataGrid.show_query_tool.apply(
-          this, [undefined, i]
-        );
+        pgAdmin.DataGrid.show_query_tool('', i);
       },
       added: function(item, data, browser) {
         var b = browser || pgBrowser,
@@ -863,10 +874,41 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
         j = panel.$container.find('.obj_properties').first(),
         view = j.data('obj-view'),
         content = $('<div tabindex="1"></div>')
-          .addClass('pg-prop-content col-xs-12'),
+          .addClass('pg-prop-content col-xs-12');
+
+        // Handle key press events for Cancel, save and help button
+        var handleKeyDown = function(event, context) {
+          // If called on panel other than node_props, return
+          if (panel && panel['_type'] !== 'node_props') return;
+
+          switch (event.which) {
+            case keyCode.ESCAPE:
+              closePanel();
+              break;
+            case keyCode.ENTER:
+              // Return if event is fired from child element
+              if (event.target !== context) return;
+              if (view && view.model && view.model.sessChanged()) {
+                onSave.call(this, view);
+              }
+              break;
+            case keyCode.F1:
+              onDialogHelp();
+              break;
+            default:
+                break;
+          }
+        }.bind(panel);
+
+        setTimeout(function() {
+          // Register key press events with panel element
+          panel.$container.find('.backform-tab').on("keydown", function(event) {
+              handleKeyDown(event, this);
+          });
+        }, 200); // wait for panel tab to render
 
         // Template function to create the status bar
-        createStatusBar = function(location){
+        var createStatusBar = function(location){
             var statusBar = $('<div></div>').addClass(
                       'pg-prop-status-bar'
                       ).appendTo(j);
@@ -979,7 +1021,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
 
             buttons.push({
               label: '', type: 'edit',
-              tooltip: '{{ _("Edit") }}',
+              tooltip: gettext('Edit'),
               extraClasses: ['btn-default'],
               icon: 'fa fa-lg fa-pencil-square-o',
               disabled: !that.canEdit,
@@ -992,7 +1034,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
 
             buttons.push({
               label: '', type: 'help',
-              tooltip: '{{ _("SQL help for this object type.") }}',
+              tooltip: gettext('SQL help for this object type.'),
               extraClasses: ['btn-default', 'pull-right'],
               icon: 'fa fa-lg fa-info',
               disabled: (that.sqlAlterHelp == '' && that.sqlCreateHelp == '') ? true : false,
@@ -1003,7 +1045,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
               }
             });
 
-            createButtons(buttons, 'header', 'pg-prop-btn-group-above');
+            createButtons(buttons, 'header', 'pg-prop-btn-group-above bg-gray-2 border-gray-3');
           }
           j.append(content);
         }.bind(panel),
@@ -1071,6 +1113,61 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
           iframe.openURL(that.dialogHelp);
         }.bind(panel),
 
+        onSave = function(view) {
+          var m = view.model,
+            d = m.toJSON(true),
+
+            // Generate a timer for the request
+            timer = setTimeout(function(){
+              $('.obj_properties').addClass('show_progress');
+            }, 1000);
+
+          if (d && !_.isEmpty(d)) {
+            m.save({}, {
+              attrs: d,
+              validate: false,
+              cache: false,
+              success: function() {
+                onSaveFunc.call();
+                // Hide progress cursor
+                $('.obj_properties').removeClass('show_progress');
+                clearTimeout(timer);
+
+                // Removing the node-prop property of panel
+                // so that we show updated data on panel
+                var pnlProperties = pgBrowser.docker.findPanels('properties')[0],
+                  pnlSql = pgBrowser.docker.findPanels('sql')[0],
+                  pnlStats = pgBrowser.docker.findPanels('statistics')[0],
+                  pnlDependencies = pgBrowser.docker.findPanels('dependencies')[0],
+                  pnlDependents = pgBrowser.docker.findPanels('dependents')[0];
+
+                if(pnlProperties)
+                    $(pnlProperties).removeData('node-prop');
+                if(pnlSql)
+                    $(pnlSql).removeData('node-prop');
+                if(pnlStats)
+                    $(pnlStats).removeData('node-prop');
+                if(pnlDependencies)
+                    $(pnlDependencies).removeData('node-prop');
+                if(pnlDependents)
+                    $(pnlDependents).removeData('node-prop');
+              },
+              error: function(m, jqxhr) {
+                Alertify.pgNotifier(
+                  "error", jqxhr,
+                  S(
+                    gettext("Error saving properties: %s")
+                    ).sprintf(jqxhr.statusText).value()
+                  );
+
+                // Hide progress cursor
+                $('.obj_properties').removeClass('show_progress');
+                clearTimeout(timer);
+              }
+            });
+          }
+        }.bind(panel),
+
         editFunc = function() {
           var panel = this;
           if (action && action == 'properties') {
@@ -1136,7 +1233,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
             // Create proper buttons
             createButtons([{
               label: '', type: 'help',
-              tooltip: '{{ _("SQL help for this object type.") }}',
+              tooltip: gettext('SQL help for this object type.'),
               extraClasses: ['btn-default', 'pull-left'],
               icon: 'fa fa-lg fa-info',
               disabled: (that.sqlAlterHelp == '' && that.sqlCreateHelp == '') ? true : false,
@@ -1147,7 +1244,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
               }
             },{
               label: '', type: 'help',
-              tooltip: '{{ _("Help for this dialog.") }}',
+              tooltip: gettext('Help for this dialog.'),
               extraClasses: ['btn-default', 'pull-left'],
               icon: 'fa fa-lg fa-question',
               disabled: (that.dialogHelp == '') ? true : false,
@@ -1157,71 +1254,20 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
                 });
               }
             },{
-              label: '{{ _("Save") }}', type: 'save',
-              tooltip: '{{ _("Save this object.") }}',
+              label: gettext('Save'), type: 'save',
+              tooltip: gettext('Save this object.'),
               extraClasses: ['btn-primary'],
               icon: 'fa fa-lg fa-save',
               disabled: true,
               register: function(btn) {
                 // Save the changes
                 btn.click(function() {
-                  var m = view.model,
-                    d = m.toJSON(true),
-
-                    // Generate a timer for the request
-                    timer = setTimeout(function(){
-                      $('.obj_properties').addClass('show_progress');
-                    }, 1000);
-
-                  if (d && !_.isEmpty(d)) {
-                    m.save({}, {
-                      attrs: d,
-                      validate: false,
-                      cache: false,
-                      success: function() {
-                        onSaveFunc.call();
-                        // Hide progress cursor
-                        $('.obj_properties').removeClass('show_progress');
-                        clearTimeout(timer);
-
-                        // Removing the node-prop property of panel
-                        // so that we show updated data on panel
-                        var pnlProperties = pgBrowser.docker.findPanels('properties')[0],
-                          pnlSql = pgBrowser.docker.findPanels('sql')[0],
-                          pnlStats = pgBrowser.docker.findPanels('statistics')[0],
-                          pnlDependencies = pgBrowser.docker.findPanels('dependencies')[0],
-                          pnlDependents = pgBrowser.docker.findPanels('dependents')[0];
-
-                        if(pnlProperties)
-                            $(pnlProperties).removeData('node-prop');
-                        if(pnlSql)
-                            $(pnlSql).removeData('node-prop');
-                        if(pnlStats)
-                            $(pnlStats).removeData('node-prop');
-                        if(pnlDependencies)
-                            $(pnlDependencies).removeData('node-prop');
-                        if(pnlDependents)
-                            $(pnlDependents).removeData('node-prop');
-                      },
-                      error: function(m, jqxhr) {
-                        Alertify.pgNotifier(
-                          "error", jqxhr,
-                          S(
-                            "{{ _("Error saving properties: %s") }}"
-                            ).sprintf(jqxhr.statusText).value()
-                          );
-
-                        // Hide progress cursor
-                        $('.obj_properties').removeClass('show_progress');
-                        clearTimeout(timer);
-                      }
-                    });
-                  }
+                  onSave.call(this, view);
                 });
               }
             },{
-              label: '{{ _('Cancel') }}', type: 'cancel',
-              tooltip: '{{ _("Cancel changes to this object.") }}',
+              label: gettext('Cancel'), type: 'cancel',
+              tooltip: gettext('Cancel changes to this object.'),
               extraClasses: ['btn-danger'],
               icon: 'fa fa-lg fa-close',
               disabled: false,
@@ -1233,8 +1279,8 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
                 });
               }
             },{
-              label: '{{ _('Reset') }}', type: 'reset',
-              tooltip: '{{ _("Reset the fields on this dialog.") }}',
+              label: gettext('Reset'), type: 'reset',
+              tooltip: gettext('Reset the fields on this dialog.'),
               extraClasses: ['btn-warning'],
               icon: 'fa fa-lg fa-recycle',
               disabled: true,
@@ -1243,7 +1289,7 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
                   setTimeout(function() { editFunc.call(); }, 0);
                 });
               }
-            }],'footer' ,'pg-prop-btn-group-below');
+            }],'footer' ,'pg-prop-btn-group-below bg-gray-2 border-gray-3');
           };
 
           // Create status bar.
@@ -1271,9 +1317,14 @@ function($, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform) {
           pgBrowser.Events.trigger(
             'pgadmin:browser:tree:update',
             _old, _new, info, {
-              success: function() {
+              success: function(_item, _newNodeData, _oldNodeData) {
                 pgBrowser.Events.trigger(
-                  'pgadmin:browser:node:updated', _new
+                  'pgadmin:browser:node:updated', _item, _newNodeData,
+                  _oldNodeData
+                );
+                pgBrowser.Events.trigger(
+                  'pgadmin:browser:node:' + _newNodeData._type + ':updated',
+                  _item, _newNodeData, _oldNodeData
                 );
               }
             }

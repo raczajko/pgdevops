@@ -5,7 +5,7 @@ try {
 require(
 ['pgadmin', 'pgadmin.browser'],
 function(pgAdmin, pgBrowser) {
-pgBrowser.init();
+  pgBrowser.init();
 },
 function() {
 /* TODO:: Show proper error dialog */
@@ -88,6 +88,9 @@ require.onResourceLoad = function (context, map, depMaps) {
   text-align: center;
   color: #fff;
 }
+.pgadmin_header_logo {
+  cursor: default;
+}
 </style>
 <div id="pg-spinner">
   <div class="pg-sp-content">
@@ -116,7 +119,7 @@ require.onResourceLoad = function (context, map, depMaps) {
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="{{ '#' if config.SERVER_MODE else '?key=' + current_app.PGADMIN_KEY }}">
+            <a class="navbar-brand pgadmin_header_logo" onClick="return false;" href="{{ '#' }}">
                 <i class="app-icon {{ config.APP_ICON }}"></i>
                 <span>&nbsp;{{ config.APP_NAME }}</span>
             </a>
@@ -127,32 +130,32 @@ require.onResourceLoad = function (context, map, depMaps) {
             <ul class="nav navbar-nav">
 
                 <li id="mnu_file" class="dropdown hide">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
+                    <a href="#" accesskey="f" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
                         _('File') }} <span class="caret"></span></a>
                     <ul class="dropdown-menu navbar-inverse" role="menu"></ul>
                 </li>
                 <li id="mnu_edit" class="dropdown hide">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
+                    <a href="#" accesskey="e" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
                         _('Edit') }} <span class="caret"></span></a>
                     <ul class="dropdown-menu navbar-inverse" role="menu"></ul>
                 </li>
                 <li id="mnu_obj" class="dropdown ">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
+                    <a href="#" accesskey="o" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
                         _('Object') }} <span class="caret"></span></a>
                     <ul class="dropdown-menu navbar-inverse" role="menu"></ul>
                 </li>
                 <li id="mnu_management" class="dropdown hide">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
+                    <a href="#" accesskey="m" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
                         _('Management') }} <span class="caret"></span></a>
                     <ul class="dropdown-menu navbar-inverse" role="menu"></ul>
                 </li>
-                <li id="mnu_tools" class="dropdown hide">
+                <li id="mnu_tools" accesskey="t" class="dropdown hide">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
                         _('Tools') }} <span class="caret"></span></a>
                     <ul class="dropdown-menu navbar-inverse" role="menu"></ul>
                 </li>
                 <li id="mnu_help" class="dropdown hide">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
+                    <a href="#" accesskey="h" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{
                         _('Help') }} <span class="caret"></span></a>
                     <ul class="dropdown-menu navbar-inverse" role="menu"></ul>
                 </li>

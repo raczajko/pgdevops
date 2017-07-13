@@ -17,6 +17,8 @@ from flask import render_template, request, \
 from flask_babel import gettext as _
 from flask_security import login_required, roles_required, current_user
 from flask_security.utils import encrypt_password
+
+import config
 from pgadmin.utils import PgAdminModule
 from pgadmin.utils.ajax import make_response as ajax_response, \
     make_json_response, bad_request, internal_server_error
@@ -49,6 +51,11 @@ class UserManagementModule(PgAdminModule):
             'name': 'pgadmin.tools.user_management',
             'path': url_for('user_management.index') + 'user_management',
             'when': None
+        },{
+            'name': 'pgadmin.user_management.current_user',
+            'path': url_for('user_management.index') + 'current_user',
+            'when': None,
+            'is_template': True
         }]
 
     def show_system_objects(self):
@@ -56,6 +63,18 @@ class UserManagementModule(PgAdminModule):
         return system preference objects
         """
         return self.pref_show_system_objects
+
+    def get_exposed_url_endpoints(self):
+        """
+        Returns:
+            list: URL endpoints for backup module
+        """
+        return [
+            'user_management.roles', 'user_management.role',
+            'user_management.update_user', 'user_management.delete_user',
+            'user_management.create_user', 'user_management.users',
+            'user_management.user'
+        ]
 
 
 # Create blueprint for BackupModule class
@@ -108,15 +127,35 @@ def script():
             "user_management/js/user_management.js", _=_,
             is_admin=current_user.has_role("Administrator"),
             user_id=current_user.id
+        ),
+        status=200,
+        mimetype="application/javascript"
+    )
 
+@blueprint.route("/current_user.js")
+@login_required
+def current_user_info():
+    return Response(
+        response=render_template(
+            "user_management/js/current_user.js",
+            is_admin='true' if current_user.has_role("Administrator") else 'false',
+            user_id=current_user.id,
+            email=current_user.email,
+            name=(
+                current_user.email.split('@')[0] if config.SERVER_MODE is True
+                else 'postgres'
+            ),
+            allow_save_password='true' if config.ALLOW_SAVE_PASSWORD else 'false'
         ),
         status=200,
         mimetype="application/javascript"
     )
 
 
-@blueprint.route('/user/', methods=['GET'], defaults={'uid': None})
-@blueprint.route('/user/<int:uid>', methods=['GET'])
+@blueprint.route(
+    '/user/', methods=['GET'], defaults={'uid': None}, endpoint='users'
+)
+@blueprint.route('/user/<int:uid>', methods=['GET'], endpoint='user')
 @roles_required('Administrator')
 def user(uid):
     """
@@ -155,7 +194,7 @@ def user(uid):
     )
 
 
-@blueprint.route('/user/', methods=['POST'])
+@blueprint.route('/user/', methods=['POST'], endpoint='create_user')
 @roles_required('Administrator')
 def create():
     """
@@ -208,7 +247,7 @@ def create():
     )
 
 
-@blueprint.route('/user/<int:uid>', methods=['DELETE'])
+@blueprint.route('/user/<int:uid>', methods=['DELETE'], endpoint='delete_user')
 @roles_required('Administrator')
 def delete(uid):
     """
@@ -250,7 +289,7 @@ def delete(uid):
         return internal_server_error(errormsg=str(e))
 
 
-@blueprint.route('/user/<int:uid>', methods=['PUT'])
+@blueprint.route('/user/<int:uid>', methods=['PUT'], endpoint='update_user')
 @roles_required('Administrator')
 def update(uid):
     """
@@ -301,8 +340,10 @@ def update(uid):
         return internal_server_error(errormsg=str(e))
 
 
-@blueprint.route('/role/', methods=['GET'], defaults={'rid': None})
-@blueprint.route('/role/<int:rid>', methods=['GET'])
+@blueprint.route(
+    '/role/', methods=['GET'], defaults={'rid': None}, endpoint='roles'
+)
+@blueprint.route('/role/<int:rid>', methods=['GET'], endpoint='role')
 @roles_required('Administrator')
 def role(rid):
     """

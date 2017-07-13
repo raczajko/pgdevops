@@ -11,10 +11,9 @@ CREATE OR REPLACE PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name) }}{% i
 {% if not loop.last %}, {% endif %}
 {% endfor -%}
 ){% endif %}
-{% endif %}
-{% if query_type != 'create' %}
 
-    {{ data.provolatile }}{% if data.proleakproof %} LEAKPROOF {% endif %}
+{% endif %}
+    {{ data.provolatile }} {% if data.proleakproof %}LEAKPROOF {% endif %}
 {% if data.proisstrict %}STRICT {% endif %}
 {% if data.prosecdef %}SECURITY DEFINER {% endif %}{% if data.procost %}
 
@@ -23,15 +22,18 @@ CREATE OR REPLACE PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name) }}{% i
     ROWS {{data.prorows}}{% endif -%}{% if data.variables %}{% for v in data.variables %}
 
     SET {{ conn|qtIdent(v.name) }}={{ v.value|qtLiteral }}{% endfor -%}
-{% endif %}{% endif %}
+{% endif %}
 
-AS
-{{ data.prosrc }};
+AS {{ data.prosrc }};
 {% if data.acl and not is_sql %}
 {% for p in data.acl %}
 
 {{ PRIVILEGE.SET(conn, "PROCEDURE", p.grantee, data.name, p.without_grant, p.with_grant, data.pronamespace, data.func_args_without)}}
 {% endfor %}{% endif %}
+{% if data.revoke_all %}
+
+{{ PRIVILEGE.UNSETALL(conn, "PROCEDURE", "PUBLIC", data.name, data.pronamespace, data.func_args_without)}}
+{% endif %}
 {% if data.description %}
 
 COMMENT ON PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name) }}

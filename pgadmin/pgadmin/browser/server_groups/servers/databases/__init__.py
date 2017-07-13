@@ -14,7 +14,7 @@ import re
 from functools import wraps
 
 import pgadmin.browser.server_groups.servers as servers
-from flask import render_template, make_response, current_app, request, jsonify
+from flask import render_template, current_app, request, jsonify
 from flask_babel import gettext as _
 from pgadmin.browser.collection import CollectionNodeModule
 from pgadmin.browser.server_groups.servers.databases.utils import \
@@ -78,6 +78,13 @@ class DatabaseModule(CollectionNodeModule):
 
         return snippets
 
+    @property
+    def module_use_template_javascript(self):
+        """
+        Returns whether Jinja2 template is used for generating the javascript
+        module.
+        """
+        return False
 
 blueprint = DatabaseModule(__name__)
 
@@ -106,7 +113,6 @@ class DatabaseView(PGChildNodeView):
         'dependency': [{'get': 'dependencies'}],
         'dependent': [{'get': 'dependents'}],
         'children': [{'get': 'children'}],
-        'module.js': [{}, {}, {'get': 'module_js'}],
         'connect': [{
             'get': 'connect_status', 'post': 'connect', 'delete': 'disconnect'
         }],
@@ -283,13 +289,13 @@ class DatabaseView(PGChildNodeView):
         )
         status, res = conn.execute_dict(SQL)
 
+        if not status:
+            return internal_server_error(errormsg=res)
+
         if len(res['rows']) == 0:
             return gone(
                 _("Could not find the database on the server.")
             )
-
-        if not status:
-            return internal_server_error(errormsg=res)
 
         SQL = render_template(
             "/".join([self.template_path, 'acl.sql']),
@@ -344,19 +350,6 @@ class DatabaseView(PGChildNodeView):
             priv = parse_priv_from_db(row)
             res['rows'][0].setdefault(row['deftype'], []).append(priv)
         return res
-
-    def module_js(self):
-        """
-        This property defines (if javascript) exists for this node.
-        Override this property for your own logic.
-        """
-        return make_response(
-            render_template(
-                "databases/js/databases.js",
-                _=_
-            ),
-            200, {'Content-Type': 'application/x-javascript'}
-        )
 
     def connect(self, gid, sid, did):
         """Connect the Database."""
@@ -605,17 +598,44 @@ class DatabaseView(PGChildNodeView):
         # used for offline updates
         self.manager.release(conn_id="db_offline_update")
 
+        # Fetch the new data again after update for proper node
+        # generation
+        status, rset = self.conn.execute_dict(
+            render_template(
+                "/".join([self.template_path, 'nodes.sql']),
+                did=did, conn=self.conn, last_system_oid=0
+            )
+        )
+        if not status:
+            return internal_server_error(errormsg=rset)
+
+        if len(rset['rows']) == 0:
+            return gone(
+                _("Could not find the database on the server.")
+            )
+
+        res = rset['rows'][0]
+
+        canDrop = canDisConn = True
+        if self.manager.db == res['name']:
+            canDrop = canDisConn = False
+
         return jsonify(
             node=self.blueprint.generate_browser_node(
                 did,
                 sid,
-                data['name'],
-                "pg-icon-{0}".format(self.node_type) if
-                self._db['datallowconn'] else
+                res['name'],
+                icon="pg-icon-{0}".format(self.node_type) if
+                self._db['datallowconn'] and self.conn.connected() else
                 "icon-database-not-connected",
                 connected=self.conn.connected() if
                 self._db['datallowconn'] else False,
-                allowConn=self._db['datallowconn']
+                tablespace=res['spcname'],
+                allowConn=res['datallowconn'],
+                canCreate=res['cancreate'],
+                canDisconn=canDisConn,
+                canDrop=canDrop,
+                inode=True if res['datallowconn'] else False
             )
         )
 
@@ -859,8 +879,14 @@ class DatabaseView(PGChildNodeView):
             did=did, conn=conn, last_system_oid=0
         )
         status, res = conn.execute_dict(SQL)
+
         if not status:
             return internal_server_error(errormsg=res)
+
+        if len(res['rows']) == 0:
+            return gone(
+                _("Could not find the database on the server.")
+            )
 
         SQL = render_template(
             "/".join([self.template_path, 'acl.sql']),

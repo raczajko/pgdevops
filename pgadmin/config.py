@@ -45,7 +45,7 @@ APP_ICON = 'icon-postgres-alt'
 
 # Application version number components
 APP_RELEASE = 1
-APP_REVISION = 5
+APP_REVISION = 6
 
 # Application version suffix, e.g. 'beta1', 'dev'. Usually an empty string
 # for GA releases.
@@ -56,7 +56,7 @@ APP_SUFFIX = ''
 # zero if needed, and Z represents the suffix, with a leading zero if needed
 # Note that we messed this up in v1.x, where the format is [X]XYZZZ. This
 # should be fixed for v2.x!!
-APP_VERSION_INT = 15001
+APP_VERSION_INT = 16001
 
 # DO NOT CHANGE!
 # The application version string, constructed from the components
@@ -148,7 +148,7 @@ SERVER_MODE = True
 # The default should be fine here, as it's not exposed in the app.
 DESKTOP_USER = 'pgadmin4@pgadmin.org'
 
-# This configuration otion allows the user to host the application on a LAN
+# This option allows the user to host the application on a LAN
 # Default hosting is on localhost (DEFAULT_SERVER='localhost').
 # To host pgAdmin4 over LAN set DEFAULT_SERVER='0.0.0.0' (or a specific
 # adaptor address.
@@ -156,7 +156,7 @@ DESKTOP_USER = 'pgadmin4@pgadmin.org'
 # NOTE: This is NOT recommended for production use, only for debugging
 # or testing. Production installations should be run as a WSGI application
 # behind Apache HTTPD.
-DEFAULT_SERVER = 'localhost'
+DEFAULT_SERVER = '127.0.0.1'
 
 # The default port on which the app server will listen if not set in the
 # environment by the runtime
@@ -305,8 +305,6 @@ DEFAULT_BINARY_PATHS = {
 ##########################################################################
 # Test settings - used primarily by the regression suite, not for users
 ##########################################################################
-# Set default testing mode
-TESTING_MODE = False
 
 # The default path for SQLite database for testing
 TEST_SQLITE_PATH = os.path.join(DATA_DIR, 'test_pgadmin4.db')
@@ -322,6 +320,12 @@ THREADED_MODE = True
 # deprecated in future
 ##########################################################################
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+##########################################################################
+# Number of records to fetch in one batch in query tool when query result
+# set is large.
+##########################################################################
+ON_DEMAND_RECORD_COUNT = 1000
 
 ##########################################################################
 # Local config settings

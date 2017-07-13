@@ -10,6 +10,9 @@
 from selenium.webdriver import ActionChains
 from regression.python_test_utils import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 import time
 
 class CheckForXssFeatureTest(BaseFeatureTest):
@@ -58,7 +61,7 @@ class CheckForXssFeatureTest(BaseFeatureTest):
 
         # Query tool
         self._check_xss_in_query_tool()
-        self._close_query_tool()
+        self.page.close_query_tool()
 
     def after(self):
         time.sleep(1)
@@ -72,6 +75,7 @@ class CheckForXssFeatureTest(BaseFeatureTest):
 
     def _connects_to_server(self):
         self.page.find_by_xpath("//*[@class='aciTreeText' and .='Servers']").click()
+        time.sleep(2)
         self.page.driver.find_element_by_link_text("Object").click()
         ActionChains(self.page.driver) \
             .move_to_element(self.page.driver.find_element_by_link_text("Create")) \
@@ -88,7 +92,7 @@ class CheckForXssFeatureTest(BaseFeatureTest):
         self.page.find_by_xpath("//button[contains(.,'Save')]").click()
 
     def _tables_node_expandable(self):
-        self.page.toggle_open_tree_item(self.server['name'])
+        self.page.toggle_open_server(self.server['name'])
         self.page.toggle_open_tree_item('Databases')
         self.page.toggle_open_tree_item('acceptance_test_db')
         self.page.toggle_open_tree_item('Schemas')
@@ -119,7 +123,6 @@ class CheckForXssFeatureTest(BaseFeatureTest):
             "Properties tab (Backform Control)"
         )
 
-
     def _check_xss_in_sql_tab(self):
         self.page.click_tab("SQL")
         # Fetch the inner html & check for escaped characters
@@ -149,35 +152,25 @@ class CheckForXssFeatureTest(BaseFeatureTest):
     def _check_xss_in_query_tool(self):
         self.page.driver.find_element_by_link_text("Tools").click()
         self.page.find_by_partial_link_text("Query Tool").click()
-        time.sleep(3)
-        self.page.driver.switch_to.frame(self.page.driver.find_element_by_tag_name('iframe'))
         self.page.fill_codemirror_area_with("select '<img src=\"x\" onerror=\"console.log(1)\">'")
         time.sleep(1)
         self.page.find_by_id("btn-flash").click()
-        time.sleep(2)
+        wait = WebDriverWait(self.page.driver, 5)
 
-        source_code = self.page.find_by_xpath(
-            "//*[@id='0']//*[@id='datagrid']/div[5]/div/div[1]/div[2]"
-        ).get_attribute('innerHTML')
+        result_row = self.page.find_by_xpath(
+            "//*[contains(@class, 'ui-widget-content') and contains(@style, 'top:0px')]"
+        )
+
+        cells = result_row.find_elements_by_tag_name('div')
+
+        # remove first element as it is row number.
+        source_code = cells[1].get_attribute('innerHTML')
 
         self._check_escaped_characters(
             source_code,
             '&lt;img src="x" onerror="console.log(1)"&gt;',
             "Query tool (SlickGrid)"
         )
-
-    def _close_query_tool(self):
-        self.page.driver.switch_to_default_content()
-        self.page.click_element(
-            self.page.find_by_xpath("//*[@id='dockerContainer']/div/div[3]/div/div[2]/div[1]")
-        )
-        time.sleep(0.5)
-        self.page.driver.switch_to.frame(self.page.driver.find_element_by_tag_name('iframe'))
-        time.sleep(1)
-        self.page.click_element(self.page.find_by_xpath("//button[contains(.,'Yes')]"))
-        time.sleep(0.5)
-        self.page.driver.switch_to_default_content()
-
 
     def _check_escaped_characters(self, source_code, string_to_find, source):
         # For XSS we need to search against element's html code

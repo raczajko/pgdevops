@@ -1,9 +1,19 @@
-define(
-  ['jquery', 'underscore', 'underscore.string', 'alertify', 'pgadmin','pgadmin.browser',
-   'backbone', 'backgrid', 'codemirror', 'backform','pgadmin.tools.debugger.ui',
-  'wcdocker', 'pgadmin.backform', 'pgadmin.backgrid', 'codemirror/addon/selection/active-line',
-  'codemirror/addon/fold/foldgutter', 'codemirror/addon/fold/foldcode', 'pgadmin-sqlfoldcode'],
-  function($, _, S, Alertify, pgAdmin, pgBrowser, Backbone, Backgrid, CodeMirror, Backform, debug_function_again) {
+define([
+  'sources/gettext', 'jquery', 'underscore', 'underscore.string', 'alertify',
+  'pgadmin','pgadmin.browser', 'backbone', 'backgrid', 'codemirror', 'backform',
+  'pgadmin.tools.debugger.ui',
+  'sources/alerts/alertify_wrapper',
+
+  'wcdocker', 'pgadmin.backform',
+  'pgadmin.backgrid', 'codemirror/addon/selection/active-line',
+  'codemirror/addon/fold/foldgutter', 'codemirror/addon/fold/foldcode',
+  'pgadmin-sqlfoldcode', 'codemirror/addon/edit/matchbrackets',
+  'codemirror/addon/edit/closebrackets',
+
+], function(
+  gettext, $, _, S, Alertify, pgAdmin, pgBrowser, Backbone, Backgrid,
+  CodeMirror, Backform, debug_function_again, AlertifyWrapper
+) {
 
   if (pgAdmin.Browser.tree != null) {
     pgAdmin = pgAdmin || window.pgAdmin || {};
@@ -360,7 +370,7 @@ define(
               pgTools.DirectDebug.polling_timeout_idle = true;
               // If status is Busy then poll the result by recursive call to the poll function
               if (!pgTools.DirectDebug.debug_type) {
-                pgTools.DirectDebug.docker.startLoading('{{ _('Waiting for another session to invoke the target...') }}');
+                pgTools.DirectDebug.docker.startLoading(gettext('Waiting for another session to invoke the target...'));
 
                 // As we are waiting for another session to invoke the target,disable all the buttons
                 self.enable('stop', false);
@@ -456,12 +466,8 @@ define(
                 pgTools.DirectDebug.polling_timeout_idle = true;
 
                 //Set the alertify message to inform the user that execution is completed.
-                Alertify.notify(
-                  res.info,
-                  'success',
-                  3,
-                  function() { }
-                );
+                var alertifyWrapper = new AlertifyWrapper();
+                alertifyWrapper.success(res.info, 3);
 
                 // Update the message tab of the debugger
                 if (res.data.status_message) {
@@ -492,12 +498,8 @@ define(
                   pgTools.DirectDebug.polling_timeout_idle = true;
 
                   //Set the alertify message to inform the user that execution is completed.
-                  Alertify.notify(
-                    res.info,
-                    'success',
-                    3,
-                    function() { }
-                  );
+                  var alertifyWrapper = new AlertifyWrapper();
+                  alertifyWrapper.success(res.info, 3);
 
                   // Update the message tab of the debugger
                   if (res.data.status_message) {
@@ -540,12 +542,11 @@ define(
               pgTools.DirectDebug.editor.removeLineClass(self.active_line_no, 'wrap', 'CodeMirror-activeline-background');
 
               //Set the alertify message to inform the user that execution is completed with error.
-              Alertify.notify(
-                res.info,
-                'error',
-                3,
-                function() { }
-              );
+              var alertifyWrapper = new AlertifyWrapper();
+
+              if(!pgTools.DirectDebug.is_user_aborted_debugging) {
+                alertifyWrapper.error(res.info, 3);
+              }
 
               // Update the message tab of the debugger
               if (res.data.status_message) {
@@ -557,14 +558,21 @@ define(
               // remove progress cursor
               $('.debugger-container').removeClass('show_progress');
 
-              // Execution completed so disable the buttons other than "Continue/Start" button because user can still
-              // start the same execution again.
+              // Execution completed so disable the buttons other than
+              // "Continue/Start" button because user can still start the
+              // same execution again.
               self.enable('stop', false);
               self.enable('step_over', false);
               self.enable('step_into', false);
               self.enable('toggle_breakpoint', false);
               self.enable('clear_all_breakpoints', false);
-              self.enable('continue', true);
+              // If debugging is stopped by user then do not enable
+              // continue/restart button
+              if(!pgTools.DirectDebug.is_user_aborted_debugging)
+              {
+                self.enable('continue', true);
+                pgTools.DirectDebug.is_user_aborted_debugging = false;
+              }
 
               // Stop further pooling
               pgTools.DirectDebug.is_polling_required = false;
@@ -602,6 +610,7 @@ define(
           var restart_dbg = res.data.restart_debug ? 1 : 0;
 
           // Start pooling again
+          pgTools.DirectDebug.polling_timeout_idle = false;
           pgTools.DirectDebug.is_polling_required = true;
           self.poll_end_execution_result(trans_id);
           self.poll_result(trans_id);
@@ -770,7 +779,7 @@ define(
         self.enable('step_into', false);
         self.enable('toggle_breakpoint', false);
         self.enable('clear_all_breakpoints', false);
-        self.enable('continue', true);
+        self.enable('continue', false);
 
         // Make ajax call to listen the database message
         var baseUrl = "{{ url_for('debugger.index') }}" + "execute_query/" + trans_id + "/" + "abort_target";
@@ -783,18 +792,19 @@ define(
               // Call function to create and update local variables ....
               pgTools.DirectDebug.editor.removeLineClass(self.active_line_no, 'wrap', 'CodeMirror-activeline-background');
               pgTools.DirectDebug.direct_execution_completed = true;
+              pgTools.DirectDebug.is_user_aborted_debugging = true;
 
-              //Set the alertify message to inform the user that execution is completed.
-              Alertify.notify(
-                res.info,
-                'success',
-                3,
-                function() { }
-              );
+              // Stop further pooling
+              pgTools.DirectDebug.is_polling_required = false;
 
-              //Disable the buttons other than continue button. If user wants to again then it should allow to debug again...
-              self.enable('continue', true);
+              // Restarting debugging in the same transaction do not work
+              // We will give same behaviour as pgAdmin3 and disable all buttons
+              self.enable('continue', false);
 
+              // Set the alertify message to inform the user that execution
+              // is completed.
+              var alertifyWrapper = new AlertifyWrapper();
+              alertifyWrapper.success(res.info, 3);
             }
             else if (res.data.status === 'NotConnected') {
               Alertify.alert(
@@ -1178,12 +1188,12 @@ define(
               // Get the updated variables value
               self.GetLocalVariables(pgTools.DirectDebug.trans_id);
               // Show the message to the user that deposit value is success or failure
-              Alertify.notify(
-                res.data.info,
-                res.data.result ? 'success': 'error',
-                3,
-                function() { }
-              );
+              var alertifyWrapper = new AlertifyWrapper();
+              if (res.data.result) {
+                alertifyWrapper.success(res.data.info, 3);
+              } else {
+                alertifyWrapper.error(res.data.info, 3);
+              }
             }
           },
           error: function(e) {
@@ -1359,6 +1369,7 @@ define(
       this.direct_execution_completed = false;
       this.polling_timeout_idle = false;
       this.debug_restarted = false;
+      this.is_user_aborted_debugging = false;
       this.is_polling_required = true; // Flag to stop unwanted ajax calls
 
       var docker = this.docker = new wcDocker(
@@ -1501,13 +1512,13 @@ define(
     intializePanels: function() {
       var self = this;
       this.registerPanel(
-        'code', false, '100%', '100%',
+        'code', false, '100%', '50%',
         function(panel) {
 
             // Create the parameters panel to display the arguments of the functions
             var parameters = new pgAdmin.Browser.Panel({
               name: 'parameters',
-              title: '{{ _('Parameters') }}',
+              title: gettext('Parameters'),
               width: '100%',
               height:'100%',
               isCloseable: false,
@@ -1518,7 +1529,7 @@ define(
             // Create the Local variables panel to display the local variables of the function.
             var local_variables = new pgAdmin.Browser.Panel({
               name: 'local_variables',
-              title: '{{ _('Local variables') }}',
+              title: gettext('Local variables'),
               width: '100%',
               height:'100%',
               isCloseable: false,
@@ -1529,7 +1540,7 @@ define(
             // Create the messages panel to display the message returned from the database server
             var messages = new pgAdmin.Browser.Panel({
               name: 'messages',
-              title: '{{ _('Messages') }}',
+              title: gettext('Messages'),
               width: '100%',
               height:'100%',
               isCloseable: false,
@@ -1540,7 +1551,7 @@ define(
             // Create the result panel to display the result after debugging the function
             var results = new pgAdmin.Browser.Panel({
               name: 'results',
-              title: '{{ _('Results') }}',
+              title: gettext('Results'),
               width: '100%',
               height:'100%',
               isCloseable: false,
@@ -1551,7 +1562,7 @@ define(
             // Create the stack pane panel to display the debugging stack information.
             var stack_pane = new pgAdmin.Browser.Panel({
               name: 'stack_pane',
-              title: '{{ _('Stack') }}',
+              title: gettext('Stack'),
               width: '100%',
               height:'100%',
               isCloseable: false,
@@ -1600,7 +1611,9 @@ define(
           readOnly: true,
           extraKeys: pgAdmin.Browser.editor_shortcut_keys,
           tabSize: pgAdmin.Browser.editor_options.tabSize,
-          lineWrapping: pgAdmin.Browser.editor_options.wrapCode
+          lineWrapping: pgAdmin.Browser.editor_options.wrapCode,
+          autoCloseBrackets: pgAdmin.Browser.editor_options.insert_pair_brackets,
+          matchBrackets: pgAdmin.Browser.editor_options.brace_matching
         });
 
         // On loading the docker, register the callbacks
@@ -1611,7 +1624,7 @@ define(
           self.editor.on("gutterClick", self.onBreakPoint.bind(self), self);
         };
 
-        self.docker.startLoading('{{ _('Loading...') }}');
+        self.docker.startLoading(gettext('Loading...'));
         self.docker.on(wcDocker.EVENT.LOADED, onLoad);
 
         // Create the toolbar view for debugging the function

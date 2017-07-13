@@ -29,7 +29,7 @@ class HelpModule(PgAdminModule):
                      priority=100,
                      target='_blank',
                      icon='fa fa-question',
-                     url='https://www.bigsql.org/docs/pgadmin4/'),
+                     url=url_for('help.static', filename='index.html')),
 
             MenuItem(name='mnu_pgadmin_website',
                      label=gettext('pgAdmin Website'),
@@ -100,6 +100,12 @@ class HelpModule(PgAdminModule):
             help_str=gettext(
                 'Path to the EDB Advanced Server documentation. $VERSION$ will be replaced with the major.minor version number.')
         )
+
+    def get_exposed_url_endpoints(self):
+        """
+        Returns the list of URLs exposed to the client.
+        """
+        return ['help.static']
 
 
 # Initialise the module

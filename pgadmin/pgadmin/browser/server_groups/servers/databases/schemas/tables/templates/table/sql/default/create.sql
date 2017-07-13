@@ -18,7 +18,7 @@
 {% endif %}
 CREATE {% if data.relpersistence %}UNLOGGED {% endif %}TABLE {{conn|qtIdent(data.schema, data.name)}}{{empty_bracket}}
 {% if data.typname %}
-    OF {{ conn|qtTypeIdent(data.typname) }}
+    OF {{ data.typname }}
 {% endif %}
 {% if data.like_relation or data.coll_inherits or data.columns|length > 0 or data.primary_key|length > 0 or data.unique_constraint|length > 0 or data.foreign_key|length > 0 or data.check_constraint|length > 0 or data.exclude_constraint|length > 0 %}
 (
@@ -44,7 +44,7 @@ CREATE {% if data.relpersistence %}UNLOGGED {% endif %}TABLE {{conn|qtIdent(data
 {% if c.name and c.cltype %}
 {% if loop.index != 1 %},
 {% endif %}
-    {{conn|qtIdent(c.name)}} {{ GET_TYPE.CREATE_TYPE_SQL(conn, c.cltype, c.attlen, c.attprecision, c.hasSqrBracket) }}{% if c.collspcname %} COLLATE {{c.collspcname}}{% endif %}{% if c.attnotnull %} NOT NULL{% endif %}{% if c.defval %} DEFAULT {{c.defval}}{% endif %}
+    {{conn|qtIdent(c.name)}} {% if is_sql %}{{c.displaytypname}}{% else %}{{ GET_TYPE.CREATE_TYPE_SQL(conn, c.cltype, c.attlen, c.attprecision, c.hasSqrBracket) }}{% endif %}{% if c.collspcname %} COLLATE {{c.collspcname}}{% endif %}{% if c.attnotnull %} NOT NULL{% endif %}{% if c.defval %} DEFAULT {{c.defval}}{% endif %}
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -57,8 +57,8 @@ CREATE {% if data.relpersistence %}UNLOGGED {% endif %}TABLE {{conn|qtIdent(data
 {{CONSTRAINTS.EXCLUDE(conn, data.exclude_constraint)}}{% endif %}
 {% if data.like_relation or data.coll_inherits or data.columns|length > 0 or data.primary_key|length > 0 or data.unique_constraint|length > 0 or data.foreign_key|length > 0 or data.check_constraint|length > 0 or data.exclude_constraint|length > 0 %}
 
-)
-{% endif %}
+){% endif %}{% if data.relkind is defined and data.relkind == 'p' %} PARTITION BY {{ data.partition_scheme }} {% endif %}
+
 {### If we are inheriting it from another table(s) ###}
 {% if data.coll_inherits %}
     INHERITS ({% for val in data.coll_inherits %}{% if loop.index != 1 %}, {% endif %}{{val}}{% endfor %})

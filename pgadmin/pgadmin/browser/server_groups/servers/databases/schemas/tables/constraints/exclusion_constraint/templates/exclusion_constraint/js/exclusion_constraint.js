@@ -1,7 +1,8 @@
-define(
-        ['jquery', 'underscore', 'underscore.string', 'pgadmin',
-        'pgadmin.browser', 'alertify', 'pgadmin.browser.collection'],
-function($, _, S, pgAdmin, pgBrowser, Alertify) {
+define('pgadmin.node.exclusion_constraint', [
+  'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
+  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
+  'pgadmin.browser.collection'
+], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Alertify) {
 
   var ExclusionConstraintColumnModel = pgBrowser.Node.Model.extend({
     defaults: {
@@ -19,15 +20,30 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
       return d;
     },
     schema: [{
-        id: 'column', label:'{{ _('Column') }}', type:'text', editable: false,
+        id: 'column', label: gettext('Column'), type:'text', editable: false,
         cell:'string'
       },{
-        id: 'oper_class', label:'{{ _('Operator class') }}', type:'text',
+        id: 'oper_class', label: gettext('Operator class'), type:'text',
         node: 'table', url: 'get_oper_class', first_empty: true,
-        editable: true,
+        editable: function(m) {
+          if (m instanceof Backbone.Collection) {
+            return true;
+          } else if ((_.has(m.collection, 'handler') &&
+                !_.isUndefined(m.collection.handler) &&
+                !_.isUndefined(m.collection.handler.get('oid')))) {
+            return false;
+          } else if (_.has(m.collection, 'handler') &&
+                !_.isUndefined(m.collection.handler) &&
+                !_.isUndefined(m.collection.handler.get('amname')) &&
+                m.collection.handler.get('amname') != 'btree') {
+            // Disable if access method is not btree
+            return false;
+          }
+          return true;
+        },
         select2: {
           allowClear: true, width: 'style', tags: true,
-          placeholder: '{{ _("Select the operator class") }}'
+          placeholder: gettext('Select the operator class')
         }, cell: Backgrid.Extension.Select2Cell.extend({
           initialize: function () {
             Backgrid.Extension.Select2Cell.prototype.initialize.apply(this, arguments);
@@ -65,6 +81,7 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
                   url: full_url,
                   success: function(res) {
                     data = res.data;
+                    self.column.set('options', data);
                   },
                   error: function() {
                     eventHandler.trigger('pgadmin:view:fetch:error', m, self.column);
@@ -72,74 +89,55 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
                 });
                 eventHandler.trigger('pgadmin:view:fetched', m, self.column);
               }
-              /*
-               * Transform the data
-               */
-              transform = self.column.get('transform') || self.defaults.transform;
-              if (transform && _.isFunction(transform)) {
-                // We will transform the data later, when rendering.
-                // It will allow us to generate different data based on the
-                // dependencies.
-                self.column.set('options', transform.bind(self, data));
-              } else {
-                self.column.set('options', data);
-              }
             } else {
               self.column.set('options', []);
             }
           }
         })
       },{
-        id: 'order', label:'{{ _('DESC') }}', type: 'switch',
+        id: 'order', label: gettext('DESC'), type: 'switch',
         options: {
           onText: 'ASC',
           offText: 'DESC',
-        },editable: function(m) {
+        },
+        editable: function(m) {
           if (m instanceof Backbone.Collection) {
             return true;
-          }
-          else {
-            if (m.top.get('amname') === 'btree') {
-              m.set('is_sort_nulls_applicable', true);
-              return true;
-            }
-            m.set('is_sort_nulls_applicable', false);
-            return false;
-          }
-          if ((_.has(m.collection, 'handler') &&
+          } else if ((_.has(m.collection, 'handler') &&
                 !_.isUndefined(m.collection.handler) &&
                 !_.isUndefined(m.collection.handler.get('oid')))) {
             return false;
+          } else if (m.top.get('amname') === 'btree') {
+            m.set('is_sort_nulls_applicable', true);
+            return true;
+          } else {
+            m.set('is_sort_nulls_applicable', false);
+            return false;
           }
-          return true;
         }
       },{
-        id: 'nulls_order', label:'{{ _('NULLs order') }}', type:"switch",
+        id: 'nulls_order', label: gettext('NULLs order'), type:"switch",
         options: {
           onText: 'FIRST',
           offText: 'LAST',
-        },editable: function(m) {
+        },
+        editable: function(m) {
           if (m instanceof Backbone.Collection) {
             return true;
-          }
-          else {
-            if (m.top.get('amname') === 'btree') {
-              m.set('is_sort_nulls_applicable', true);
-              return true;
-            }
-            m.set('is_sort_nulls_applicable', false);
-            return false;
-          }
-
-          if ((_.has(m.collection, 'handler') &&
+          } else if ((_.has(m.collection, 'handler') &&
                 !_.isUndefined(m.collection.handler) &&
                 !_.isUndefined(m.collection.handler.get('oid')))) {
             return false;
+          } else if (m.top.get('amname') === 'btree') {
+              m.set('is_sort_nulls_applicable', true);
+              return true;
+          } else {
+            m.set('is_sort_nulls_applicable', false);
+            return false;
           }
-          return true;
         }
       },{
-        id: 'operator', label:'{{ _('Operator') }}', type: 'text',
+        id: 'operator', label: gettext('Operator'), type: 'text',
         node: 'table', url: 'get_operator',
         editable: function(m) {
           if (m instanceof Backbone.Collection) {
@@ -184,24 +182,13 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
                   url: full_url,
                   success: function(res) {
                     data = res.data;
+                    self.column.set('options', data);
                   },
                   error: function() {
                     eventHandler.trigger('pgadmin:view:fetch:error', m, self.column);
                   }
                 });
                 eventHandler.trigger('pgadmin:view:fetched', m, self.column);
-              }
-              /*
-               * Transform the data
-               */
-              transform = self.column.get('transform') || self.defaults.transform;
-              if (transform && _.isFunction(transform)) {
-                // We will transform the data later, when rendering.
-                // It will allow us to generate different data based on the
-                // dependencies.
-                self.column.set('options', transform.bind(self, data));
-              } else {
-                self.column.set('options', data);
               }
             }
           }
@@ -213,7 +200,7 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
       var operator = this.get('operator'),
         column_name = this.get('column');
       if (_.isUndefined(operator) || _.isNull(operator)) {
-        var msg = '{{ _('Please specify operator for column: ') }}' + column_name;
+        var msg = gettext('Please specify operator for column: ') + column_name;
         this.errorModel.set('operator', msg);
         return msg;
       }
@@ -413,7 +400,7 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
         '</div>',].join("\n")
 
       _.extend(data, {
-        column_label: '{{ _('Column') }}'
+        column_label: gettext('Column')
       });
 
       var self = this,
@@ -615,14 +602,15 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
   // Extend the browser's node class for exclusion constraint node
   if (!pgBrowser.Nodes['exclusion_constraint']) {
     pgAdmin.Browser.Nodes['exclusion_constraint'] = pgBrowser.Node.extend({
+      getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
       type: 'exclusion_constraint',
-      label: '{{ _('Exclusion constraint') }}',
+      label: gettext('Exclusion constraint'),
       collection_type: 'coll-constraints',
       sqlAlterHelp: 'ddl-alter.html',
       sqlCreateHelp: 'ddl-constraints.html',
-      dialogHelp: '{{ url_for('help.static', filename='exclusion_constraint_dialog.html') }}',
+      dialogHelp: url_for('help.static', {'filename': 'exclusion_constraint_dialog.html'}),
       hasSQL: true,
-      parent_type: 'table',
+      parent_type: ['table','partition'],
       canDrop: true,
       canDropCascade: true,
       hasDepends: true,
@@ -638,7 +626,7 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
         pgBrowser.add_menus([{
           name: 'create_exclusion_constraint_on_coll', node: 'coll-constraints', module: this,
           applies: ['object', 'context'], callback: 'show_obj_properties',
-          category: 'create', priority: 4, label: '{{ _('Exclusion constraint...') }}',
+          category: 'create', priority: 4, label: gettext('Exclusion constraint...'),
           icon: 'wcTabIcon icon-exclusion_constraint', data: {action: 'create', check: true},
           enable: 'canCreate'
         }]);
@@ -664,13 +652,13 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
 
         // Define the schema for the exclusion constraint node
         schema: [{
-          id: 'name', label: '{{ _('Name') }}', type: 'text',
+          id: 'name', label: gettext('Name'), type: 'text',
           mode: ['properties', 'create', 'edit'], editable: true,
         },{
-          id: 'oid', label:'{{ _('OID') }}', cell: 'string',
+          id: 'oid', label: gettext('OID'), cell: 'string',
           type: 'text' , mode: ['properties']
         },{
-          id: 'comment', label:'{{ _('Comment') }}', cell: 'string',
+          id: 'comment', label: gettext('Comment'), cell: 'string',
           type: 'multiline', mode: ['properties', 'create', 'edit'],
           deps:['name'], disabled:function(m) {
             var name = m.get('name');
@@ -685,8 +673,8 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
             }
           }
         },{
-          id: 'spcname', label: '{{ _('Tablespace') }}',
-          type: 'text', group: '{{ _('Definition') }}',
+          id: 'spcname', label: gettext('Tablespace'),
+          type: 'text', group: gettext('Definition'),
           control: 'node-list-by-name', node: 'tablespace',
           select2:{allowClear:false},
           filter: function(m) {
@@ -695,8 +683,8 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
             else return true;
           }
         },{
-          id: 'amname', label: '{{ _('Access method') }}',
-          type: 'text', group: '{{ _('Definition') }}',
+          id: 'amname', label: gettext('Access method'),
+          type: 'text', group: gettext('Definition'),
           url:"get_access_methods", node: 'table',
           control: Backform.NodeAjaxOptionsControl.extend({
             // When access method changes we need to clear columns collection
@@ -710,7 +698,7 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
               column_collection = self.model.get('columns');
 
               if (column_collection.length > 0 && current_am != previous_am) {
-                var msg = '{{ _('Changing access method will clear columns collection') }}';
+                var msg = gettext('Changing access method will clear columns collection');
                 Alertify.confirm(msg, function (e) {
                     // User clicks Ok, lets clear collection.
                     column_collection.each(function(m) {
@@ -740,19 +728,19 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
               !_.isUndefined(m.get('oid'))) || (_.isFunction(m.isNew) && !m.isNew()));
           }
         },{
-          id: 'fillfactor', label: '{{ _('Fill factor') }}',
-          type: 'int', group: '{{ _('Definition') }}', allowNull: true
+          id: 'fillfactor', label: gettext('Fill factor'),
+          type: 'int', group: gettext('Definition'), allowNull: true
         },{
-          id: 'condeferrable', label: '{{ _('Deferrable?') }}',
-          type: 'switch', group: '{{ _('Definition') }}', deps: ['index'],
+          id: 'condeferrable', label: gettext('Deferrable?'),
+          type: 'switch', group: gettext('Definition'), deps: ['index'],
           disabled: function(m) {
             return ((_.has(m, 'handler') &&
               !_.isUndefined(m.handler) &&
               !_.isUndefined(m.get('oid'))) || (_.isFunction(m.isNew) && !m.isNew()));
           }
         },{
-          id: 'condeferred', label: '{{ _('Deferred?') }}',
-          type: 'switch', group: '{{ _('Definition') }}',
+          id: 'condeferred', label: gettext('Deferred?'),
+          type: 'switch', group: gettext('Definition'),
           deps: ['condeferrable'],
           disabled: function(m) {
             if((_.has(m, 'handler') &&
@@ -773,16 +761,16 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
             }
           }
         },{
-          id: 'constraint', label:'{{ _('Constraint') }}', cell: 'string',
+          id: 'constraint', label: gettext('Constraint'), cell: 'string',
           type: 'multiline', mode: ['create', 'edit'], editable: false,
-          group: '{{ _('Definition') }}', disabled: function(m) {
+          group: gettext('Definition'), disabled: function(m) {
             return ((_.has(m, 'handler') &&
               !_.isUndefined(m.handler) &&
               !_.isUndefined(m.get('oid'))) || (_.isFunction(m.isNew) && !m.isNew()));
           }
         },{
-          id: 'columns', label: '{{ _('Columns') }}',
-          type: 'collection', group: '{{ _('Columns') }}', disabled: false,
+          id: 'columns', label: gettext('Columns'),
+          type: 'collection', group: gettext('Columns'), disabled: false,
           deps:['amname'], canDelete: true, editable: false,
           canAdd: function(m) {
             // We can't update columns of existing exclusion constraint.
@@ -910,12 +898,12 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
               name = this.get('name');
 
           if ((_.isUndefined(name) || _.isNull(name) || name.length < 1)) {
-            var msg = '{{ _('Please specify name for exclusion constraint.') }}';
+            var msg = gettext('Please specify name for exclusion constraint.');
             this.errorModel.set('name', msg);
             return msg;
           }
           else  if ((_.isUndefined(columns) || _.isNull(columns) || columns.length < 1)) {
-            var msg = '{{ _('Please specify columns for exclusion constraint.') }}';
+            var msg = gettext('Please specify columns for exclusion constraint.');
             this.errorModel.set('columns', msg);
             return msg;
           }
@@ -929,12 +917,22 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
           if (data && data.check == false)
             return true;
 
-          var t = pgBrowser.tree, i = item, d = itemData, parents = [];
+          var t = pgBrowser.tree, i = item, d = itemData, parents = [],
+            immediate_parent_table_found = false,
+            is_immediate_parent_table_partitioned = false;
           // To iterate over tree to check parent node
           while (i) {
+            // If table is partitioned table then return false
+            if (!immediate_parent_table_found && (d._type == 'table' || d._type == 'partition')) {
+              immediate_parent_table_found = true;
+              if ('is_partitioned' in d && d.is_partitioned) {
+                is_immediate_parent_table_partitioned = true;
+              }
+            }
+
             // If it is schema then allow user to create table
             if (_.indexOf(['schema'], d._type) > -1)
-              return true;
+              return !is_immediate_parent_table_partitioned;
             parents.push(d._type);
             i = t.hasParent(i) ? t.parent(i) : null;
             d = i ? t.itemData(i) : null;
@@ -943,7 +941,7 @@ function($, _, S, pgAdmin, pgBrowser, Alertify) {
           if (_.indexOf(parents, 'catalog') > -1) {
             return false;
           } else {
-            return true;
+            return !is_immediate_parent_table_partitioned;
           }
       }
     });

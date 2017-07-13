@@ -88,6 +88,16 @@ class PgAdmin(Flask):
         return messages
 
     @property
+    def exposed_endpoint_url_map(self):
+        for rule in current_app.url_map.iter_rules('static'):
+            yield rule.endpoint, rule.rule
+
+        for module in self.submodules:
+            for endpoint in module.exposed_endpoints:
+                for rule in current_app.url_map.iter_rules(endpoint):
+                    yield rule.endpoint, rule.rule
+
+    @property
     def javascripts(self):
         scripts = []
         scripts_names = []
@@ -160,6 +170,11 @@ def create_app(app_name=None):
     # logger.
     logger = logging.getLogger('werkzeug')
     logger.setLevel(logging.INFO)
+
+    # Set SQLITE_PATH to TEST_SQLITE_PATH while running test cases
+    if "PGADMIN_TESTING_MODE" in os. environ and \
+                    os.environ["PGADMIN_TESTING_MODE"] == "1":
+        config.SQLITE_PATH = config.TEST_SQLITE_PATH
 
     # Ensure the various working directories exist
     from pgadmin.setup import create_app_data_directory, db_upgrade

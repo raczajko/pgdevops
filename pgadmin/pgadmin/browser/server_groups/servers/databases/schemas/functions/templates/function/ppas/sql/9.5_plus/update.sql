@@ -30,16 +30,16 @@ CREATE OR REPLACE FUNCTION {{ conn|qtIdent(o_data.pronamespace, name) }}({% if d
 
     {% if data.procost %}COST {{data.procost}}{% elif o_data.procost %}COST {{o_data.procost}}{% endif %}{% if data.prorows %}
 
-    ROWS {{data.prorows}}{% elif o_data.prorows %}ROWS {{o_data.prorows}} {%endif -%}{% if data.merged_variables %}{% for v in data.merged_variables %}
+    ROWS {{data.prorows}}{% elif o_data.prorows and o_data.prorows != '0' %}    ROWS {{o_data.prorows}} {%endif -%}{% if data.merged_variables %}{% for v in data.merged_variables %}
 
     SET {{ conn|qtIdent(v.name) }}={{ v.value|qtLiteral }}{% endfor -%}
     {% endif %}
 
 AS {% if 'probin' in data or 'prosrc_c' in data %}
 {% if 'probin' in data %}{{ data.probin|qtLiteral }}{% else %}{{ o_data.probin|qtLiteral }}{% endif %}, {% if 'prosrc_c' in data %}{{ data.prosrc_c|qtLiteral }}{% else %}{{ o_data.prosrc_c|qtLiteral }}{% endif %}{% elif 'prosrc' in data %}
-$function${{ data.prosrc }}$function${% elif o_data.lanname == 'c' %}
+$BODY${{ data.prosrc }}$BODY${% elif o_data.lanname == 'c' %}
 {{ o_data.probin|qtLiteral }}, {{ o_data.prosrc_c|qtLiteral }}{% else %}
-$function${{ o_data.prosrc }}$function${% endif -%};
+$BODY${{ o_data.prosrc }}$BODY${% endif -%};
 {% endif -%}
 {% if data.funcowner %}
 

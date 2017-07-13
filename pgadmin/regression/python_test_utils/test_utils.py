@@ -159,18 +159,49 @@ def create_table(server, db_name, table_name):
         connection.set_isolation_level(0)
         pg_cursor = connection.cursor()
         pg_cursor.execute(
-            '''CREATE TABLE "%s" (some_column VARCHAR, value NUMERIC)''' %
+            '''CREATE TABLE "%s" (some_column VARCHAR, value NUMERIC, details VARCHAR)''' %
             table_name)
         pg_cursor.execute(
-            '''INSERT INTO "%s" VALUES ('Some-Name', 6)''' % table_name)
+            '''INSERT INTO "%s" VALUES ('Some-Name', 6, 'some info')''' % table_name)
         pg_cursor.execute(
-            '''INSERT INTO "%s" VALUES ('Some-Other-Name', 22)''' % table_name)
+            '''INSERT INTO "%s" VALUES ('Some-Other-Name', 22, 'some other info')''' % table_name)
+        pg_cursor.execute(
+            '''INSERT INTO "%s" VALUES ('Yet-Another-Name', 14, 'cool info')''' % table_name)
 
         connection.set_isolation_level(old_isolation_level)
         connection.commit()
 
     except Exception:
         traceback.print_exc(file=sys.stderr)
+
+
+def create_table_with_query(server, db_name, query):
+    """
+    This function create the table in given database name
+    :param server: server details
+    :type server: dict
+    :param db_name: database name
+    :type db_name: str
+    :param query: create table query
+    :type query: str
+    :return: None
+    """
+    try:
+        connection = get_db_connection(db_name,
+                                       server['username'],
+                                       server['db_password'],
+                                       server['host'],
+                                       server['port'])
+        old_isolation_level = connection.isolation_level
+        connection.set_isolation_level(0)
+        pg_cursor = connection.cursor()
+        pg_cursor.execute(query)
+        connection.set_isolation_level(old_isolation_level)
+        connection.commit()
+
+    except Exception:
+        traceback.print_exc(file=sys.stderr)
+
 
 def create_constraint(
         server, db_name, table_name,
@@ -195,6 +226,7 @@ def create_constraint(
 
     except Exception:
         traceback.print_exc(file=sys.stderr)
+
 
 def create_debug_function(server, db_name, function_name="test_func"):
     try:

@@ -60,12 +60,18 @@ psycopg2.extensions.register_type(
 psycopg2.extensions.register_type(
     psycopg2.extensions.new_type(
         (
-            # To cast bytea and interval type
-            17, 1186,
-            # to cast int4range, int8range, numrange tsrange, tstzrange, daterange
-            3904,3926, 3906, 3908, 3910, 3912, 3913,
+            # To cast bytea, bytea[] and interval type
+            17, 1001, 1186,
+
+            # to cast int4range, int8range, numrange tsrange, tstzrange,
+            # daterange
+            3904, 3926, 3906, 3908, 3910, 3912, 3913,
+
             # date, timestamp, timestamptz, bigint, double precision, bigint[]
-            1700, 1082, 1114, 1184, 20, 701, 1016
+            1700, 1082, 1114, 1184, 20, 701, 1016,
+
+            # double precision[], real, real[]
+            1022, 700, 1021
          ),
         'TYPECAST_TO_STRING', psycopg2.STRING)
 )
@@ -310,13 +316,13 @@ class Connection(BaseConnection):
 
             pg_conn = psycopg2.connect(
                 host=mgr.host,
+                hostaddr=mgr.hostaddr,
                 port=mgr.port,
                 database=database,
                 user=user,
                 password=password,
                 async=self.async,
-                sslmode=mgr.ssl_mode,
-                connect_timeout = 20
+                sslmode=mgr.ssl_mode
             )
 
             # If connection is asynchronous then we will have to wait
@@ -1073,6 +1079,55 @@ Failed to execute query (execute_void) for the server #{server_id} - {conn_id}
 
         return True, {'columns': columns, 'rows': rows}
 
+    def async_fetchmany_2darray(self, records=2000, formatted_exception_msg=False):
+        """
+        User should poll and check if status is ASYNC_OK before calling this
+        function
+        Args:
+          records: no of records to fetch. use -1 to fetchall.
+          formatted_exception_msg:
+
+        Returns:
+
+        """
+        cur = self.__async_cursor
+        if not cur:
+            return False, gettext(
+                "Cursor could not be found for the async connection."
+            )
+
+        if self.conn.isexecuting():
+            return False, gettext(
+                "Asynchronous query execution/operation underway."
+            )
+
+        if self.row_count > 0:
+            result = []
+            # For DDL operation, we may not have result.
+            #
+            # Because - there is not direct way to differentiate DML and
+            # DDL operations, we need to rely on exception to figure
+            # that out at the moment.
+            try:
+                if records == -1:
+                    res = cur.fetchall()
+                else:
+                    res = cur.fetchmany(records)
+                for row in res:
+                    new_row = []
+                    for col in self.column_info:
+                        new_row.append(row[col['name']])
+                    result.append(new_row)
+            except psycopg2.ProgrammingError as e:
+                result = None
+        else:
+            # User performed operation which dose not produce record/s as
+            # result.
+            # for eg. DDL operations.
+            return True, None
+
+        return True, result
+
     def connected(self):
         if self.conn:
             if not self.conn.closed:
@@ -1101,6 +1156,7 @@ Failed to execute query (execute_void) for the server #{server_id} - {conn_id}
         try:
             pg_conn = psycopg2.connect(
                 host=mgr.host,
+                hostaddr=mgr.hostaddr,
                 port=mgr.port,
                 database=self.db,
                 user=mgr.user,
@@ -1219,7 +1275,7 @@ Failed to reset the connection to the server due to following error:
                 "poll() returned %s from _wait_timeout function" % state
             )
 
-    def poll(self, formatted_exception_msg=False):
+    def poll(self, formatted_exception_msg=False, no_result=False):
         """
         This function is a wrapper around connection's poll function.
         It internally uses the _wait_timeout method to poll the
@@ -1229,13 +1285,14 @@ Failed to reset the connection to the server due to following error:
         Args:
             formatted_exception_msg: if True then function return the formatted
                                      exception message, otherwise error string.
+            no_result: If True then only poll status will be returned.
         """
 
         cur = self.__async_cursor
         if not cur:
             return False, gettext(
                 "Cursor could not be found for the async connection."
-            ), None
+            )
 
         current_app.logger.log(
             25,
@@ -1284,23 +1341,23 @@ Failed to reset the connection to the server due to following error:
                     pos += 1
 
             self.row_count = cur.rowcount
+            if not no_result:
+                if cur.rowcount > 0:
+                    result = []
+                    # For DDL operation, we may not have result.
+                    #
+                    # Because - there is not direct way to differentiate DML and
+                    # DDL operations, we need to rely on exception to figure
+                    # that out at the moment.
+                    try:
+                        for row in cur:
+                            new_row = []
+                            for col in self.column_info:
+                                new_row.append(row[col['name']])
+                            result.append(new_row)
 
-            if cur.rowcount > 0:
-                result = []
-                # For DDL operation, we may not have result.
-                #
-                # Because - there is not direct way to differentiate DML and
-                # DDL operations, we need to rely on exception to figure that
-                # out at the moment.
-                try:
-                    for row in cur:
-                        new_row = []
-                        for col in self.column_info:
-                            new_row.append(row[col['name']])
-                        result.append(new_row)
-
-                except psycopg2.ProgrammingError:
-                    result = None
+                    except psycopg2.ProgrammingError:
+                        result = None
 
         return status, result
 
@@ -1368,6 +1425,7 @@ Failed to reset the connection to the server due to following error:
             try:
                 pg_conn = psycopg2.connect(
                     host=self.manager.host,
+                    hostaddr=self.manager.hostaddr,
                     port=self.manager.port,
                     database=self.db,
                     user=self.manager.user,
@@ -1514,6 +1572,7 @@ class ServerManager(object):
 
         self.sid = server.id
         self.host = server.host
+        self.hostaddr = server.hostaddr
         self.port = server.port
         self.db = server.maintenance_db
         self.did = None

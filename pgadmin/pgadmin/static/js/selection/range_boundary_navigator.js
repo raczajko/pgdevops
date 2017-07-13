@@ -1,4 +1,5 @@
-define(['sources/selection/range_selection_helper'], function (RangeSelectionHelper) {
+define(['sources/selection/range_selection_helper'],
+function (RangeSelectionHelper) {
   return {
     getUnion: function (allRanges) {
       if (_.isEmpty(allRanges)) {
@@ -57,6 +58,7 @@ define(['sources/selection/range_selection_helper'], function (RangeSelectionHel
     },
 
     rangesToCsv: function (data, columnDefinitions, selectedRanges) {
+
       var rowRangeBounds = selectedRanges.map(function (range) {
         return [range.fromRow, range.toRow];
       });
@@ -71,11 +73,16 @@ define(['sources/selection/range_selection_helper'], function (RangeSelectionHel
       var csvRows = this.mapOver2DArray(rowRangeBounds, colRangeBounds, this.csvCell.bind(this, data, columnDefinitions), function (rowData) {
         return rowData.join(',');
       });
+
       return csvRows.join('\n');
     },
 
     removeFirstColumn: function (colRangeBounds) {
       var unionedColRanges = this.getUnion(colRangeBounds);
+
+      if(unionedColRanges.length == 0) {
+        return [];
+      }
 
       var firstSubrangeStartsAt0 = function () {
         return unionedColRanges[0][0] == 0;
@@ -96,16 +103,16 @@ define(['sources/selection/range_selection_helper'], function (RangeSelectionHel
     },
 
     csvCell: function (data, columnDefinitions, rowId, colId) {
-      var val = data[rowId][columnDefinitions[colId].pos];
+      var val = data[rowId][columnDefinitions[colId].field];
 
       if (val && _.isObject(val)) {
-        val = "'" + JSON.stringify(val) + "'";
-      } else if (val && typeof val != "number" && typeof val != "boolean") {
-        val = "'" + val.toString() + "'";
+        val = '\'' + JSON.stringify(val) + '\'';
+      } else if (val && typeof val != 'number' && typeof val != 'boolean') {
+        val = '\'' + val.toString() + '\'';
       } else if (_.isNull(val) || _.isUndefined(val)) {
         val = '';
       }
       return val;
-    }
+    },
   };
 });

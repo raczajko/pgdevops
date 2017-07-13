@@ -13,18 +13,20 @@ import simplejson as json
 from functools import wraps
 
 import pgadmin.browser.server_groups.servers.databases as databases
-from flask import render_template, make_response, request, jsonify
+from flask import render_template, request, jsonify
 from flask_babel import gettext
 from pgadmin.browser.collection import CollectionNodeModule
 from pgadmin.browser.server_groups.servers.utils import parse_priv_from_db, \
     parse_priv_to_db
 from pgadmin.browser.utils import PGChildNodeView
 from pgadmin.utils.ajax import make_json_response, internal_server_error, \
-    make_response as ajax_response
+    make_response as ajax_response, gone
 from pgadmin.utils.driver import get_driver
-from pgadmin.utils.ajax import gone
-
 from config import PG_DEFAULT_DRIVER
+from pgadmin.utils import IS_PY2
+# If we are in Python3
+if not IS_PY2:
+    unicode = str
 
 
 class LanguageModule(CollectionNodeModule):
@@ -94,6 +96,14 @@ class LanguageModule(CollectionNodeModule):
         """
         return databases.DatabaseModule.NODE_TYPE
 
+    @property
+    def module_use_template_javascript(self):
+        """
+        Returns whether Jinja2 template is used for generating the javascript
+        module.
+        """
+        return False
+
 
 blueprint = LanguageModule(__name__)
 
@@ -110,10 +120,6 @@ class LanguageView(PGChildNodeView):
     -------
     * __init__(**kwargs)
       - Method is used to initialize the LanguageView and it's base view.
-
-    * module_js()
-      - This property defines (if javascript) exists for this node.
-        Override this property for your own logic
 
     * check_precondition()
       - This function will behave as a decorator which will checks
@@ -183,7 +189,6 @@ class LanguageView(PGChildNodeView):
         'stats': [{'get': 'statistics'}],
         'dependency': [{'get': 'dependencies'}],
         'dependent': [{'get': 'dependents'}],
-        'module.js': [{}, {}, {'get': 'module_js'}],
         'get_functions': [{}, {'get': 'get_functions'}],
         'get_templates': [{}, {'get': 'get_templates'}],
         'delete': [{'delete': 'delete'}]
@@ -202,18 +207,6 @@ class LanguageView(PGChildNodeView):
         self.manager = None
 
         super(LanguageView, self).__init__(**kwargs)
-
-    def module_js(self):
-        """
-        This property defines whether javascript exists for this node.
-        """
-        return make_response(
-            render_template(
-                "languages/js/languages.js",
-                _=gettext
-            ),
-            200, {'Content-Type': 'application/x-javascript'}
-        )
 
     def check_precondition(f):
         """
@@ -392,6 +385,9 @@ class LanguageView(PGChildNodeView):
 
         try:
             sql, name = self.get_sql(data, lid)
+            # Most probably this is due to error
+            if not isinstance(sql, (str, unicode)):
+                return sql
             sql = sql.strip('\n').strip(' ')
             status, res = self.conn.execute_dict(sql)
             if not status:
@@ -531,6 +527,9 @@ class LanguageView(PGChildNodeView):
                 data[k] = v
         try:
             sql, name = self.get_sql(data, lid)
+            # Most probably this is due to error
+            if not isinstance(sql, (str, unicode)):
+                return sql
             if sql == '':
                 sql = "--modified SQL"
 
@@ -643,6 +642,11 @@ class LanguageView(PGChildNodeView):
         status, res = self.conn.execute_dict(sql)
         if not status:
             return internal_server_error(errormsg=res)
+
+        if len(res['rows']) == 0:
+            return gone(
+                gettext("Could not find the language information.")
+            )
 
         # Making copy of output for future use
         old_data = dict(res['rows'][0])

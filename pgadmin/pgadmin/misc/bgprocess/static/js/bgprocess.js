@@ -1,7 +1,10 @@
 define([
-  'pgadmin', 'underscore', 'underscore.string', 'jquery', 'pgadmin.browser',
-  'alertify', 'pgadmin.browser.messages'
-], function(pgAdmin, _, S, $, pgBrowser, alertify, pgMessages) {
+  'pgadmin', 'sources/gettext', 'sources/url_for', 'underscore',
+  'underscore.string', 'jquery', 'pgadmin.browser', 'alertify',
+  'pgadmin.browser.messages'
+], function(
+  pgAdmin, gettext, url_for, _, S, $, pgBrowser, alertify, pgMessages
+) {
 
   pgBrowser.BackgroundProcessObsorver = pgBrowser.BackgroundProcessObsorver || {};
 
@@ -70,20 +73,24 @@ define([
         );
       },
 
-      url: function(type) {
-        var url = S('%s%s').sprintf(pgMessages['bgprocess.index'], this.id).value();
-
+      bgprocess_url: function(type) {
         switch (type) {
           case 'status':
             if (this.details && this.out != -1 && this.err != -1) {
-              url = S('%s/%s/%s/').sprintf(
-                url, this.out, this.err
-              ).value();
+              return url_for(
+                'bgprocess.detailed_status', {
+                  'pid': this.id,
+                  'out': this.out,
+                  'err': this.err
+                }
+              );
             }
-            break;
+            return url_for('bgprocess.status', {'pid': this.id});
+          case 'acknowledge':
+            return url_for('bgprocess.acknowledge', {'pid': this.id});
+          default:
+            return url_for('bgprocess.list');
         }
-
-        return url;
       },
 
       update: function(data) {
@@ -155,18 +162,18 @@ define([
         }
 
         if (self.stime) {
-          self.curr_status = pgMessages['started'];
+          self.curr_status = gettext('Started');
 
           if (self.execution_time >= 2) {
-            self.curr_status = pgMessages['running'];
+            self.curr_status = gettext['Running...'];
           }
 
           if (!_.isNull(self.exit_code)) {
             if (self.exit_code == 0) {
-              self.curr_status = pgMessages['successfully_finished'];
+              self.curr_status = gettext('Successfully completed.');
             } else {
               self.curr_status = S(
-                pgMessages['failed_with_exit_code']
+                gettext("Failed (exit code: %s).")
               ).sprintf(String(self.exit_code)).value();
             }
           }
@@ -203,7 +210,7 @@ define([
         $.ajax({
           typs: 'GET',
           timeout: 30000,
-          url: self.url('status'),
+          url: self.bgprocess_url('status'),
           cache: false,
           async: true,
           contentType: "application/json",
@@ -240,7 +247,7 @@ define([
                 for_details = $('<div></div>', {
                   class: "col-xs-12 text-center pg-bg-click h6"
                 }).append(
-                  $('<span></span>').text(pgMessages.CLICK_FOR_DETAILED_MSG)
+                  $('<span></span>').text(gettext('Click here for details.'))
                 ).appendTo(content),
                 status = $('<div></div>', {
                   class: "pg-bg-status col-xs-12 h5 " + ((self.exit_code === 0) ?
@@ -290,7 +297,7 @@ define([
               String(self.execution_time)
             )
           ).append(
-            $('<span></span>').text(' ' + pgMessages['seconds'])
+            $('<span></span>').text(' ' + gettext('seconds'))
           );
           self.container.find('.pg-bg-status').empty().append(
             self.curr_status
@@ -348,7 +355,7 @@ define([
             String(self.execution_time)
           )
         ).append(
-          $('<span></span>').text(' ' + pgMessages['seconds'])
+          $('<span></span>').text(' ' + gettext('seconds'))
         );
 
         if (is_new) {
@@ -388,7 +395,7 @@ define([
         $.ajax({
           type: 'PUT',
           timeout: 30000,
-          url: self.url('acknowledge'),
+          url: self.bgprocess_url('acknowledge'),
           cache: false,
           async: true,
           contentType: "application/json",
@@ -436,7 +443,7 @@ define([
         $.ajax({
           typs: 'GET',
           timeout: 30000,
-          url: pgMessages['bgprocess.index'],
+          url: url_for('bgprocess.list'),
           cache: false,
           async: true,
           contentType: "application/json",
@@ -499,7 +506,7 @@ define([
                 content: '<div class="bg-process-details col-xs-12">'+
                   '<p class="bg-detailed-desc"></p>'+
                   '<div class="bg-process-stats">'+
-                  '<span><b>' + pgMessages['START_TIME'] + ': </b>'+
+                  '<span><b>' + gettext('Start time') + ': </b>'+
                   '<span class="bgprocess-start-time"></span>'+
                   '</span></div>'+
                   '</div>'+
@@ -507,11 +514,11 @@ define([
                   '</div>'+
                   '<div class="bg-process-footer col-xs-12">'+
                   '<div class="bg-process-status col-xs-6">'+
-                  '<span><b>' + pgMessages['STATUS'] + ':</b></span><p></p>'+
+                  '<span><b>' + gettext('Status') + ':</b></span><p></p>'+
                   '</div>'+
                   '<div class="bg-process-exec-time col-xs-6">'+
                   '<div class="exec-div pull-right">'+
-                  '<span><b>' + pgMessages['EXECUTION_TIME'] + ':</b></span><p></p>'+
+                  '<span><b>' + gettext('Execution time') + ':</b></span><p></p>'+
                   '</div>'+
                   '</div>'+
                   '</div>',

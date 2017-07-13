@@ -29,6 +29,7 @@ class PgAdminModule(Blueprint):
         kwargs.setdefault('template_folder', 'templates')
         kwargs.setdefault('static_folder', 'static')
         self.submodules = []
+        self.parentmodules = []
 
         super(PgAdminModule, self).__init__(name, import_name, **kwargs)
 
@@ -59,6 +60,8 @@ class PgAdminModule(Blueprint):
         super(PgAdminModule, self).register(app, options, first_registration)
 
         for module in self.submodules:
+            if first_registration:
+                module.parentmodules.append(self)
             app.register_blueprint(module)
 
     def get_own_stylesheets(self):
@@ -100,6 +103,13 @@ class PgAdminModule(Blueprint):
         """
         return []
 
+    def get_exposed_url_endpoints(self):
+        """
+        Returns:
+            list: a list of url endpoints exposed to the client.
+        """
+        return []
+
     @property
     def stylesheets(self):
         stylesheets = self.get_own_stylesheets()
@@ -131,6 +141,15 @@ class PgAdminModule(Blueprint):
         menu_items = dict((key, sorted(value, key=attrgetter('priority')))
                           for key, value in menu_items.items())
         return menu_items
+
+    @property
+    def exposed_endpoints(self):
+        res = self.get_exposed_url_endpoints()
+
+        for module in self.submodules:
+            res += module.exposed_endpoints
+
+        return res
 
 
 import os

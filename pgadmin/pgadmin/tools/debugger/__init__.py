@@ -197,18 +197,16 @@ def init_function(node_type, sid, did, scid, fid, trid=None):
         elif ppas_server and r_set['rows'][0]['prosrc'].lstrip().startswith('$__EDBwrapped__$'):
             ret_status = False
             msg = gettext("EDB Advanced Server wrapped functions cannot be debugged.")
+        # We cannot debug if PPAS and argument mode is VARIADIC
+        elif ppas_server and r_set['rows'][0]['lanname'] == 'edbspl' and \
+                r_set['rows'][0]['proargmodes'] is not None and \
+                'v' in r_set['rows'][0]['proargmodes']:
+            ret_status = False
+            msg = gettext(
+                "An 'edbspl' target with a variadic argument is not supported"
+                " and cannot be debugged."
+            )
         else:
-            # If user is super user then we should check debugger library is loaded or not
-            if user['is_superuser']:
-                status_in, rid_pre = conn.execute_scalar("SHOW shared_preload_libraries")
-                if not status_in:
-                    return internal_server_error(gettext("Could not fetch debugger plugin information."))
-
-                # Need to check if plugin is really loaded or not with "plugin_debugger" string
-                if "plugin_debugger" not in rid_pre:
-                    ret_status = False
-                    msg = gettext("The debugger plugin is not enabled. Please add the plugin to the shared_preload_libraries setting in the postgresql.conf file and restart the database server.")
-
             status_in, rid_tar = conn.execute_scalar(
                 "SELECT count(*) FROM pg_proc WHERE proname = 'pldbg_get_target_info'")
             if not status_in:
@@ -376,6 +374,35 @@ def initialize_target(debug_type, sid, did, scid, func_id, tri_id=None):
     if not status:
         return internal_server_error(errormsg=str(msg))
 
+    user = manager.user_info
+    if debug_type == 'indirect':
+        # If user is super user then we should check debugger library is
+        # loaded or not
+        if not user['is_superuser']:
+            msg = gettext("You must be a superuser to set a global breakpoint "
+                          "and perform indirect debugging.")
+            return internal_server_error(errormsg=msg)
+        else:
+            status_in, rid_pre = conn.execute_scalar(
+                "SHOW shared_preload_libraries"
+            )
+            if not status_in:
+                return internal_server_error(
+                    gettext("Could not fetch debugger plugin information.")
+                )
+
+            # Need to check if plugin is really loaded or not with
+            # "plugin_debugger" string
+            if "plugin_debugger" not in rid_pre:
+                msg = gettext(
+                    "The debugger plugin is not enabled. "
+                    "Please add the plugin to the shared_preload_libraries "
+                    "setting in the postgresql.conf file and restart the "
+                    "database server for indirect debugging."
+                )
+                current_app.logger.debug(msg)
+                return internal_server_error(msg)
+
     # Set the template path required to read the sql files
     template_path = 'debugger/sql'
 
@@ -497,7 +524,7 @@ def initialize_target(debug_type, sid, did, scid, func_id, tri_id=None):
                                     'newBrowserTab': new_browser_tab})
 
 
-@blueprint.route('/close/<int:trans_id>', methods=["GET"])
+@blueprint.route('/close/<int:trans_id>', methods=["DELETE"])
 def close(trans_id):
     """
     close(trans_id)
@@ -822,10 +849,16 @@ def execute_debugger_query(trans_id, query_type):
         template_path = 'debugger/sql/v2'
 
     if conn.connected():
-        sql = render_template("/".join([template_path, query_type + ".sql"]), session_id=obj['session_id'])
-        # As the query type is continue or step_into or step_over then we may get result after some time so poll the
-        # result. We need to update the frame id variable when user move the next step for debugging.
-        if query_type == 'continue' or query_type == 'step_into' or query_type == 'step_over':
+        sql = render_template(
+            "/".join([template_path, query_type + ".sql"]),
+            session_id=obj['session_id']
+        )
+        # As the query type is continue or step_into or step_over then we
+        # may get result after some time so poll the result.
+        # We need to update the frame id variable when user move the next
+        # step for debugging.
+        if query_type == 'continue' or query_type == 'step_into' or \
+                        query_type == 'step_over':
             # We should set the frame_id to 0 when execution starts.
             if obj['frame_id'] != 0:
                 session_obj = debugger_data[str(trans_id)]
@@ -833,29 +866,30 @@ def execute_debugger_query(trans_id, query_type):
                 update_session_debugger_transaction(trans_id, session_obj)
 
             status, result = conn.execute_async(sql)
-            return make_json_response(data={'status': status, 'result': result})
+            return make_json_response(
+                data={'status': status, 'result': result}
+            )
         elif query_type == 'abort_target':
             status, result = conn.execute_dict(sql)
-
-            manager.release(did=obj['database_id'], conn_id=obj['conn_id'])
-
-            # Delete the existing debugger data in session variable
-            del session['debuggerData'][str(trans_id)]
-            del session['functionData'][str(trans_id)]
-
             if not status:
                 return internal_server_error(errormsg=result)
             else:
-                return make_json_response(info=gettext('Target Aborted.'), data={'status': status, 'result': result})
+                return make_json_response(
+                    info=gettext('Debugging aborted successfully.'),
+                    data={'status': 'Success', 'result': result}
+                )
         else:
             status, result = conn.execute_dict(sql)
         if not status:
             return internal_server_error(errormsg=result)
     else:
-        status = False
-        result = gettext('Not connected to server or connection with the server has been closed.')
+        result = gettext('Not connected to server or connection '
+                         'with the server has been closed.')
+        return internal_server_error(errormsg=result)
 
-    return make_json_response(data={'status': 'Success', 'result': result['rows']})
+    return make_json_response(
+        data={'status': 'Success', 'result': result['rows']}
+    )
 
 
 @blueprint.route('/messages/<int:trans_id>/', methods=["GET"])
@@ -888,9 +922,12 @@ def messages(trans_id):
         status, result = conn.poll()
         notify = conn.messages()
         if notify:
-            # In notice message we need to find "PLDBGBREAK" string to find the port number to attach.
-            # Notice message returned by the server is   "NOTICE:  PLDBGBREAK:7".
-            # From the above message we need to find out port number as "7" so below logic will find 7 as port number
+            # In notice message we need to find "PLDBGBREAK" string to find the
+            # port number to attach.
+            # Notice message returned by the server is
+            # "NOTICE:  PLDBGBREAK:7".
+            # From the above message we need to find out port number
+            # as "7" so below logic will find 7 as port number
             # and attach listened to that port number
             offset = notify[0].find('PLDBGBREAK')
             str_len = len('PLDBGBREAK')
@@ -908,11 +945,18 @@ def messages(trans_id):
                 status = 'Busy'
         else:
             status = 'Busy'
-    else:
-        status = 'NotConnected'
-        result = gettext('Not connected to server or connection with the server has been closed.')
 
-    return make_json_response(data={'status': status, 'result': port_number})
+        return make_json_response(
+            data={'status': status, 'result': port_number}
+        )
+    else:
+        result = gettext(
+            'Not connected to server or connection with the '
+            'server has been closed.'
+        )
+        return internal_server_error(errormsg=str(result))
+
+
 
 
 @blueprint.route('/start_execution/<int:trans_id>/<int:port_num>', methods=['GET'])
@@ -1395,7 +1439,10 @@ def poll_end_execution_result(trans_id):
     if str(trans_id) not in debugger_data:
         return make_json_response(
             data={'status': 'NotConnected',
-                  'result': gettext('Not connected to server or connection with the server has been closed.')}
+                  'result': gettext(
+                      'Not connected to server or connection with the '
+                      'server has been closed.')
+                  }
         )
     obj = debugger_data[str(trans_id)]
 
@@ -1420,18 +1467,23 @@ def poll_end_execution_result(trans_id):
                 else:
                     statusmsg = additional_msgs
 
-            return make_json_response(success=1, info=gettext("Execution Completed."),
-                                      data={'status': status, 'status_message': statusmsg})
+            return make_json_response(
+                success=1, info=gettext("Execution Completed."),
+                data={'status': status, 'status_message': statusmsg}
+            )
         if result:
             if 'ERROR' in result:
                 status = 'ERROR'
-                return make_json_response(info=gettext("Execution completed with error"),
-                                          data={'status': status, 'status_message': result})
+                return make_json_response(
+                    info=gettext("Execution completed with error"),
+                    data={'status': status, 'status_message': result}
+                )
             else:
                 status = 'Success'
                 additional_msgs = conn.messages()
                 if len(additional_msgs) > 0:
-                    additional_msgs = [msg.strip("\n") for msg in additional_msgs]
+                    additional_msgs = [msg.strip("\n")
+                                       for msg in additional_msgs]
                     additional_msgs = "\n".join(additional_msgs)
                     if statusmsg:
                         statusmsg = additional_msgs + "\n" + statusmsg
@@ -1440,9 +1492,11 @@ def poll_end_execution_result(trans_id):
 
                 columns, result = convert_data_to_dict(conn, result)
 
-                return make_json_response(success=1, info=gettext("Execution Completed."),
-                                          data={'status': status, 'result': result,
-                                                'col_info': columns, 'status_message': statusmsg})
+                return make_json_response(
+                    success=1, info=gettext("Execution Completed."),
+                    data={'status': status, 'result': result,
+                          'col_info': columns, 'status_message': statusmsg}
+                )
         else:
             status = 'Busy'
             additional_msgs = conn.messages()
@@ -1458,7 +1512,8 @@ def poll_end_execution_result(trans_id):
             })
     else:
         status = 'NotConnected'
-        result = gettext('Not connected to server or connection with the server has been closed.')
+        result = gettext('Not connected to server or connection with the '
+                         'server has been closed.')
 
     return make_json_response(data={'status': status, 'result': result})
 

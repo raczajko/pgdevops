@@ -23,17 +23,20 @@ CREATE{% if query_type is defined %}{{' OR REPLACE'}}{% endif %} FUNCTION {{ con
 {% if data.proparallel and (data.proparallel == 'r' or data.proparallel == 's') %}
 {% if data.proparallel == 'r' %}PARALLEL RESTRICTED{% elif data.proparallel == 's' %}PARALLEL SAFE{% endif %}{% endif %}
 {% if data.procost %}
+
     COST {{data.procost}}{% endif %}{% if data.prorows %}
+
     ROWS {{data.prorows}}{% endif -%}{% if data.variables %}{% for v in data.variables %}
+
     SET {{ conn|qtIdent(v.name) }}={{ v.value|qtLiteral }}{% endfor %}
 {% endif %}
 
 AS {% if data.lanname == 'c' %}
 {{ data.probin|qtLiteral }}, {{ data.prosrc_c|qtLiteral }}
 {% else %}
-$function$
+$BODY$
 {{ data.prosrc }}
-$function${% endif -%};
+$BODY${% endif -%};
 {% if data.funcowner %}
 
 ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})
@@ -44,6 +47,10 @@ ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args
 
 {{ PRIVILEGE.SET(conn, "FUNCTION", p.grantee, data.name, p.without_grant, p.with_grant, data.pronamespace, data.func_args_without)}}
 {% endfor %}{% endif %}
+{% if data.revoke_all %}
+
+{{ PRIVILEGE.UNSETALL(conn, "FUNCTION", "PUBLIC", data.name, data.pronamespace, data.func_args_without)}}
+{% endif %}
 {% if data.description %}
 
 COMMENT ON FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})

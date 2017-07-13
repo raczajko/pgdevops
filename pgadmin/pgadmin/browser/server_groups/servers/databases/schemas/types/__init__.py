@@ -21,11 +21,13 @@ from pgadmin.browser.server_groups.servers.utils import parse_priv_from_db, \
     parse_priv_to_db
 from pgadmin.browser.utils import PGChildNodeView
 from pgadmin.utils.ajax import make_json_response, internal_server_error, \
-    make_response as ajax_response
+    make_response as ajax_response, gone
 from pgadmin.utils.driver import get_driver
-
 from config import PG_DEFAULT_DRIVER
-from pgadmin.utils.ajax import gone
+from pgadmin.utils import IS_PY2
+# If we are in Python3
+if not IS_PY2:
+    unicode = str
 
 
 class TypeModule(SchemaChildModule):
@@ -294,7 +296,7 @@ class TypeView(PGChildNodeView, DataTypeReader):
             return internal_server_error(errormsg=rset)
 
         if len(rset['rows']) == 0:
-            return gone(gettext("""Could not find the type in the table."""))
+            return gone(gettext("""Could not find the type in the database."""))
 
         res = self.blueprint.generate_browser_node(
                 rset['rows'][0]['oid'],
@@ -412,12 +414,9 @@ class TypeView(PGChildNodeView, DataTypeReader):
 
             for row in rset['rows']:
                 # We will fetch Full type name
-                fulltype = self.get_full_type(
-                    row['collnspname'], row['typname'],
-                    row['isdup'], row['attndims'], row['atttypmod']
-                )
 
-                typelist = ' '.join([row['attname'], fulltype])
+
+                typelist = ' '.join([row['attname'], row['fulltype']])
                 if not row['collname'] or (row['collname'] == 'default'
                                            and row['collnspname'] == 'pg_catalog'):
                     full_collate = ''
@@ -429,25 +428,29 @@ class TypeView(PGChildNodeView, DataTypeReader):
                 typelist += collate
                 properties_list.append(typelist)
 
+                is_tlength = False
+                is_precision = False
+                if 'elemoid' in row:
+                    is_tlength, is_precision, typeval = self.get_length_precision(row['elemoid'])
+
                 # Below logic will allow us to split length, precision from type name for grid
                 import re
+                t_len = None
+                t_prec = None
+
                 # If we have length & precision both
-                matchObj = re.search(r'(\d+),(\d+)', fulltype)
-                if matchObj:
-                    t_len = matchObj.group(1)
-                    t_prec = matchObj.group(2)
-                else:
+                if is_tlength and is_precision:
+                    matchObj = re.search(r'(\d+),(\d+)', row['fulltype'])
+                    if matchObj:
+                        t_len = matchObj.group(1)
+                        t_prec = matchObj.group(2)
+                elif is_tlength:
                     # If we have length only
-                    matchObj = re.search(r'(\d+)', fulltype)
+                    matchObj = re.search(r'(\d+)', row['fulltype'])
                     if matchObj:
                         t_len = matchObj.group(1)
                         t_prec = None
-                    else:
-                        t_len = None
-                        t_prec = None
 
-                is_tlength = True if t_len else False
-                is_precision = True if t_prec else False
 
                 type_name = DataTypeReader.parse_type_name(row['typname'])
 
@@ -459,7 +462,7 @@ class TypeView(PGChildNodeView, DataTypeReader):
                     'collation': full_collate, 'cltype': row['type'],
                     'tlength': t_len, 'precision': t_prec,
                     'is_tlength': is_tlength, 'is_precision': is_precision,
-                    'hasSqrBracket': row['hasSqrBracket']})
+                    'hasSqrBracket': row['hasSqrBracket'], 'fulltype': row['fulltype']})
 
             # Adding both results
             res['member_list'] = ', '.join(properties_list)
@@ -537,7 +540,7 @@ class TypeView(PGChildNodeView, DataTypeReader):
             return internal_server_error(errormsg=res)
 
         if len(res['rows']) == 0:
-            return gone(gettext("""Could not find the type in the table."""))
+            return gone(gettext("""Could not find the type in the database."""))
 
         # Making copy of output for future use
         copy_dict = dict(res['rows'][0])
@@ -903,19 +906,9 @@ class TypeView(PGChildNodeView, DataTypeReader):
                             'Composite types require at least two members.'
                         )
                     )
-            # If type is enum then check if it has minimum one label
-            if data and data[arg] == 'e':
-                if len(data['enum']) < 1:
-                    return make_json_response(
-                        status=410,
-                        success=0,
-                        errormsg=gettext(
-                            'Enumeration types require at least one label.'
-                        )
-                    )
             # If type is range then check if subtype is defined or not
             if data and data[arg] == 'r':
-                if data['typname'] is None:
+                if 'typname' not in data or data['typname'] is None:
                     return make_json_response(
                         status=410,
                         success=0,
@@ -926,7 +919,9 @@ class TypeView(PGChildNodeView, DataTypeReader):
             # If type is external then check if input/output
             # conversion function is defined
             if data and data[arg] == 'b':
-                if data['typinput'] is None or \
+                if 'typinput' not in data or \
+                                'typoutput' not in data or \
+                                data['typinput'] is None or \
                                 data['typoutput'] is None:
                     return make_json_response(
                         status=410,
@@ -1000,6 +995,9 @@ class TypeView(PGChildNodeView, DataTypeReader):
         )
         try:
             SQL, name = self.get_sql(gid, sid, data, scid, tid)
+            # Most probably this is due to error
+            if not isinstance(SQL, (str, unicode)):
+                return SQL
             SQL = SQL.strip('\n').strip(' ')
             status, res = self.conn.execute_scalar(SQL)
             if not status:
@@ -1112,6 +1110,9 @@ class TypeView(PGChildNodeView, DataTypeReader):
 
         try:
             sql, name = self.get_sql(gid, sid, data, scid, tid)
+            # Most probably this is due to error
+            if not isinstance(sql, (str, unicode)):
+                return sql
             sql = sql.strip('\n').strip(' ')
 
             if sql == '':
@@ -1152,7 +1153,7 @@ class TypeView(PGChildNodeView, DataTypeReader):
 
         return data
 
-    def get_sql(self, gid, sid, data, scid, tid=None):
+    def get_sql(self, gid, sid, data, scid, tid=None, is_sql=False):
         """
         This function will genrate sql from model data
         """
@@ -1185,6 +1186,10 @@ class TypeView(PGChildNodeView, DataTypeReader):
             status, res = self.conn.execute_dict(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
+            if len(res['rows']) == 0:
+                return gone(
+                    gettext("Could not find the type in the database.")
+                )
 
             # Making copy of output for future use
             old_data = dict(res['rows'][0])
@@ -1222,7 +1227,27 @@ class TypeView(PGChildNodeView, DataTypeReader):
 
             for arg in required_args:
                 if arg not in data:
-                    return " --definition incomplete"
+                    return "-- definition incomplete"
+
+            # Additional checks go here
+            # If type is composite then check if it has two members
+            if data and data[arg] == 'c':
+                if len(data['composite']) < 2:
+                    return "-- definition incomplete"
+
+            # If type is range then check if subtype is defined or not
+            if data and data[arg] == 'r':
+                if 'typname' not in data or data['typname'] is None:
+                    return "-- definition incomplete"
+
+            # If type is external then check if input/output
+            # conversion function is defined
+            if data and data[arg] == 'b':
+                if 'typinput' not in data or \
+                                'typoutput' not in data or \
+                                data['typinput'] is None or \
+                                data['typoutput'] is None:
+                    return "-- definition incomplete"
 
             # Privileges
             if 'typacl' in data and data['typacl'] is not None:
@@ -1238,7 +1263,7 @@ class TypeView(PGChildNodeView, DataTypeReader):
 
             SQL = render_template("/".join([self.template_path,
                                             'create.sql']),
-                                  data=data, conn=self.conn)
+                                  data=data, conn=self.conn, is_sql=is_sql)
 
         return SQL, data['name'] if 'name' in data else old_data['name']
 
@@ -1263,7 +1288,10 @@ class TypeView(PGChildNodeView, DataTypeReader):
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
-
+        if len(res['rows']) == 0:
+            return gone(
+                gettext("Could not find the type in the database.")
+            )
         # Making copy of output for future use
         data = dict(res['rows'][0])
 
@@ -1297,8 +1325,10 @@ class TypeView(PGChildNodeView, DataTypeReader):
             if data[k] == '-':
                 data[k] = None
 
-        SQL, name = self.get_sql(gid, sid, data, scid, tid=None)
-
+        SQL, name = self.get_sql(gid, sid, data, scid, tid=None, is_sql=True)
+        # Most probably this is due to error
+        if not isinstance(SQL, (str, unicode)):
+            return SQL
         # We are appending headers here for sql panel
         sql_header = u"-- Type: {0}\n\n-- ".format(data['name'])
 

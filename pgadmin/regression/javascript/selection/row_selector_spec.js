@@ -1,174 +1,328 @@
-define(
-  ["jquery",
-    "underscore",
-    "slickgrid/slick.grid",
-    "sources/selection/row_selector",
-    "slickgrid/slick.rowselectionmodel",
-    "slickgrid",
-  ],
-  function ($, _, SlickGrid, RowSelector, RowSelectionModel, Slick) {
-    describe("RowSelector", function () {
-      var container, data, columnDefinitions, grid, rowSelectionModel;
+//////////////////////////////////////////////////////////////////////////
+//
+// pgAdmin 4 - PostgreSQL Tools
+//
+// Copyright (C) 2013 - 2017, The pgAdmin Development Team
+// This software is released under the PostgreSQL Licence
+//
+//////////////////////////////////////////////////////////////////////////
+import $ from 'jquery';
 
+import Slick from 'slickgrid';
+import 'slickgrid.grid';
+
+import RowSelector from 'sources/selection/row_selector';
+import ActiveCellCapture from 'sources/selection/active_cell_capture';
+import XCellSelectionModel from 'sources/selection/xcell_selection_model';
+
+describe('RowSelector', function () {
+  var KEY = {
+    RIGHT: 39,
+    LEFT: 37,
+    UP: 38,
+    DOWN: 40,
+  };
+  var container, dataView, columnDefinitions, grid, cellSelectionModel;
+  var SlickGrid = Slick.Grid;
+
+  beforeEach(function () {
+    container = $('<div></div>');
+    container.height(9999);
+    container.width(9999);
+
+    columnDefinitions = [{
+      id: '1',
+      name: 'some-column-name',
+      selectable: true,
+      pos: 0,
+    }, {
+      id: '2',
+      name: 'second column',
+      selectable: true,
+      pos: 1,
+    }];
+
+    dataView = new Slick.Data.DataView();
+    var rowSelector = new RowSelector();
+    var data = [];
+    for (var i = 0; i < 10; i++) {
+      data.push({'some-column-name':'some-value-' + i, 'second column':'second value ' + i});
+    }
+    columnDefinitions = rowSelector.getColumnDefinitions(columnDefinitions);
+    dataView.setItems(data, 'some-column-name');
+    grid = new SlickGrid(container, dataView, columnDefinitions);
+    grid.registerPlugin(new ActiveCellCapture());
+    cellSelectionModel = new XCellSelectionModel();
+    grid.setSelectionModel(cellSelectionModel);
+
+    grid.registerPlugin(rowSelector);
+    grid.invalidate();
+
+    $('body').append(container);
+  });
+
+  afterEach(function () {
+    $('body').find(container).remove();
+  });
+
+  it('renders an additional column on the left', function () {
+    expect(columnDefinitions.length).toBe(3);
+
+    var leftmostColumn = columnDefinitions[0];
+    expect(leftmostColumn.id).toBe('row-header-column');
+    expect(leftmostColumn.name).toBe('');
+    expect(leftmostColumn.selectable).toBe(false);
+  });
+
+  it('renders a span on the leftmost column', function () {
+    expect(container.find('.slick-row').length).toBe(10);
+    expect(container.find('.slick-row .slick-cell:first-child span[data-cell-type="row-header-selector"]').length).toBe(10);
+  });
+
+  it('preserves the other attributes of column definitions', function () {
+    expect(columnDefinitions[1].id).toBe('1');
+    expect(columnDefinitions[1].selectable).toBe(true);
+  });
+
+  describe('selecting rows', function () {
+    describe('when the user clicks a row header span', function () {
+      it('selects the row', function () {
+        container.find('.slick-row .slick-cell:first-child span[data-cell-type="row-header-selector"]')[0].click();
+
+        var selectedRanges = cellSelectionModel.getSelectedRanges();
+        expectOnlyTheFirstRowToBeSelected(selectedRanges);
+      });
+
+      it('add selected class to parent of the span', function () {
+        container.find('.slick-row .slick-cell:first-child span[data-cell-type="row-header-selector"]')[5].click();
+
+        expect($(container.find('.slick-row .slick-cell:first-child ')[5])
+          .hasClass('selected')).toBeTruthy();
+      });
+    });
+
+    describe('when the user clicks a row header', function () {
       beforeEach(function () {
-        container = $("<div></div>");
-        container.height(9999);
+        container.find('.slick-row .slick-cell:first-child')[1].click();
 
-        columnDefinitions = [{
-          id: '1',
-          name: 'some-column-name',
-          selectable: true
-        }, {
-          id: '2',
-          name: 'second column',
-          selectable: true
-        }];
+      });
+      it('selects the row', function () {
 
-        var rowSelector = new RowSelector();
-        data = [];
-        for (var i = 0; i < 10; i++) {
-          data.push(['some-value-' + i, 'second value ' + i]);
-        }
-        columnDefinitions = rowSelector.getColumnDefinitionsWithCheckboxes(columnDefinitions);
-        grid = new SlickGrid(container, data, columnDefinitions);
+        var selectedRanges = cellSelectionModel.getSelectedRanges();
+        var row = selectedRanges[0];
 
-        rowSelectionModel = new RowSelectionModel();
-        grid.setSelectionModel(rowSelectionModel);
-        grid.registerPlugin(rowSelector);
-        grid.invalidate();
-
-        $("body").append(container);
+        expect(selectedRanges.length).toEqual(1);
+        expect(row.fromCell).toBe(1);
+        expect(row.toCell).toBe(2);
+        expect(row.fromRow).toBe(1);
+        expect(row.toRow).toBe(1);
       });
 
-      afterEach(function () {
-        $("body").find(container).remove();
+      it('add selected class to parent of the span', function () {
+
+        expect($(container.find('.slick-row .slick-cell:first-child ')[1])
+          .hasClass('selected')).toBeTruthy();
       });
 
-      it("renders an additional column on the left", function () {
-        expect(columnDefinitions.length).toBe(3);
+      describe('when the user clicks again the same row header', function () {
+        it('add selected class to parent of the span', function () {
+          container.find('.slick-row .slick-cell:first-child span[data-cell-type="row-header-selector"]')[1].click();
 
-        var leftmostColumn = columnDefinitions[0];
-        expect(leftmostColumn.id).toBe('row-header-column');
-        expect(leftmostColumn.name).toBe('');
-        expect(leftmostColumn.selectable).toBe(false);
+          expect($(container.find('.slick-row .slick-cell:first-child ')[1])
+            .hasClass('selected')).toBeFalsy();
+        });
       });
 
-      it("renders a checkbox the leftmost column", function () {
-        expect(container.find('.sr').length).toBe(11);
-        expect(container.find('.sr .sc:first-child input[type="checkbox"]').length).toBe(10);
+      describe('and presses shift + down-arrow', function () {
+        beforeEach(function () {
+          pressShiftArrow(KEY.DOWN);
+        });
+
+        it('keeps the last row selected', function () {
+          expect(cellSelectionModel.getSelectedRanges().length).toBe(1);
+        });
+
+        it('grows the selection down', function () {
+          var selectedRanges = cellSelectionModel.getSelectedRanges();
+
+          var row = selectedRanges[0];
+
+          expect(selectedRanges.length).toEqual(1);
+          expect(row.fromCell).toBe(1);
+          expect(row.toCell).toBe(2);
+          expect(row.fromRow).toBe(1);
+          expect(row.toRow).toBe(2);
+        });
+
+        it('keeps selected class on rows 1 and 2', function () {
+          expect($(container.find('.slick-row .slick-cell:first-child ')[0])
+            .hasClass('selected')).toBeFalsy();
+          expect($(container.find('.slick-row .slick-cell:first-child ')[1])
+            .hasClass('selected')).toBeTruthy();
+          expect($(container.find('.slick-row .slick-cell:first-child ')[2])
+            .hasClass('selected')).toBeTruthy();
+          expect($(container.find('.slick-row .slick-cell:first-child ')[3])
+            .hasClass('selected')).toBeFalsy();
+        });
       });
 
-      it("preserves the other attributes of column definitions", function () {
-        expect(columnDefinitions[1].id).toBe('1');
-        expect(columnDefinitions[1].selectable).toBe(true);
+      describe('when the user clicks a cell on the current range', function () {
+        beforeEach(function () {
+          container.find('.slick-cell.l1.r1')[5].click();
+        });
+
+        it('row gets deselected', function () {
+
+          var selectedRanges = cellSelectionModel.getSelectedRanges();
+
+          expect(selectedRanges.length).toBe(1);
+
+          var newSelection = selectedRanges[0];
+
+          expect(newSelection.fromCell).toBe(1);
+          expect(newSelection.fromRow).toBe(5);
+          expect(newSelection.toCell).toBe(1);
+          expect(newSelection.toRow).toBe(5);
+        });
+
+        it('keep select class on row header', function () {
+          expect($(container.find('.slick-cell.l0.r0')[5]).hasClass('selected'))
+            .toBeTruthy();
+        });
       });
 
-      describe("selecting rows", function () {
-        describe("when the user clicks a row header checkbox", function () {
-          it("selects the row", function () {
-            container.find('.sr .sc:first-child input[type="checkbox"]')[0].click();
-
-            var selectedRanges = rowSelectionModel.getSelectedRanges();
-            expectOnlyTheFirstRowToBeSelected(selectedRanges);
-          });
-
-          it("checks the checkbox", function () {
-            container.find('.sr .sc:first-child input[type="checkbox"]')[5].click();
-
-            expect($(container.find('.sr .sc:first-child input[type="checkbox"]')[5])
-              .is(':checked')).toBeTruthy();
-          });
+      describe('when the user clicks a cell outside the current range', function () {
+        beforeEach(function () {
+          container.find('.slick-cell.l2.r2')[2].click();
         });
 
-        describe("when the user clicks a row header", function () {
-          it("selects the row", function () {
-            container.find('.sr .sc:first-child')[0].click();
+        it('row gets deselected', function () {
 
-            var selectedRanges = rowSelectionModel.getSelectedRanges();
-            expectOnlyTheFirstRowToBeSelected(selectedRanges);
-          });
+          var selectedRanges = cellSelectionModel.getSelectedRanges();
 
-          it("checks the checkbox", function () {
-            container.find('.sr .sc:first-child')[7].click();
+          expect(selectedRanges.length).toBe(1);
 
-            expect($(container.find('.sr .sc:first-child input[type="checkbox"]')[7])
-              .is(':checked')).toBeTruthy();
-          });
+          var newSelection = selectedRanges[0];
+
+          expect(newSelection.fromCell).toBe(2);
+          expect(newSelection.fromRow).toBe(2);
+          expect(newSelection.toCell).toBe(2);
+          expect(newSelection.toRow).toBe(2);
         });
 
-        describe("when the user clicks multiple row headers", function () {
-          it("selects another row", function () {
-            container.find('.sr .sc:first-child')[4].click();
-            container.find('.sr .sc:first-child')[0].click();
+        it('remove select class on "some-column-name" column header', function () {
+          expect($(container.find('.slick-cell.l0.r0')[5]).hasClass('selected'))
+            .toBeFalsy();
+          expect($(container.find('.slick-cell.l0.r0')[2]).hasClass('selected'))
+            .toBeTruthy();
+        });
+      });
 
-            var selectedRanges = rowSelectionModel.getSelectedRanges();
-            expect(selectedRanges.length).toEqual(2);
-
-            var row1 = selectedRanges[0];
-            expect(row1.fromRow).toBe(4);
-            expect(row1.toRow).toBe(4);
-
-            var row2 = selectedRanges[1];
-            expect(row2.fromRow).toBe(0);
-            expect(row2.toRow).toBe(0);
-          });
+      describe('when the user has a column selected', function () {
+        beforeEach(function () {
+          var selectedRanges = [new Slick.Range(0, 1, 9, 1)];
+          cellSelectionModel.setSelectedRanges(selectedRanges);
         });
 
-        describe("when a column was already selected", function () {
-          beforeEach(function () {
-            var selectedRanges = [new Slick.Range(0, 0, 0, 1)];
-            rowSelectionModel.setSelectedRanges(selectedRanges);
-          });
-
-          it("deselects the column", function () {
-            container.find('.sr .sc:first-child')[0].click();
-            var selectedRanges = rowSelectionModel.getSelectedRanges();
-
-            expectOnlyTheFirstRowToBeSelected(selectedRanges);
-          })
-        });
-
-        describe("when the row is deselected through setSelectedRanges", function () {
-          beforeEach(function () {
-            container.find('.sr .sc:first-child')[4].click();
-          });
-
-          it("should uncheck the checkbox", function () {
-            rowSelectionModel.setSelectedRanges([]);
-
-            expect($(container.find('.sr .sc:first-child input[type="checkbox"]')[4])
-              .is(':checked')).toBeFalsy();
-          });
-        });
-
-        describe("click a second time", function () {
-          beforeEach(function () {
-            container.find('.sr .sc:first-child')[1].click();
-          });
-
-          it("unchecks checkbox", function () {
-            container.find('.sr .sc:first-child')[1].click();
-            expect($(container.find('.sr .sc:first-child input[type="checkbox"]')[1])
-              .is(':checked')).toBeFalsy();
-          });
-
-          it("unselects the row", function () {
-            container.find('.sr .sc:first-child')[1].click();
-            var selectedRanges = rowSelectionModel.getSelectedRanges();
-
-            expect(selectedRanges.length).toEqual(0);
-          })
+        it('no row should have the class "selected"', function () {
+          expect($(container.find('.slick-cell.l0.r0')[0]).hasClass('selected'))
+            .toBeFalsy();
+          expect($(container.find('.slick-cell.l0.r0')[1]).hasClass('selected'))
+            .toBeFalsy();
+          expect($(container.find('.slick-cell.l0.r0')[2]).hasClass('selected'))
+            .toBeFalsy();
+          expect($(container.find('.slick-cell.l0.r0')[3]).hasClass('selected'))
+            .toBeFalsy();
+          expect($(container.find('.slick-cell.l0.r0')[4]).hasClass('selected'))
+            .toBeFalsy();
+          expect($(container.find('.slick-cell.l0.r0')[5]).hasClass('selected'))
+            .toBeFalsy();
         });
       });
     });
 
-    function expectOnlyTheFirstRowToBeSelected(selectedRanges) {
-      var row = selectedRanges[0];
+    describe('when the user clicks multiple row headers', function () {
+      it('selects another row', function () {
+        container.find('.slick-row .slick-cell:first-child')[4].click();
+        container.find('.slick-row .slick-cell:first-child')[0].click();
 
-      expect(selectedRanges.length).toEqual(1);
-      expect(row.fromCell).toBe(1);
-      expect(row.toCell).toBe(2);
-      expect(row.fromRow).toBe(0);
-      expect(row.toRow).toBe(0);
-    }
+        var selectedRanges = cellSelectionModel.getSelectedRanges();
+        expect(selectedRanges.length).toEqual(2);
+
+        var row1 = selectedRanges[0];
+        expect(row1.fromRow).toBe(4);
+        expect(row1.toRow).toBe(4);
+
+        var row2 = selectedRanges[1];
+        expect(row2.fromRow).toBe(0);
+        expect(row2.toRow).toBe(0);
+      });
+    });
+
+    describe('when a column was already selected', function () {
+      beforeEach(function () {
+        var selectedRanges = [new Slick.Range(0, 0, 0, 1)];
+        cellSelectionModel.setSelectedRanges(selectedRanges);
+      });
+
+      it('deselects the column', function () {
+        container.find('.slick-row .slick-cell:first-child')[0].click();
+        var selectedRanges = cellSelectionModel.getSelectedRanges();
+
+        expectOnlyTheFirstRowToBeSelected(selectedRanges);
+      });
+    });
+
+    describe('when the row is deselected through setSelectedRanges', function () {
+      beforeEach(function () {
+        container.find('.slick-row .slick-cell:first-child')[4].click();
+      });
+
+      it('should remove the selected class', function () {
+        cellSelectionModel.setSelectedRanges([]);
+
+        expect($(container.find('.slick-row .slick-cell:first-child span[data-cell-type="row-header-selector"]')[4])
+          .hasClass('selected')).toBeFalsy();
+      });
+    });
+
+    describe('click a second time', function () {
+      beforeEach(function () {
+        container.find('.slick-row .slick-cell:first-child')[1].click();
+      });
+
+      it('removes the selected class', function () {
+        container.find('.slick-row .slick-cell:first-child')[1].click();
+        expect($(container.find('.slick-row .slick-cell:first-child span[data-cell-type="row-header-selector"]')[1])
+          .hasClass('selected')).toBeFalsy();
+      });
+
+      it('unselects the row', function () {
+        container.find('.slick-row .slick-cell:first-child')[1].click();
+        var selectedRanges = cellSelectionModel.getSelectedRanges();
+
+        expect(selectedRanges.length).toEqual(0);
+      });
+    });
   });
+
+  function pressShiftArrow(keyCode) {
+    var pressEvent = new $.Event('keydown');
+    pressEvent.shiftKey = true;
+    pressEvent.ctrlKey = false;
+    pressEvent.altKey = false;
+    pressEvent.which = keyCode;
+
+    $(container.find('.grid-canvas')).trigger(pressEvent);
+  }
+
+  function expectOnlyTheFirstRowToBeSelected(selectedRanges) {
+    var row = selectedRanges[0];
+
+    expect(selectedRanges.length).toEqual(1);
+    expect(row.fromCell).toBe(1);
+    expect(row.toCell).toBe(2);
+    expect(row.fromRow).toBe(0);
+    expect(row.toRow).toBe(0);
+  }
+});

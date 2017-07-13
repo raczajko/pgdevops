@@ -21,7 +21,6 @@ if 'raw_input' in __builtins__:
 
 
 def user_info():
-    active = 1
     if config.SERVER_MODE is False:
         print(u"NOTE: Configuring authentication for DESKTOP mode.")
         email = config.DESKTOP_USER
@@ -41,7 +40,6 @@ def user_info():
                 'PGADMIN_SETUP_PASSWORD']:
                 email = os.environ['PGADMIN_SETUP_EMAIL']
                 p1 = os.environ['PGADMIN_SETUP_PASSWORD']
-                active = os.environ.get('PGADMIN_SETUP_ACTIVE',1)
         else:
             # Prompt the user for their default username and password.
             print(
@@ -70,5 +68,5 @@ def user_info():
                     print(
                         u'Password must be at least 6 characters. Please try again.'
                     )
-                p1, p2, active = pprompt()
-    return email, p1, str(active)
+                p1, p2 = pprompt()
+    return email, p1

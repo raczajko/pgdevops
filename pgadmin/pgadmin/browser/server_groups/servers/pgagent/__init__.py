@@ -11,7 +11,7 @@
 from functools import wraps
 import json
 
-from flask import render_template, make_response, request, jsonify
+from flask import render_template, request, jsonify
 from flask_babel import gettext as _
 
 from config import PG_DEFAULT_DRIVER
@@ -98,6 +98,14 @@ SELECT EXISTS(
 
         return snippets
 
+    @property
+    def module_use_template_javascript(self):
+        """
+        Returns whether Jinja2 template is used for generating the javascript
+        module.
+        """
+        return False
+
 
 blueprint = JobModule(__name__)
 
@@ -124,8 +132,7 @@ class JobView(PGChildNodeView):
         'run_now': [{'put': 'run_now'}],
         'classes': [{}, {'get': 'job_classes'}],
         'children': [{'get': 'children'}],
-        'stats': [{'get': 'statistics'}],
-        'module.js': [{}, {}, {'get': 'module_js'}]
+        'stats': [{'get': 'statistics'}]
     })
 
     def check_precondition(f):
@@ -249,19 +256,6 @@ SELECT EXISTS(
             status=200
         )
 
-    def module_js(self):
-        """
-        This property defines (if javascript) exists for this node.
-        Override this property for your own logic.
-        """
-        return make_response(
-            render_template(
-                "pga_job/js/pga_job.js",
-                _=_
-            ),
-            200, {'Content-Type': 'application/x-javascript'}
-        )
-
     @check_precondition
     def create(self, gid, sid):
         """Create the pgAgent job."""
@@ -345,7 +339,7 @@ SELECT EXISTS(
         status, res = self.conn.execute_dict(
             render_template(
                 "/".join([self.template_path, 'nodes.sql']),
-                jid=res, conn=self.conn
+                jid=jid, conn=self.conn
             )
         )
 
@@ -440,6 +434,12 @@ SELECT EXISTS(
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+
+
+        if len(res['rows']) == 0:
+            return gone(
+                _("Could not find the object on the server.")
+            )
 
         row = res['rows'][0]
 

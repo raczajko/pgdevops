@@ -13,16 +13,18 @@ import simplejson as json
 from functools import wraps
 
 import pgadmin.browser.server_groups.servers.databases as databases
-from flask import render_template, make_response, request, jsonify
+from flask import render_template, request, jsonify
 from flask_babel import gettext
 from pgadmin.browser.collection import CollectionNodeModule
 from pgadmin.browser.utils import PGChildNodeView
 from pgadmin.utils.ajax import make_json_response, internal_server_error, \
     make_response as ajax_response, gone
 from pgadmin.utils.driver import get_driver
-
 from config import PG_DEFAULT_DRIVER
-
+from pgadmin.utils import IS_PY2
+# If we are in Python3
+if not IS_PY2:
+    unicode = str
 
 class CastModule(CollectionNodeModule):
     """
@@ -76,6 +78,14 @@ class CastModule(CollectionNodeModule):
         """
         return databases.DatabaseModule.NODE_TYPE
 
+    @property
+    def module_use_template_javascript(self):
+        """
+        Returns whether Jinja2 template is used for generating the javascript
+        module.
+        """
+        return False
+
 
 blueprint = CastModule(__name__)
 
@@ -92,10 +102,6 @@ class CastView(PGChildNodeView):
     -------
     * __init__(**kwargs)
       - Method is used to initialize the CastView and it's base view.
-
-    * module_js()
-      - This property defines (if javascript) exists for this node.
-        Override this property for your own logic
 
     * check_precondition()
       - This function will behave as a decorator which will checks
@@ -164,7 +170,6 @@ class CastView(PGChildNodeView):
         'stats': [{'get': 'statistics'}],
         'dependency': [{'get': 'dependencies'}],
         'dependent': [{'get': 'dependents'}],
-        'module.js': [{}, {}, {'get': 'module_js'}],
         'get_type': [{'get': 'get_src_and_trg_type'}, {'get': 'get_src_and_trg_type'}],
         'get_functions': [{'post': 'get_functions'}, {'post': 'get_functions'}]
     })
@@ -174,18 +179,6 @@ class CastView(PGChildNodeView):
         self.template_path = None
         self.manager = None
         super(CastView, self).__init__(**kwargs)
-
-    def module_js(self):
-        """
-        This property defines whether javascript exists for this node.
-        """
-        return make_response(
-            render_template(
-                "cast/js/casts.js",
-                _=gettext
-            ),
-            200, {'Content-Type': 'application/x-javascript'}
-        )
 
     def check_precondition(f):
         """
@@ -413,6 +406,9 @@ class CastView(PGChildNodeView):
         )
         try:
             sql, name = self.get_sql(gid, sid, did, data, cid)
+            # Most probably this is due to error
+            if not isinstance(sql, (str, unicode)):
+                return sql
             status, res = self.conn.execute_scalar(sql)
             if not status:
                 return internal_server_error(errormsg=res)
@@ -503,6 +499,9 @@ class CastView(PGChildNodeView):
         """
         data = request.args
         sql, name = self.get_sql(gid, sid, did, data, cid)
+        # Most probably this is due to error
+        if not isinstance(sql, (str, unicode)):
+            return sql
         sql = sql.strip('\n').strip(' ')
         if sql == '':
             sql = "--modified SQL"
@@ -535,6 +534,11 @@ class CastView(PGChildNodeView):
 
             if not status:
                 return internal_server_error(errormsg=res)
+
+            if len(res['rows']) == 0:
+                return gone(
+                    _("Could not find the specified cast on the server.")
+                )
 
             old_data = res['rows'][0]
             sql = render_template(

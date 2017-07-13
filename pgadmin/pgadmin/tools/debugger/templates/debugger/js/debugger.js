@@ -1,9 +1,9 @@
-define(
-  ['jquery', 'underscore', 'underscore.string', 'alertify', 'pgadmin',
-  'pgadmin.browser', 'backbone', 'backgrid', 'codemirror', 'backform',
-  'pgadmin.tools.debugger.ui', 'wcdocker', 'pgadmin.backform',
-  'pgadmin.backgrid', 'pgadmin.browser.frame'],
-  function($, _, S, Alertify, pgAdmin, pgBrowser, Backbone, Backgrid, CodeMirror, Backform, get_function_arguments) {
+define([
+  'sources/gettext', 'jquery', 'underscore', 'underscore.string', 'alertify',
+  'pgadmin', 'pgadmin.browser', 'backbone', 'backgrid', 'codemirror',
+  'backform', 'pgadmin.tools.debugger.ui', 'wcdocker', 'pgadmin.backform',
+  'pgadmin.backgrid', 'pgadmin.browser.frame'
+], function(gettext, $, _, S, Alertify, pgAdmin, pgBrowser, Backbone, Backgrid, CodeMirror, Backform, get_function_arguments) {
 
   pgAdmin = pgAdmin || window.pgAdmin || {};
 
@@ -25,69 +25,69 @@ define(
         pgBrowser.add_menus([{
           name: 'direct_debugger', node: 'function', module: this,
           applies: ['object', 'context'], callback: 'get_function_information',
-          category: 'Debugging', priority: 10, label: '{{ _('Debug') }}',
+          category: gettext('Debugging'), priority: 10, label: gettext('Debug'),
           data: {object: 'function'}, icon: 'fa fa-arrow-circle-right',
           enable: 'can_debug'
         },{
           name: 'global_debugger', node: 'function', module: this,
           applies: ['object', 'context'], callback: 'check_func_debuggable',
-          category: 'Debugging', priority: 10, label: '{{ _('Set breakpoint') }}',
-          data: {object: 'function'}, icon: 'fa fa-arrow-circle-right',
-          enable: 'can_debug'
+          category: gettext('Debugging'), priority: 10, label: gettext('Set breakpoint'),
+          data: {object: 'function', debug_type: 'indirect'},
+          icon: 'fa fa-arrow-circle-right', enable: 'can_debug'
         },{
           name: 'procedure_direct_debugger', node: 'procedure', module: this,
           applies: ['object', 'context'], callback: 'get_function_information',
-          category: 'Debugging', priority: 10, label: '{{ _('Debug') }}',
+          category: gettext('Debugging'), priority: 10, label: gettext('Debug'),
           data: {object: 'procedure'}, icon: 'fa fa-arrow-circle-right',
           enable: 'can_debug'
         }, {
           name: 'procedure_indirect_debugger', node: 'procedure', module: this,
           applies: ['object', 'context'], callback: 'check_func_debuggable',
-          category: 'Debugging', priority: 10, label: '{{ _('Set breakpoint') }}',
-          data: {object: 'procedure'}, icon: 'fa fa-arrow-circle-right',
-          enable: 'can_debug'
+          category: gettext('Debugging'), priority: 10, label: gettext('Set breakpoint'),
+          data: {object: 'procedure', debug_type: 'indirect'},
+          icon: 'fa fa-arrow-circle-right', enable: 'can_debug'
         }, {
           name: 'trigger_function_indirect_debugger', node: 'trigger_function', module: this,
           applies: ['object', 'context'], callback: 'check_func_debuggable',
-          priority: 10, label: '{{ _('Set breakpoint') }}', category: 'Debugging',
-          icon: 'fa fa-arrow-circle-right', data: {object:'trigger_function'},
-          enable: 'can_debug'
+          priority: 10, label: gettext('Set breakpoint'), category: gettext('Debugging'),
+          icon: 'fa fa-arrow-circle-right',
+          data: {object:'trigger_function', debug_type: 'indirect'}, enable: 'can_debug'
         }, {
           name: 'trigger_indirect_debugger', node: 'trigger', module: this,
           applies: ['object', 'context'], callback: 'check_func_debuggable',
-          priority: 10, label: '{{ _('Set breakpoint') }}', category: 'Debugging',
-          icon: 'fa fa-arrow-circle-right', data: {object:'trigger'},
-          enable: 'can_debug'
+          priority: 10, label: gettext('Set breakpoint'), category: gettext('Debugging'),
+          icon: 'fa fa-arrow-circle-right',
+          data: {object:'trigger', debug_type: 'indirect'}, enable: 'can_debug'
         }, {
           name: 'package_function_direct_debugger', node: 'edbfunc', module: this,
           applies: ['object', 'context'], callback: 'get_function_information',
-          category: 'Debugging', priority: 10, label: '{{ _('Debug') }}',
+          category: gettext('Debugging'), priority: 10, label: gettext('Debug'),
           data: {object: 'edbfunc'}, icon: 'fa fa-arrow-circle-right',
           enable: 'can_debug'
         },{
           name: 'package_function_global_debugger', node: 'edbfunc', module: this,
           applies: ['object', 'context'], callback: 'check_func_debuggable',
-          category: 'Debugging', priority: 10, label: '{{ _('Set breakpoint') }}',
-          data: {object: 'edbfunc'}, icon: 'fa fa-arrow-circle-right',
-          enable: 'can_debug'
+          category: gettext('Debugging'), priority: 10, label: gettext('Set breakpoint'),
+          data: {object: 'edbfunc', debug_type: 'indirect'},
+          icon: 'fa fa-arrow-circle-right', enable: 'can_debug'
         },{
           name: 'package_procedure_direct_debugger', node: 'edbproc', module: this,
           applies: ['object', 'context'], callback: 'get_function_information',
-          category: 'Debugging', priority: 10, label: '{{ _('Debug') }}',
+          category: gettext('Debugging'), priority: 10, label: gettext('Debug'),
           data: {object: 'edbproc'}, icon: 'fa fa-arrow-circle-right',
           enable: 'can_debug'
         }, {
           name: 'package_procedure_global_debugger', node: 'edbproc', module: this,
           applies: ['object', 'context'], callback: 'check_func_debuggable',
-          category: 'Debugging', priority: 10, label: '{{ _('Set breakpoint') }}',
-          data: {object: 'edbproc'}, icon: 'fa fa-arrow-circle-right',
-          enable: 'can_debug'
+          category: gettext('Debugging'), priority: 10, label: gettext('Set breakpoint'),
+          data: {object: 'edbproc', debug_type: 'indirect'},
+          icon: 'fa fa-arrow-circle-right', enable: 'can_debug'
         }]);
 
         // Create and load the new frame required for debugger panel
         this.frame = new pgBrowser.Frame({
           name: 'frm_debugger',
-          title: '{{ _('Debugger') }}',
+          title: gettext('Debugger'),
           width: 500,
           isCloseable: true,
           isPrivate: true,
@@ -121,8 +121,19 @@ define(
 
         var treeInfo = node.getTreeNodeHierarchy.apply(node, [info]);
 
+        // For indirect debugging user must be super user
+        if(data && data.debug_type && data.debug_type == 'indirect'
+            && !treeInfo.server.user.is_superuser)
+          return false;
+
+        // Fetch object owner
+        var obj_owner = treeInfo.function && treeInfo.function.funcowner ||
+            treeInfo.procedure && treeInfo.procedure.funcowner ||
+            treeInfo.edbfunc && treeInfo.edbfunc.funcowner ||
+            treeInfo.edbproc && treeInfo.edbproc.funcowner;
+
         // Must be a super user or object owner to create breakpoints of any kind
-        if (!(treeInfo.server.user.is_superuser || treeInfo.function.funcowner == treeInfo.server.user.name))
+        if (!(treeInfo.server.user.is_superuser || obj_owner == treeInfo.server.user.name))
           return false;
 
         // For trigger node, language will be undefined - we should allow indirect debugging for trigger node
@@ -229,9 +240,14 @@ define(
           var baseUrl = "{{ url_for('debugger.index') }}" + "initialize_target/" + "indirect/" + treeInfo.server._id +
                                 "/" + treeInfo.database._id + "/" + treeInfo.schema._id + "/" + treeInfo.trigger_function._id;
         }
-        else if (d._type == "trigger") {
+        else if (d._type == "trigger" && "table" in treeInfo) {
           var baseUrl = "{{ url_for('debugger.index') }}" + "initialize_target/" + "indirect/" + treeInfo.server._id +
                                 "/" + treeInfo.database._id + "/" + treeInfo.schema._id + "/" + treeInfo.table._id +
+                                "/" + treeInfo.trigger._id;
+        }
+        else if (d._type == "trigger" && "view" in treeInfo) {
+          var baseUrl = "{{ url_for('debugger.index') }}" + "initialize_target/" + "indirect/" + treeInfo.server._id +
+                                "/" + treeInfo.database._id + "/" + treeInfo.schema._id + "/" + treeInfo.view._id +
                                 "/" + treeInfo.trigger._id;
         }
 
@@ -251,7 +267,7 @@ define(
 
               // Create the debugger panel as per the data received from user input dialog.
               var dashboardPanel = pgBrowser.docker.findPanels(
-                'dashboard'
+                'properties'
               ),
               panel = pgBrowser.docker.addPanel(
                 'frm_debugger', wcDocker.DOCK.STACKED, dashboardPanel[0]
@@ -264,15 +280,18 @@ define(
                 var closeUrl = "{{ url_for('debugger.index') }}" + "close/" + res.data.debuggerTransId;
                 $.ajax({
                   url: closeUrl,
-                  method: 'GET'
+                  method: 'DELETE'
                 });
               });
             }
           },
-          error: function(e) {
-            Alertify.alert(
-              'Debugger target initialization error'
-            );
+          error: function(xhr, status, error) {
+            try {
+              var err = $.parseJSON(xhr.responseText);
+              if (err.success == 0) {
+                Alertify.alert(err.errormsg);
+              }
+            } catch (e) {}
           }
         });
       },
@@ -306,9 +325,9 @@ define(
               get_function_arguments(res.data[0], 0);
             }
             else {
-	          // Initialize the target and create asynchronous connection and unique transaction ID
-	          // If there is no arguments to the functions then we should not ask for for function arguments and
-	          // Directly open the panel
+              // Initialize the target and create asynchronous connection and unique transaction ID
+              // If there is no arguments to the functions then we should not ask for for function arguments and
+              // Directly open the panel
               var t = pgBrowser.tree,
                 i = t.selected(),
                 d = i && i.length == 1 ? t.itemData(i) : undefined,
@@ -345,7 +364,7 @@ define(
 
                     // Create the debugger panel as per the data received from user input dialog.
                     var dashboardPanel = pgBrowser.docker.findPanels(
-                      'dashboard'
+                      'properties'
                       ),
                       panel = pgBrowser.docker.addPanel(
                         'frm_debugger', wcDocker.DOCK.STACKED, dashboardPanel[0]
@@ -358,7 +377,7 @@ define(
                       var closeUrl = "{{ url_for('debugger.index') }}" + "close/" + res.data.debuggerTransId;
                       $.ajax({
                         url: closeUrl,
-                        method: 'GET'
+                        method: 'DELETE'
                       });
                     });
                   }

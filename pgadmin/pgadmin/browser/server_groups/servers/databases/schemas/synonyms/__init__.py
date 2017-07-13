@@ -19,11 +19,14 @@ from pgadmin.browser.server_groups.servers.databases.schemas.utils \
     import SchemaChildModule
 from pgadmin.browser.utils import PGChildNodeView
 from pgadmin.utils.ajax import make_json_response, \
-    make_response as ajax_response, internal_server_error
+    make_response as ajax_response, internal_server_error, gone
 from pgadmin.utils.ajax import precondition_required
 from pgadmin.utils.driver import get_driver
 from config import PG_DEFAULT_DRIVER
-from pgadmin.utils.ajax import gone
+from pgadmin.utils import IS_PY2
+# If we are in Python3
+if not IS_PY2:
+    unicode = str
 
 
 class SynonymModule(SchemaChildModule):
@@ -331,18 +334,28 @@ class SynonymView(PGChildNodeView):
             except ValueError:
                 data[k] = v
 
-        sql = render_template("/".join([self.template_path,
-                                        'get_objects.sql']),
-                              trgTyp=data['trgTyp'],
-                              trgSchema=data['trgSchema'])
-        status, rset = self.conn.execute_dict(sql)
+        is_valid_request = True
+        if 'trgTyp' not in data or data['trgTyp'] is None or \
+            data['trgTyp'].strip() == '':
+            is_valid_request = False
 
-        if not status:
-            return internal_server_error(errormsg=rset)
+        if 'trgSchema' not in data or data['trgSchema'] is None or \
+            data['trgSchema'].strip() == '':
+            is_valid_request = False
 
-        for row in rset['rows']:
-            res.append({'label': row['name'],
-                        'value': row['name']})
+        if is_valid_request:
+            sql = render_template("/".join([self.template_path,
+                                            'get_objects.sql']),
+                                trgTyp=data['trgTyp'],
+                                trgSchema=data['trgSchema'])
+            status, rset = self.conn.execute_dict(sql)
+
+            if not status:
+                return internal_server_error(errormsg=rset)
+
+            for row in rset['rows']:
+                res.append({'label': row['name'],
+                            'value': row['name']})
 
         return make_json_response(
             data=res,
@@ -381,14 +394,8 @@ class SynonymView(PGChildNodeView):
                     status=200
                 )
             else:
-                return make_json_response(
-                    success=410,
-                    errormsg=gettext(
-                        'Error: Object not found.'
-                    ),
-                    info=gettext(
-                        'The specified synonym could not be found.\n'
-                    )
+                return gone(
+                    gettext('The specified synonym could not be found.')
                 )
 
         except Exception as e:
@@ -480,14 +487,8 @@ class SynonymView(PGChildNodeView):
             if len(res['rows']) > 0:
                 data = res['rows'][0]
             else:
-                return make_json_response(
-                    success=0,
-                    errormsg=gettext(
-                        'Error: Object not found.'
-                    ),
-                    info=gettext(
-                        'The specified synonym could not be found.\n'
-                    )
+                return gone(
+                    gettext('The specified synonym could not be found.')
                 )
 
             SQL = render_template("/".join([self.template_path,
@@ -527,6 +528,9 @@ class SynonymView(PGChildNodeView):
             request.data, encoding='utf-8'
         )
         SQL = self.get_sql(gid, sid, data, scid, syid)
+        # Most probably this is due to error
+        if not isinstance(SQL, (str, unicode)):
+            return SQL
         try:
             if SQL and SQL.strip('\n') and SQL.strip(' '):
                 status, res = self.conn.execute_scalar(SQL)
@@ -566,6 +570,9 @@ class SynonymView(PGChildNodeView):
 
         try:
             SQL = self.get_sql(gid, sid, data, scid, syid)
+            # Most probably this is due to error
+            if not isinstance(SQL, (str, unicode)):
+                return SQL
             if SQL and SQL.strip('\n') and SQL.strip(' '):
                 return make_json_response(
                     data=SQL,
@@ -585,6 +592,10 @@ class SynonymView(PGChildNodeView):
             status, res = self.conn.execute_dict(SQL)
             if not status:
                 return internal_server_error(errormsg=res)
+            if len(res['rows']) == 0:
+                return gone(
+                    gettext("Could not find the synonym on the server.")
+                )
             old_data = res['rows'][0]
             # If target schema/object is not present then take it from
             # old data, it means it does not changed
@@ -633,14 +644,8 @@ class SynonymView(PGChildNodeView):
         if len(res['rows']) > 0:
            data = res['rows'][0]
         else:
-            return make_json_response(
-                success=0,
-                errormsg=gettext(
-                    'Error: Object not found.'
-                ),
-                info=gettext(
-                    'The specified synonym could not be found.\n'
-                )
+            return gone(
+                gettext('The specified synonym could not be found.')
             )
 
         SQL = render_template("/".join([self.template_path,

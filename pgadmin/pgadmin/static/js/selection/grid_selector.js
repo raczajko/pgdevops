@@ -1,79 +1,85 @@
-define(['jquery', 'sources/selection/column_selector', 'sources/selection/row_selector'],
-  function ($, ColumnSelector, RowSelector) {
-    var Slick = window.Slick;
+define(['jquery',
+  'sources/gettext',
+  'sources/selection/column_selector',
+  'sources/selection/row_selector',
+  'sources/selection/range_selection_helper',
+  'sources/url_for',
+], function ($, gettext, ColumnSelector, RowSelector, RangeSelectionHelper, url_for) {
+  var GridSelector = function (columnDefinitions) {
+    var Slick = window.Slick,
+      rowSelector = new RowSelector(columnDefinitions),
+      columnSelector = new ColumnSelector(columnDefinitions),
+      onBeforeGridSelectAll = new Slick.Event(),
+      onGridSelectAll = new Slick.Event(),
+      onBeforeGridColumnSelectAll = columnSelector.onBeforeColumnSelectAll,
+      onGridColumnSelectAll = columnSelector.onColumnSelectAll;
 
-    var GridSelector = function (columnDefinitions) {
-      var rowSelector = new RowSelector(columnDefinitions);
-      var columnSelector = new ColumnSelector(columnDefinitions);
-
-      var init = function (grid) {
-        this.grid = grid;
-        grid.onHeaderClick.subscribe(function (event, eventArguments) {
-          if (eventArguments.column.selectAllOnClick) {
-            toggleSelectAll(grid);
-          }
-        });
-
-        grid.getSelectionModel().onSelectedRangesChanged
-          .subscribe(handleSelectedRangesChanged.bind(null, grid));
-        grid.registerPlugin(rowSelector);
-        grid.registerPlugin(columnSelector);
-      };
-
-      var getColumnDefinitionsWithCheckboxes = function (columnDefinitions) {
-        columnDefinitions = columnSelector.getColumnDefinitionsWithCheckboxes(columnDefinitions);
-        columnDefinitions = rowSelector.getColumnDefinitionsWithCheckboxes(columnDefinitions);
-
-        columnDefinitions[0].selectAllOnClick = true;
-        columnDefinitions[0].name = '<input type="checkbox" data-id="checkbox-select-all" ' +
-          'title="Select/Deselect All"/>' + columnDefinitions[0].name;
-        return columnDefinitions;
-      };
-
-      function handleSelectedRangesChanged(grid) {
-        $("[data-id='checkbox-select-all']").prop("checked", isEntireGridSelected(grid));
-      }
-
-      function isEntireGridSelected(grid) {
-        var selectionModel = grid.getSelectionModel();
-        var selectedRanges = selectionModel.getSelectedRanges();
-        return selectedRanges.length == 1 && isSameRange(selectedRanges[0], getRangeOfWholeGrid(grid));
-      }
-
-      function toggleSelectAll(grid) {
-        if (isEntireGridSelected(grid)) {
-          deselect(grid);
-        } else {
-          selectAll(grid)
+    var init = function (grid) {
+      this.grid = grid;
+      grid.onHeaderClick.subscribe(function (event, eventArguments) {
+        if (eventArguments.column.selectAllOnClick && !$(event.target).hasClass('slick-resizable-handle')) {
+          toggleSelectAll(grid, event, eventArguments);
         }
-      }
+      });
 
-      var isSameRange = function (range, otherRange) {
-        return range.fromCell == otherRange.fromCell && range.toCell == otherRange.toCell &&
-          range.fromRow == otherRange.fromRow && range.toRow == otherRange.toRow;
-      };
+      grid.getSelectionModel().onSelectedRangesChanged
+        .subscribe(handleSelectedRangesChanged.bind(null, grid));
 
-      function getRangeOfWholeGrid(grid) {
-        return new Slick.Range(0, 1, grid.getDataLength() - 1, grid.getColumns().length - 1);
-      }
+      grid.registerPlugin(rowSelector);
+      grid.registerPlugin(columnSelector);
 
-      function deselect(grid) {
-        var selectionModel = grid.getSelectionModel();
-        selectionModel.setSelectedRanges([]);
-      }
-
-      function selectAll(grid) {
-        var range = getRangeOfWholeGrid(grid);
-        var selectionModel = grid.getSelectionModel();
-
-        selectionModel.setSelectedRanges([range]);
-      }
-
-      $.extend(this, {
-        "init": init,
-        "getColumnDefinitionsWithCheckboxes": getColumnDefinitionsWithCheckboxes
+      onGridSelectAll.subscribe(function(e, args) {
+        RangeSelectionHelper.selectAll(args.grid);
       });
     };
 
-    return GridSelector;
-  });
+    var getColumnDefinitions = function (columnDefinitions) {
+      columnDefinitions = columnSelector.getColumnDefinitions(columnDefinitions);
+      columnDefinitions = rowSelector.getColumnDefinitions(columnDefinitions);
+
+      columnDefinitions[0].selectAllOnClick = true;
+      columnDefinitions[0].name = '<span data-id="select-all" ' +
+          'title="' + gettext('Select/Deselect All') + '">' +
+          '<br>' +
+          columnDefinitions[0].name +
+          '<img class="select-all-icon" src="' + url_for('static', {'filename': 'img/select-all-icon.png'}) + '"></img>';
+      '</span>';
+      return columnDefinitions;
+    };
+
+    function handleSelectedRangesChanged(grid) {
+      if(RangeSelectionHelper.isEntireGridSelected(grid)) {
+        $('[data-id=\'select-all\']').addClass('selected');
+      } else {
+        $('[data-id=\'select-all\']').removeClass('selected');
+      }
+    }
+
+    function toggleSelectAll(grid, event, eventArguments) {
+      if (RangeSelectionHelper.isEntireGridSelected(grid)) {
+        selectNone(grid);
+      } else {
+        onBeforeGridSelectAll.notify(eventArguments, event);
+        if (!(event.isPropagationStopped() || event.isImmediatePropagationStopped())) {
+          RangeSelectionHelper.selectAll(grid);
+        }
+      }
+    }
+
+    function selectNone(grid) {
+      var selectionModel = grid.getSelectionModel();
+      selectionModel.setSelectedRanges([]);
+    }
+
+    $.extend(this, {
+      'init': init,
+      'getColumnDefinitions': getColumnDefinitions,
+      'onBeforeGridSelectAll': onBeforeGridSelectAll,
+      'onGridSelectAll': onGridSelectAll,
+      'onBeforeGridColumnSelectAll': onBeforeGridColumnSelectAll,
+      'onGridColumnSelectAll': onGridColumnSelectAll,
+    });
+  };
+
+  return GridSelector;
+});

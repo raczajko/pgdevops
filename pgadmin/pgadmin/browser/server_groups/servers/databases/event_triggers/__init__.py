@@ -12,16 +12,18 @@ import re
 from functools import wraps
 
 import pgadmin.browser.server_groups.servers.databases as database
-from flask import render_template, make_response, request, jsonify
+from flask import render_template, request, jsonify
 from flask_babel import gettext
 from pgadmin.browser.collection import CollectionNodeModule
 from pgadmin.browser.utils import PGChildNodeView
 from pgadmin.utils.ajax import make_json_response, internal_server_error, \
-    make_response as ajax_response
+    make_response as ajax_response, gone
 from pgadmin.utils.driver import get_driver
-from pgadmin.utils.ajax import gone
-
 from config import PG_DEFAULT_DRIVER
+from pgadmin.utils import IS_PY2
+# If we are in Python3
+if not IS_PY2:
+    unicode = str
 
 
 class EventTriggerModule(CollectionNodeModule):
@@ -81,6 +83,14 @@ class EventTriggerModule(CollectionNodeModule):
         """
         return database.DatabaseModule.NODE_TYPE
 
+    @property
+    def module_use_template_javascript(self):
+        """
+        Returns whether Jinja2 template is used for generating the javascript
+        module.
+        """
+        return False
+
 
 blueprint = EventTriggerModule(__name__)
 
@@ -98,9 +108,6 @@ class EventTriggerView(PGChildNodeView):
     -------
     * __init__(**kwargs)
       - Method is used to initialize the EventTriggerView and it's base view.
-
-    * module_js()
-      - Returns the javascript module for event trigger.
 
     * check_precondition()
       - This function will behave as a decorator which will checks
@@ -163,21 +170,8 @@ class EventTriggerView(PGChildNodeView):
         'stats': [{'get': 'statistics'}],
         'dependency': [{'get': 'dependencies'}],
         'dependent': [{'get': 'dependents'}],
-        'module.js': [{}, {}, {'get': 'module_js'}],
         'fopts': [{'get': 'get_event_funcs'}, {'get': 'get_event_funcs'}]
     })
-
-    def module_js(self):
-        """
-        Returns the javascript module for event trigger.
-        """
-        return make_response(
-            render_template(
-                "event_triggers/js/event_trigger.js",
-                _=gettext
-            ),
-            200, {'Content-Type': 'application/x-javascript'}
-        )
 
     def check_precondition(f):
         """
@@ -427,6 +421,9 @@ class EventTriggerView(PGChildNodeView):
 
         try:
             sql = self.get_sql(data, etid)
+            # Most probably this is due to error
+            if not isinstance(sql, (str, unicode)):
+                return sql
             sql = sql.strip('\n').strip(' ')
             if sql != "":
                 status, res = self.conn.execute_scalar(sql)
@@ -539,7 +536,11 @@ class EventTriggerView(PGChildNodeView):
                 data[k] = v
         try:
             sql = self.get_sql(data, etid)
+            # Most probably this is due to error
+            if not isinstance(sql, (str, unicode)):
+                return sql
             sql = sql.strip('\n').strip(' ')
+            sql = re.sub('\n{2,}', '\n\n', sql)
             if sql == '':
                 sql = "--modified SQL"
             return make_json_response(
@@ -628,6 +629,11 @@ class EventTriggerView(PGChildNodeView):
         if not status:
             return internal_server_error(errormsg=res)
 
+        if len(res['rows']) == 0:
+            return gone(
+                _("Could not find the specified event trigger on the server.")
+            )
+
         result = res['rows'][0]
         result = self._formatter(result)
 
@@ -648,6 +654,7 @@ class EventTriggerView(PGChildNodeView):
         sql_header += "\n"
 
         sql = sql_header + sql
+        sql = re.sub('\n{2,}', '\n\n', sql)
 
         return ajax_response(response=sql)
 

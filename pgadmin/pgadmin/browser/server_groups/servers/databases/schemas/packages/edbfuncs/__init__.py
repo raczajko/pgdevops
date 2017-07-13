@@ -291,7 +291,8 @@ class EdbFuncView(PGChildNodeView, DataTypeReader):
                     row['oid'],
                     pkgid,
                     row['name'],
-                    icon="icon-" + self.node_type
+                    icon="icon-" + self.node_type,
+                    funcowner=row['funcowner']
                 ),
                 status=200
             )
@@ -302,7 +303,8 @@ class EdbFuncView(PGChildNodeView, DataTypeReader):
                     row['oid'],
                     pkgid,
                     row['name'],
-                    icon="icon-" + self.node_type
+                    icon="icon-" + self.node_type,
+                    funcowner=row['funcowner']
                 ))
 
         return make_json_response(
@@ -331,10 +333,9 @@ class EdbFuncView(PGChildNodeView, DataTypeReader):
             return internal_server_error(errormsg=res)
 
         if len(res['rows']) == 0:
-            return gone(gettext("""
-Could not find the function in the database.\n
-It may have been removed by another user or moved to another schema.
-"""))
+            return gone(
+                gettext("Could not find the function in the database.")
+            )
 
         resp_data = res['rows'][0]
 
@@ -527,6 +528,10 @@ It may have been removed by another user or moved to another schema.
         status, res = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
+        if len(res['rows']) == 0:
+            return gone(
+                gettext("Could not find the function in the database.")
+            )
 
         body = self.get_inner(res['rows'][0]['pkgbodysrc'])
 
