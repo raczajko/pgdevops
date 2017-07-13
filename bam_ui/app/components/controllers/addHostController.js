@@ -134,6 +134,9 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	    				$scope.isSudo =  jsonData.isSudo;
 	    				$scope.pgcDir = jsonData.pgc_path;
 	    				$scope.pgcVersion = jsonData.pgc_version;
+	    				if($scope.pgcVersion && !$scope.editHost){
+	    				    $scope.create_btn = "Associate";
+	    				}
 	    				$scope.root_pgc_path=jsonData.root_pgc_path;
 	    				$scope.auth_err=jsonData.auth_err;
 	    				$scope.not_sudoer=jsonData.not_sudoer;
