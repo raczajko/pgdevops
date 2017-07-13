@@ -209,14 +209,14 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-5 control-label">DB Parameter Group :</label>
-                    <div class="col-sm-2">
-                        <select class="form-control" ng-model="data.dbGroup"></select>
+                    <div class="col-sm-7">
+                        <select class="form-control" ng-model="data.dbGroup" ng-options="db.DBParameterGroupName as db.DBParameterGroupName for db in dbGroups"></select>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Option Group :</label>
                     <div class="col-sm-7">
-                        <select class="form-control" ng-model="data.optionGroup"></select>
+                        <select class="form-control" ng-model="data.optionGroup" ng-options="option.OptionGroupName as option.OptionGroupName for option in optionGroups"></select>
                     </div>
                 </div>
                 <div class="form-group">
@@ -252,6 +252,23 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-group" ng-if="data.enableMon == 'yes'">
+                    <label class="col-sm-5 control-label"> Monitoring Role : </label>
+                    <div class="col-sm-7">
+                        <select class="form-control" ng-model="data.monitoring_role">
+                            <option value="default">Default</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" ng-if="data.enableMon == 'yes'">
+                    <label class="col-sm-5 control-label"> Granularity : </label>
+                    <div class="col-sm-2">
+                        <select class="form-control" ng-model="data.granularity">
+                            <option ng-repeat="n in [] | range:120" value="{{$index}}">{{$index}}</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-2" style="margin-left: -25px; margin-top: 8px;"><strong>second(s)</strong></div>
+                </div>
             </form>
         </div>
         <div class="col-md-6">
@@ -271,7 +288,9 @@
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Maintenance Window :</label>
                     <div class="col-sm-7">
-                        <select class="form-control" ng-model="data.mainWindow"></select>
+                        <select class="form-control" ng-model="data.mainWindow">
+                            <option value="">Select Window</option>
+                        </select>
                     </div>
                 </div>
             </form>
@@ -284,7 +303,9 @@
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Backup Retention Period : </label>
                     <div class="col-sm-2">
-                        <input type="number" class="form-control" ng-model="data.backup_retention" name="">
+                        <select class="form-control" ng-model="data.backup_retention">
+                            <option ng-repeat="n in [] | range:36" value="{{$index}}">{{$index}}</option>
+                        </select>
                     </div>
                     <div class="col-sm-2" style="margin-left: -25px; margin-top: 8px;"><strong>days</strong></div>
                 </div>

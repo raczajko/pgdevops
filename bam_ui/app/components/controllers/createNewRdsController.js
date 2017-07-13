@@ -16,10 +16,12 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         'storage_type' : 'General Purpose (SSD)',
         'MultiAZ' : 'no',
         'vpcGroup' : 'default',
-        'backup_retention' : 7,
+        'backup_retention' : '7',
         'enableMon' : 'no',
         'autoUpgrade' : 'yes',
-        'storage_encrypted' : 'no'
+        'storage_encrypted' : 'no',
+        'granularity' : '60',
+        'monitoring_role' : 'default'
     };
 
     var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
@@ -57,6 +59,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
             if($scope.secondStep){
                 $scope.dbEngVersions = response;
                 $scope.data.EngineVersion = $scope.dbEngVersions[0].EngineVersion;
+                $scope.versionChange();
             }else if($scope.thirdStep){
                 $scope.networkSec = JSON.parse(data[0])
                 $scope.vpc = { select : $scope.networkSec[0].vpc }
@@ -65,11 +68,21 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         });
     });
 
+    $scope.versionChange = function(argument){
+        for(var i = 0; i < $scope.dbEngVersions.length; ++i){
+            if($scope.dbEngVersions[i].EngineVersion == $scope.data.EngineVersion){
+                $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
+                $scope.optionGroups = $scope.dbEngVersions[i].OptionGroups;
+                $scope.data.dbGroup = $scope.dbGroups[0].DBParameterGroupName;
+                $scope.data.optionGroup = $scope.optionGroups[0].OptionGroupName;
+            }
+        }
+    }
+
     $scope.vpcChange = function(argument){
         for (var i = 0; i < $scope.networkSec.length; ++i) {
             if($scope.networkSec[i].vpc == $scope.vpc.select){
                 $scope.data.subnet_group = $scope.networkSec[i].subnet_group;
-                debugger
                 $scope.availableZones = $scope.networkSec[i].zones;
                 if($scope.availableZones.length > 0){
                     $scope.data.zone = $scope.availableZones[0].name;
