@@ -8,12 +8,6 @@
     <div ng-if="loading" class="text-center">
         <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
     </div>
-    <div ng-if="creating">
-        <i class="fa fa-spinner fa-pulse fa-2x"></i> &nbsp;<strong>Creating...</strong>
-    </div>
-    <div ng-if="showErrMsg">
-        <strong style="color:#EF0808;">{{errMsg}}</strong>
-    </div>
     <div ng-if="firstStep && !loading">
         <div class="row">
             <div class="col-sm-2" style="margin-right: -100px; margin-top: 5px; margin-left:10px;"><strong>Region :</strong> </div>
@@ -143,7 +137,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Confirm Password:</label>
                     <div class="col-sm-8">
-	                    <input type="password" class="form-control" id="password_c" name="password_c" ng-model="data.password_c" placeholder="Password"  ng-disabled="initializing"valid-password-c required  />
+	                    <input type="password" class="form-control" id="password_c" name="password_c" ng-model="data.confPassword" placeholder="Password"  ng-disabled="initializing"valid-password-c required  />
                         <span ng-show="!initForm.password_c.$error.required && initForm.password_c.$error.noMatch && initForm.password.$dirty">Passwords do not match.</span>
                     </div>
                 </div>
@@ -151,7 +145,8 @@
         </div>
     </div>
     <div ng-if="thirdStep && !loading" class="row">
-        <div class="col-md-6">
+        <div class="col-md-12">
+         <div class="col-md-6">
             <div>
                 <div class="box-header create-rds-cat-header"> <strong>Network & Security </strong></div>
             </div>
@@ -195,7 +190,7 @@
                 </div>
             </form>
         </div>
-        <div class="col-md-6">
+            <div class="col-md-6">
             <div>
                 <div class="box-header create-rds-cat-header"> <strong>Database Options </strong></div>
             </div>
@@ -241,30 +236,9 @@
                 </div>
             </form>
         </div>
-        <div class="col-md-6">
-            <div>
-                <div class="box-header create-rds-cat-header"> <strong>Backup </strong></div>
-            </div>
-            <form class="form-horizontal create-rds-modal" ng-if="thirdStep">
-                <div class="form-group">
-                    <label class="col-sm-5 control-label">Backup Retention Period : </label>
-                    <div class="col-sm-2">
-                        <select class="form-control" ng-model="data.backup_retention">
-                            <option ng-repeat="n in [] | range:30" value="{{$index}}">{{$index}}</option>
-                        </select>
-                    </div>
-                    <div class="col-sm-2" style="margin-left: -25px; margin-top: 8px;"><strong>days</strong></div>
-                </div>
-                <div class="form-group">
-                    <label class="col-sm-5 control-label">Backup Window:</label>
-                    <div class="col-sm-7">
-                        <select class="form-control" ng-model="backupWindow">
-                        </select>
-                    </div>
-                </div>
-            </form>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-12">
+            <div class="col-md-6">
             <div>
                 <div class="box-header create-rds-cat-header"> <strong>Monitoring </strong></div>
             </div>
@@ -291,7 +265,7 @@
                         <select class="form-control" ng-model="data.autoUpgrade">
                             <option value="no">No</option>
                             <option value="yes">Yes</option>
-                        </select></select>
+                        </select>
                     </div>
                 </div>
                 <div class="form-group">
@@ -302,12 +276,40 @@
                 </div>
             </form>
         </div>
+            <div class="col-md-6">
+            <div>
+                <div class="box-header create-rds-cat-header"> <strong>Backup </strong></div>
+            </div>
+            <form class="form-horizontal create-rds-modal" ng-if="thirdStep">
+                <div class="form-group">
+                    <label class="col-sm-5 control-label">Backup Retention Period : </label>
+                    <div class="col-sm-2">
+                        <input type="number" class="form-control" ng-model="data.backup_retention" name="">
+                    </div>
+                    <div class="col-sm-2" style="margin-left: -25px; margin-top: 8px;"><strong>days</strong></div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-5 control-label">Backup Window:</label>
+                    <div class="col-sm-7">
+                        <select class="form-control" ng-model="backupWindow">
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        </div>
     </div>
 </div>
 <div class="modal-footer" ng-if="!loading">
+    <div class="pull-left">
+        <div ng-if="showErrMsg">
+            <strong style="color:#EF0808;">{{errMsg}}</strong>
+        </div>
+    </div>
     <div class="pull-right">
         <button class="btn btn-default" ng-if="!firstStep" ng-click="previous()">Previous</button>
-        <button class="btn btn-primary" ng-if="!thirdStep" ng-click="next()">Next Step</button>
-        <button class="btn btn-primary" ng-if="thirdStep" ng-click="createRDS()">Create</button>
+        <button class="btn btn-primary" ng-if="!thirdStep && secondStep" ng-disabled="!data.master_user || !data.instance || !data.password" ng-click="next()">Next Step</button>
+        <button class="btn btn-primary" ng-if="!thirdStep && !secondStep" ng-click="next()">Next Step</button>
+        <button class="btn btn-primary" ng-if="thirdStep" ng-disabled="creating" ng-click="createRDS()"> <i ng-if="creating" class="fa fa-spinner fa-pulse"></i> Create</button>
     </div>
 </div>
