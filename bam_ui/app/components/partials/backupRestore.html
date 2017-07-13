@@ -26,7 +26,7 @@
                                 <label class="col-sm-4 control-label">PG Connection:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
                                     <select class="form-control" id="dbBackupPgcListDropDown" ng-model="backup.pgc" ng-change="onPGCChange(backup.pgc,'backup')" required>
-                                        <option ng-repeat="pgc in pgListRes" value="{{ pgc.host }}"><h3>{{ pgc.server_name }}, {{pgc.db_user}}@{{pgc.host}}:{{pgc.port}}/{{pgc.db}} </h3> </option>
+                                        <option ng-repeat="pgc in pgListRes" value="{{ pgc.server_name }}"><h3>{{ pgc.server_name }}, {{pgc.db_user}}@{{pgc.host}}:{{pgc.port}}/{{pgc.db}} </h3> </option>
                                     </select>
                                 </div>
                             </div>
@@ -115,8 +115,8 @@
                             <div class="form-group">
                                 <div class="col-sm-5"></div>
                                 <div class="col-sm-5">
-                                    <button type="submit" ng-disabled= !backupRestoreFeature class="btn btn-primary">Start Backup...</button>
-                                    <b>&nbsp;&nbsp;<a ui-sref="components.backgroundProcessList">View Recent Jobs..</a></b>
+                                    <button type="submit" ng-disabled= "!backupRestoreFeature || loadingBackupAction" class="btn btn-primary"><i class="fa fa-cog fa-spin fa-fw" ng-if="loadingBackupAction"></i>&nbsp;Start Backup...</button>
+                                    <b>&nbsp;&nbsp;<a ng-click="navigate('#/components/jobs')" class="notification" style="cursor: pointer;">View Recent Jobs<span class="num">{{$root.runningJobsCount}}</span></a></b>
                                 </div>
                                 <div class="col-sm-2">
 
@@ -194,7 +194,7 @@
                                 <label class="col-sm-4 control-label">PG Connection:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
                                      <select class="form-control" id="dbRestorePgcListDropDown" ng-model="restore.pgc" ng-change="onPGCChange(restore.pgc,'restore')" required>
-                                        <option ng-repeat="pgc in pgListRes" value="{{ pgc.host }}"><h3>{{ pgc.server_name }}, {{pgc.db_user}}@{{pgc.host}}:{{pgc.port}}/{{pgc.db}} </h3> </option>
+                                        <option ng-repeat="pgc in pgListRes" value="{{ pgc.server_name }}"><h3>{{ pgc.server_name }}, {{pgc.db_user}}@{{pgc.host}}:{{pgc.port}}/{{pgc.db}} </h3> </option>
                                     </select>
                                 </div>
                             </div>
@@ -235,8 +235,8 @@
                             <div class="form-group">
                                 <div class="col-sm-5"></div>
                                 <div class="col-sm-5">
-                                    <button type="submit" ng-disabled= !backupRestoreFeature class="btn btn-primary">Start Restore...</button>
-                                    <b>&nbsp;&nbsp;<a ui-sref="components.backgroundProcessList">View Recent Jobs..</a></b>
+                                    <button type="submit" ng-disabled= "!backupRestoreFeature || loadingRestoreAction" class="btn btn-primary"><i class="fa fa-cog fa-spin fa-fw" ng-if="loadingRestoreAction"></i>&nbsp;Start Restore...</button>
+                                    <b>&nbsp;&nbsp;<a ng-click="navigate('#/components/jobs')" class="notification" style="cursor: pointer;">View Recent Jobs<span class="num">{{$root.runningJobsCount}}</span></a></b>
                                 </div>
                                 <div class="col-sm-2">
 

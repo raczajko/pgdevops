@@ -32,6 +32,7 @@ class ConnectAPI(MethodView):
             gid = args.get('gid')
             pwd = args.get('pwd')
             save = args.get('save')
+            update = args.get('update')
             try:
                 pg_server = Server.query.filter_by(
                     id=sid,
@@ -46,7 +47,8 @@ class ConnectAPI(MethodView):
                     json_dict['discovery_id'] = pg_server.discovery_id
 
                 manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(int(sid))
-                manager.update(pg_server)
+                if update:
+                    manager.update(pg_server)
                 conn = manager.connection()
                 if conn.connected():
                     try:
@@ -100,6 +102,8 @@ class ConnectAPI(MethodView):
                             errmsg = emsg[0]
                     if hasattr(str, 'decode'):
                         errmsg = errmsg.decode('utf-8')
+                    if errmsg.find("timeout expired") >= 0:
+                        errmsg = "Connection timed out."
                     json_dict['state'] = "error"
                     json_dict['msg'] = errmsg
                     if errmsg.find("password authentication failed")>=0:

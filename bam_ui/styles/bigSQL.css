@@ -7365,4 +7365,13 @@ fieldset
 .create-rds-cat-header {
     border-bottom: 1px solid #e5e5e5;
     padding-bottom:3px;
+
+a.notification{
+  position: relative;
+  background-size: contain;
+  text-decoration: none;
+}
+.num {
+  position: absolute;
+  color: red;
 }

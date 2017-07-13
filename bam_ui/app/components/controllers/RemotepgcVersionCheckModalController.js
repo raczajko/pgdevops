@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('RemotepgcVersionCheckModalController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', 'bamAjaxCall', '$sce', 'htmlMessages', '$cookies', 'UpdateComponentsService', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal, bamAjaxCall, $sce, htmlMessages, $cookies, UpdateComponentsService) {
+angular.module('bigSQL.components').controller('RemotepgcVersionCheckModalController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', 'bamAjaxCall', '$sce', 'htmlMessages', '$cookies', 'UpdateComponentsService', '$uibModalStack', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal, bamAjaxCall, $sce, htmlMessages, $cookies, UpdateComponentsService, $uibModalStack) {
 
     $scope.host = $uibModalInstance.host;
     $scope.returnCode = $uibModalInstance.returnCode;
@@ -62,6 +62,7 @@ angular.module('bigSQL.components').controller('RemotepgcVersionCheckModalContro
 
     $scope.cancel = function () {
         $rootScope.$emit('addedHost');
+        $uibModalStack.dismissAll();
         $uibModalInstance.dismiss('cancel');
     };
 

@@ -1,11 +1,11 @@
-angular.module('bigSQL.common').directive('backgroundProcessAlert', function (bamAjaxCall, $rootScope) {
+angular.module('bigSQL.common').directive('backgroundJobProcessAlert', function (bamAjaxCall, $rootScope) {
 
     return {
         scope: {
             title: '@'
         },
         restrict: 'E',
-        templateUrl: '../app/common/partials/backgroundProcessAlert.html',
+        templateUrl: '../app/common/partials/backgroundJobProcessAlert.html',
         controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', '$timeout', '$uibModal', '$sce','PubSubService', function backgroundProcessAlertController($scope, $http, $window, $cookies, $rootScope, $timeout, $uibModal, $sce, PubSubService) {
 
             $scope.isbgProcessStarted = false;
@@ -32,41 +32,21 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                             $scope.generatedFile = '';
                             $scope.generatedFileName = '';
                             $scope.error_msg = ret_data.data.error_msg;
-                            if(ret_data.data.component_required){
-                                var modalInstance = $uibModal.open({
-                                    templateUrl: '../app/components/partials/confirmOverrideModel.html',
-                                    controller: 'confirmOverrideModalController',
-                                });
-                                if($scope.procCmd.indexOf("pgc dbrestore") != -1){
-                                    modalInstance.modalTitle = $sce.trustAsHtml("pg_restore must match source DB version");
-                                    $rootScope.$emit("getSelectedHost","restore");
-                                }
-                                else{
-                                    modalInstance.modalTitle = $sce.trustAsHtml("pg_dump must match source DB version");
-                                    $rootScope.$emit("getSelectedHost","backup");
-                                }
-                                modalInstance.modelBody = $sce.trustAsHtml("Host " + $rootScope.selectedHost +" Requires: "+ret_data.data.component_required);
-                                modalInstance.successText = "Install";
-                                modalInstance.failText = "Cancel";
-                                modalInstance.acceptMethod = "initComponentInstall";
-                                modalInstance.sshHost = $rootScope.selectedHost;
-                                modalInstance.component = ret_data.data.component_required;
-                                $rootScope.$emit('hidebgProcess');
-                            }
                         }else{
                             $scope.procStatus = "Completed."
                             $scope.generatedFile = ret_data.data.file;
                             $scope.generatedFileName = ret_data.data.report_file;
                         }
-                        $scope.procEndTime = new Date(ret_data.data.end_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
-                        $rootScope.$emit("refreshBadgerReports");
+                        if(ret_data.data.end_time){
+                            $scope.procEndTime = new Date(ret_data.data.end_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
+                        }
                     } else{
                         $scope.procEndTime = '';
                         $scope.generatedFile = '';
                         $scope.generatedFileName = '';
                         $scope.procCompleted = false;
-                        $scope.procStatus = "Running...."
-                        setTimeout(function() {getBGStatus(process_log_id) },2000);
+                        $scope.procStatus = "Running....";
+                        $scope.refreshConsole = setTimeout(function() {getBGStatus(process_log_id) },2000);
                     }
 
                     $timeout(function() {
@@ -107,6 +87,9 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
             }
 
             $rootScope.$on('backgroundProcessStarted', function (argument, pid) {
+                if($scope.refreshConsole){
+                    clearTimeout($scope.refreshConsole);
+                }
                 getBGStatus(pid);
 
             });

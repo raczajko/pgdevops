@@ -80,11 +80,11 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
                             $scope.sid = argument.sid;
                         }
                         if ($scope.savePassword) {
-                            $rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, $scope.password, true);
+                            $rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, $scope.password, true, true);
                             $scope.connect_err = '';
                             $scope.connecting = true;
                         }else{
-                            $rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, $scope.password, false);
+                            $rootScope.$emit('getDBstatus', $scope.sid, $scope.gid, $scope.password, false, true);
                             $scope.connect_err = '';
                             $scope.connecting = true;
                         }
@@ -95,8 +95,8 @@ angular.module('bigSQL.components').controller('addPGConnectionModalController',
                 }else{
                     $scope.connectionError = true;
                     $scope.message = data.msg;
+                    $scope.connecting = false;
                 }
-                $scope.connecting = false;
              })
 	    })
     }
