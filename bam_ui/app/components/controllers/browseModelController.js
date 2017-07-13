@@ -16,12 +16,22 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
     $scope.backLink = $scope.directory;
     $scope.currentPath = $scope.directory;
 
-    if(!$scope.directory.endsWith('/')){
+    function endsWith(str, suffix) {
+        return str.indexOf(suffix, str.length - suffix.length) !== -1;
+    }
+
+    if($scope.directory.indexOf('\\') != -1 && !endsWith($scope.directory,'\\')){
+        $scope.directory = $scope.directory + '\\';
+    }
+    else if(!endsWith($scope.directory,'/')){
         $scope.directory = $scope.directory + '/';
     }
     $scope.directory = $scope.directory + "*"
     if($scope.type == 'backup'){
-        $scope.directory = $scope.directory + "/"
+        if($scope.directory.indexOf('\\') != -1)
+            $scope.directory = $scope.directory + "\\"
+        else
+            $scope.directory = $scope.directory + "/"
     }
     var args = {
        "baseDir": $scope.directory,
@@ -35,14 +45,20 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
 
     $scope.getFiles = function(filename,type){
         if(['d','.'].indexOf(type) != -1){
-            if(!filename.endsWith('/')){
-                var temp_filename = filename + "/*";
+            if(filename.indexOf('\\') != -1 && !endsWith(filename,'\\')){
+                var temp_filename = filename + '\\';
+            }
+            else if(!endsWith(filename,'/')){
+                var temp_filename = filename + '/';
             }
             else{
                 var temp_filename = filename + "*";
             }
            if($scope.type == 'backup'){
-            temp_filename = temp_filename + "/";
+            if($scope.directory.indexOf('\\') != -1)
+                temp_filename = temp_filename + "\\"
+            else
+                temp_filename = temp_filename + "/"
            }
            var args = {
                "baseDir": temp_filename,
@@ -71,9 +87,11 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
     };
 
     $scope.getName = function(filename){
-        if(filename.endsWith('/')){
+        if((filename.lastIndexOf('/') != -1 && filename.lastIndexOf('/') + 1 == filename.length) || (filename.lastIndexOf('\\') != -1 && filename.lastIndexOf('\\') + 1 == filename.length)){
             filename = filename.substring(0, filename.length - 1);
         }
+        if(filename.lastIndexOf('\\') != -1 )
+            return filename.split('\\').pop();
         return filename.split('/').pop();
     }
 }]);

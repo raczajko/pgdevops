@@ -20,6 +20,7 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
                 'type':'Badger',
                 'type_value': 'pgBadger Report'
             }];
+
     $scope.getBGprocessList = function(type) {
         if(type == 'all' || type == ''){
             type = '';
@@ -34,10 +35,11 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
                 $scope.loading = false;
             }
             $timeout(function() {
-            $scope.getBGprocessList($scope.processType)
+                $scope.getBGprocessList($scope.processType)
             }, 5000);
         })
     };
+
     $scope.getBGprocessList('');
 
     $scope.jobTypeChange = function(type){
@@ -67,6 +69,9 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
     };
 
     $scope.getLocalTime = function(time){
+        if(!time){
+            return "";
+        }
         var d_date = new Date(time.split('.')[0].replace(/-/gi,'/')+' UTC');
         return d_date;
     }

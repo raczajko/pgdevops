@@ -8,8 +8,14 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
     $scope.showBackupBgProcess = false;
     $scope.backup.advoptions = "-v"
     $scope.restore.advoptions = "-v"
+    $scope.loadingBackupAction = false;
+    $scope.loadingRestoreAction = false;
 
     $scope.backupRestoreFeature = false;
+
+    function endsWith(str, suffix) {
+        return str.indexOf(suffix, str.length - suffix.length) !== -1;
+    }
 
     var getLabList = bamAjaxCall.getCmdData('lablist');
 
@@ -122,13 +128,13 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         if(pgc){
             var i;
             for(i = 0; i < $scope.pgListRes.length; i++){
-                if($scope.pgListRes[i].host == pgc && b_type == 'backup'){
+                if($scope.pgListRes[i].server_name == pgc && b_type == 'backup'){
                     $scope.backup.hostname = $scope.pgListRes[i].host;
                     $scope.backup.port = $scope.pgListRes[i].port;
                     $scope.backup.dbname = $scope.pgListRes[i].db;
                     $scope.backup.user = $scope.pgListRes[i].db_user;
                 }
-                else if($scope.pgListRes[i].host == pgc && b_type == 'restore'){
+                else if($scope.pgListRes[i].server_name == pgc && b_type == 'restore'){
                     $scope.restore.hostname = $scope.pgListRes[i].host;
                     $scope.restore.port = $scope.pgListRes[i].port;
                     $scope.restore.dbname = $scope.pgListRes[i].db;
@@ -202,8 +208,8 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             var data = JSON.parse(data);
             $scope.pgListRes = data;
             if(data.length > 0){
-                $scope.backup.pgc = data[0].host;
-                $scope.restore.pgc = data[0].host;
+                $scope.backup.pgc = data[0].server_name;
+                $scope.restore.pgc = data[0].server_name;
                 $scope.onPGCChange($scope.backup.pgc,'backup');
                 $scope.$apply();
             }
@@ -213,9 +219,14 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         });
 
         $scope.checkFileExistense = function(){
-            if(!$scope.backup.directory.endsWith('/')){
+
+            if($scope.backup.directory.indexOf('\\') != -1 && !endsWith($scope.backup.directory,'\\')){
+                $scope.backup.directory = $scope.backup.directory + '\\';
+            }
+            else if(!endsWith($scope.backup.directory,'/')){
                 $scope.backup.directory = $scope.backup.directory + '/';
             }
+
             var filename = $scope.backup.filename;
             if($scope.backup.format == 'p'){
                 if((filename.split('.')).length == 1){
@@ -228,6 +239,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                "pgcHost": $scope.backup.sshserver
             };
             var fileData = {}
+            $scope.loadingBackupAction = true;
             var dirlist = $http.post($window.location.origin + '/api/dirlist', args);
             dirlist.then(function (argument) {
                 for (var i = 0; i < argument.data[0].data.length ; i++) {
@@ -237,6 +249,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
                         fileData['last_accessed'] = argument.data[0].data[i].last_accessed;
                     }
                 }
+                $scope.loadingBackupAction = false;
                 if(exists){
                     //var confirmStatus = confirm("Do you want to override !");
                     var modalInstance = $uibModal.open({
@@ -278,8 +291,10 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             if($scope.backup.password){
                 args["password"] = $scope.backup.password;
             }
+            $scope.loadingBackupAction = true;
             var backupDb = $http.post($window.location.origin + '/api/backup_restore_db', args);
             backupDb.then(function (argument) {
+                $scope.loadingBackupAction = false;
                 $scope.showBackupBgProcess = true;
                 $rootScope.$emit('backgroundProcessStarted', argument.data.process_log_id);
                 $scope.backupDbSpinner = false;
@@ -305,8 +320,10 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             if($scope.restore.password){
                 args["password"] = $scope.restore.password;
             }
+            $scope.loadingRestoreAction = true;
             var backupDb = $http.post($window.location.origin + '/api/backup_restore_db', args);
             backupDb.then(function (argument) {
+                $scope.loadingRestoreAction = false;
                 $scope.showBackupBgProcess = true;
                 $rootScope.$emit('backgroundProcessStarted', argument.data.process_log_id);
                 $scope.backupDbSpinner = false;
