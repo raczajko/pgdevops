@@ -188,8 +188,21 @@ class ComponentAction(object):
         if dataDir == '':
             pgcCmd = pgcCmd.split(' --datadir')[0]
         if host:
-            pgcCmd = pgcCmd + " --host \"" + host + "\""
-        if util.is_postgres(name):
+            pgc_host_info = util.get_pgc_host(host)
+            ssh_host = pgc_host_info[3]
+            ssh_host_name = pgc_host_info[4]
+            ssh_username = pgc_host_info[1]
+            ssh_password = pgc_host_info[2]
+            ssh_key = pgc_host_info[5]
+            sudo_pwd = pgc_host_info[7]
+            is_sudo = pgc_host_info[6]
+            from PgcRemote import PgcRemote
+            remote = PgcRemote(ssh_host, ssh_username, password=ssh_password, ssh_key=ssh_key)
+            remote.connect()
+            is_file_added = remote.add_file('/tmp/.pgpass', password)
+            remote.disconnect()
+            pgcCmd = pgcCmd + " --pwfile /tmp/.pgpass --host \"" + host + "\""
+        if util.is_postgres(name) and not host:
             pgpass_file = PGC_HOME + os.sep + name + os.sep + ".pgpass"
             if not os.path.isfile(pgpass_file):
                 password_file = open(pgpass_file, 'w')

@@ -125,19 +125,21 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
             session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDir, $scope.portNumber.toString() ] );
         } else {
             if ($scope.userName == undefined || $scope.password == undefined) {
-                var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password ;
+                // var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password ;
+                session.call('com.bigsql.init', [ $scope.comp, $scope.formData.password, $scope.dataDir, $scope.portNumber.toString(), $scope.host ] );
             }else{
                 var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password + '/' + $scope.userName +'/' + $scope.userPassword;
+                var eventData = bamAjaxCall.getCmdData(event_url);
+                eventData.then(function(data) {
+                    debugger
+                    $scope.addToMetaData();
+                    if (!$scope.autostartOn && $scope.autoStartVal) {
+                        session.call('com.bigsql.autostart',[$scope.autoStartVal,$scope.comp, $scope.host]).then(function (argument) {
+                            getInfoComp();
+                        });
+                    }
+                });
             }
-            var eventData = bamAjaxCall.getCmdData(event_url);
-            eventData.then(function(data) {
-                $scope.addToMetaData();
-                if (!$scope.autostartOn && $scope.autoStartVal) {
-                    session.call('com.bigsql.autostart',[$scope.autoStartVal,$scope.comp, $scope.host]).then(function (argument) {
-                        getInfoComp();
-                    });
-                }                  
-            });
         }
 
     }
