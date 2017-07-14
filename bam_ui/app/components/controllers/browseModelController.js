@@ -23,13 +23,13 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
     if($scope.directory.indexOf('\\') != -1 && !endsWith($scope.directory,'\\')){
         $scope.directory = $scope.directory + '\\';
     }
-    else if(!endsWith($scope.directory,'/')){
+    else if($scope.directory.indexOf('/') != -1 && !endsWith($scope.directory,'/')){
         $scope.directory = $scope.directory + '/';
     }
     $scope.directory = $scope.directory + "*"
     if($scope.type == 'backup'){
         if($scope.directory.indexOf('\\') != -1)
-            $scope.directory = $scope.directory + "\\"
+            $scope.directory = $scope.directory + "\\\\"
         else
             $scope.directory = $scope.directory + "/"
     }
@@ -46,17 +46,17 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
     $scope.getFiles = function(filename,type){
         if(['d','.'].indexOf(type) != -1){
             if(filename.indexOf('\\') != -1 && !endsWith(filename,'\\')){
-                var temp_filename = filename + '\\';
+                var temp_filename = filename + '\\*';
             }
-            else if(!endsWith(filename,'/')){
-                var temp_filename = filename + '/';
+            else if(filename.indexOf('/') != -1 && !endsWith(filename,'/')){
+                var temp_filename = filename + '/*';
             }
             else{
                 var temp_filename = filename + "*";
             }
            if($scope.type == 'backup'){
             if($scope.directory.indexOf('\\') != -1)
-                temp_filename = temp_filename + "\\"
+                temp_filename = temp_filename + "\\\\"
             else
                 temp_filename = temp_filename + "/"
            }
@@ -82,8 +82,14 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
     };
 
     $scope.navigateBack = function(index,currentPath){
-        var path = currentPath.split('/').slice(1,index+1).join('/');
-        $scope.getFiles('/'+path+'/','d');
+        if(currentPath.indexOf('\\') != -1){
+            var path = currentPath.split('\\').slice(0,index+1).join('\\');
+            $scope.getFiles(path+'\\','d');
+        }
+        else{
+            var path = currentPath.split('/').slice(1,index+1).join('/');
+            $scope.getFiles('/'+path+'/','d');
+        }
     };
 
     $scope.getName = function(filename){
@@ -93,5 +99,12 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
         if(filename.lastIndexOf('\\') != -1 )
             return filename.split('\\').pop();
         return filename.split('/').pop();
+    }
+
+    $scope.getNavigateLinks = function(path){
+        if(path.indexOf('\\') != -1){
+            return path.split('\\');
+        }
+        return path.split('/');
     }
 }]);
