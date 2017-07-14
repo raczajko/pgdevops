@@ -29,7 +29,7 @@ class HelpModule(PgAdminModule):
                      priority=100,
                      target='_blank',
                      icon='fa fa-question',
-                     url=url_for('help.static', filename='index.html')),
+                     url='https://www.bigsql.org/docs/pgadmin4/'),
 
             MenuItem(name='mnu_pgadmin_website',
                      label=gettext('pgAdmin Website'),

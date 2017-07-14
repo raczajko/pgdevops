@@ -110,7 +110,7 @@ INSERT INTO "servergroup"
 VALUES(1, 1, 'Servers')
 """)
 
-    email, password = user_info()
+    email, password, active = user_info()
     current_salt = getattr(
         config, 'SECURITY_PASSWORD_SALT', base64.urlsafe_b64encode(
             os.urandom(32)
@@ -129,8 +129,8 @@ VALUES(1, 1, 'Servers')
 INSERT INTO "user"
     VALUES(1, '%s',
            '%s',
-           1, NULL)
-    """ % (email, password))
+            %s, NULL)
+    """ % (email, password, active if active in ['1','0'] else 0))
     db.engine.execute("""
 INSERT INTO "version"
 VALUES('ConfigDB', 2);

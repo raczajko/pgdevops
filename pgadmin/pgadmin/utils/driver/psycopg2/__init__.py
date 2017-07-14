@@ -322,7 +322,8 @@ class Connection(BaseConnection):
                 user=user,
                 password=password,
                 async=self.async,
-                sslmode=mgr.ssl_mode
+                sslmode=mgr.ssl_mode,
+                connect_timeout=20
             )
 
             # If connection is asynchronous then we will have to wait
