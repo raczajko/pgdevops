@@ -65,8 +65,8 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                         $scope.generatedFile = '';
                         $scope.generatedFileName = '';
                         $scope.procCompleted = false;
-                        $scope.procStatus = "Running...."
-                        setTimeout(function() {getBGStatus(process_log_id) },2000);
+                        $scope.procStatus = "Running....";
+                        $scope.refreshConsole = setTimeout(function() {getBGStatus(process_log_id) },2000);
                     }
 
                     $timeout(function() {
@@ -107,6 +107,9 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
             }
 
             $rootScope.$on('backgroundProcessStarted', function (argument, pid) {
+                if($scope.refreshConsole){
+                    clearTimeout($scope.refreshConsole);
+                }
                 getBGStatus(pid);
 
             });

@@ -16,6 +16,7 @@ class BackupRestore(object):
         elif action == "restore":
             pgc_cmd = PGC_HOME + os.sep + "pgc dbrestore "
         pgc_cmd = pgc_cmd + dbname + " " + host + " " + port + " " + username
+        pwd_str = None
         if password:
             pgc_cmd = pgc_cmd + " --pwd " + password
             pwd_str = " --pwd " + password

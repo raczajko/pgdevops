@@ -909,6 +909,9 @@ class BackupRestoreDatabase(Resource):
             from BackupRestore import BackupRestore
             backuprestore = BackupRestore()
             ctime = get_current_time(format='%y%m%d%H%M%S%f')
+            import util
+            if args['host'] in ['localhost','127.0.0.1']:
+                args['host'] = util.get_host_ip()
             result = backuprestore.backup_restore(ctime,args['action'],args['host'],args['port'],args['username'],args['dbName'],
                                  args['sshServer'],args['backupDirectory'],
                                  args['fileName'],args['format'],args.get('advOptions',""), password=args.get('password',None))
