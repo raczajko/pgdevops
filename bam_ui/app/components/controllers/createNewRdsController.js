@@ -8,21 +8,34 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     $scope.loading = true;
     $scope.firstStep = true;
     $scope.secondStep = false;
+    $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
 
     $scope.data = {
+        'engine' : 'postgres',
         'allocated_storage' : 5,
         'port' : 5432,
-        'publicly' : 'no',
+        'public_accessible' : false,
+        'copy_tags' : false,
         'storage_type' : 'General Purpose (SSD)',
-        'MultiAZ' : 'no',
+        'multi_az' : false,
         'vpcGroup' : 'default',
-        'backup_retention' : '7',
+        'backup_retention_period' : 7,
         'enableMon' : 'no',
-        'autoUpgrade' : 'yes',
-        'storage_encrypted' : 'no',
-        'granularity' : '60',
-        'monitoring_role' : 'default'
+        'version_upgrade' : false,
+        'storage_encrypted' : false,
+        'granularity' : 60,
+        'monitoring_role' : 'default',
+        'mainWindow' : 'no',
+        'backupWindow' : 'no',
+        'mainWindowDay' : 'mon',
+        'mainWindowHours': 0,
+        'mainWindowMins' : 0,
+        'mainWindowDuration': 0,
+        'backupWindowHours' : 0,
+        'backupWindowMins' : 0,
+        'backupWindowDuration' : 0
     };
+
 
     var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
     regions.then(function(data){
@@ -73,7 +86,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
             if($scope.dbEngVersions[i].EngineVersion == $scope.data.EngineVersion){
                 $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
                 $scope.optionGroups = $scope.dbEngVersions[i].OptionGroups;
-                $scope.data.dbGroup = $scope.dbGroups[0].DBParameterGroupName;
+                $scope.data.db_parameter_group = $scope.dbGroups[0].DBParameterGroupName;
                 $scope.data.optionGroup = $scope.optionGroups[0].OptionGroupName;
             }
         }
@@ -85,7 +98,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
                 $scope.data.subnet_group = $scope.networkSec[i].subnet_group;
                 $scope.availableZones = $scope.networkSec[i].zones;
                 if($scope.availableZones.length > 0){
-                    $scope.data.zone = $scope.availableZones[0].name;
+                    $scope.data.availability_zone = $scope.availableZones[0].name;
                 }
                 for (var j = 0; j < $scope.availableZones.length; ++j) {
 
