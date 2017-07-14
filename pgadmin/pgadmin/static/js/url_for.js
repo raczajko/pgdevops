@@ -16,6 +16,8 @@ define(["pgadmin.browser.endpoints"], function (endpoints) {
 
     var rawURL = endpoints[endpoint];
 
+    rawURL = "/admin" +rawURL
+
     // captures things of the form <path:substitutionName>
     var substitutionGroupsRegExp = /([<])([^:^>]*:)?([^>]+)([>])/g;
     var matchFound;
