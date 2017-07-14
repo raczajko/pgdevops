@@ -12,7 +12,7 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
             $scope.cmdAllowedTypes = ['backup','restore'];
             // $scope.cancelbgProcess = false;
             function getBGStatus(process_log_id){
-            var bgReportStatus = $http.get($window.location.origin + '/api/bgprocess_status/'+ process_log_id);
+            var bgReportStatus = $http.get($window.location.origin + '/api/bgprocess_status/'+ process_log_id + '?q=' + Math.floor(Date.now() / 1000).toString());
 
                 bgReportStatus.then(function (ret_data){
                     $scope.procId = ret_data.data.pid;
