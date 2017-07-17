@@ -16,7 +16,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         'port' : 5432,
         'public_accessible' : false,
         'copy_tags' : false,
-        'storage_type' : 'General Purpose (SSD)',
+        'storage_type' : 'standard',
         'multi_az' : false,
         'vpcGroup' : 'default',
         'backup_retention_period' : 7,
