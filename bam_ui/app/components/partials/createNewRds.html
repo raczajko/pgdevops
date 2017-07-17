@@ -185,8 +185,9 @@
                     <label class="col-sm-4 control-label">VPC Security Group(s) : </label>
                     <div class="col-sm-8" ng-model="data.vpcGroup">
                         <select class="form-control" id="leftValues" size="5" multiple data-ng-model="data.vpc_security_group_ids"
-    data-ng-options="vpc for vpc in data.vpc_security_group_ids"></select>
-                        <!--<textarea class="form-control">default (VPC)</textarea>-->
+    data-ng-options="">
+                            <option value="">default (VPC)</option>
+                        </select>
                     </div>
                 </div>
             </form>
