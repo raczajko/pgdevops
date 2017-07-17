@@ -12,33 +12,37 @@ angular.module('bigSQL.common').directive('backgroundJobProcessAlert', function 
             $scope.cmdAllowedTypes = ['backup','restore'];
             // $scope.cancelbgProcess = false;
             function getBGStatus(process_log_id){
+<<<<<<< HEAD
             var bgReportStatus = $http.get($window.location.origin + '/api/bgprocess_status/'+ process_log_id + '?q=' + Math.floor(Date.now() / 1000).toString());
 
+=======
+            var bgReportStatus = bamAjaxCall.getCmdData('bgprocess_status/'+ process_log_id);
+>>>>>>> master-1.5
                 bgReportStatus.then(function (ret_data){
-                    $scope.procId = ret_data.data.pid;
+                    $scope.procId = ret_data.pid;
                     $scope.error_msg = ''; 
-                    $scope.procStartTime = new Date(ret_data.data.start_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
+                    $scope.procStartTime = new Date(ret_data.start_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
                     $scope.taskID = process_log_id;
-                    $scope.out_data = ret_data.data.out_data;
-                    $scope.process_type = ret_data.data.process_type;
-                    $scope.procCmd = ret_data.data.cmd;
+                    $scope.out_data = ret_data.out_data;
+                    $scope.process_type = ret_data.process_type;
+                    $scope.procCmd = ret_data.cmd;
                     if($scope.procCmd && $scope.procCmd.indexOf("pgc dbdump") != -1 || $scope.procCmd.indexOf("pgc dbrestore") != -1){
                         $scope.procCmd = "pgc " + $scope.procCmd.split("pgc ")[1];
                     }
-                    if (ret_data.data.process_completed){
+                    if (ret_data.process_completed){
                         $scope.procCompleted = true;
-                        if(ret_data.data.process_failed){
+                        if(ret_data.process_failed){
                             $scope.procStatus = "Failed."
                             $scope.generatedFile = '';
                             $scope.generatedFileName = '';
-                            $scope.error_msg = ret_data.data.error_msg;
+                            $scope.error_msg = ret_data.error_msg;
                         }else{
                             $scope.procStatus = "Completed."
-                            $scope.generatedFile = ret_data.data.file;
-                            $scope.generatedFileName = ret_data.data.report_file;
+                            $scope.generatedFile = ret_data.file;
+                            $scope.generatedFileName = ret_data.report_file;
                         }
-                        if(ret_data.data.end_time){
-                            $scope.procEndTime = new Date(ret_data.data.end_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
+                        if(ret_data.end_time){
+                            $scope.procEndTime = new Date(ret_data.end_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
                         }
                     } else{
                         $scope.procEndTime = '';
