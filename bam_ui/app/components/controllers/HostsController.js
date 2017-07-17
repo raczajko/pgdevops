@@ -217,6 +217,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 templateUrl: '../app/components/partials/createNewRds.html',
                 controller: 'createNewRdsController',
                 keyboard  : false,
+                windowClass : 'rds-modal',
                 backdrop  : 'static',
             });
         }else{

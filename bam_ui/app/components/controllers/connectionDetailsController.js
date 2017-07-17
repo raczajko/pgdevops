@@ -176,7 +176,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
                 }
             }
 
-            session.call('com.bigsql.rdsMetaList', [$scope.rdsInfo.db_class])
+            session.call('com.bigsql.rdsMetaList', ['aws-rds', $scope.rdsInfo.db_class])
             $scope.$apply();
         }).then(function (subscription) {
             subscriptions.push(subscription);
