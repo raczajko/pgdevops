@@ -16,7 +16,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         'port' : 5432,
         'public_accessible' : false,
         'copy_tags' : false,
-        'storage_type' : 'standard',
+        'storage_type' : 'gp2',
         'multi_az' : false,
         'vpcGroup' : 'default',
         'backup_retention_period' : 7,
@@ -34,8 +34,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         'backupWindowHours' : '00',
         'backupWindowMins' : '00',
         'backupWindowDuration' : '00',
-        'monitor_arn' : 'Default',
-        'vpc_security_group_ids' : ['default (VPC)']
+        'monitor_arn' : 'Default'
     };
 
 
@@ -130,7 +129,6 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
             if(mainTotalTime<10){mainTotalTime="0"+mainTotalTime};
             $scope.data.maintanance_window = $scope.data.mainWindowDay + ':' + $scope.data.mainWindowHours + ':' + $scope.data.mainWindowMins + '-' + $scope.data.mainWindowDay + ':' + mainTotalTime + ':' + $scope.data.mainWindowMins;
         }
-        $scope.data.vpc_security_group_ids = [];
         $scope.creating = true;
         $scope.showErrMsg = false;
         var data = [];
