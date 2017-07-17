@@ -130,6 +130,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
             if(mainTotalTime<10){mainTotalTime="0"+mainTotalTime};
             $scope.data.maintanance_window = $scope.data.mainWindowDay + ':' + $scope.data.mainWindowHours + ':' + $scope.data.mainWindowMins + '-' + $scope.data.mainWindowDay + ':' + mainTotalTime + ':' + $scope.data.mainWindowMins;
         }
+        $scope.data.vpc_security_group_ids = [];
         $scope.creating = true;
         $scope.showErrMsg = false;
         var data = [];
