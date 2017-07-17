@@ -20,20 +20,22 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         'multi_az' : false,
         'vpcGroup' : 'default',
         'backup_retention_period' : 7,
-        'enableMon' : 'no',
+        'enableMon' : false,
         'version_upgrade' : false,
         'storage_encrypted' : false,
-        'granularity' : 60,
+        'monitoring_interval' : 60,
         'monitoring_role' : 'default',
         'mainWindow' : 'no',
         'backupWindow' : 'no',
         'mainWindowDay' : 'mon',
-        'mainWindowHours': 0,
-        'mainWindowMins' : 0,
-        'mainWindowDuration': 0,
-        'backupWindowHours' : 0,
-        'backupWindowMins' : 0,
-        'backupWindowDuration' : 0
+        'mainWindowHours': '00',
+        'mainWindowMins' : '00',
+        'mainWindowDuration': '00',
+        'backupWindowHours' : '00',
+        'backupWindowMins' : '00',
+        'backupWindowDuration' : '00',
+        'monitor_arn' : 'Default',
+        'vpc_security_group_ids' : ['default (VPC)']
     };
 
 
@@ -71,7 +73,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
             var response = JSON.parse(data[0]);
             if($scope.secondStep){
                 $scope.dbEngVersions = response;
-                $scope.data.EngineVersion = $scope.dbEngVersions[0].EngineVersion;
+                $scope.data.engine_version = $scope.dbEngVersions[0].EngineVersion;
                 $scope.versionChange();
             }else if($scope.thirdStep){
                 $scope.networkSec = JSON.parse(data[0])
@@ -83,7 +85,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
 
     $scope.versionChange = function(argument){
         for(var i = 0; i < $scope.dbEngVersions.length; ++i){
-            if($scope.dbEngVersions[i].EngineVersion == $scope.data.EngineVersion){
+            if($scope.dbEngVersions[i].EngineVersion == $scope.data.engine_version){
                 $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
                 $scope.optionGroups = $scope.dbEngVersions[i].OptionGroups;
                 $scope.data.db_parameter_group = $scope.dbGroups[0].DBParameterGroupName;
@@ -112,6 +114,22 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     };
 
     $scope.createRDS = function(){
+        $scope.data.maintanance_window = '';
+        $scope.data.backup_window = '';
+        if(!$scope.data.enableMon){
+            $scope.data.monitoring_interval = 0;
+            $scope.data.monitor_arn = '';
+        }
+        if($scope.data.backupWindow=='yes'){
+            var backTotalTime = parseInt($scope.data.backupWindowHours) + parseInt($scope.data.backupWindowDuration);
+            if(backTotalTime<10){backTotalTime="0"+backTotalTime};
+            $scope.data.backup_window = $scope.data.backupWindowHours + ':' + $scope.data.backupWindowMins + '-' + backTotalTime + ':' + $scope.data.backupWindowMins;
+        }
+        if($scope.data.mainWindow=='yes'){
+            var mainTotalTime = parseInt($scope.data.mainWindowHours) + parseInt($scope.data.mainWindowDuration);
+            if(mainTotalTime<10){mainTotalTime="0"+mainTotalTime};
+            $scope.data.maintanance_window = $scope.data.mainWindowDay + ':' + $scope.data.mainWindowHours + ':' + $scope.data.mainWindowMins + '-' + $scope.data.mainWindowDay + ':' + mainTotalTime + ':' + $scope.data.mainWindowMins;
+        }
         $scope.creating = true;
         $scope.showErrMsg = false;
         var data = [];
