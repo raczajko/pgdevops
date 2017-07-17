@@ -316,7 +316,7 @@ class Connection(BaseConnection):
 
             pg_conn = psycopg2.connect(
                 host=mgr.host,
-                hostaddr=mgr.hostaddr,
+                hostaddr=mgr.hostaddr or mgr.host,
                 port=mgr.port,
                 database=database,
                 user=user,
@@ -1157,7 +1157,7 @@ Failed to execute query (execute_void) for the server #{server_id} - {conn_id}
         try:
             pg_conn = psycopg2.connect(
                 host=mgr.host,
-                hostaddr=mgr.hostaddr,
+                hostaddr=mgr.hostaddr or mgr.host,
                 port=mgr.port,
                 database=self.db,
                 user=mgr.user,
@@ -1426,7 +1426,7 @@ Failed to reset the connection to the server due to following error:
             try:
                 pg_conn = psycopg2.connect(
                     host=self.manager.host,
-                    hostaddr=self.manager.hostaddr,
+                    hostaddr=self.manager.hostaddr or self.manager.host,
                     port=self.manager.port,
                     database=self.db,
                     user=self.manager.user,
