@@ -12,27 +12,27 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
             $scope.cmdAllowedTypes = ['backup','restore'];
             // $scope.cancelbgProcess = false;
             function getBGStatus(process_log_id){
-            var bgReportStatus = $http.get($window.location.origin + '/api/bgprocess_status/'+ process_log_id);
+            var bgReportStatus = bamAjaxCall.getCmdData('bgprocess_status/'+ process_log_id);
 
                 bgReportStatus.then(function (ret_data){
-                    $scope.procId = ret_data.data.pid;
+                    $scope.procId = ret_data.pid;
                     $scope.error_msg = ''; 
-                    $scope.procStartTime = new Date(ret_data.data.start_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
+                    $scope.procStartTime = new Date(ret_data.start_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
                     $scope.taskID = process_log_id;
-                    $scope.out_data = ret_data.data.out_data;
-                    $scope.process_type = ret_data.data.process_type;
-                    $scope.procCmd = ret_data.data.cmd;
+                    $scope.out_data = ret_data.out_data;
+                    $scope.process_type = ret_data.process_type;
+                    $scope.procCmd = ret_data.cmd;
                     if($scope.procCmd && $scope.procCmd.indexOf("pgc dbdump") != -1 || $scope.procCmd.indexOf("pgc dbrestore") != -1){
                         $scope.procCmd = "pgc " + $scope.procCmd.split("pgc ")[1];
                     }
-                    if (ret_data.data.process_completed){
+                    if (ret_data.process_completed){
                         $scope.procCompleted = true;
-                        if(ret_data.data.process_failed){
+                        if(ret_data.process_failed){
                             $scope.procStatus = "Failed."
                             $scope.generatedFile = '';
                             $scope.generatedFileName = '';
-                            $scope.error_msg = ret_data.data.error_msg;
-                            if(ret_data.data.component_required){
+                            $scope.error_msg = ret_data.error_msg;
+                            if(ret_data.component_required){
                                 var modalInstance = $uibModal.open({
                                     templateUrl: '../app/components/partials/confirmOverrideModel.html',
                                     controller: 'confirmOverrideModalController',
@@ -45,20 +45,20 @@ angular.module('bigSQL.common').directive('backgroundProcessAlert', function (ba
                                     modalInstance.modalTitle = $sce.trustAsHtml("pg_dump must match source DB version");
                                     $rootScope.$emit("getSelectedHost","backup");
                                 }
-                                modalInstance.modelBody = $sce.trustAsHtml("Host " + $rootScope.selectedHost +" Requires: "+ret_data.data.component_required);
+                                modalInstance.modelBody = $sce.trustAsHtml("Host " + $rootScope.selectedHost +" Requires: "+ret_data.component_required);
                                 modalInstance.successText = "Install";
                                 modalInstance.failText = "Cancel";
                                 modalInstance.acceptMethod = "initComponentInstall";
                                 modalInstance.sshHost = $rootScope.selectedHost;
-                                modalInstance.component = ret_data.data.component_required;
+                                modalInstance.component = ret_data.component_required;
                                 $rootScope.$emit('hidebgProcess');
                             }
                         }else{
                             $scope.procStatus = "Completed."
-                            $scope.generatedFile = ret_data.data.file;
-                            $scope.generatedFileName = ret_data.data.report_file;
+                            $scope.generatedFile = ret_data.file;
+                            $scope.generatedFileName = ret_data.report_file;
                         }
-                        $scope.procEndTime = new Date(ret_data.data.end_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
+                        $scope.procEndTime = new Date(ret_data.end_time.split('.')[0].replace(/-/gi,'/')+' UTC').toString();
                         $rootScope.$emit("refreshBadgerReports");
                     } else{
                         $scope.procEndTime = '';
