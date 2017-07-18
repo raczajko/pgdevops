@@ -13,6 +13,8 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
 
     $scope.backupRestoreFeature = false;
 
+    var ajaxSubscriptions = [];
+
     function endsWith(str, suffix) {
         return str.indexOf(suffix, str.length - suffix.length) !== -1;
     }
@@ -101,9 +103,9 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             $rootScope.runningJobsCount = totalCount;
             $rootScope.runningBackupJobsCount = backupCount;
             $rootScope.runningRestoreJobsCount = restoreCount;
-            $timeout(function() {
+            ajaxSubscriptions.push($timeout(function() {
                 $scope.runningJobs('')
-            }, 5000);
+            }, 5000));
         })
     }
     $scope.runningJobs('');
@@ -402,6 +404,9 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
 
         //need to destroy all the subscriptions on a template before exiting it
         $scope.$on('$destroy', function () {
+            for (var i = 0; i < ajaxSubscriptions.length; i++) {
+                $timeout.cancel(ajaxSubscriptions[i])
+            }
             for (var i = 0; i < subscriptions.length; i++) {
                 session.unsubscribe(subscriptions[i])
             }
