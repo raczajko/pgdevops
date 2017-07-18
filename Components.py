@@ -725,7 +725,7 @@ class Components(ComponentAction):
         line = ""
         for c in iter(lambda: pgcProcess.stdout.read(1), ''):
             line = line + c
-            if pgcCmd.find("lablist") < 0 and line.find("sudo") >= 0 \
+            if pgcCmd.find("lablist") < 0 and pgcCmd.find("relnotes") < 0 and line.find("sudo") >= 0 \
                     and line.find("password") >= 0 and line.endswith(":"):
                 if pwd and std_in:
                     pgcProcess.stdin.write(pwd + str(os.linesep))
