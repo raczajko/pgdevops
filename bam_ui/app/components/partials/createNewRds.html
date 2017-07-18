@@ -168,8 +168,6 @@
                     <label class="col-sm-4 control-label">Publicly Accessible : </label>
                     <div class="col-sm-8">
                         <select class="form-control" ng-model="data.public_accessible" ng-options="val.v as val.n for val in [{ n: 'No', v: false }, { n: 'Yes', v: true }]">
-                            <!--<option value="no">No</option>-->
-                            <!--<option value="yes">Yes</option>-->
                         </select>
                     </div>
                 </div>
@@ -184,8 +182,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">VPC Security Group(s) : </label>
                     <div class="col-sm-8" ng-model="data.vpcGroup">
-                        <select class="form-control" id="leftValues" size="5" multiple data-ng-model="data.vpc_security_group_ids"
-    data-ng-options="">
+                        <select class="form-control" id="leftValues" size="5" multiple>
                             <option value="">default (VPC)</option>
                         </select>
                     </div>
@@ -231,8 +228,6 @@
                     <label class="col-sm-5 control-label">Enable Encryption : </label>
                     <div class="col-sm-2">
                         <select class="form-control" ng-model="data.storage_encrypted" ng-options="val.v as val.n for val in [{ n: 'No', v: false }, { n: 'Yes', v: true }]">
-                            <!--<option value="no">No</option>-->
-                            <!--<option value="yes">Yes</option>-->
                         </select>
                     </div>
                 </div>
@@ -264,7 +259,6 @@
                     <label class="col-sm-5 control-label"> Granularity : </label>
                     <div class="col-sm-2">
                         <select class="form-control" ng-model="data.monitoring_interval" ng-options="n for n in [0, 1, 5, 10,15,60]">
-                            <!--<option ng-repeat="n in [] | range:120" value="{{$index}}">{{$index}}</option>-->
                         </select>
                     </div>
                     <div class="col-sm-2" style="margin-left: -25px; margin-top: 8px;"><strong>second(s)</strong></div>
@@ -301,14 +295,12 @@
                             <div class="col-md-12">
                             <label class="col-sm-4 control-label">Start Time :</label>
                             <div class="col-sm-3">
-                                <select style="margin:5px;" ng-model="data.mainWindowHours" ng-options="n | digits as n | digits for n in [] | range:25">
-                                    <!--<option ng-repeat="n in [] | range:25" value="{{$index}}">{{$index | digits}}</option>-->
+                                <select style="margin:5px;" ng-model="data.mainWindowHours" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:25">
                                 </select>
                             </div>
                                 <span class="col-sm-1" style="margin-top:5px;"><strong>:</strong></span>
                             <div class="col-sm-2">
-                                <select style="margin:5px 5px 5px -21px;" ng-model="data.mainWindowMins" ng-options="n | digits as n | digits for n in [] | range:60">
-                                    <!--<option ng-repeat="n in [] | range:60" value="{{$index}}">{{$index | digits}}</option>-->
+                                <select style="margin:5px 5px 5px -21px;" ng-model="data.mainWindowMins" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:60">
                                 </select>
                             </div>
                             <div class="col-sm-1" style="margin-left: -11px; margin-top: 6px;">UTC</div>
@@ -316,8 +308,7 @@
                             <div class="col-md-12">
                             <label class="col-sm-4 control-label">Duration :</label>
                             <div class="col-sm-4">
-                                <select style="margin:5px;" ng-model="data.mainWindowDuration" ng-options="n | digits as n | digits for n in [] | range:13">
-                                    <!--<option ng-repeat="n in [] | range:25" value="{{$index}}">{{$index | digits}}</option>-->
+                                <select style="margin:5px;" ng-model="data.mainWindowDuration" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:13">
                                 </select>
                             </div>
                                 <div class="col-sm-2" style="margin-left: -11px; margin-top: 6px;">hours</div>
@@ -351,14 +342,12 @@
                             <div class="col-md-12">
                             <label class="col-sm-4 control-label">Start Time :</label>
                             <div class="col-sm-3">
-                                <select style="margin:5px;" ng-model="data.backupWindowHours" ng-options="n | digits as n | digits for n in [] | range:25">
-                                    <!--<option ng-repeat="n in [] | range:25" value="{{$index}}">{{$index | digits}}</option>-->
+                                <select style="margin:5px;" ng-model="data.backupWindowHours" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:25">
                                 </select>
                             </div>
                                 <span class="col-sm-1" style="margin-top:5px;"><strong>:</strong></span>
                             <div class="col-sm-2">
-                                <select style="margin:5px 5px 5px -21px;" ng-model="data.backupWindowMins" ng-options="n | digits as n | digits for n in [] | range:60">
-                                    <!--<option ng-repeat="n in [] | range:60" value="{{$index}}">{{$index | digits}}</option>-->
+                                <select style="margin:5px 5px 5px -21px;" ng-model="data.backupWindowMins" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:60">
                                 </select>
                             </div>
                             <div class="col-sm-1" style="margin-left: -11px; margin-top: 6px;">UTC</div>
@@ -366,8 +355,7 @@
                             <div class="col-md-12">
                             <label class="col-sm-4 control-label">Duration :</label>
                             <div class="col-sm-4">
-                                <select style="margin:5px;" ng-model="data.backupWindowDuration" ng-options="n | digits as n | digits for n in [] | range:13">
-                                    <!--<option ng-repeat="n in [] | range:25" value="{{$index}}">{{$index | digits}}</option>-->
+                                <select style="margin:5px;" ng-model="data.backupWindowDuration" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:13">
                                 </select>
                             </div>
                                 <div class="col-sm-2" style="margin-left: -11px; margin-top: 6px;">hours</div>
