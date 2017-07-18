@@ -1,12 +1,12 @@
-angular.module('bigSQL.common').directive('backgroundJobProcessAlert', function (bamAjaxCall, $rootScope) {
+angular.module('bigSQL.common').directive('backgroundJobConsole', function (bamAjaxCall, $rootScope) {
 
     return {
         scope: {
             title: '@'
         },
         restrict: 'E',
-        templateUrl: '../app/common/partials/backgroundJobProcessAlert.html',
-        controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', '$timeout', '$uibModal', '$sce','PubSubService', function backgroundProcessAlertController($scope, $http, $window, $cookies, $rootScope, $timeout, $uibModal, $sce, PubSubService) {
+        templateUrl: '../app/common/partials/backgroundJobConsole.html',
+        controller: ['$scope', '$http', '$window', '$cookies', '$rootScope', '$timeout', '$uibModal', '$sce','PubSubService', function backgroundJobConsoleController($scope, $http, $window, $cookies, $rootScope, $timeout, $uibModal, $sce, PubSubService) {
 
             $scope.isbgProcessStarted = false;
             $scope.cmdAllowedTypes = ['backup','restore'];
@@ -85,7 +85,7 @@ angular.module('bigSQL.common').directive('backgroundJobProcessAlert', function 
                 // $scope.cancelbgProcess = true;
             }
 
-            $rootScope.$on('backgroundProcessStarted', function (argument, pid) {
+            $rootScope.$on('backgroundJobConsole', function (argument, pid) {
                 if($scope.refreshConsole){
                     clearTimeout($scope.refreshConsole);
                 }

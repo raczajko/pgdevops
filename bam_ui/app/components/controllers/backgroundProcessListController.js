@@ -20,7 +20,7 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
                 'type':'Badger',
                 'type_value': 'pgBadger Report'
             }];
-
+    var ajaxSubscriptions = [];
     $scope.getBGprocessList = function(type) {
         if(type == 'all' || type == ''){
             type = '';
@@ -34,9 +34,9 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
                 $scope.processList = argument.process;
                 $scope.loading = false;
             }
-            $timeout(function() {
+            ajaxSubscriptions.push($timeout(function() {
                 $scope.getBGprocessList($scope.processType)
-            }, 5000);
+            }, 5000));
         })
     };
 
@@ -83,10 +83,17 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
     }
     $scope.showConsoleOutput = function(log_id){
         $scope.showBackupBgProcess = true;
-        $rootScope.$emit('backgroundProcessStarted', log_id);
+        $rootScope.$emit('backgroundJobConsole', log_id);
     };
 
     $rootScope.$on('hidebgProcess', function (argument) {
         $scope.showBackupBgProcess = false;
+    });
+
+    //need to destroy all the subscriptions on a template before exiting it
+    $scope.$on('$destroy', function () {
+        for (var i = 0; i < ajaxSubscriptions.length; i++) {
+            $timeout.cancel(ajaxSubscriptions[i])
+        }
     });
 }]);
