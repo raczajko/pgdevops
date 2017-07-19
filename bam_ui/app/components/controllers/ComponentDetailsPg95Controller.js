@@ -459,13 +459,14 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                     delete $scope.component.installationStart;
                     delete $scope.component.installationRunning;
                     delete $scope.component.installation;
-                } else if (data.state == 'unpack') {
+                } else if (data.state == 'unpack' || data.state == 'install') {
                     session.call('com.bigsql.infoComponent', [$stateParams.component]);
                     $scope.component.status = 'NotInitialized';
+                    $scope.component.installation = false;
                     delete $scope.component.installationStart;
                     delete $scope.component.installationRunning;
                     delete $scope.component.installation;
-                    $scope.openInitPopup($stateParams.component);
+                    if (data.state == 'unpack') { $scope.openInitPopup($stateParams.component); }
                 } else if (data.state == 'update'){
                     callInfo();
                     statusRefreshRate = $interval(function(){ callStatus(); }, 5000);
