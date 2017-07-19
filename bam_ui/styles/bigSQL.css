@@ -7021,7 +7021,8 @@ span.more-text.show {
 }
 
 .btask-wrapper  .btask--stdout-stderr {
-   display: none;
+   display: block;
+   width: 650px;
    margin-right: 2px;
     border-right: 1px solid #d2d6de ;
 }
@@ -7374,4 +7375,61 @@ a.notification{
 .num {
   position: absolute;
   color: red;
+}
+
+@media (max-width: 1220px) {
+    .btask-wrapper  .btask--stdout-stderr {
+       display: block;
+       width: 450px;
+       margin-right: 2px;
+        border-right: 1px solid #d2d6de ;
+    }
+}
+@media (max-width: 1000px) {
+    .btask-wrapper  .btask, .btask-wrapper  .btask--stdout-stderr {
+         width: 300px;
+         height: 200px;
+         background-color: #fff;
+         float: left;
+         border-left: 1px solid #d2d6de ;
+         border-top: 1px solid #d2d6de ;
+        }
+    .btask-wrapper  .btask--stdout-stderr {
+       display: block;
+       width: 400px;
+       margin-right: 2px;
+        border-right: 1px solid #d2d6de ;
+    }
+}
+@media (max-width: 730px) {
+    .btask-wrapper  .btask, .btask-wrapper  .btask--stdout-stderr {
+         width: 200px;
+         height: 200px;
+         background-color: #fff;
+         float: left;
+         border-left: 1px solid #d2d6de ;
+         border-top: 1px solid #d2d6de ;
+        }
+    .btask-wrapper  .btask--stdout-stderr {
+       display: block;
+       width: 250px;
+       margin-right: 2px;
+        border-right: 1px solid #d2d6de ;
+    }
+}
+@media (max-width: 500px) {
+    .btask-wrapper  .btask, .btask-wrapper  .btask--stdout-stderr {
+         width: 150px;
+         height: 200px;
+         background-color: #fff;
+         float: left;
+         border-left: 1px solid #d2d6de ;
+         border-top: 1px solid #d2d6de ;
+        }
+    .btask-wrapper  .btask--stdout-stderr {
+       display: block;
+       width: 200px;
+       margin-right: 2px;
+        border-right: 1px solid #d2d6de ;
+    }
 }
