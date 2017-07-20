@@ -12,6 +12,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $scope.refreshMsg= false;
     $scope.checked = false;
     $scope.showBgProcess = false;
+    $scope.pgJobs = '1';
 
     var session;
     $scope.updateSettings;
@@ -41,6 +42,16 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $rootScope.$on('hidebgProcess', function (argument) {
         $scope.showBgProcess = false;
     })
+    var infoCmd = bamAjaxCall.getCmdData('info');
+    infoCmd.then(function (data) {
+        $scope.maxNumJobs = [];
+        for (var i = 1 ; i < data[0].cores; i++) {
+            $scope.maxNumJobs.push(i.toString());
+        }
+        if ($scope.maxNumJobs.length == 0) {
+            $scope.maxNumJobs = ['1']
+        }
+    });
 
     var serverStatus = bamAjaxCall.getCmdData('status');
         serverStatus.then(function (data) {
