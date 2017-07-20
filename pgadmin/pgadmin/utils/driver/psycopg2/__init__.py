@@ -314,17 +314,19 @@ class Connection(BaseConnection):
             import os
             os.environ['PGAPPNAME'] = '{0} - {1}'.format(config.APP_NAME, conn_id)
 
-            pg_conn = psycopg2.connect(
-                host=mgr.host,
-                hostaddr=mgr.hostaddr or mgr.host,
-                port=mgr.port,
-                database=database,
-                user=user,
-                password=password,
-                async=self.async,
-                sslmode=mgr.ssl_mode,
-                connect_timeout=20
-            )
+            pg_dict = dict()
+            pg_dict['host'] = mgr.host
+            if mgr.hostaddr:
+                pg_dict['hostaddr'] = mgr.hostaddr
+            pg_dict['port'] = mgr.port
+            pg_dict['database'] = database
+            pg_dict['user'] = user
+            pg_dict['password'] = password
+            pg_dict['async'] = self.async
+            pg_dict['sslmode'] = mgr.ssl_mode
+            pg_dict['connect_timeout'] = 20
+
+            pg_conn = psycopg2.connect(**pg_dict)
 
             # If connection is asynchronous then we will have to wait
             # until the connection is ready to use.
@@ -1155,14 +1157,16 @@ Failed to execute query (execute_void) for the server #{server_id} - {conn_id}
             password = decrypt(password, user.password).decode()
 
         try:
-            pg_conn = psycopg2.connect(
-                host=mgr.host,
-                hostaddr=mgr.hostaddr or mgr.host,
-                port=mgr.port,
-                database=self.db,
-                user=mgr.user,
-                password=password
-            )
+            pg_dict = dict()
+            pg_dict['host'] = mgr.host
+            if mgr.hostaddr:
+                pg_dict['hostaddr'] = mgr.hostaddr
+            pg_dict['port'] = mgr.port
+            pg_dict['database'] = self.db
+            pg_dict['user'] = mgr.user
+            pg_dict['password'] = password
+
+            pg_conn = psycopg2.connect(**pg_dict)
 
         except psycopg2.Error as e:
             msg = e.pgerror if e.pgerror else e.message \
@@ -1424,14 +1428,16 @@ Failed to reset the connection to the server due to following error:
                 password = decrypt(password, user.password).decode()
 
             try:
-                pg_conn = psycopg2.connect(
-                    host=self.manager.host,
-                    hostaddr=self.manager.hostaddr or self.manager.host,
-                    port=self.manager.port,
-                    database=self.db,
-                    user=self.manager.user,
-                    password=password
-                )
+                pg_dict = dict()
+                pg_dict['host'] = self.manager.host
+                if self.manager.hostaddr:
+                    pg_dict['hostaddr'] = self.manager.hostaddr
+                pg_dict['port'] = self.manager.port
+                pg_dict['database'] = self.db
+                pg_dict['user'] = self.manager.user
+                pg_dict['password'] = password
+
+                pg_conn = psycopg2.connect(**pg_dict)
 
                 # Get the cursor and run the query
                 cur = pg_conn.cursor()

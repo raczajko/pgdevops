@@ -30,6 +30,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     // $scope.groupOpen = true;
     // $scope.hostOpen = true;
     $scope.version=false;
+    $scope.actionBtnOpen = false;
     $scope.connection = {savePwd:false};
     $scope.pgListRes = [];
 
@@ -409,7 +410,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     $interval.cancel(stopStatusCall);
                 }else{
                     data = $(data).filter(function(i,n){ return n.category == '1' });
-                    $scope.groupsList[p_idx].hosts[idx].comps = data;
+                    if (!$scope.actionBtnOpen) {
+                        $scope.groupsList[p_idx].hosts[idx].comps = data;                        
+                    }
                     if ($scope.groupsList[p_idx].hosts[idx].comps.length == 0) {
                         $scope.groupsList[p_idx].hosts[idx].showMsg = true;
                     } else {
@@ -642,6 +645,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     $scope.stopServerCall = function (argument) {
         $interval.cancel(stopStatusCall);
+    }
+
+    $scope.restartServerCall = function () {
+        $scope.actionBtnOpen = true;
+        setTimeout( function () {
+            $scope.actionBtnOpen = false;
+        } , 10000);
     }
 
     $scope.startServerCall = function (p_idx, idx) {
