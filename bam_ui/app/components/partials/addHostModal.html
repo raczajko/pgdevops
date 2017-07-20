@@ -1,4 +1,7 @@
 <div class="modal-header">
+    <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <i class="fa fa-lg fa-close cursor_pointer"></i>
+    </div>
     <h4 ng-if="!thirdPhase" class="modal-title"> {{type}} SSH Host</h4>
     <h4 ng-if="thirdPhase" class="modal-title"> {{type}} SSH Host</h4>
 </div>
@@ -115,11 +118,11 @@
             </div>
             <div class="form-actions">
                 <div class="text-right">
-                    <button class="btn btn-default" type="button" ng-click="cancel(); refreshHostManager()">Cancel</button>
+                   <!--  <button class="btn btn-default" type="button" ng-click="cancel(); refreshHostManager()">Cancel</button> -->
                     <button class="btn btn-default" type="button" ng-show="secondPhase" ng-click="back()">Back</button>
                     <button ng-show="secondPhase && auth_err" class="btn btn-default" type="button" ng-click="verify()">Verify</button>
-                    <button ng-show="!secondPhase" class="btn btn-default" type="button" ng-click="next()" ng-disabled="!(hostName && userName && connectionName && connectionName) || (!pgInstall && thirdPhase) ">Connect</button>
-                    <button ng-show="secondPhase" class="btn btn-default" type="button" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">{{ create_btn }}</button>
+                    <button ng-if="!secondPhase" class="btn btn-default" type="submit" ng-click="next()" ng-disabled="!(hostName && userName && connectionName && connectionName) || (!pgInstall && thirdPhase) ">Connect</button>
+                    <button ng-if="secondPhase" class="btn btn-default" type="submit" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">{{ create_btn }}</button>
                     <!-- <button type="submit" ng-show="secondPhase" class="btn btn-primary" ng-disabled="!(hostName && pgcDir && userName && password && connectionName)" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Save</button> -->
                 </div>
             </div>

@@ -17,8 +17,6 @@ angular.module('bigSQL.components').controller('RemotepgcVersionCheckModalContro
         $scope.modalMsg = $sce.trustAsHtml(htmlMessages.getMessage('remote-pgc-ver-compatible').replace("{{host}}", $scope.host).replace("{{remote_pgc_ver}}", $scope.remote_pg_ver).replace("{{local_pgc_ver}}", $scope.local_pg_ver));
     }
 
-    $rootScope.$emit('stopStatusGraphs');
-
     function checkInfo(argument) {
         if ($scope.returnCode == 1){
             var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+$scope.host);
@@ -52,6 +50,7 @@ angular.module('bigSQL.components').controller('RemotepgcVersionCheckModalContro
 
 
     $scope.update = function (manual) {
+        $rootScope.$emit('stopStatusGraphs');
         $scope.updatingSpinner = true;
         if ($scope.returnCode == 1){
             session.call('com.bigsql.updatesCheck', [$scope.host]);
@@ -61,7 +60,9 @@ angular.module('bigSQL.components').controller('RemotepgcVersionCheckModalContro
     };
 
     $scope.cancel = function () {
-        $rootScope.$emit('addedHost');
+        if($scope.success){
+            $rootScope.$emit('addedHost');
+        }
         $uibModalStack.dismissAll();
         $uibModalInstance.dismiss('cancel');
     };

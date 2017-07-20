@@ -800,7 +800,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     templateUrl: '../app/components/partials/RemotepgcVersionCheckModal.html',
                     windowClass: 'modal',
                     controller: 'RemotepgcVersionCheckModalController',
-                    scope: $scope
+                    scope: $scope,
+                    keyboard  : false,
+                    backdrop  : 'static',
                 });
                 modalInstance.host = host;
                 modalInstance.local_pg_ver = argument.local_pg_ver;
