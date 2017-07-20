@@ -225,7 +225,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             if($scope.backup.directory.indexOf('\\') != -1 && !endsWith($scope.backup.directory,'\\')){
                 $scope.backup.directory = $scope.backup.directory + '\\';
             }
-            else if(!endsWith($scope.backup.directory,'/')){
+            else if($scope.backup.directory.indexOf('\\') == -1 && !endsWith($scope.backup.directory,'/')){
                 $scope.backup.directory = $scope.backup.directory + '/';
             }
 

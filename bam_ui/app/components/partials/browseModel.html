@@ -4,7 +4,7 @@
         <i class="fa fa-lg fa-close cursor_pointer" ng-click="cancel()"></i>
     </div>
     <h4 class="modal-title">{{title}}</h4>
-    <p style="display:inline-block"><span>{{userName}}@{{hostIp}}:</span><span class="ellipses-4x"><a ng-repeat="path in getNavigateLinks(currentPath) track by $index" ng-click="navigateBack($index,currentPath)" style="cursor: pointer;">&nbsp;/{{path}}</a></span></p>
+    <p style="display:inline-block"><span>{{userName}}@{{hostIp}}:</span><span class="ellipses-4x"><a ng-repeat="path in getNavigateLinks(currentPath) track by $index" ng-click="navigateBack($index,currentPath)" style="cursor: pointer;" ng-if="path!=''">&nbsp;/{{path}}</a></span></p>
 
 </div>
 <div class="modal-body browse-window" style="padding-top: 8px;">
