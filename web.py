@@ -1099,7 +1099,7 @@ def dirlist():
     base_dir = data.get("baseDir","/Users/naveen/*")
     cmd = 'dirlist "'+base_dir + '"'
     if pgc_host not in["","localhost"]:
-        cmd = cmd + ' --host '+pgc_host
+        cmd = cmd + ' --host "' + pgc_host + '"'
     result = pgc.get_data(cmd)
     return json.dumps(result)
 
