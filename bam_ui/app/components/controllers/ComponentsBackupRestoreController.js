@@ -23,13 +23,16 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
 
     getLabList.then(function (argument) {
         for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "dumprest"){
+                $scope.backupRestoreLab = argument[i].disp_name;
+            }
             if(argument[i].lab == "dumprest" && argument[i].enabled == "on"){
                 $scope.backupRestoreFeature = true;
                 break;
             }
         }
         if(!$scope.backupRestoreFeature){
-            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled').replace('{{lab}}', $scope.backupRestoreLab));
                 $scope.alerts.push({
                     msg: getMessage,
                     type: 'warning'

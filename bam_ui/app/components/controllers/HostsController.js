@@ -203,6 +203,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.awsRdsFeature = false;
     getLabList.then(function (argument) {
         for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "multi-host-mgr"){
+                $scope.multiHostlabName = argument[i].disp_name;
+            }else if(argument[i].lab == "aws"){
+                $scope.awsRdslabName = argument[i].disp_name;
+            }
+
             if(argument[i].lab == "multi-host-mgr" && argument[i].enabled == "on"){
                 $scope.multiHostlab = true;
             }else if(argument[i].lab == "aws" && argument[i].enabled == "on"){
@@ -221,7 +227,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 backdrop  : 'static',
             });
         }else{
-            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled').replace('{{lab}}', $scope.awsRdslabName));
 
                 $scope.alerts.push({
                     msg: getMessage,
@@ -243,7 +249,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             modalInstance.lab = settingName;
             modalInstance.disp_name = disp_name;
         }else{
-            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled').replace('{{lab}}', $scope.awsRdslabName));
 
                 $scope.alerts.push({
                     msg: getMessage,
@@ -816,7 +822,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             modalInstance.pgList = $scope.pgListRes;
             modalInstance.editConnData = argument;
         }else{
-            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled').replace('{{lab}}', $scope.multiHostlabName));
 
                 $scope.alerts.push({
                     msg: getMessage,
@@ -841,7 +847,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     backdrop  : 'static',
                 });
             }else{
-                var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+                var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled').replace('{{lab}}', $scope.multiHostlabName));
 
                 $scope.alerts.push({
                     msg: getMessage,
@@ -888,7 +894,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     }
                 }
             }else{
-                var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled'));
+                var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled').replace('{{lab}}', $scope.multiHostlabName));
 
                 $scope.alerts.push({
                     msg: getMessage,
