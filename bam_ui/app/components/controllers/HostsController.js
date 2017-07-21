@@ -237,6 +237,13 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     }
 
+    $rootScope.$on('RdsCreated', function (argument, data) {
+        $scope.alerts.push({
+                    msg: $sce.trustAsHtml(data),
+                    type: 'success'
+                });
+    })
+
     $scope.discoverRds = function (settingName, value, disp_name) {
         if ($scope.awsRdsFeature) {
             var modalInstance = $uibModal.open({

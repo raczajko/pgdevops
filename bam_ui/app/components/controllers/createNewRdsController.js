@@ -63,8 +63,10 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
             $scope.showErrMsg = true;
             $scope.errMsg = data[0].msg;
           }else{
+            $rootScope.$emit("RdsCreated", data[0].msg);
             $uibModalInstance.dismiss('cancel');
           }
+          $scope.$apply();
         })
 
         session.subscribe("com.bigsql.onRdsMetaList", function (data) {
@@ -83,6 +85,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
                 $scope.vpc = { select : $scope.networkSec[0].vpc }
                 $scope.vpcChange();
             }
+            $scope.$apply();
         });
     });
 
