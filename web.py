@@ -856,7 +856,8 @@ class GenerateBadgerReports(Resource):
                 try:
                     j = Process(
                         pid=int(report_file["process_log_id"]), command=report_file['cmd'],
-                        logdir=process_log_dir, desc=dumps("pgBadger Report"), user_id=current_user.id
+                        logdir=process_log_dir, desc=dumps("pgBadger Report"), user_id=current_user.id,
+                        acknowledge='pgDevOps'
                     )
                     db_session.add(j)
                     db_session.commit()
@@ -926,7 +927,7 @@ class BackupRestoreDatabase(Resource):
                     j = Process(
                         pid=int(result["process_log_id"]), command=result['cmd'],
                         logdir=result["log_dir"], desc=dumps(str(args['action'])),
-                        user_id=current_user.id
+                        user_id=current_user.id, acknowledge = 'pgDevOps'
                     )
                     db_session.add(j)
                     db_session.commit()
