@@ -13,10 +13,10 @@
         <ul uib-dropdown-menu role="menu " aria-labelledby="split-button ">
             <li><a href="" ng-click="createNewRds()">Create New RDS Instance</a></li>
             <li><a href="" ng-click="discoverRds('aws', '', 'AWS Postgres RDS')">Discover Existing RDS Instances</a></li>
-            <li><a href="" ng-click="openPGConnModal()">PostgreSQL Connection</a></li>
+            <li><a href="" ng-click="openPGConnModal()">Direct PostgreSQL Connection</a></li>
             <!--<li><a href="" ng-click="openPGConnGroupModal()">PostgreSQL Group</a></li>-->
-            <li><a href="" ng-click="openGroupsModal()">SSH Group</a></li>
-            <li><a href="" ng-click="open()">SSH Host</a></li>
+            <li><a href="" ng-click="open()">Manage SSH Host</a></li>
+            <li><a href="" ng-click="openGroupsModal()">Manage SSH Group</a></li>
         </ul>
     </div>
 </section>
@@ -41,7 +41,7 @@
                 <uib-accordion-group is-open="showpgList" ng-if="pgListRes.length>0">
                     <uib-accordion-heading>
                         <span class="host-uib-tab-heading" ng-click="openPostgresConnGroup(showpgList); closeAllServers()">
-                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !showpgList, 'fa fa-minus':showpgList}"></i> &nbsp; <strong> PostgreSQL Connections</strong>
+                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !showpgList, 'fa fa-minus':showpgList}"></i> &nbsp; <strong>Direct PostgreSQL Connections</strong>
                         </span>
                     </uib-accordion-heading>
                     <div class="col-md-12" ng-controller="dbGraphsController">
@@ -101,7 +101,7 @@
                 <uib-accordion-group ng-repeat="group in groupsList" is-open="group.state"  ng-init="parentIndex = $index" >
                     <uib-accordion-heading>
                         <span ng-click="loadGroup($index)" ng-if="group.group == 'default'" class="host-uib-tab-heading">
-                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i> &nbsp; <strong> SSH Hosts</strong>
+                            <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i> &nbsp; <strong>Managed SSH Hosts</strong>
                         </span>
                         <span ng-click="loadGroup($index)" id="{{group.group}}" ng-if="group.group != 'default'" class="host-uib-tab-heading">
                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !group.state, 'fa fa-minus': group.state}"></i>&nbsp; <strong>{{group.group}}</strong>
