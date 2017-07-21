@@ -19,14 +19,14 @@
                     <form class="form-horizontal" id="backupForm" ng-submit="checkFileExistense()">
                         <div class="col-md-6" style="border-right: 1px solid #f4f4f4;">
                             <div class="box-header with-border">
-                                <div class="col-md-12"><h4><strong> Source PostgreSQL Connection </strong></h4></div>
+                                <div class="col-md-12"><h4><strong> Direct PostgreSQL Connection </strong></h4></div>
                             </div>
                             <br>
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">PG Connection:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
                                     <select class="form-control" id="dbBackupPgcListDropDown" ng-model="backup.pgc" ng-change="onPGCChange(backup.pgc,'backup')" required>
-                                        <option ng-repeat="pgc in pgListRes" value="{{ pgc.server_name }}"><h3>{{ pgc.server_name }}, {{pgc.db_user}}@{{pgc.host}}:{{pgc.port}}/{{pgc.db}} </h3> </option>
+                                        <option ng-repeat="pgc in pgListRes" value="{{ pgc.server_name }}"><h3>[{{ pgc.server_name }}] {{pgc.db_user}}@{{pgc.host}}:{{pgc.port}}/{{pgc.db}} </h3> </option>
                                     </select>
                                 </div>
                             </div>
@@ -194,7 +194,7 @@
                                 <label class="col-sm-4 control-label">PG Connection:<span class="requiredSymbol">*</span></label>
                                 <div class="col-sm-7">
                                      <select class="form-control" id="dbRestorePgcListDropDown" ng-model="restore.pgc" ng-change="onPGCChange(restore.pgc,'restore')" required>
-                                        <option ng-repeat="pgc in pgListRes" value="{{ pgc.server_name }}"><h3>{{ pgc.server_name }}, {{pgc.db_user}}@{{pgc.host}}:{{pgc.port}}/{{pgc.db}} </h3> </option>
+                                        <option ng-repeat="pgc in pgListRes" value="{{ pgc.server_name }}"><h3>[{{ pgc.server_name }}] {{pgc.db_user}}@{{pgc.host}}:{{pgc.port}}/{{pgc.db}} </h3> </option>
                                     </select>
                                 </div>
                             </div>

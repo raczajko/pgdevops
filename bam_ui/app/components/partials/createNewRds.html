@@ -77,11 +77,17 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">DB Instance Class :</label>
-                    <div class="col-sm-8">
-                        <select class="form-control"  ng-change="typeChange(typeSelect.type)" ng-model="data.db_class">
-                            <option ng-repeat="type in types" value="{{ type.instance }}"> {{type.instance}} -- {{type.v_cpu}}(vCPU), {{type.memory}} GiB RAM  </option>
+                    <div class="col-sm-8" ng-if="!disableInsClass">
+                        <select class="form-control" ng-change="typeChange(typeSelect.type)" ng-model="data.db_class">
+                            <option ng-repeat="type in types" value="{{ type.DBInstanceClass }}" ng-if="!type.v_cpu">
+                                {{type.DBInstanceClass}}  
+                            </option>
+                            <option ng-repeat="type in types" value="{{ type.DBInstanceClass }}" ng-if="type.v_cpu">
+                                {{type.DBInstanceClass}} -- {{type.v_cpu}}(vCPU), {{type.memory}} GiB RAM  
+                            </option>
                         </select>
                     </div>
+                    <div class="col-sm-2" ng-if="disableInsClass"><i class="fa fa-spinner fa-pulse fa-2x"></i></div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Multi-AZ Deployment :</label>

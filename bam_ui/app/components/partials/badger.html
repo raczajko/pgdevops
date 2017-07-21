@@ -83,7 +83,7 @@
                     </div>
                     <div class="form-group">
                         <label class="col-sm-3 control-label" style="margin-top: 5px;"> Number of jobs :</label>
-                        <div class="col-sm-2">
+                        <div class="col-sm-2" uib-tooltip="Maximum number of jobs are equivalent to available cores.">
                             <select ng-model="pgJobs" class="form-control" ng-options="n for n in maxNumJobs">
                             </select>
                         </div>

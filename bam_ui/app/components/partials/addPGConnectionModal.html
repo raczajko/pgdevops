@@ -2,7 +2,7 @@
     <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
         <i class="fa fa-lg fa-close cursor_pointer"></i>
     </div>
-    <h4 class="modal-title"> {{type}} PostgreSQL Connection</h4>
+    <h4 class="modal-title"> {{type}} Direct PostgreSQL Connection</h4>
 </div>
 <div class="modal-body">
     <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert()" class="uib-text">{{alert.msg}}</uib-alert>

@@ -20,6 +20,7 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
                 templateUrl: '../app/components/partials/createNewRds.html',
                 controller: 'createNewRdsController',
                 keyboard  : false,
+                windowClass : 'rds-modal',
                 backdrop  : 'static',
             });
     }

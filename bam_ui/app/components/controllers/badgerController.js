@@ -12,7 +12,6 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $scope.refreshMsg= false;
     $scope.checked = false;
     $scope.showBgProcess = false;
-    $scope.pgJobs = '1';
 
     var session;
     $scope.updateSettings;
@@ -45,8 +44,14 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     var infoCmd = bamAjaxCall.getCmdData('info');
     infoCmd.then(function (data) {
         $scope.maxNumJobs = [];
-        for (var i = 1 ; i < data[0].cores; i++) {
+        for (var i = 1 ; i <= data[0].cores; i++) {
             $scope.maxNumJobs.push(i.toString());
+        }
+        
+        if(localStorage.getItem('pgJobsCookie')){
+            $scope.pgJobs = localStorage.getItem('pgJobsCookie');
+        }else{
+            $scope.pgJobs = Math.round(data[0].cores/2).toString();            
         }
         if ($scope.maxNumJobs.length == 0) {
             $scope.maxNumJobs = ['1']
@@ -240,6 +245,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         }else{
             pgJobs = '0';
         }
+        localStorage.setItem('pgJobsCookie', pgJobs);
         var args={
                     "log_files": selectedFiles,
                     "db":       $scope.pgDB,

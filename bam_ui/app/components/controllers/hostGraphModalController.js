@@ -7,6 +7,9 @@ angular.module('bigSQL.components').controller('hostGraphModalController', ['$sc
     $scope.chartName = $uibModalInstance.chartName;
     $scope.data = $uibModalInstance.data;
     $scope.hostName = $uibModalInstance.hostName;
+    if (!$scope.hostName) {
+        $scope.hostName = $uibModalInstance.host;
+    }
 
     var chart = $uibModalInstance.chart;
     chart.chart['showLegend'] = true;

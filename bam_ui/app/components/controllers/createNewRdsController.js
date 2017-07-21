@@ -8,6 +8,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     $scope.loading = true;
     $scope.firstStep = true;
     $scope.secondStep = false;
+    $scope.disableInsClass = true;
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
 
     $scope.data = {
@@ -45,18 +46,17 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         $scope.data.region = $scope.regions[0].region;
     });
 
-    var types = bamAjaxCall.getCmdData('metalist/aws-rds')
-    types.then(function(data){
-        $scope.types = data;
-        $scope.data.db_class = $scope.types[0].instance;
-    });
+    // var types = bamAjaxCall.getCmdData('metalist/aws-rds')
+    // types.then(function(data){
+    //     $scope.types = data;
+    //     $scope.data.db_class = $scope.types[0].instance;
+    // });
 
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
     	session = val;
         session.subscribe("com.bigsql.onCreateRds", function(data){
-            debugger
           $scope.creating = false;
           var data = JSON.parse(data);
           if(data[0].state == 'error'){
@@ -70,10 +70,14 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         session.subscribe("com.bigsql.onRdsMetaList", function (data) {
             $scope.loading = false;
             var response = JSON.parse(data[0]);
-            if($scope.secondStep){
+            if($scope.secondStep && !$scope.data.engine_version){
                 $scope.dbEngVersions = response;
                 $scope.data.engine_version = $scope.dbEngVersions[0].EngineVersion;
                 $scope.versionChange();
+            }else if($scope.secondStep && $scope.data.engine_version){
+                $scope.types = response;
+                $scope.data.db_class = $scope.types[0].DBInstanceClass;
+                $scope.disableInsClass = false;
             }else if($scope.thirdStep){
                 $scope.networkSec = JSON.parse(data[0])
                 $scope.vpc = { select : $scope.networkSec[0].vpc }
@@ -83,6 +87,15 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     });
 
     $scope.versionChange = function(argument){
+        $scope.disableInsClass = true;
+        $scope.data.db_class = '';
+        $scope.dbGroups = [];
+        $scope.optionGroups = '';
+        $scope.data.db_parameter_group = [];
+        $scope.data.optionGroup = '';
+        $scope.types = '';
+        $scope.data.db_class = [];
+        session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version])
         for(var i = 0; i < $scope.dbEngVersions.length; ++i){
             if($scope.dbEngVersions[i].EngineVersion == $scope.data.engine_version){
                 $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
@@ -139,11 +152,11 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     $scope.next = function(region){
         $scope.loading = true;
         if($scope.firstStep){
-            session.call('com.bigsql.rdsMetaList', ['rds-versions', '', $scope.data.region])
+            session.call('com.bigsql.rdsMetaList', ['rds-versions', '', $scope.data.region, ''])
             $scope.firstStep = false;
             $scope.secondStep = true;
         }else{
-            session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region])
+            session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, ''])
             $scope.secondStep = false;
             $scope.thirdStep = true;
         }
@@ -153,9 +166,12 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         if($scope.secondStep){
             $scope.secondStep = false;
             $scope.firstStep = true;
+            $scope.dbEngVersions = [];
+            $scope.data.engine_version = '';
         }else if($scope.thirdStep){
             $scope.thirdStep = false;
             $scope.secondStep = true;
+            $scope.showErrMsg = false;
         }
     }
 
