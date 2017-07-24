@@ -205,6 +205,9 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
                 }
             }
             if (data.state == "error") {
+                delete currentComponent.installationStart;
+                delete currentComponent.installationRunning;
+                delete currentComponent.installation;
                 $scope.alerts.push({
                     msg: data.msg,
                     type: 'danger'
