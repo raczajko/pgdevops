@@ -8,6 +8,7 @@
     <div class="box">
     <div ng-if="cmdAllowedTypes.indexOf(process_type) != -1 && procCmd" class="bt-status"><b>Command: </b><br><span style="color:#3c8dbc;">{{procCmd}} </span></div>
     <div ng-if="procStartTime" class="bt-start-time"><b>Start time: </b>{{procStartTime}} </div>
+    <div ng-if="procEndTime" class="bt-start-time"><b>End time: </b>{{procEndTime}} </div>
     </div>
     <div ng-if="out_data" class="bg_job_console" id="bg_console">
       {{out_data}}
