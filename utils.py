@@ -1,5 +1,5 @@
 
-def get_readable_time_diff(amount, units='Secs', precision=0):
+def get_readable_time_diff(amount, units='secs', precision=0):
 
     def process_time(amount, units):
 
@@ -10,13 +10,13 @@ def get_readable_time_diff(amount, units='Secs', precision=0):
                      60*60*24*7*4,
                      60*60*24*7*4*12]
 
-        NAMES = [('Sec', 'Secs'),
-                 ('Min', 'Mins'),
-                 ('Hr', 'Hrs'),
-                 ('Day', 'Days'),
-                 ('Week', 'Weeks'),
-                 ('Month', 'Months'),
-                 ('Year', 'Years')]
+        NAMES = [('sec', 'secs'),
+                 ('min', 'mins'),
+                 ('hr', 'hrs'),
+                 ('day', 'days'),
+                 ('week', 'weeks'),
+                 ('month', 'months'),
+                 ('year', 'years')]
 
         result = []
 
@@ -33,7 +33,7 @@ def get_readable_time_diff(amount, units='Secs', precision=0):
         return result
 
     if int(amount)==0:
-      return "0 Secs"
+      return "0 secs"
     rd = process_time(int(amount), units)
     cont = 0
     for u in rd:
