@@ -82,8 +82,15 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
         return -1;
     }
     $scope.showConsoleOutput = function(log_id){
-        $scope.showBackupBgProcess = true;
-        $rootScope.$emit('backgroundJobConsole', log_id);
+        //$scope.showBackupBgProcess = true;
+        //$rootScope.$emit('backgroundJobConsole', log_id);
+
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/backgroundJobConsole.html',
+            controller: 'backgroundJobConsoleController',
+        });
+
+        modalInstance.processId = log_id;
     };
 
     $rootScope.$on('hidebgProcess', function (argument) {

@@ -1054,8 +1054,8 @@ class GetBgProcessStatus(Resource):
 
         stime = dateutil.parser.parse(proc_status.get("start_time"))
         etime = dateutil.parser.parse(proc_status.get("end_time") or get_current_time())
-
-        execution_time = (etime - stime).total_seconds()
+        from utils import get_readable_time_diff
+        execution_time = get_readable_time_diff((etime - stime).total_seconds())
 
         proc_status['execution_time'] = execution_time
         proc_status['error_msg']=""

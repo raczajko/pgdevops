@@ -7433,3 +7433,20 @@ a.notification{
         border-right: 1px solid #d2d6de ;
     }
 }
+
+.bg_job_console {
+ height: 50vh;
+ overflow: auto;
+ background-color: #fff;
+ font-family: monospace;
+ white-space: pre-line;
+}
+.success-text{
+    color:green;
+}
+.fail-text{
+    color:red;
+}
+.running-text{
+    color:green;
+}
