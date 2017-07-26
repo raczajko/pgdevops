@@ -155,8 +155,8 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                     type: "danger"
                 }
                 $scope.alerts.push(alertObj);
-                callInfo();
             }
+            callInfo();
         };
 
         session.subscribe('com.bigsql.onRemove', onRemove).then(
