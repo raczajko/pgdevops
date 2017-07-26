@@ -7438,8 +7438,7 @@ a.notification{
  height: 50vh;
  overflow: auto;
  background-color: #fff;
- font-family: monospace;
- white-space: pre-line;
+ color:rgba(212, 27, 57, 0.81);
 }
 .success-text{
     color:green;
@@ -7449,4 +7448,10 @@ a.notification{
 }
 .running-text{
     color:green;
+}
+
+.overlayDiv {
+    position: absolute;
+    width: 100%;
+    z-index:99;
 }
