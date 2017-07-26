@@ -7050,8 +7050,8 @@ span.more-text.show {
 }
 
 .lab_row {
-    padding-bottom: 5px;
-    margin: 10px 0 10px 0;
+    /*padding-bottom: 5px;
+    margin: 10px 0 10px 0;*/
     border-bottom: 1px solid #f4f4f4;
 }
 
@@ -7130,8 +7130,7 @@ fieldset
 }
 
 .lab-img {
-  height: 86px; 
-  width: 200px;
+  margin: 5px auto 0px auto;
 }
 
 .overlay {
