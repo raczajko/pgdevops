@@ -3,7 +3,7 @@
         <i class="fa fa-lg fa-close cursor_pointer"></i>
     </div>
     <div>
-        <button class="btn btn-default pull-right" ng-if="rdsList && !noRDS" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections for pgDevOps/pgAdmin4</button>&nbsp;
+        <button ng-if="instance == 'rds'" class="btn btn-default pull-right" ng-if="rdsList && !noRDS" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections for pgDevOps/pgAdmin4</button>&nbsp;
         <h4 class="modal-title pull-left"> {{disp_name}} </h4>
     </div>
 </div>
@@ -11,6 +11,17 @@
            class="uib-text">{{ alert.msg }}</uib-alert>
 
 <div class="modal-body">
+    <div class="row" ng-if="!loadingSpinner">
+        <div class="col-sm-3" style="margin-right: -100px; margin-top: 5px; margin-left:10px;"><strong>Select Region :</strong> </div>
+        <div class="col-sm-4">
+            <select class="form-control" ng-options="region.region as region.location for region in regions" ng-model="region">
+                <option value="">All Regions</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary" ng-click="regionChange(region)">Search</button>
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-12 col-xs-12" ng-if="loadingSpinner">
             <div class="well">
@@ -18,7 +29,7 @@
             </div>
         </div>
         <div class="col-md-12 col-xs-12">
-            <div class="well" ng-bind="errMsg" ng-if="!loadingSpinner && !rdsList">
+            <div class="well" ng-bind="errMsg" ng-if="!loadingSpinner && !rdsList && errMsg">
             </div>
         </div>
         <div class="col-md-12 col-xs-12">
@@ -28,7 +39,7 @@
         </div>
         <div class="col-md-12 col-xs-12">
             <div class="well" ng-if="noRDS">
-                <div> {{noRDSMsg}} </div>
+                <div> {{noInstanceMsg}} </div>
             </div>
         </div>
         <div ng-if="availList.length > 0 && !addToMetadata">
@@ -78,6 +89,57 @@
                             </div>
                             <div class="col-md-6 col-sm-6 col-xs-6" style="white-space: nowrap;">
                                 {{rds.address}}
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <div ng-if="ec2List.length > 0 ">
+            <div class="box-body">
+                <div id="serversTable">
+                <div class="component_head_box">
+                    <div class="row">
+                    <div class="col-md-2 col-sm-2 col-xs-2">
+                        <div class="col-md-4 col-sm-4 col-xs-4">
+                            <input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected" name="">
+                        </div>
+                        <div class="col-md-8 col-sm-8 col-xs-8"><strong>Region</strong></div>
+                    </div>
+                    <div class="col-md-10 col-sm-10 col-xs-10">
+                        <div class="col-md-5 col-sm-5 col-xs-5"><strong>Instance</strong></div>
+                        <div class="col-md-1 col-sm-1 col-xs-1"><strong>State</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Type</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Key Name</strong></div>
+                    </div>
+                    </div>
+                </div>
+                <div id="serversTableTbody">
+                    <div ng-repeat="ec in ec2List" class= "component_box" ng-class-odd="'oddRow'" style="border-bottom: 1px solid #f4f4f4;">
+                        <div class="row">
+                        <div class="col-md-2 col-sm-2 col-xs-2">
+                            <div class="col-md-4 col-sm-4 col-xs-4">
+                                <input type="checkbox" ng-model="ec.selected" ng-change="optionToggled()" name=""> 
+                            </div>
+                            <div class="col-md-8 col-sm-8 col-xs-8" style="white-space: nowrap;">
+                                {{ec.region}}
+                            </div>
+                        </div>
+                        <div class="col-md-10 col-sm-10 col-xs-10">
+                            <div class="col-md-5 col-sm-5 col-xs-5" style="white-space: nowrap;">
+                                {{ec.name}}
+                            </div>
+                            <div class="col-md-1 col-sm-1 col-xs-1" style="white-space: nowrap;">
+                                {{ec.state_name}}
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
+                                {{ec.instance_type}}
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
+                                {{ec.keyname}}
                             </div>
                         </div>
                         </div>

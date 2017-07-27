@@ -1,8 +1,8 @@
 angular.module('bigSQL.components').controller('awsIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$uibModal', '$timeout', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $uibModal, $timeout) {
 
 	$scope.alerts = [];
-	$scope.discoverRds =  function (settingName, disp_name) {
-	
+	$scope.discover =  function (settingName, disp_name, instance) {
+
 		var modalInstance = $uibModal.open({
 	        templateUrl: '../app/components/partials/rdsModal.html',
 	        controller: 'rdsModalController',
@@ -13,6 +13,7 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
 	    });
 	    modalInstance.lab = settingName;
 	    modalInstance.disp_name = disp_name;
+	    modalInstance.instance = instance;
 	}
 
 	$scope.closeAlert = function (index) {

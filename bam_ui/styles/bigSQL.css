@@ -7454,3 +7454,9 @@ a.notification{
     width: 100%;
     z-index:99;
 }
+
+
+.aws-page-tile-name{
+  text-align:center; 
+  white-space: pre-wrap;
+}

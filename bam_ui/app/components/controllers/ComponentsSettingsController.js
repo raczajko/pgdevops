@@ -182,11 +182,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         })
     };
 
-    $scope.changeSetting = function (settingName, value, disp_name) {
-        var getLablist = bamAjaxCall.getCmdData('lablist');
-        if (settingName == 'aws' && value == 'off') {
-            $scope.awsRdsTile = false;
-        }
+    $scope.discoverRds = function (settingName, value, disp_name) {
         if (settingName == 'aws' && (value == 'on' || value=='')) {
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/rdsModal.html',
@@ -198,15 +194,28 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             });
             modalInstance.lab = settingName;
             modalInstance.disp_name = disp_name;
+            modalInstance.instance = 'rds';
+        }
+    }
+
+    $scope.changeSetting = function (settingName, value, disp_name) {
+        var getLablist = bamAjaxCall.getCmdData('lablist');
+        if (settingName == 'aws') {
+            $rootScope.$emit('hideAwsNav', value);
+            if (value == 'on') {
+                $scope.awsRdsTile = true;
+            }else{
+                $scope.awsRdsTile = false;
+            }
         }
         if (value) {
             session.call('com.bigsql.setLabSetting', [settingName, value]);            
         }
-        // if ($scope.currentHost == "" || $scope.currentHost == 'localhost'){
-        //     session.call('com.bigsql.setLabSetting', [settingName, value]);
-        // }else{
-        //     session.call('com.bigsql.setLabSetting', [settingName, value, $scope.currentHost]);
-        // }
+        if ($scope.currentHost == "" || $scope.currentHost == 'localhost'){
+            session.call('com.bigsql.setLabSetting', [settingName, value]);
+        }else{
+            session.call('com.bigsql.setLabSetting', [settingName, value, $scope.currentHost]);
+        }
     }
 
     $rootScope.$on('refreshUpdateDate', function (argument) {
