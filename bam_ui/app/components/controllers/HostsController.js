@@ -416,7 +416,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     $scope.errorMsg = data[0].msg;
                     $interval.cancel(stopStatusCall);
                 }else{
-                    data = $(data).filter(function(i,n){ return n.category == '1' });
+                    // data = $(data).filter(function(i,n){ return n.category == '1' });
                     if (!$scope.actionBtnOpen) {
                         $scope.groupsList[p_idx].hosts[idx].comps = data;                        
                     }
@@ -565,7 +565,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     $scope.errorMsg = data[0].msg;
                 }else{
                     $scope.hostStatus = false;
-                    data = $(data).filter(function(i,n){ return n.category == '1' });
+                    // data = $(data).filter(function(i,n){ return n.category == '1' });
                     if(data.length <= 0){
                         $scope.groupsList[p_idx].hosts[idx].comps = data;
                         $scope.groupsList[p_idx].hosts[idx].showMsg = true;
