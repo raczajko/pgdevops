@@ -97,7 +97,7 @@ def before_request():
 
 application.before_request(before_request)
 
-from forms import RegisterForm
+from forms import RegisterForm, check_ami
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -118,7 +118,9 @@ def on_user_registerd(app, user, confirm_token):
         user_id=user.id,
         name="Servers")
     db.session.add(sg)
-    session['initial-logged-in'] = True
+    is_ami = check_ami()
+    if is_ami.get('rc') != 2:
+        session['initial-logged-in'] = True
     db.session.commit()
     default_user = user_datastore.get_user('bigsql@bigsql.org')
     if not len(User.query.filter(User.roles.any(name='Administrator'),User.active==True).all()) > 0 :
