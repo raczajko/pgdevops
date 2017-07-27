@@ -15,8 +15,8 @@
             <li><a href="" ng-click="discoverRds('aws', '', 'AWS Postgres RDS')">Discover Existing RDS Instances</a></li>
             <li><a href="" ng-click="openPGConnModal()">Direct PostgreSQL Connection</a></li>
             <!--<li><a href="" ng-click="openPGConnGroupModal()">PostgreSQL Group</a></li>-->
-            <li><a href="" ng-click="open()">Manage SSH Host</a></li>
-            <li><a href="" ng-click="openGroupsModal()">Manage SSH Group</a></li>
+            <li><a href="" ng-click="open()">Managed SSH Host</a></li>
+            <li><a href="" ng-click="openGroupsModal()">Managed SSH Group</a></li>
         </ul>
     </div>
 </section>
@@ -209,12 +209,12 @@
                                                 <tr ng-repeat="comp in host.comps" ng-if="comp.component != 'pgdevops'">
                                                     <td class="col-md-1 col-xs-2">
                                                         <div ng-if="comp.category != 1">
-                                                            <a ng-click="changeHost(host.host); openDetailsModal(comp.component)">
+                                                            <a ng-click="changeHost(host.name); openDetailsModal(comp.component)">
                                                                 {{ comp.component }}
                                                             </a>
                                                         </div>
                                                         <div ng-if="comp.category == 1">
-                                                            <a ui-sref="components.detailspg95({component:comp.component}) " ng-click="changeHost(host.host)">
+                                                            <a ui-sref="components.detailspg95({component:comp.component}) " ng-click="changeHost(host.name)">
                                                                 {{ comp.component }}
                                                             </a>
                                                         </div>

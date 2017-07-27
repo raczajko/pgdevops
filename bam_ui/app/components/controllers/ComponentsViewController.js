@@ -296,7 +296,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
             session.call('com.bigsql.getSetting', ['STAGE', $scope.currentHost]);
         }
         session.subscribe("com.bigsql.onGetSetting", function (settings) {
-            if(settings[0] == "test"){
+            if(settings[0] == "test" || settings[0].contains('test')){
                $scope.showComps.test = true
             }else{
                 $scope.showComps.test = false;
