@@ -41,11 +41,18 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
 
     var dirlist = $http.post($window.location.origin + '/api/dirlist', args);
     dirlist.then(function (argument) {
-        $scope.files = argument.data[0].data;
+        $scope.errorText = "";
+        if(argument.data[0].state != 'completed'){
+            $scope.errorText = argument.data[0].msg;
+        }
+        else{
+            $scope.files = argument.data[0].data;
+        }
         $scope.loading = false;
     });
 
     $scope.getFiles = function(filename,type){
+        $scope.errorText = "";
         $scope.loading = true;
         if(['d','.'].indexOf(type) != -1){
             if(filename.indexOf('\\') != -1 && !endsWith(filename,'\\')){
@@ -69,8 +76,13 @@ angular.module('bigSQL.components').controller('browseModalController', ['$scope
             };
             var dirlist = $http.post($window.location.origin + '/api/dirlist', args);
             dirlist.then(function (argument) {
-                $scope.files = argument.data[0].data;
-                $scope.currentPath = filename;
+                if(argument.data[0].state != 'completed'){
+                    $scope.errorText = argument.data[0].msg;
+                }
+                else{
+                    $scope.files = argument.data[0].data;
+                    $scope.currentPath = filename;
+                }
                 $scope.loading = false;
             });
         }

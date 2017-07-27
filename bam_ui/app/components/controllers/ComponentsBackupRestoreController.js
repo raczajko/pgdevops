@@ -247,6 +247,10 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             $scope.loadingBackupAction = true;
             var dirlist = $http.post($window.location.origin + '/api/dirlist', args);
             dirlist.then(function (argument) {
+                if(argument.data[0].state != 'completed'){
+                    $scope.startBackup();
+                    return;
+                }
                 for (var i = 0; i < argument.data[0].data.length ; i++) {
                     if(argument.data[0].data[i].name == $scope.backup.directory + filename){
                         exists = true;
