@@ -7,7 +7,6 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     $scope.components = {};
     $scope.currentHost;
     $scope.showPgDgFeature = false;
-    $scope.awsRdsTile = false;
     $scope.settingsOptions = [{name:'Weekly'},{name:'Daily'},{name:'Monthly'}]
 
     $scope.open = function (manual) {
@@ -175,9 +174,6 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             $scope.lablist = argument;
             for (var i = $scope.lablist.length - 1; i >= 0; i--) {
                 $scope.lablist[i]['markdownDesc'] = $sce.trustAsHtml($scope.lablist[i].short_desc);
-                if ($scope.lablist[i].lab == 'aws' && $scope.lablist[i].enabled == 'on') {
-                    $scope.awsRdsTile = true;
-                }
             }
         })
     };
@@ -202,11 +198,8 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         var getLablist = bamAjaxCall.getCmdData('lablist');
         if (settingName == 'aws') {
             $rootScope.$emit('hideAwsNav', value);
-            if (value == 'on') {
-                $scope.awsRdsTile = true;
-            }else{
-                $scope.awsRdsTile = false;
-            }
+        }else if(settingName == 'dumprest'){
+            $rootScope.$emit('hideBackupRestoreNav', value);
         }
         if (value) {
             session.call('com.bigsql.setLabSetting', [settingName, value]);            
