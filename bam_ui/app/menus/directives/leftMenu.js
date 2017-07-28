@@ -8,8 +8,7 @@ angular.module('bigSQL.menus').component('leftMenu', {
     		for (var i = argument.length - 1; i >= 0; i--) {
                 if (argument[i].lab == 'aws' && argument[i].enabled == 'on') {
                     $scope.hideAwsNav = true;
-                }
-                if (argument[i].lab == 'dumprest' && argument[i].enabled == 'on') {
+                }else if (argument[i].lab == 'dumprest' && argument[i].enabled == 'on') {
                     $scope.hideBackupRestore = true;
                 }
             }
