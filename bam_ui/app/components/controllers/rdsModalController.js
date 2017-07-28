@@ -131,7 +131,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         } );
     };
 
-    $scope.openRDSdetails = function (instance, region) {
+    $scope.openRDSdetails = function (instance, region, db_class) {
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/rdsDetailsModal.html',
             controller: 'rdsDetailsModalController',
@@ -139,6 +139,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         });
         modalInstance.instance = instance;
         modalInstance.region = region;
+        modalInstance.db_class = db_class;
     }
 
     $scope.toggleAll = function() { 

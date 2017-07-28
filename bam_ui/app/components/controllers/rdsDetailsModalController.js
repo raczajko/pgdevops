@@ -7,10 +7,18 @@ angular.module('bigSQL.components').controller('rdsDetailsModalController', ['$s
 	$scope.region = $uibModalInstance.region;
 	$scope.instance = $uibModalInstance.instance;
 	$scope.rdsDetailsLoading = true;
+	$scope.db_class = $uibModalInstance.db_class;
 
 	sessPromise.then(function (sessParam) {
         session = sessParam;
         session.call('com.bigsql.rdsInfo', [ $scope.region, $scope.instance]);
+        session.call('com.bigsql.rdsMetaList', ['aws-rds', $scope.db_class])
+
+        session.subscribe("com.bigsql.onRdsMetaList", function (data) {
+            $scope.instanceMetaList = JSON.parse(data[0]);
+            $rootScope.instanceMetaList = JSON.parse(data);
+            $scope.$apply();
+        })
 
         session.subscribe("com.bigsql.onRdsInfo", function (data) {
             var data = JSON.parse(data[0]);

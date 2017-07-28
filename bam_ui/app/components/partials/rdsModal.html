@@ -76,7 +76,7 @@
                             </div>
                         </div>
                         <div class="col-md-10 col-sm-10 col-xs-10">
-                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap; cursor: pointer;" ng-click="openRDSdetails(rds.instance, rds.region)">
+                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap; cursor: pointer;" ng-click="openRDSdetails(rds.instance, rds.region, rds.db_class)">
                                 <a>{{rds.instance}}</a>
                             </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;" ng-class="{ 'greenText' :rds.status == 'available' , 'redText' : rds.status != 'available'}">
