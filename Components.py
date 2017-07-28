@@ -410,33 +410,32 @@ class Components(ComponentAction):
         data = pgcProcess.communicate()
 
     @inlineCallbacks
-    def rdsList(self, email):
+    def instancesList(self, instance, email, region=None):
         """
         Method to get the rds instances list
         """
-        if this_uname != "Windows":
-            os.environ["PYTHONPATH"] = devops_lib_path
-        pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json"
+        pgcCmd = PGC_HOME + os.sep + "pgc instances --json " + instance
+        if region:
+            pgcCmd = pgcCmd + " --region " + region
         if email:
             pgcCmd = pgcCmd + " --email " + email
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
             ln = (line).rstrip('\n')
-            self.session.publish('com.bigsql.onRdsList', ln)
+            self.session.publish('com.bigsql.onInstancesList', ln)
             yield sleep(0.001)
         self.process = ''
         returnValue(1)
 
     @inlineCallbacks
-    def rdsInfo(self, email, region, instance):
+    def rdsInfo(self, region, instance):
         """
         Method to get rds Instance Info
         """
         pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json  --region " + region + " --instance " + instance
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.process = process
-        print pgcCmd
         for line in iter(process.stdout.readline, ''):
             ln = (line).rstrip('\n')
             self.session.publish('com.bigsql.onRdsInfo', ln)

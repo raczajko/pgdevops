@@ -7,7 +7,6 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     $scope.components = {};
     $scope.currentHost;
     $scope.showPgDgFeature = false;
-    $scope.awsRdsTile = false;
     $scope.settingsOptions = [{name:'Weekly'},{name:'Daily'},{name:'Monthly'}]
 
     $scope.open = function (manual) {
@@ -175,18 +174,11 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             $scope.lablist = argument;
             for (var i = $scope.lablist.length - 1; i >= 0; i--) {
                 $scope.lablist[i]['markdownDesc'] = $sce.trustAsHtml($scope.lablist[i].short_desc);
-                if ($scope.lablist[i].lab == 'aws' && $scope.lablist[i].enabled == 'on') {
-                    $scope.awsRdsTile = true;
-                }
             }
         })
     };
 
-    $scope.changeSetting = function (settingName, value, disp_name) {
-        var getLablist = bamAjaxCall.getCmdData('lablist');
-        if (settingName == 'aws' && value == 'off') {
-            $scope.awsRdsTile = false;
-        }
+    $scope.discoverRds = function (settingName, value, disp_name) {
         if (settingName == 'aws' && (value == 'on' || value=='')) {
             var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/rdsModal.html',
@@ -198,15 +190,25 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             });
             modalInstance.lab = settingName;
             modalInstance.disp_name = disp_name;
+            modalInstance.instance = 'rds';
+        }
+    }
+
+    $scope.changeSetting = function (settingName, value, disp_name) {
+        var getLablist = bamAjaxCall.getCmdData('lablist');
+        if (settingName == 'aws') {
+            $rootScope.$emit('hideAwsNav', value);
+        }else if(settingName == 'dumprest'){
+            $rootScope.$emit('hideBackupRestoreNav', value);
         }
         if (value) {
             session.call('com.bigsql.setLabSetting', [settingName, value]);            
         }
-        // if ($scope.currentHost == "" || $scope.currentHost == 'localhost'){
-        //     session.call('com.bigsql.setLabSetting', [settingName, value]);
-        // }else{
-        //     session.call('com.bigsql.setLabSetting', [settingName, value, $scope.currentHost]);
-        // }
+        if ($scope.currentHost == "" || $scope.currentHost == 'localhost'){
+            session.call('com.bigsql.setLabSetting', [settingName, value]);
+        }else{
+            session.call('com.bigsql.setLabSetting', [settingName, value, $scope.currentHost]);
+        }
     }
 
     $rootScope.$on('refreshUpdateDate', function (argument) {

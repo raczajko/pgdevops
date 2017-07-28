@@ -36,6 +36,24 @@ angular.module('bigSQL.components').controller('bamLoading', ['$scope', 'PubSubS
     });
   });
 
+  $scope.hideBackupRestore = false;
+  var getLablist = bamAjaxCall.getCmdData('lablist');
+  getLablist.then(function (argument) {
+    for (var i = argument.length - 1; i >= 0; i--) {
+            if (argument[i].lab == 'dumprest' && argument[i].enabled == 'on') {
+                $scope.hideBackupRestore = true;
+            }
+        }
+  });
+
+  $rootScope.$on('hideBackupRestoreNav', function (event, value) {
+      if (value == 'on') {
+        $scope.hideBackupRestore = true;
+      }else{
+        $scope.hideBackupRestore = false;
+      }
+    });
+
 	$timeout(function() {
         if ($scope.bamLoading) {
             $window.location.reload();

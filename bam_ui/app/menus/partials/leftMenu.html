@@ -32,7 +32,7 @@
                     <i class="bgs bgs-sm bgs-package-manager-menu"></i> <span>Package Manager</span>
                 </a>
             </li>
-            <li>
+            <li ng-if="hideBackupRestore">
                 <a ui-sref="components.backupRestoreView">
                     <i class="fa fa-floppy-o"></i> <span>Backup & Restore</span>
                 </a>
@@ -62,12 +62,12 @@
                     <i class="fa fa-paw"></i> <span>Dev Manager </span>
                 </a>
             </li> -->
-            <li>
+            <li ng-if="hideAwsNav">
                 <a ui-sref="components.awsIntegration">
                     <i class="bgs bgs-sm bgs-aws-menu"></i> <span>AWS Integration</span>
                 </a>
             </li>
-            <li>
+            <li ng-if="hideBackupRestore">
                 <a ui-sref="components.backgroundProcessList">
                     <i class="fa fa-clock-o"></i>
                     <span>Job Manager</span>

@@ -55,3 +55,5 @@ SESSION_DB_PATH = os.path.join(DATA_DIR, 'sessions')
 TEST_SQLITE_PATH = os.path.join(DATA_DIR, 'test_pgadmin4.db')
 
 UPGRADE_CHECK_ENABLED = False
+
+TESTING_MODE = False

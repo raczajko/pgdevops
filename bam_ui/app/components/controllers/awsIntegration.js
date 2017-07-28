@@ -1,8 +1,8 @@
-angular.module('bigSQL.components').controller('awsIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$uibModal', '$timeout', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $uibModal, $timeout) {
+angular.module('bigSQL.components').controller('awsIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$uibModal', '$timeout', 'htmlMessages', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $uibModal, $timeout, htmlMessages) {
 
 	$scope.alerts = [];
-	$scope.discoverRds =  function (settingName, disp_name) {
-	
+	$scope.discover =  function (settingName, disp_name, instance) {
+
 		var modalInstance = $uibModal.open({
 	        templateUrl: '../app/components/partials/rdsModal.html',
 	        controller: 'rdsModalController',
@@ -13,6 +13,7 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
 	    });
 	    modalInstance.lab = settingName;
 	    modalInstance.disp_name = disp_name;
+	    modalInstance.instance = instance;
 	}
 
 	$scope.closeAlert = function (index) {
@@ -25,6 +26,13 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
                     type: 'success'
                 });
     })
+
+    $scope.comingSoon = function (argument) {
+    	$scope.alerts.push({
+                    msg: htmlMessages.getMessage('coming-soon'),
+                    type: 'warning'
+                });
+    }
 
 	$scope.createNewRds = function(){
         var modalInstance = $uibModal.open({

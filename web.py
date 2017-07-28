@@ -97,7 +97,7 @@ def before_request():
 
 application.before_request(before_request)
 
-from forms import RegisterForm
+from forms import RegisterForm, check_ami
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -105,6 +105,7 @@ security = Security(application, user_datastore, register_form=RegisterForm)
 
 from flask_security.signals import user_registered
 
+is_ami = check_ami()
 
 def no_admin_users():
     if not len(User.query.filter(User.roles.any(name='Administrator'), User.active == True).all()) > 0:
@@ -118,7 +119,8 @@ def on_user_registerd(app, user, confirm_token):
         user_id=user.id,
         name="Servers")
     db.session.add(sg)
-    session['initial-logged-in'] = True
+    if is_ami.get('rc') != 2:
+        session['initial-logged-in'] = True
     db.session.commit()
     default_user = user_datastore.get_user('bigsql@bigsql.org')
     if not len(User.query.filter(User.roles.any(name='Administrator'),User.active==True).all()) > 0 :
@@ -189,9 +191,10 @@ api.add_resource(pgcApi,
 
 class checkInitLogin(Resource):
     def get(self):
-        if session.get('initial-logged-in'):
+        if is_ami.get('rc') != 2 and session.get('initial-logged-in'):
             session['initial-logged-in'] = False
             return True
+        return False
 
 api.add_resource(checkInitLogin,
                  '/check_init_login')

@@ -1,13 +1,44 @@
-angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, htmlMessages) {
+angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, htmlMessages, $uibModal, $cookies) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
     $scope.disp_name = $uibModalInstance.disp_name;
+    $scope.instance = $uibModalInstance.instance;
     $scope.availList = [];
     var addList = [];
     $scope.addToMetadata = false;
-    $scope.discoverMsg = htmlMessages.getMessage('discover-rds');
+    $scope.discoverMsg = htmlMessages.getMessage('loading-regions');
     var session;
+    $scope.region = '';
+
+    var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
+    regions.then(function(data){
+        $scope.loadingSpinner = false;
+        $scope.regions = data;
+        var regionCookie = $cookies.get('lastSelRegion');
+        if(regionCookie){
+            $scope.region = regionCookie;
+        }
+    });
+
+    $scope.regionChange = function (region) {
+        if (region==null) {
+            region = '';
+        }
+        $cookies.put('lastSelRegion', region);
+        $scope.availList = [];
+        $scope.loadingSpinner = true;
+        $scope.noRDS = false;
+        $scope.ec2List = [];
+        $scope.checked = false;
+        $scope.discoverMsg = 'Searching';
+        if (region) {
+            session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, region]);
+        }else{
+            session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, '']);
+        }
+        $scope.region = region;
+    }
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
@@ -15,11 +46,11 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         var userInfoData = bamAjaxCall.getCmdData('userinfo');
         userInfoData.then(function(data) {
             $scope.userInfo = data;
-            session.call('com.bigsql.rdsList', [$scope.userInfo.email]);
+            // session.call('com.bigsql.instancesList', [$scope.userInfo.email]);
         });
 
-        session.subscribe('com.bigsql.onRdsList', function (data) {
-           var data = JSON.parse(data[0]);
+        session.subscribe('com.bigsql.onInstancesList', function (data) {
+            var data = JSON.parse(data[0]);
             if (data[0].state == 'info') {
                 $scope.discoverMsg = data[0].msg;
             }else if (data[0].state=="error") {
@@ -28,6 +59,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                 $rootScope.$emit('disableLab', $scope.lab, 'off')
             }else if(data[0].state=="completed"){
                 $scope.loadingSpinner = false;
+                $scope.availList = [];
                 $scope.rdsList = data[0].data;
                 for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
                     if($scope.rdsList[i].status == 'available'){
@@ -38,9 +70,16 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                         $scope.availList.push($scope.rdsList[i]);
                     }
                 }
-                if ($scope.availList.length == 0) {
+                if($scope.instance == 'ec2'){
+                    $scope.ec2List = data[0].data;
+                }
+                if (data[0].data.length == 0 ) {
                     $scope.noRDS = true;
-                    $scope.noRDSMsg = htmlMessages.getMessage('no-rds');
+                    if($scope.instance == 'rds'){
+                        $scope.noInstanceMsg = htmlMessages.getMessage('no-rds');
+                    }else{
+                        $scope.noInstanceMsg = htmlMessages.getMessage('no-ec2');
+                    }
                 }
            }
            $scope.$apply();
@@ -96,6 +135,17 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         } );
     };
 
+    $scope.openRDSdetails = function (instance, region, db_class) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/rdsDetailsModal.html',
+            controller: 'rdsDetailsModalController',
+            size : 'lg'
+        });
+        modalInstance.instance = instance;
+        modalInstance.region = region;
+        modalInstance.db_class = db_class;
+    }
+
     $scope.toggleAll = function() { 
         if($scope.isAllSelected){
             $scope.isAllSelected = false;
@@ -103,6 +153,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
             $scope.isAllSelected = true;
         }
         angular.forEach($scope.availList, function(itm){ itm.selected = $scope.isAllSelected; });
+        angular.forEach($scope.ec2List, function(itm){ itm.selected = $scope.isAllSelected; });
     }
 
     $scope.optionToggled = function(){

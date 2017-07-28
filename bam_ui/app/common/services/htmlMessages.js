@@ -6,8 +6,10 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'last-update-none' : 'Last Update : None',
         'add-to-pgadmin' : 'Creating connections in pgAdmin4',
         'discover-rds' : 'Discovering available RDS instances',
+        'loading-regions': 'Loading Regions List',
         'pgc-not-active' : 'Unable to connect PGC.',
         'no-rds' : 'There are no RDS Instances found.',
+        'no-ec2' : 'There are no EC2 Instances found',
         'email-response' : 'Thanks for your valuable feedback, we will get back to you shortly.',
         'pgDevOps-rds-init-msg' : 'pgDevOps detected that you are in AWS environment.<br> Do you want us to discover your RDS instances if there are any?',
         'unable-to-connect' : 'Unable to connect SSH host due to session timeout.',
@@ -15,7 +17,8 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'pgc-ver-incompatible' : 'PGC version incompatible',
         'rds-not-available' : 'Instances is not available',
         'update-pgc-host-msg' : 'Updating PGC on host {{host}}',
-        'update-pgc-host-completed' : 'PGC update completed successfully'
+        'update-pgc-host-completed' : 'PGC update completed successfully',
+        'coming-soon': 'Coming Soon'
     };
 
     return {

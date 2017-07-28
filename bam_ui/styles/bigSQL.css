@@ -7448,3 +7448,21 @@ a.notification{
 .running-text{
     color:green;
 }
+
+.aws-page-tile-name{
+  color: #191515;
+  font-size: 1.1em;
+  text-align:center; 
+  white-space: pre-wrap;
+}
+
+.aws-page-head {
+  float:left; 
+  display: inline; 
+  padding-right: 10px;
+}
+
+.instance-list-body {
+  max-height: 300px;
+  overflow: auto;
+}

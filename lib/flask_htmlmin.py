@@ -1,4 +1,8 @@
-from htmlmin.main import minify
+try:
+    from htmlmin.main import minify
+except ImportError as e:
+    from htmlmin import minify
+    pass
 
 __author__ = 'Hamid FzM'
 
