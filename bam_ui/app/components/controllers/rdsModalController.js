@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', '$uibModal', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, htmlMessages, $uibModal) {
+angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, htmlMessages, $uibModal, $cookies) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
@@ -14,10 +14,14 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     regions.then(function(data){
         $scope.loadingSpinner = false;
         $scope.regions = data;
-        console.log($scope.regions);
+        var regionCookie = $cookies.get('lastSelRegion');
+        if(regionCookie){
+            $scope.region = regionCookie;
+        }
     });
 
     $scope.regionChange = function (region) {
+        $cookies.put('lastSelRegion', region);
         $scope.availList = [];
         $scope.loadingSpinner = true;
         $scope.noRDS = false;
