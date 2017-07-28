@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('awsIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$uibModal', '$timeout', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $uibModal, $timeout) {
+angular.module('bigSQL.components').controller('awsIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$uibModal', '$timeout', 'htmlMessages', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $uibModal, $timeout, htmlMessages) {
 
 	$scope.alerts = [];
 	$scope.discover =  function (settingName, disp_name, instance) {
@@ -26,6 +26,13 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
                     type: 'success'
                 });
     })
+
+    $scope.comingSoon = function (argument) {
+    	$scope.alerts.push({
+                    msg: htmlMessages.getMessage('coming-soon'),
+                    type: 'warning'
+                });
+    }
 
 	$scope.createNewRds = function(){
         var modalInstance = $uibModal.open({

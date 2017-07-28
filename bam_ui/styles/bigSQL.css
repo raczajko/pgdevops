@@ -7457,6 +7457,14 @@ a.notification{
 
 
 .aws-page-tile-name{
+  color: #191515;
+  font-size: 1.1em;
   text-align:center; 
   white-space: pre-wrap;
+}
+
+.aws-page-head {
+  float:left; 
+  display: inline; 
+  padding-right: 10px;
 }

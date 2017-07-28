@@ -55,10 +55,11 @@
                     </div>
                     <div class="col-md-10 col-sm-10 col-xs-10">
                         <div class="col-md-2 col-sm-2 col-xs-2"><strong>Instance</strong></div>
-                        <div class="col-md-1 col-sm-1 col-xs-1"><strong>User</strong></div>
-                        <div class="col-md-1 col-sm-1 col-xs-1"><strong>Port</strong></div>
-                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Database</strong></div>
-                        <div class="col-md-6 col-sm-6 col-xs-6"><strong>Address</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Status</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Type</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>DBName</strong></div>
+                        <div class="col-md-3 col-sm-3 col-xs-3"><strong>VPC</strong></div>
+                        <div class="col-md-1 col-sm-1 col-xs-1" style="margin-left: -15px;"><strong>MultiAZ</strong></div>
                     </div>
                     </div>
                 </div>
@@ -78,17 +79,20 @@
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
                                 {{rds.instance}}
                             </div>
-                            <div class="col-md-1 col-sm-1 col-xs-1" style="white-space: nowrap;">
-                                {{rds.master_user}}
+                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;" ng-class="{ 'greenText' :rds.status == 'available' , 'redText' : rds.status != 'available'}">
+                                {{rds.status}}
                             </div>
-                            <div class="col-md-1 col-sm-1 col-xs-1" style="white-space: nowrap;">
-                                {{rds.port}}
+                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
+                                {{rds.db_class}}
                             </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
                                 {{rds.dbname}}
                             </div>
-                            <div class="col-md-6 col-sm-6 col-xs-6" style="white-space: nowrap;">
-                                {{rds.address}}
+                            <div class="col-md-3 col-sm-3 col-xs-3" style="white-space: nowrap;">
+                                {{rds.vpc}}
+                            </div>
+                            <div class="col-md-1 col-sm-1 col-xs-1" ng-class="{ 'greenText' :rds.az_is_multi == 'True' , 'redText' : rds.az_is_multi != 'True'}">
+                                {{rds.az_is_multi}}
                             </div>
                         </div>
                         </div>
@@ -111,9 +115,9 @@
                     </div>
                     <div class="col-md-10 col-sm-10 col-xs-10">
                         <div class="col-md-5 col-sm-5 col-xs-5"><strong>Instance</strong></div>
-                        <div class="col-md-1 col-sm-1 col-xs-1"><strong>State</strong></div>
                         <div class="col-md-2 col-sm-2 col-xs-2"><strong>Type</strong></div>
-                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Key Name</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>State</strong></div>
+                        <div class="col-md-3 col-sm-3 col-xs-3"><strong>Key Name</strong></div>
                     </div>
                     </div>
                 </div>
@@ -132,13 +136,13 @@
                             <div class="col-md-5 col-sm-5 col-xs-5" style="white-space: nowrap;">
                                 {{ec.name}}
                             </div>
-                            <div class="col-md-1 col-sm-1 col-xs-1" style="white-space: nowrap;">
-                                {{ec.state_name}}
-                            </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
                                 {{ec.instance_type}}
                             </div>
-                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
+                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;" ng-class="{ 'greenText' :ec.state_name == 'running' , 'redText' : ec.state_name != 'running'}">
+                                {{ec.state_name}}
+                            </div>
+                            <div class="col-md-3 col-sm-3 col-xs-3" style="white-space: nowrap;" >
                                 {{ec.keyname}}
                             </div>
                         </div>

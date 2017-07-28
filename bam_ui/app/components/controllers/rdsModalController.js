@@ -22,6 +22,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         $scope.loadingSpinner = true;
         $scope.noRDS = false;
         $scope.ec2List = [];
+        $scope.checked = false;
         $scope.discoverMsg = 'Searching';
         if (region) {
             session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, region]);

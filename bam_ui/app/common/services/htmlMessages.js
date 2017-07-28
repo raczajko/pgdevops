@@ -17,7 +17,8 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'pgc-ver-incompatible' : 'PGC version incompatible',
         'rds-not-available' : 'Instances is not available',
         'update-pgc-host-msg' : 'Updating PGC on host {{host}}',
-        'update-pgc-host-completed' : 'PGC update completed successfully'
+        'update-pgc-host-completed' : 'PGC update completed successfully',
+        'coming-soon': 'Coming Soon'
     };
 
     return {
