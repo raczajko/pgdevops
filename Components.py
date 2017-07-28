@@ -436,7 +436,6 @@ class Components(ComponentAction):
         pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json  --region " + region + " --instance " + instance
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.process = process
-        print pgcCmd
         for line in iter(process.stdout.readline, ''):
             ln = (line).rstrip('\n')
             self.session.publish('com.bigsql.onRdsInfo', ln)
