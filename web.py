@@ -105,6 +105,7 @@ security = Security(application, user_datastore, register_form=RegisterForm)
 
 from flask_security.signals import user_registered
 
+is_ami = check_ami()
 
 def no_admin_users():
     if not len(User.query.filter(User.roles.any(name='Administrator'), User.active == True).all()) > 0:
@@ -118,7 +119,6 @@ def on_user_registerd(app, user, confirm_token):
         user_id=user.id,
         name="Servers")
     db.session.add(sg)
-    is_ami = check_ami()
     if is_ami.get('rc') != 2:
         session['initial-logged-in'] = True
     db.session.commit()
@@ -191,9 +191,10 @@ api.add_resource(pgcApi,
 
 class checkInitLogin(Resource):
     def get(self):
-        if session.get('initial-logged-in'):
+        if is_ami.get('rc') != 2 and session.get('initial-logged-in'):
             session['initial-logged-in'] = False
             return True
+        return False
 
 api.add_resource(checkInitLogin,
                  '/check_init_login')
