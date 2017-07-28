@@ -429,7 +429,7 @@ class Components(ComponentAction):
         returnValue(1)
 
     @inlineCallbacks
-    def rdsInfo(self, email, region, instance):
+    def rdsInfo(self, region, instance):
         """
         Method to get rds Instance Info
         """

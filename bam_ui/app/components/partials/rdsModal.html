@@ -76,8 +76,8 @@
                             </div>
                         </div>
                         <div class="col-md-10 col-sm-10 col-xs-10">
-                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
-                                {{rds.instance}}
+                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap; cursor: pointer;" ng-click="openRDSdetails(rds.instance, rds.region)">
+                                <a>{{rds.instance}}</a>
                             </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;" ng-class="{ 'greenText' :rds.status == 'available' , 'redText' : rds.status != 'available'}">
                                 {{rds.status}}
@@ -92,7 +92,7 @@
                                 {{rds.vpc}}
                             </div>
                             <div class="col-md-1 col-sm-1 col-xs-1" ng-class="{ 'greenText' :rds.az_is_multi == 'True' , 'redText' : rds.az_is_multi != 'True'}">
-                                {{rds.az_is_multi}}
+                                {{rds.az_is_multi == "True" ? "Yes":"No"}}
                             </div>
                         </div>
                         </div>

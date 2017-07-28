@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, htmlMessages) {
+angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', '$uibModal', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, htmlMessages, $uibModal) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
@@ -126,6 +126,16 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
             $uibModalInstance.dismiss('cancel');
         } );
     };
+
+    $scope.openRDSdetails = function (instance, region) {
+        var modalInstance = $uibModal.open({
+            templateUrl: '../app/components/partials/rdsDetailsModal.html',
+            controller: 'rdsDetailsModalController',
+            size : 'lg'
+        });
+        modalInstance.instance = instance;
+        modalInstance.region = region;
+    }
 
     $scope.toggleAll = function() { 
         if($scope.isAllSelected){

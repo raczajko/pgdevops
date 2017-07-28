@@ -63,7 +63,7 @@ angular.module('bigSQL.components').controller('connectionDetailsController', ['
         connStatus.then(function (data) {
             $scope.up_time = '';
             if (data.discovery_id=="RDS") {
-                session.call('com.bigsql.rdsInfo', [$scope.userInfo.email, $scope.currentPG.server_group, $scope.currentPG.server_name]);
+                session.call('com.bigsql.rdsInfo', [$scope.currentPG.server_group, $scope.currentPG.server_name]);
                 $scope.showRDSdetails = true;
             }else{
                 $scope.showRDSdetails = false;
