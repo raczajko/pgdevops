@@ -7434,7 +7434,7 @@ a.notification{
 }
 
 .bg_job_console {
- height: 50vh;
+ height:380px;
  overflow: auto;
  background-color: #fff;
  color:rgba(212, 27, 57, 0.81);
@@ -7447,10 +7447,4 @@ a.notification{
 }
 .running-text{
     color:green;
-}
-
-.overlayDiv {
-    position: absolute;
-    width: 100%;
-    z-index:99;
 }
