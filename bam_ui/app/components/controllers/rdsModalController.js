@@ -56,7 +56,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
             }else if (data[0].state=="error") {
                 $scope.loadingSpinner = false;
                 $scope.errMsg = data[0].msg;
-                $rootScope.$emit('disableLab', $scope.lab, 'off')
+                // $rootScope.$emit('disableLab', $scope.lab, 'off')
             }else if(data[0].state=="completed"){
                 $scope.loadingSpinner = false;
                 $scope.availList = [];
