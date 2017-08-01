@@ -15,7 +15,6 @@ angular.module('bigSQL.common').directive('splashScreen', function () {
 
             $scope.navToServerManager = function (argument) {
                 document.getElementById("rdsSplash").style.height = "0%";
-                $window.location = '#/hosts'
                 var modalInstance = $uibModal.open({
                     templateUrl: '../app/components/partials/rdsModal.html',
                     controller: 'rdsModalController',
@@ -26,6 +25,7 @@ angular.module('bigSQL.common').directive('splashScreen', function () {
                 });
                 modalInstance.lab = 'aws';
                 modalInstance.disp_name = 'Discover AWS Postgres RDS Instances';
+                modalInstance.instance = 'rds';
               }
 
             $scope.closeNav = function(argument){
