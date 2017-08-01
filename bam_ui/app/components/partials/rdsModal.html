@@ -3,7 +3,6 @@
         <i class="fa fa-lg fa-close cursor_pointer"></i>
     </div>
     <div>
-        <button ng-if="instance == 'rds'" class="btn btn-default pull-right" ng-if="rdsList && !noRDS" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections for pgDevOps/pgAdmin4</button>&nbsp;
         <h4 class="modal-title pull-left"> {{disp_name}} </h4>
     </div>
 </div>
@@ -19,7 +18,10 @@
             </select>
         </div>
         <div class="col-md-2">
-            <button class="btn btn-primary" ng-click="regionChange(region)">Search</button>
+            <button ng-disabled="showUseConn" ng-class="searched ? 'btn btn-default' : 'btn btn-primary'"  ng-click="regionChange(region)">Search</button>
+        </div>
+        <div class="col-md-4">
+            <button ng-if="instance == 'rds' && showUseConn && rdsList && !noRDS" ng-class="searched ? 'btn btn-primary' : 'btn btn-default'" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
         </div>
     </div>
     <div class="row">

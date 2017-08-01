@@ -10,6 +10,8 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     $scope.discoverMsg = htmlMessages.getMessage('loading-regions');
     var session;
     $scope.region = '';
+    $scope.searched = false;
+    $scope.showUseConn = false;
 
     var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
     regions.then(function(data){
@@ -22,6 +24,8 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     });
 
     $scope.regionChange = function (region) {
+        $scope.searched = true;
+        $scope.showUseConn = true;
         if (region==null) {
             region = '';
         }
@@ -65,11 +69,12 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                     if($scope.rdsList[i].status == 'available'){
                         if ($scope.rdsList[i].is_in_pglist == true) {
                             $scope.rdsList[i].selected = true;
-                            $scope.checked = true;
+                            // $scope.checked = true;
                         }
                         $scope.availList.push($scope.rdsList[i]);
                     }
                 }
+                $scope.newAvailList = $($scope.availList).filter(function(i,n){ return n.is_in_pglist != true });
                 if($scope.instance == 'ec2'){
                     $scope.ec2List = data[0].data;
                 }
@@ -158,7 +163,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
 
     $scope.optionToggled = function(){
         $scope.checked = false;
-        angular.forEach($scope.availList, function (item) {
+        angular.forEach($scope.newAvailList, function (item) {
             if(item.selected){
                 $scope.checked = true;
             }
