@@ -10,7 +10,6 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     $scope.discoverMsg = htmlMessages.getMessage('loading-regions');
     var session;
     $scope.region = '';
-    $scope.searched = false;
     $scope.showUseConn = false;
 
     var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
@@ -24,7 +23,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     });
 
     $scope.regionChange = function (region) {
-        $scope.searched = true;
+
         $scope.showUseConn = true;
         if (region==null) {
             region = '';
