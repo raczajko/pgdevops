@@ -39,8 +39,6 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
             }else{
                 $scope.hostActive.state = true;
                 $scope.topProcess = data[0];
-                $scope.topProcess.kb_read_sec = 0;
-                $scope.topProcess.kb_write_sec = 0;
             }   
 
         });
