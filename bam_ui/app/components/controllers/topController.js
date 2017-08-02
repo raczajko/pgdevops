@@ -44,8 +44,8 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
                 $scope.hostActive.state = true;
                 $scope.topProcess = data[0];
                 if (previous_kb_read) {
-                    $scope.kb_read_sec = (parseInt($scope.topProcess.kb_read) - parseInt(previous_kb_read))/1024;
-                    $scope.kb_write_sec = (parseInt($scope.topProcess.kb_write) - parseInt(previous_kb_write))/1024;
+                    $scope.kb_read_sec = (parseInt($scope.topProcess.kb_read) - parseInt(previous_kb_read))/2;
+                    $scope.kb_write_sec = (parseInt($scope.topProcess.kb_write) - parseInt(previous_kb_write))/2;
                 }
                 previous_kb_read = $scope.topProcess.kb_read;
                 previous_kb_write = $scope.topProcess.kb_write;
