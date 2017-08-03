@@ -102,18 +102,13 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
         $scope.showBackupBgProcess = false;
     });
 
-    //need to destroy all the subscriptions on a template before exiting it
-    $scope.$on('$destroy', function () {
-        for (var i = 0; i < ajaxSubscriptions.length; i++) {
-            $timeout.cancel(ajaxSubscriptions[i])
-        }
-    });
+
 
     $scope.isbgProcessStarted = false;
-    $scope.cmdAllowedTypes = ['backup','restore'];
+    $scope.cmdAllowedTypes = ['backup','restore', 'badger'];
     // $scope.cancelbgProcess = false;
     function getBGStatus(process_log_id){
-        var bgReportStatus = bamAjaxCall.getCmdData('bgprocess_status/'+ process_log_id);
+        var bgReportStatus = bamAjaxCall.getCmdData('bgprocess_status/'+ process_log_id,{'line_count':1000});
         bgReportStatus.then(function (ret_data){
             $scope.procId = ret_data.pid;
             $scope.error_msg = '';
@@ -174,19 +169,32 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
             modal: false,
             //scrollable:true
             initialized: function (e) {
-                $(".bg_job_console").height($('#dialog').height() - 220);
+                $(".bg_job_console").height($('#dialog').height() - 200);
             },
             opening: function (e) {
-                $(".bg_job_console").height($('#dialog').height() - 220);
+                $(".bg_job_console").height($('#dialog').height() - 200);
             },
             opened: function (e) {
-                $(".bg_job_console").height($('#dialog').height() - 220);
+                $(".bg_job_console").height($('#dialog').height() - 200);
             },
         });
 
         $scope.dialog.on('resize', function (e) {
-            $(".bg_job_console").height($('#dialog').height() - 220);
+            $(".bg_job_console").height($('#dialog').height() - 200);
         });
+    });
+
+    $scope.navigate = function (path){
+        window.location = path;
+        window.location.reload();
+    };
+
+    //need to destroy all the subscriptions on a template before exiting it
+    $scope.$on('$destroy', function () {
+        for (var i = 0; i < ajaxSubscriptions.length; i++) {
+            $timeout.cancel(ajaxSubscriptions[i])
+        }
+        $scope.dialog.close();
     });
 
 }]);
