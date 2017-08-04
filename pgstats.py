@@ -19,7 +19,7 @@ pgstats = Blueprint('pgstats', 'pgstats', url_prefix='/pgstats')
 
 
 class ConnectAPI(MethodView):
-
+    @login_required
     def post(self):
         json_dict = {}
         if not current_user:
@@ -134,7 +134,7 @@ pgstats.add_url_rule('/connect/', view_func=ConnectAPI.as_view('connect'))
 
 
 class ConnStatusAPI(MethodView):
-
+    @login_required
     def get(self):
         json_dict = {}
         if not current_user:
@@ -187,7 +187,7 @@ pgstats.add_url_rule('/conn_status/', view_func=ConnStatusAPI.as_view('conn_stat
 
 
 class StatsAPI(MethodView):
-
+    @login_required
     def get(self):
         json_dict = {}
         if not current_user:
@@ -237,6 +237,7 @@ pgstats.add_url_rule('/stats/', view_func=StatsAPI.as_view('stats'))
 
 
 class UptimeAPI(MethodView):
+    @login_required
     def get(self):
         json_dict = {}
         if not current_user:
@@ -271,7 +272,7 @@ pgstats.add_url_rule('/uptime/', view_func=UptimeAPI.as_view('uptime'))
 
 
 class ActivityAPI(MethodView):
-
+    @login_required
     def get(self):
         json_dict = {}
         if not current_user:
@@ -309,7 +310,7 @@ pgstats.add_url_rule('/activity/', view_func=ActivityAPI.as_view('activity'))
 
 
 class DbListAPI(MethodView):
-
+    @login_required
     def get(self):
         json_dict = {}
         if not current_user:
@@ -347,7 +348,7 @@ pgstats.add_url_rule('/db_list/', view_func=DbListAPI.as_view('db_list'))
 
 
 class ConfigAPI(MethodView):
-
+    @login_required
     def get(self):
         json_dict = {}
         if not current_user:
@@ -387,7 +388,7 @@ pgstats.add_url_rule('/config/', view_func=ConfigAPI.as_view('config'))
 
 
 class DBCloseAPI(MethodView):
-
+    @login_required
     def get(self):
         json_dict = {}
         if not current_user:
@@ -409,6 +410,7 @@ pgstats.add_url_rule('/disconnect/', view_func=DBCloseAPI.as_view('disconnect'))
 
 
 class CloseAllDBSessionsAPI(MethodView):
+    @login_required
     def get(self):
         json_dict = {}
         if not current_user:

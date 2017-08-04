@@ -86,14 +86,17 @@
         <background-job-detail-screen title="Backup Database" ng-if="showBackupBgProcess"></background-job-detail-screen>-->
 
     <div id="dialog" width="350" title="" data-auto-open="false" data-resizable="true" style="display: none">
-       <div data-role="header">
-            <span>{{ title }} Background Task ID #{{taskID}}</span>
+       <div data-role="header" style="padding-right: 20px;word-wrap: break-word;">
+           <b ng-if="cmdAllowedTypes.indexOf(process_type) != -1 && procCmd">Command: </b><span ng-if="cmdAllowedTypes.indexOf(process_type) != -1 && procCmd" style="color:#3c8dbc;">{{procCmd}} </span>
+           <span ng-if="!(cmdAllowedTypes.indexOf(process_type) != -1 && procCmd)">{{ title }} Background Task ID #{{taskID}}</span>
        </div>
       <div data-role="body">
-        <div class="box">
-        <div ng-if="cmdAllowedTypes.indexOf(process_type) != -1 && procCmd" class="bt-status"><b>Command: </b><br><span style="color:#3c8dbc;">{{procCmd}} </span></div>
-        <div ng-if="procStartTime" class="bt-start-time"><b>Start time: </b>{{procStartTime}} </div>
+        <div class="">
+            <!--<div ng-if="cmdAllowedTypes.indexOf(process_type) != -1 && procCmd" class="bt-status"><b>Command: </b><br><span style="color:#3c8dbc;">{{procCmd}} </span></div>-->
+            <div ng-if="procStartTime" class="bt-start-time pull-left"><b>Start time: </b>{{procStartTime}} </div>
+            <div ng-if="out_data" class="bt-start-time pull-right"><b>Log File: </b><a href="#/log/{{process_type}}?lid={{taskID}}" style="cursor: pointer;">{{taskID}}</a> </div>
         </div>
+          <br><hr>
         <div ng-if="out_data" class="bg_job_console" id="bg_console">
               <br>
               <ol>

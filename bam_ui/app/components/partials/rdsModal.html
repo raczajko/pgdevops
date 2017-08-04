@@ -3,7 +3,6 @@
         <i class="fa fa-lg fa-close cursor_pointer"></i>
     </div>
     <div>
-        <button ng-if="instance == 'rds'" class="btn btn-default pull-right" ng-if="rdsList && !noRDS" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections for pgDevOps/pgAdmin4</button>&nbsp;
         <h4 class="modal-title pull-left"> {{disp_name}} </h4>
     </div>
 </div>
@@ -12,14 +11,17 @@
 
 <div class="modal-body">
     <div class="row" ng-if="!loadingSpinner">
-        <div class="col-sm-3" style="margin-right: -100px; margin-top: 5px; margin-left:10px;"><strong>Select Region :</strong> </div>
-        <div class="col-sm-4">
+        <div class="col-sm-4 col-xs-4 col-md-3" style="margin-right: -100px; margin-top: 5px; margin-left:10px;"><strong>Select Region :</strong> </div>
+        <div class="col-sm-4 col-xs-4 col-md-4">
             <select class="form-control" ng-options="region.region as region.location for region in regions" ng-model="region">
                 <option value="">All Regions</option>
             </select>
         </div>
-        <div class="col-md-2">
-            <button class="btn btn-primary" ng-click="regionChange(region)">Search</button>
+        <div class="col-sm-4 col-xs-4 col-md-1">
+            <button class="btn btn-default"  ng-click="regionChange(region)">Search <i class="fa fa-search" aria-hidden="true"></i></button>
+        </div>
+        <div class="col-sm-4 col-xs-4 col-md-4">
+            <button style="margin-left: 20px;" ng-if="instance == 'rds' && showUseConn && rdsList && !noRDS" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
         </div>
     </div>
     <div class="row">

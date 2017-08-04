@@ -13,6 +13,10 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
     $scope.hostActive = {state: true};
     var previousTopData = "";
     $scope.loading = true;
+    $scope.kb_read_sec = 0;
+    $scope.kb_write_sec = 0;
+    var previous_kb_read;
+    var previous_kb_write;
 
     function getTopCmdData() {
 
@@ -39,8 +43,12 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
             }else{
                 $scope.hostActive.state = true;
                 $scope.topProcess = data[0];
-                $scope.topProcess.kb_read_sec = 0;
-                $scope.topProcess.kb_write_sec = 0;
+                if (previous_kb_read) {
+                    $scope.kb_read_sec = (parseInt($scope.topProcess.kb_read) - parseInt(previous_kb_read))/2;
+                    $scope.kb_write_sec = (parseInt($scope.topProcess.kb_write) - parseInt(previous_kb_write))/2;
+                }
+                previous_kb_read = $scope.topProcess.kb_read;
+                previous_kb_write = $scope.topProcess.kb_write;
             }   
 
         });

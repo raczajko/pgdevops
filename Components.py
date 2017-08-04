@@ -225,7 +225,7 @@ class ComponentAction(object):
         :param name: Name of the component to be upgraded.
         :return: It yields json string for the upgrade process.
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc --json upgrade "
+        pgcCmd = PGC_HOME + os.sep + "pgc --json upgrade -y "
         if name:
             pgcCmd = pgcCmd + name
         if host:

@@ -46,8 +46,8 @@
                     {{ topProcess.cpu_idle }} %idle &nbsp; <span ng-if="topProcess.iowait">{{ topProcess.iowait }} %wait &nbsp;</span>
                 </h5>
                 <h5>
-                    <strong>DISK </strong>: kB_read {{ topProcess.kb_read_sec }}/sec &nbsp; ,
-                    kB_written {{ topProcess.kb_write_sec }}/sec &nbsp;
+                    <strong>DISK </strong>: KB Read {{ kb_read_sec }}/sec &nbsp; ,
+                    KB Written {{ kb_write_sec }}/sec &nbsp;
                 </h5>
                 <h5 ng-if="topProcess.load_avg"><strong>Load Average </strong>: {{ topProcess.load_avg }} &nbsp;
                     <strong>Uptime </strong>: {{ topProcess.uptime }} &nbsp;

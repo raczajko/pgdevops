@@ -171,6 +171,7 @@ db_session = db.session
 
 
 class pgcApi(Resource):
+    @login_required
     def get(self, pgc_command):
         # if 'credentials' in session:
         rpassword = request.args.get('pwd')
@@ -190,6 +191,7 @@ api.add_resource(pgcApi,
 
 
 class checkInitLogin(Resource):
+    @login_required
     def get(self):
         if is_ami.get('rc') != 2 and session.get('initial-logged-in'):
             session['initial-logged-in'] = False
@@ -201,6 +203,7 @@ api.add_resource(checkInitLogin,
 
 
 class pgcApiCom(Resource):
+    @login_required
     def get(self, cmd, comp, pgc_host=None, password=None):
         data = pgc.get_data(cmd, comp,pgc_host=pgc_host)
         return data
@@ -210,6 +213,7 @@ api.add_resource(pgcApiCom, '/api/<string:cmd>/<string:comp>', '/api/<string:cmd
 
 
 class pgcApiRelnotes(Resource):
+    @login_required
     def get(self, cmd, comp=None, pgc_host=None):
         data = pgc.get_data(cmd, comp, relnotes='relnotes', pgc_host=pgc_host)
         return data
@@ -219,6 +223,7 @@ api.add_resource(pgcApiRelnotes, '/api/relnotes/<string:cmd>/<string:comp>', '/a
 
 
 class pgcApiListRelnotes(Resource):
+    @login_required
     def get(self, cmd, pgc_host=None):
         data = pgc.get_data(cmd, relnotes='relnotes', pgc_host=pgc_host)
         return data
@@ -228,6 +233,7 @@ api.add_resource(pgcApiListRelnotes, '/api/hostrelnotes/<string:cmd>/<string:pgc
 
 
 class pgcApiHosts(Resource):
+    @login_required
     def get(self):
         data = pgc.get_data('register HOST --list --json')
         return data
@@ -237,6 +243,7 @@ api.add_resource(pgcApiHosts, '/api/hosts')
 
 
 class pgcApiGroups(Resource):
+    @login_required
     def get(self):
         data = pgc.get_data('register GROUP --list --json')
         return data
@@ -246,6 +253,7 @@ api.add_resource(pgcApiGroups, '/api/groups')
 
 
 class pgcApiExtensions(Resource):
+    @login_required
     def get(self, comp, pgc_host=None):
         if pgc_host:
             data = pgc.get_data('list --extensions', comp, pgc_host=pgc_host)
@@ -258,6 +266,7 @@ api.add_resource(pgcApiExtensions, '/api/extensions/<string:comp>', '/api/extens
 
 
 class pgcUtilRelnotes(Resource):
+    @login_required
     def get(self, comp, version=None):
         json_dict = {}
         v=version
@@ -277,6 +286,7 @@ api.add_resource(pgcUtilRelnotes, '/api/utilRelnotes/<string:comp>','/api/utilRe
 
 
 class pgcApiHostCmd(Resource):
+    @login_required
     def get(self, pgc_cmd, host_name,pwd=None):
         password=pwd
         pwd_session_name = "{0}_pwd".format(host_name)
@@ -306,6 +316,7 @@ api.add_resource(pgcApiHostCmd,
 
 
 class pgdgCommand(Resource):
+    @login_required
     def get(self, repo_id, pgc_cmd, host=None, pwd=None):
         password = pwd
         pwd_session_name = "{0}_pwd".format(host)
@@ -333,6 +344,7 @@ api.add_resource(pgdgCommand,
                  '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>/<string:pwd>')
 
 class pgdgHostCommand(Resource):
+    @login_required
     def get(self, repo_id, pgc_cmd, comp, host=None):
         data = pgc.get_pgdg_data(repo_id, pgc_cmd, component=comp, pgc_host=host)
         return data
@@ -343,6 +355,7 @@ api.add_resource(pgdgHostCommand, '/api/pgdghost/<string:repo_id>/<string:pgc_cm
 
 
 class checkUser(Resource):
+    @login_required
     def get(self):
 
         host = request.args.get('hostname')
@@ -377,6 +390,7 @@ api.add_resource(checkUser, '/api/checkUser')
 
 
 class checkHostAccess(Resource):
+    @login_required
     def get(self):
         host = request.args.get('hostname')
         check_sudo_password = request.args.get('pwd')
@@ -407,6 +421,7 @@ api.add_resource(checkHostAccess, '/api/checkUserAccess')
 
 
 class initPGComp(Resource):
+    @login_required
     def get(self, host, comp, pgpasswd, username=None, password=None):
         from PgcRemote import PgcRemote
         json_dict = {}
@@ -437,6 +452,7 @@ api.add_resource(initPGComp, '/api/initpg/<string:host>/<string:comp>/<string:pg
 
 
 class bamUserInfo(Resource):
+    @login_required
     def get(self):
         userInfo = {}
         if current_user.is_authenticated:
@@ -452,6 +468,7 @@ api.add_resource(bamUserInfo, '/api/userinfo')
 
 
 class getRecentReports(Resource):
+    @login_required
     def get(self, report_type):
         recent_reports_path = os.path.join(reports_path, report_type)
         jsonDict = {}
@@ -476,6 +493,7 @@ class getRecentReports(Resource):
 api.add_resource(getRecentReports, '/api/getrecentreports/<string:report_type>')
 
 class CheckConn(Resource):
+    @login_required
     def post(self):
         result = {}
         args = request.json.get('params')
@@ -501,6 +519,7 @@ class CheckConn(Resource):
 api.add_resource(CheckConn, '/check_pg_conn')
 
 class GenerateReports(Resource):
+    @login_required
     def post(self):
         args = request.json['data']
         from ProfilerReport import ProfilerReport
@@ -526,6 +545,7 @@ api.add_resource(GenerateReports, '/api/generate_profiler_reports')
 
 
 class RemoveReports(Resource):
+    @login_required
     def post(self,report_type):
         from ProfilerReport import ProfilerReport
         try:
@@ -547,6 +567,7 @@ api.add_resource(RemoveReports, '/api/remove_reports/<string:report_type>')
 
 
 class GetEnvFile(Resource):
+    @login_required
     def get(self, comp):
         import util
         try:
@@ -565,7 +586,7 @@ api.add_resource(GetEnvFile, '/api/read/env/<string:comp>')
 
 
 class AddtoMetadata(Resource):
-
+    @login_required
     def post(self):
         def add_to_pginstances(pg_arg):
             server_id = None
@@ -726,6 +747,7 @@ api.add_resource(AddtoMetadata, '/api/add_to_metadata')
 
 
 class DeleteFromMetadata(Resource):
+    @login_required
     def post(self):
         args = request.json
         gid = args.get('gid')
@@ -756,7 +778,7 @@ class DeleteFromMetadata(Resource):
 api.add_resource(DeleteFromMetadata, '/api/delete_from_metadata')
 
 
-def get_process_status(process_log_dir):
+def get_process_status(process_log_dir,line_count=None):
     process_dict = {}
     status_file = os.path.join(process_log_dir, "status")
     if os.path.exists(status_file):
@@ -769,12 +791,21 @@ def get_process_status(process_log_dir):
             err_data_content = None
             out_data_content = None
             process_dict['out_data'] = ""
-            with open(err_file) as err_data:
-                err_data_content = err_data.readlines()
-                err_data_content = "".join(err_data_content).replace("\r", "\n").strip()
             with open(out_file) as out_data:
-                out_data_content = out_data.readlines()
+                if line_count is None:
+                    out_data_content = out_data.readlines()
+                else:
+                    out_data_content = out_data.readlines()[-line_count:]
+                    line_count = line_count - len(out_data_content)
                 out_data_content = "".join(out_data_content).replace("\r", "\n").strip()
+
+            with open(err_file) as err_data:
+                if line_count is None:
+                    err_data_content = err_data.readlines()
+                else:
+                    err_data_content = err_data.readlines()[-line_count:]
+                err_data_content = "".join(err_data_content).replace("\r", "\n").strip()
+
             if err_data_content and out_data_content:
                 process_dict['out_data'] = '\n'.join([out_data_content, err_data_content])
             elif err_data_content:
@@ -794,6 +825,7 @@ def get_current_time(format='%Y-%m-%d %H:%M:%S.%f %z'):
 
 
 class pgdgAction(Resource):
+    @login_required
     def post(self):
         result = {}
         args = request.json
@@ -835,6 +867,7 @@ api.add_resource(pgdgAction, '/api/pgdgAction')
 
 
 class GenerateBadgerReports(Resource):
+    @login_required
     def post(self):
         result = {}
         args = request.json
@@ -902,6 +935,7 @@ def validate_backup_fields(args):
 
 
 class BackupRestoreDatabase(Resource):
+    @login_required
     def post(self):
         result = {}
         args = request.json
@@ -953,6 +987,7 @@ class BackupRestoreDatabase(Resource):
 api.add_resource(BackupRestoreDatabase, '/api/backup_restore_db')
 
 class ComparePGVersions(Resource):
+    @login_required
     def get(self, host):
         result={}
         local_pg_ver = pgc.get_data('info')[0]['version']
@@ -1032,12 +1067,25 @@ api.add_resource(GetBgProcessList, '/api/bgprocess_list', '/api/bgprocess_list/<
 
 
 class GetBgProcessStatus(Resource):
+    @login_required
     def get(self,process_log_id):
-        result={}
+        result = {}
+        args = request.args
+        line_count = None
+        if 'line_count' in args:
+            try:
+                line_count = int(args['line_count'])
+            except Exception as ex:
+                result['exit_code'] = 3
+                result['process_failed'] = True
+                result['error_msg'] = str(ex)
+                return result
+
         proc_log_dir = os.path.join(config.SESSION_DB_PATH,
                                     "process_logs",
                                     process_log_id)
-        proc_status = get_process_status(proc_log_dir)
+        proc_status = get_process_status(proc_log_dir,line_count=line_count)
+        proc_status['log_dir'] = proc_log_dir
         p = Process.query.filter_by(
             pid=process_log_id, user_id=current_user.id
         ).first()
@@ -1093,6 +1141,7 @@ class GetBgProcessStatus(Resource):
 api.add_resource(GetBgProcessStatus, '/api/bgprocess_status/<string:process_log_id>')
 
 @application.route('/api/dirlist', methods = ['POST'])
+@login_required
 def dirlist():
     """
         Method to get the list of directories available in remote server or local in specific directory.
@@ -1108,6 +1157,7 @@ def dirlist():
     return json.dumps(result)
 
 @application.route('/list')
+@login_required
 def list():
     """
     Method to get the list of components available.
@@ -1120,6 +1170,7 @@ def list():
 
 
 @application.route('/details/<component>')
+@login_required
 def details(component):
     """
     Method to get the list of components available.
@@ -1132,6 +1183,7 @@ def details(component):
 
 
 @application.route('/status')
+@login_required
 def status():
     """
     Method to get the list of components available.

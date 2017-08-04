@@ -10,6 +10,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     $scope.discoverMsg = htmlMessages.getMessage('loading-regions');
     var session;
     $scope.region = '';
+    $scope.showUseConn = false;
 
     var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
     regions.then(function(data){
@@ -22,6 +23,8 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     });
 
     $scope.regionChange = function (region) {
+
+        $scope.showUseConn = true;
         if (region==null) {
             region = '';
         }
@@ -56,7 +59,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
             }else if (data[0].state=="error") {
                 $scope.loadingSpinner = false;
                 $scope.errMsg = data[0].msg;
-                $rootScope.$emit('disableLab', $scope.lab, 'off')
+                // $rootScope.$emit('disableLab', $scope.lab, 'off')
             }else if(data[0].state=="completed"){
                 $scope.loadingSpinner = false;
                 $scope.availList = [];
@@ -65,11 +68,12 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                     if($scope.rdsList[i].status == 'available'){
                         if ($scope.rdsList[i].is_in_pglist == true) {
                             $scope.rdsList[i].selected = true;
-                            $scope.checked = true;
+                            // $scope.checked = true;
                         }
                         $scope.availList.push($scope.rdsList[i]);
                     }
                 }
+                $scope.newAvailList = $($scope.availList).filter(function(i,n){ return n.is_in_pglist != true });
                 if($scope.instance == 'ec2'){
                     $scope.ec2List = data[0].data;
                 }
@@ -158,7 +162,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
 
     $scope.optionToggled = function(){
         $scope.checked = false;
-        angular.forEach($scope.availList, function (item) {
+        angular.forEach($scope.newAvailList, function (item) {
             if(item.selected){
                 $scope.checked = true;
             }
