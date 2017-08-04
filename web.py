@@ -169,6 +169,16 @@ application.register_blueprint(pgstats, url_prefix='/pgstats')
 
 db_session = db.session
 
+class pgcRestApi(Resource):
+    @login_required
+    def get(self, arg):
+        data = pgc.get_data(arg)
+        return data
+
+
+api.add_resource(pgcRestApi,
+                 '/api/pgc/<string:arg>')
+
 
 class pgcApi(Resource):
     @login_required

@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', 'htmlMessages', '$timeout', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce, htmlMessages, $timeout) {
+angular.module('bigSQL.components').controller('ComponentsSettingsController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'pgcRestApiCall', '$cookies', '$sce', 'htmlMessages', '$timeout', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, pgcRestApiCall, $cookies, $sce, htmlMessages, $timeout) {
     $scope.alerts = [];
 
     var session;
@@ -34,7 +34,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     };
 
     $scope.lastUpdateNone = htmlMessages.getMessage('last-update-none');
-    // var infoData = bamAjaxCall.getCmdData('info')
+    // var infoData = pgcRestApiCall.getCmdData('info')
     // infoData.then(function(data) {
     //     $scope.pgcInfo = data[0];
     //     if (data[0].last_update_utc) {
@@ -135,15 +135,15 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         argument = typeof argument !== 'undefined' ? argument : "";
         $scope.currentHost = argument;
         if (argument=="" || argument == 'localhost'){
-            var infoData = bamAjaxCall.getCmdData('info');
-            var checkpgdgSupport = bamAjaxCall.getCmdData('info');
-            // var getLablist = bamAjaxCall.getCmdData('lablist');
+            var infoData = pgcRestApiCall.getCmdData('info');
+            var checkpgdgSupport = pgcRestApiCall.getCmdData('info');
+            // var getLablist = pgcRestApiCall.getCmdData('lablist');
         } else{
-            var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
-            var checkpgdgSupport = bamAjaxCall.getCmdData('hostcmd/info/'+argument);
-            // var getLablist = bamAjaxCall.getCmdData('hostcmd/lablist/'+argument);
+            var infoData = pgcRestApiCall.getCmdData('info --host "' + argument + '"');
+            var checkpgdgSupport = pgcRestApiCall.getCmdData('info --host "'+  argument + '"');
+            // var getLablist = pgcRestApiCall.getCmdData('hostcmd/lablist/'+argument);
         }
-        var getLablist = bamAjaxCall.getCmdData('lablist');
+        var getLablist = pgcRestApiCall.getCmdData('lablist');
 
         infoData.then(function(data) {
             if(data == "error"){
@@ -195,7 +195,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     }
 
     $scope.changeSetting = function (settingName, value, disp_name) {
-        var getLablist = bamAjaxCall.getCmdData('lablist');
+        var getLablist = pgcRestApiCall.getCmdData('lablist');
         if (settingName == 'aws') {
             $rootScope.$emit('hideAwsNav', value);
         }else if(settingName == 'dumprest'){
