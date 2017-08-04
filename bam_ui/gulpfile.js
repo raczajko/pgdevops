@@ -17,7 +17,20 @@ gulp.task('app-scripts', function () {
 });
 
 gulp.task('vendor-scripts', function () {
-    return gulp.src(['bower_components/angular/angular.js', 'bower_components/angular/angular-cookies.min.js', 'bower_components/jquery/dist/jquery.min.js', 'bower_components/angular-animate/angular-animate.min.js', 'bower_components/angular-ui-router/release/angular-ui-router.min.js', 'bower_components/angular-filter/dist/angular-filter.min.js', 'bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js', 'bower_components/autobahnjs/autobahn.min.js', 'ext-libs/d3.min.js', 'ext-libs/nv.d3.min.js', 'ext-libs/angular-nvd3.min.js', 'ext-libs/ui-grid.min.js' , 'bigsql-layout-helpers.js'])
+    return gulp.src(['bower_components/angular/angular.js',
+                    'bower_components/angular/angular-cookies.min.js',
+                    'bower_components/jquery/dist/jquery.min.js',
+                    'bower_components/angular-animate/angular-animate.min.js',
+                    'bower_components/angular-ui-router/release/angular-ui-router.min.js',
+                    'bower_components/angular-filter/dist/angular-filter.min.js',
+                    'bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js',
+                    'bower_components/autobahnjs/autobahn.min.js',
+                    'ext-libs/d3.min.js',
+                    'ext-libs/nv.d3.min.js',
+                    'ext-libs/angular-nvd3.min.js',
+                    'ext-libs/ui-grid.min.js' ,
+                    'bower_components/resize-dialog/dist/js/gijgo.min.js',
+                    'bigsql-layout-helpers.js'])
         .pipe(concat('vendor-scripts.js'))
         .pipe(rename('vendor-scripts.min.js'))
         .pipe(uglify({
@@ -38,10 +51,11 @@ gulp.task('app-scripts-min', function () {
 
 gulp.task('vendor-css', function () {
     return gulp.src(['bower_components/bootstrap/dist/css/bootstrap.min.css',
-    'bower_components/font-awesome/css/font-awesome.min.css',
-    'styles/_all-skins.min.css',
-    'ext-libs/nv.d3.min.css',
-    'ext-libs/ui-grid.min.css',
+        'bower_components/font-awesome/css/font-awesome.min.css',
+        'styles/_all-skins.min.css',
+        'ext-libs/nv.d3.min.css',
+        'ext-libs/ui-grid.min.css',
+        'bower_components/resize-dialog/dist/css/gijgo.min.css',
         'bower_components/Ionicons/css/ionicons.min.css'])
         .pipe(concat('vendor-css.css'))
         .pipe(gulp.dest('../web'));
