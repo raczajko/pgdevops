@@ -1,6 +1,6 @@
 angular.module('bigSQL.menus').component('topMenu', {
     bindings: {},
-    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, pgcRestApiCall, $cookies) {
+    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, pgcRestApiCall, bamAjaxCall, $cookies) {
 
         /**Below function is for displaying update badger on every page.
          **/
@@ -86,7 +86,7 @@ angular.module('bigSQL.menus').component('topMenu', {
             $scope.pgcInfo = data[0];
         });
 
-        var userInfoData = pgcRestApiCall.getCmdData('userinfo');
+        var userInfoData = bamAjaxCall.getCmdData('userinfo');
         userInfoData.then(function(data) {
             $scope.userInfo = data;
         });
