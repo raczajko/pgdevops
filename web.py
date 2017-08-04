@@ -778,7 +778,7 @@ class DeleteFromMetadata(Resource):
 api.add_resource(DeleteFromMetadata, '/api/delete_from_metadata')
 
 
-def get_process_status(process_log_dir):
+def get_process_status(process_log_dir,line_count=None):
     process_dict = {}
     status_file = os.path.join(process_log_dir, "status")
     if os.path.exists(status_file):
@@ -791,12 +791,21 @@ def get_process_status(process_log_dir):
             err_data_content = None
             out_data_content = None
             process_dict['out_data'] = ""
-            with open(err_file) as err_data:
-                err_data_content = err_data.readlines()
-                err_data_content = "".join(err_data_content).replace("\r", "\n").strip()
             with open(out_file) as out_data:
-                out_data_content = out_data.readlines()
+                if line_count is None:
+                    out_data_content = out_data.readlines()
+                else:
+                    out_data_content = out_data.readlines()[-line_count:]
+                    line_count = line_count - len(out_data_content)
                 out_data_content = "".join(out_data_content).replace("\r", "\n").strip()
+
+            with open(err_file) as err_data:
+                if line_count is None:
+                    err_data_content = err_data.readlines()
+                else:
+                    err_data_content = err_data.readlines()[-line_count:]
+                err_data_content = "".join(err_data_content).replace("\r", "\n").strip()
+
             if err_data_content and out_data_content:
                 process_dict['out_data'] = '\n'.join([out_data_content, err_data_content])
             elif err_data_content:
@@ -1060,11 +1069,23 @@ api.add_resource(GetBgProcessList, '/api/bgprocess_list', '/api/bgprocess_list/<
 class GetBgProcessStatus(Resource):
     @login_required
     def get(self,process_log_id):
-        result={}
+        result = {}
+        args = request.args
+        line_count = None
+        if 'line_count' in args:
+            try:
+                line_count = int(args['line_count'])
+            except Exception as ex:
+                result['exit_code'] = 3
+                result['process_failed'] = True
+                result['error_msg'] = str(ex)
+                return result
+
         proc_log_dir = os.path.join(config.SESSION_DB_PATH,
                                     "process_logs",
                                     process_log_id)
-        proc_status = get_process_status(proc_log_dir)
+        proc_status = get_process_status(proc_log_dir,line_count=line_count)
+        proc_status['log_dir'] = proc_log_dir
         p = Process.query.filter_by(
             pid=process_log_id, user_id=current_user.id
         ).first()

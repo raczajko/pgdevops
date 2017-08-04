@@ -7434,10 +7434,10 @@ a.notification{
 }
 
 .bg_job_console {
- height: 50vh;
+ height:400px;
  overflow: auto;
  background-color: #fff;
- color:rgba(212, 27, 57, 0.81);
+ //color:rgba(212, 27, 57, 0.81);
 }
 .success-text{
     color:green;
@@ -7448,13 +7448,6 @@ a.notification{
 .running-text{
     color:green;
 }
-
-.overlayDiv {
-    position: absolute;
-    width: 100%;
-    z-index:99;
-}
-
 
 .aws-page-tile-name{
   color: #191515;
@@ -7472,4 +7465,9 @@ a.notification{
 .instance-list-body {
   max-height: 300px;
   overflow: auto;
+}
+.modal-header .close{
+    position: absolute;
+    top: 10px;
+    right: 10px;
 }
