@@ -169,7 +169,7 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
             maxWidth: 1200,
             minHeight: 350,
             maxHeight: 750,
-            height: 600,
+            height: 500,
             width:650,
             modal: false,
             //scrollable:true
