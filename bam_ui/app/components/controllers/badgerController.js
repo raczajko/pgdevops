@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('badgerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', '$cookies', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, $cookies) {
+angular.module('bigSQL.components').controller('badgerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $cookies) {
 
     $scope.alerts = [];
     $scope.checkedFirst = false;
@@ -41,7 +41,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $rootScope.$on('hidebgProcess', function (argument) {
         $scope.showBgProcess = false;
     })
-    var infoCmd = bamAjaxCall.getCmdData('info');
+    var infoCmd = pgcRestApiCall.getCmdData('info');
     infoCmd.then(function (data) {
         $scope.maxNumJobs = [];
         for (var i = 1 ; i <= data[0].cores; i++) {
@@ -58,7 +58,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         }
     });
 
-    var serverStatus = bamAjaxCall.getCmdData('status');
+    var serverStatus = pgcRestApiCall.getCmdData('status');
         serverStatus.then(function (data) {
             var noPostgresRunning = false;
             for (var i = data.length - 1; i >= 0; i--) {
@@ -74,7 +74,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                     pgComp: true
                 });
             }else{
-                var compStatus = bamAjaxCall.getCmdData('status/pgbadger');
+                var compStatus = pgcRestApiCall.getCmdData('status pgbadger');
                 compStatus.then(function (data) {
                     if (data.state == "Installed") {
                         $scope.badgerInstalled = true;
