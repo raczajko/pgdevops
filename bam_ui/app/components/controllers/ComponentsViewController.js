@@ -481,24 +481,22 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         $scope.showRepoList = false;
         $scope.cmd_str = 'repolist';
         if ($scope.currentHost == 'localhost' || $scope.currentHost == '') {
-        if ($scope.host_pwd == ""){
-            var pgdgComps = bamAjaxCall.getCmdData('repolist')
+            if ($scope.host_pwd == ""){
+                var pgdgComps = pgcRestApiCall.getCmdData('repolist')
             } else {
-            var params = {};
-            params.pwd = $scope.host_pwd;
-            var pgdgComps = bamAjaxCall.getCmdData('repolist', params)
+                var params = {};
+                params.pwd = $scope.host_pwd;
+                var pgdgComps = pgcRestApiCall.getCmdData('repolist', params)
             }
         }else{
-
-
-        if ($scope.host_pwd == ""){
-        var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost);
-        } else{
-        var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost + "/" + $scope.host_pwd);
-        }
-        var data = {
-             hostname:$scope.currentHost,
-             cmd:"repolist"
+            if ($scope.host_pwd == ""){
+                var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost);
+            } else{
+                var pgdgComps = bamAjaxCall.getCmdData('hostcmd/repolist/'+$scope.currentHost + "/" + $scope.host_pwd);
+            }
+            var data = {
+                 hostname:$scope.currentHost,
+                 cmd:"repolist"
                          };
             //var pgdgComps = bamAjaxCall.getCmdData('pgdglist',data)
         }

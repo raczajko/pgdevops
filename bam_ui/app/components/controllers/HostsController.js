@@ -702,7 +702,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     });
 
     function getGroupsList(checkStorage) {
-        $http.get($window.location.origin + '/api/groups?q='+ Math.floor(Date.now() / 1000).toString())
+        $http.get($window.location.origin + '/api/pgc/register GROUP --list ?q='+ Math.floor(Date.now() / 1000).toString())
             .success(function (data) {
                 if (data[0].state == 'error') {
                     $scope.loading = false;
