@@ -186,7 +186,7 @@
                                 </div> 
                                 <span ng-if="retry" style="text-align: center;"> <h4>Cannot connect to PGC. Retrying connection ... </h4> </span>
 
-                                <div class="col-md-5 col-sm-12 col-xs-12" ng-if="host.comps">
+                                <div class="col-md-5 col-sm-12 col-xs-12" ng-if="host.comps && !hostStatus">
                                     <div ng-if="host.showMsg" class="jumbotron"
                                          style="background-color: #fff; margin-top: 15px; text-align: center;">
                                         <h4> No PostgreSQL or server components installed.<br \> Visit the <a ng-click="UpdateManager($index)" href="">Package Manager</a> to install components.</h4>
