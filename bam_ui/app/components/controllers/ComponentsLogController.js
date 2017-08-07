@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$sce', '$timeout', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $sce, $timeout) {
+angular.module('bigSQL.components').controller('ComponentsLogController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', '$sce', '$timeout', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, pgcRestApiCall, $cookies, $sce, $timeout) {
 
     var subscriptions = [];
     var count = 1;
@@ -28,7 +28,7 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         });
     });
 
-    var infoData = bamAjaxCall.getCmdData('info')
+    var infoData = pgcRestApiCall.getCmdData('info')
     infoData.then(function(data) {
         $scope.pgcInfo = data[0];
     });

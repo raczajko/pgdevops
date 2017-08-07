@@ -801,7 +801,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     })
 
     $rootScope.$on('comparePGVersion', function(argument, host) {
-        var comparePGVersion = bamAjaxCall.getCmdData('compatre_pg_versions/' + host);
+        var comparePGVersion = bamAjaxCall.getCmdData('compare_pg_versions/' + host);
         comparePGVersion.then(function (argument) {
             if (argument.result_code==1 || argument.result_code==2) {
                 var modalInstance = $uibModal.open({

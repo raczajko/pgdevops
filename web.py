@@ -1013,7 +1013,7 @@ class ComparePGVersions(Resource):
         result['result_code'] = result_code
         return result
 
-api.add_resource(ComparePGVersions, '/api/compatre_pg_versions/<string:host>')
+api.add_resource(ComparePGVersions, '/api/compare_pg_versions/<string:host>')
 
 class GetBgProcessList(Resource):
     @login_required

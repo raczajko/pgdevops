@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('createNewRdsController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'bamAjaxCall', '$uibModalInstance', '$uibModal', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, bamAjaxCall, $uibModalInstance, $uibModal) {
+angular.module('bigSQL.components').controller('createNewRdsController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'pgcRestApiCall', '$uibModalInstance', '$uibModal', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, pgcRestApiCall, $uibModalInstance, $uibModal) {
 
     var session;
     $scope.showErrMsg = false;
@@ -39,19 +39,12 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     };
 
 
-    var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
+    var regions = pgcRestApiCall.getCmdData('metalist aws-regions');
     regions.then(function(data){
         $scope.loading = false;
         $scope.regions = data;
         $scope.data.region = $scope.regions[0].region;
     });
-
-    // var types = bamAjaxCall.getCmdData('metalist/aws-rds')
-    // types.then(function(data){
-    //     $scope.types = data;
-    //     $scope.data.db_class = $scope.types[0].instance;
-    // });
-
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
