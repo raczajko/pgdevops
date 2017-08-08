@@ -11,7 +11,7 @@
         <a ui-sref="components.view" ng-click="clearCookies()" ng-if="alert.pgComp">Click here to install</a>
     </uib-alert>
      <div class="row">
-    <div class="col-md-6 col-sm-6 col-xs-12">
+    <div class="col-lg-6 col-md-12 col-sm-12 col-xs-12">
         <div class="box">
             <div class="box-header with-border">
                 <div class="col-md-12">
@@ -82,8 +82,8 @@
                         <input type="text" ng-model="pgTitle"  class="form-control" placeholder="Badger Title">
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-3 control-label" style="margin-top: 5px;"> Number of jobs :</label>
-                        <div class="col-sm-2" uib-tooltip="Maximum number of jobs are equivalent to available cores.">
+                        <label class="col-sm-3 col-md-3 col-xs-6 control-label" style="margin-top: 5px;"> Number of jobs :</label>
+                        <div class="col-sm-2 col-md-2 col-xs-2" uib-tooltip="Maximum number of jobs are equivalent to available cores.">
                             <select ng-model="pgJobs" class="form-control" ng-options="n for n in maxNumJobs">
                             </select>
                         </div>
@@ -102,7 +102,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-6 col-sm-6 col-xs-12">
+    <div class="col-lg-6 col-md-12 col-sm-12 col-xs-12">
         <div class="box" ng-if="showReports">
             <div class="box-header with-border">
                 <span style="margin-left: 13px;"><label>Reports</label> &nbsp; &nbsp;<input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected">&nbsp;Select all &nbsp;
