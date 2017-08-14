@@ -200,6 +200,8 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             $rootScope.$emit('hideAwsNav', value);
         }else if(settingName == 'dumprest'){
             $rootScope.$emit('hideBackupRestoreNav', value);
+        }else if(settingName == 'azure'){
+            $rootScope.$emit('hideAzureNav', value);
         }
         if (value) {
             session.call('com.bigsql.setLabSetting', [settingName, value]);            

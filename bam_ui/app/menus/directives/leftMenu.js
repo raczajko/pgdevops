@@ -2,6 +2,7 @@ angular.module('bigSQL.menus').component('leftMenu', {
     bindings: {},
     controller: function ($scope, PubSubService, $rootScope, bamAjaxCall) {
     	$scope.hideAwsNav = false;
+    	$scope.hideAzureNav = false;
     	$scope.hideBackupRestore = false;
     	var getLablist = bamAjaxCall.getCmdData('lablist');
     	getLablist.then(function (argument) {
@@ -10,6 +11,8 @@ angular.module('bigSQL.menus').component('leftMenu', {
                     $scope.hideAwsNav = true;
                 }else if (argument[i].lab == 'dumprest' && argument[i].enabled == 'on') {
                     $scope.hideBackupRestore = true;
+                }else if (argument[i].lab == 'azure' && argument[i].enabled == 'on') {
+                    $scope.hideAzureNav = true;
                 }
             }
     	});
@@ -19,6 +22,14 @@ angular.module('bigSQL.menus').component('leftMenu', {
     			$scope.hideAwsNav = true;
     		}else{
     			$scope.hideAwsNav = false;
+    		}
+    	});
+
+    	$rootScope.$on('hideAzureNav', function (event, value) {
+    		if (value == 'on') {
+    			$scope.hideAzureNav = true;
+    		}else{
+    			$scope.hideAzureNav = false;
     		}
     	});
 

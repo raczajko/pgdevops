@@ -122,7 +122,10 @@
                                     <strong ng-if="lab.enabled=='on' && lab.lab=='aws'">
                                         <a ui-sref="components.awsIntegration">{{lab.disp_name}}</a>
                                     </strong>
-                                    <strong ng-if="(lab.lab!='dumprest' && lab.lab!='multi-host-mgr' &&  lab.lab!='aws') || lab.enabled!='on'">{{lab.disp_name}}</strong>
+                                    <strong ng-if="lab.enabled=='on' && lab.lab=='azure'">
+                                        <a ui-sref="components.azureIntegration">{{lab.disp_name}}</a>
+                                    </strong>
+                                    <strong ng-if="(lab.lab!='dumprest' && lab.lab!='multi-host-mgr' &&  lab.lab!='aws' && lab.lab!='azure') || lab.enabled!='on'">{{lab.disp_name}}</strong>
                                 </div>
                                 <div class="labDescription">{{lab.credit_to}}</div>
                             </div>
