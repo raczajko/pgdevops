@@ -132,6 +132,15 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
                 templateUrl: '../app/components/partials/awsIntegration.html',
             }
         }
+    })
+    .state('components.credentials', {
+        url: '/credentials',
+        views: {
+            "sub": {
+                controller: 'credentialManagerController',
+                templateUrl: '../app/components/partials/credentialManager.html',
+            }
+        }
     });
 }).controller('ComponentsController', ['$scope', function ($scope) {
 

@@ -18,7 +18,9 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'rds-not-available' : 'Instances is not available',
         'update-pgc-host-msg' : 'Updating PGC on host {{host}}',
         'update-pgc-host-completed' : 'PGC update completed successfully',
-        'coming-soon': 'Coming Soon'
+        'coming-soon': 'Coming Soon',
+        'no-credentials': 'You haven\'t added any credentials.',
+        'select-one-cred' : 'Please select atleast one credentials.'
     };
 
     return {

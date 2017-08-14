@@ -166,6 +166,9 @@ def on_user_logged_in(sender, user):
 from pgstats import pgstats
 application.register_blueprint(pgstats, url_prefix='/pgstats')
 
+from credentials import credentials
+application.register_blueprint(credentials, url_prefix='/api/pgc/credentials')
+
 
 db_session = db.session
 
@@ -359,10 +362,25 @@ class checkUser(Resource):
     def get(self):
 
         host = request.args.get('hostname')
-        username = request.args.get('username')
-        password = request.args.get('password')
-        ssh_key = request.args.get('ssh_key')
-        sudo_pwd = request.args.get('sudo_pwd', None)
+        cred_name = request.args.get('cred_name')
+        import util
+        cred_info = util.get_credentials_by_name(cred_name)
+        enc_secret = util.get_value("GLOBAL", "SECRET", "")
+        enc_key = "{0}{1}".format(enc_secret, cred_info.get("cred_uuid"))
+        username = cred_info.get("ssh_user")
+        password= ""
+        if cred_info.get("ssh_passwd"):
+            password = decrypt(cred_info.get("ssh_passwd"),enc_key)
+        ssh_key = ""
+        if cred_info.get("ssh_key"):
+            ssh_key = decrypt(cred_info.get("ssh_key"), enc_key)
+        sudo_pwd = ""
+        if cred_info.get("ssh_sudo_pwd"):
+            sudo_pwd = decrypt(cred_info.get("ssh_sudo_pwd"), enc_key)
+        # username = request.args.get('username')
+        # password = request.args.get('password')
+        # ssh_key = request.args.get('ssh_key')
+        # sudo_pwd = request.args.get('sudo_pwd', None)
         from PgcRemote import PgcRemote
         json_dict = {}
         try:
@@ -395,10 +413,20 @@ class checkHostAccess(Resource):
         host = request.args.get('hostname')
         check_sudo_password = request.args.get('pwd')
         pgc_host_info = util.get_pgc_host(host)
-        pgc_host = pgc_host_info[3]
-        pgc_user = pgc_host_info[1]
-        pgc_passwd = pgc_host_info[2]
-        pgc_ssh_key = pgc_host_info[5]
+
+        pgc_host = pgc_host_info.get('host')
+        ssh_cred_id = pgc_host_info.get('ssh_cred_id')
+        cred_info = util.get_credentials_by_uuid(ssh_cred_id)
+        enc_secret = util.get_value("GLOBAL", "SECRET", "")
+        enc_key = "{0}{1}".format(enc_secret, cred_info.get("cred_uuid"))
+        pgc_user = cred_info.get("ssh_user")
+        pgc_passwd= ""
+        if cred_info.get("ssh_passwd"):
+            pgc_passwd = decrypt(cred_info.get("ssh_passwd"),enc_key)
+        pgc_ssh_key = ""
+        if cred_info.get("ssh_key"):
+            pgc_ssh_key = decrypt(cred_info.get("ssh_key"), enc_key)
+        
 
         from PgcRemote import PgcRemote
         json_dict = {}
@@ -428,13 +456,23 @@ class initPGComp(Resource):
         if password == None or username == None:
             import util
             pgc_host_info = util.get_pgc_host(host)
-            ssh_host = pgc_host_info[3]
-            ssh_host_name = pgc_host_info[4]
-            ssh_username = pgc_host_info[1]
-            ssh_password = pgc_host_info[2]
-            ssh_key = pgc_host_info[5]
-            sudo_pwd = pgc_host_info[7]
-            is_sudo = pgc_host_info[6]
+            ssh_host = pgc_host_info.get('host')
+            ssh_host_name = pgc_host_info.get('host_name')
+            ssh_cred_id = pgc_host_info.get('ssh_cred_id')
+            cred_info = util.get_credentials_by_uuid(ssh_cred_id)
+            enc_secret = util.get_value("GLOBAL", "SECRET", "")
+            enc_key = "{0}{1}".format(enc_secret, cred_info.get("cred_uuid"))
+            ssh_username = cred_info.get("ssh_user")
+            password= ""
+            if cred_info.get("ssh_passwd"):
+                ssh_password = decrypt(cred_info.get("ssh_passwd"),enc_key)
+            ssh_key = ""
+            if cred_info.get("ssh_key"):
+                ssh_key = decrypt(cred_info.get("ssh_key"), enc_key)
+            sudo_pwd = ""
+            if cred_info.get("ssh_sudo_pwd"):
+                sudo_pwd = decrypt(cred_info.get("ssh_sudo_pwd"), enc_key)
+            is_sudo = pgc_host_info.get('is_sudo')
         try:
             remote = PgcRemote(ssh_host, ssh_username, password=ssh_password, ssh_key=ssh_key)
             remote.connect()
@@ -658,7 +696,7 @@ class AddtoMetadata(Resource):
                         else:
                             import util
                             host_info = util.get_pgc_host(component_host)
-                            component_host = host_info[3]
+                            component_host = host_info.get('host')
                         if component_host == '':
                             component_host = pg_arg.get("host", "localhost")
                         user_id = current_user.id

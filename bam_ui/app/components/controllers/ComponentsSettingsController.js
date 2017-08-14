@@ -206,6 +206,16 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         }
     }
 
+    $scope.openCredentialManager = function (argument) {
+        var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/credentialManager.html',
+                controller: 'credentialManagerController',
+                keyboard  : false,
+                backdrop  : 'static',
+                // size : 'lg'
+            });
+    }
+
     $rootScope.$on('refreshUpdateDate', function (argument) {
        // $window.location.reload(); 
        getInfo();
