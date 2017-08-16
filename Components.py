@@ -412,7 +412,7 @@ class Components(ComponentAction):
         data = pgcProcess.communicate()
 
     @inlineCallbacks
-    def instancesList(self, instance, email, region=None):
+    def instancesList(self, instance, email, region=None, cloud = None):
         """
         Method to get the rds instances list
         """
@@ -421,6 +421,8 @@ class Components(ComponentAction):
             pgcCmd = pgcCmd + " --region " + region
         if email:
             pgcCmd = pgcCmd + " --email " + email
+        if cloud:
+            pgcCmd = pgcCmd + ' --cloud "' + cloud +'"'
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.process = process
         for line in iter(process.stdout.readline, ''):

@@ -1,0 +1,46 @@
+<uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" dismiss-on-timeout="8000" close="closeAlert($index)" class="uib-text">{{alert.msg}}</uib-alert>
+<section class="content-header">
+     <!-- <server-info-details title="AWS Integration"></server-info-details> -->
+     <div class="components-update-title-wrapper">
+	    <form class="form form-inline ">
+	        <h1 class="aws-page-head"><strong>Azure Integration</strong></h1>
+	    </form>
+	</div>
+    <div id="pgcInfoText" class="pull-left"></div>
+</section>
+<section class="content">
+    <div class="col-md-2"></div>
+    <div class="col-md-2 col-sm-3 cursor_pointer" ng-click="discover('azure', 'Discover Azure Postgres RDS', 'db')">
+        <a class="thumbnail">
+            <img class="img-responsive" src="assets/img/rds-search.png" alt="">
+            <div class="aws-caption">
+                <h4 class="aws-page-tile-name">Discover Azure PostgreSQL Instances</h4>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2 col-sm-3 cursor_pointer" ng-click="createNewAzureDb()">
+        <a class="thumbnail">
+            <img class="img-responsive" src="assets/img/rds-add.png" alt="">
+            <div class="aws-caption">
+                <h4 class="aws-page-tile-name">Create Azure PostgreSQL Instance</h4>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2 col-sm-3 cursor_pointer" ng-click="discover('azure', 'Discover Azure Instances', 'vm')">
+        <a class="thumbnail">
+            <img class="img-responsive" src="assets/img/ec2-search.png" alt="">
+            <div class="aws-caption">
+                <h4 class="aws-page-tile-name">Discover Azure VM instances</h4>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2 col-sm-3 cursor_pointer" ng-click="comingSoon()">
+        <a class="thumbnail">
+            <img class="img-responsive" src="assets/img/ec2-add.png" alt="">
+            <div class="aws-caption">
+                <h4 class="aws-page-tile-name">Create Azure VM Instance</h4>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2"></div>
+</section>

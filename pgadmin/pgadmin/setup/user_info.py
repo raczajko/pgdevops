@@ -41,7 +41,7 @@ def user_info():
                 'PGADMIN_SETUP_PASSWORD']:
                 email = os.environ['PGADMIN_SETUP_EMAIL']
                 p1 = os.environ['PGADMIN_SETUP_PASSWORD']
-                active = os.environ.get('PGADMIN_SETUP_ACTIVE', 1)
+                active = os.environ.get('PGADMIN_SETUP_ACTIVE', "1")
         else:
             # Prompt the user for their default username and password.
             print(
