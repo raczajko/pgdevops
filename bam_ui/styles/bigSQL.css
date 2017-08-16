@@ -7502,3 +7502,7 @@ a.notification{
   cursor: pointer;
   margin: 5px;
 }
+
+.disabled {
+  cursor: not-allowed;
+}
