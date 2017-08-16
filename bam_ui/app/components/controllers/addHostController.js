@@ -239,11 +239,13 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     }
 
     var credentialsList = function(argument) {
+    	$scope.gettingCreds = true;
 		$scope.isAllSelected = false;
 		var getCredentials = bamAjaxCall.getCmdData('pgc/credentials/list/')
 		getCredentials.then(function (data) {
-			$scope.loading = false;
-			$scope.credentialsList = JSON.parse(data[0]);
+			$scope.gettingCreds = false;
+			var data = JSON.parse(data[0]);
+			$scope.credentialsList = $(data).filter(function(i,n){ return n.cred_type != "cloud" ;})
 			if ($scope.cred_name) {
 				$scope.selected_cred_name = $scope.cred_name;
 			}
