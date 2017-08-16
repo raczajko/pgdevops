@@ -8,6 +8,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 	$scope.title = $uibModalInstance.title;
 	$scope.updateCred = $uibModalInstance.updateCred;
 	$scope.buttonType = "Add";
+	$scope.adding = false;
 
 	$scope.data = {
 		'type' : '',
@@ -71,35 +72,84 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 	}
 
 	$scope.addCredential = function () {
+		$scope.adding = true;
 		if ($scope.data.type != 'cloud') {
 			$scope.data.cloud_name = '';
 			$scope.data.region = '';
 		}
 		var addCred = bamAjaxCall.postData('/api/pgc/credentials/create/', $scope.data)
 		addCred.then(function (data) {
-			debugger
-			var parseData = JSON.parse(data[0]);
-			if (parseData[0].state=='info') {
+			$scope.adding = false;
+			var data = JSON.parse(data[0])[0];
+			if (data.state == 'error') {
 				$scope.alerts.push({
-                    msg: parseData[0].msg,
-                    type: 'success'
-                });
-                $rootScope.$emit('refreshCreds');
-                $uibModalInstance.dismiss('cancel');
+		    		msg : data.msg,
+		    		type : 'error'
+		    	})
 			}else{
-				$scope.alerts.push({
-                    msg: data,
-                    type: 'error'
-                });
+				$rootScope.$emit('addResponse', data);
+	            $rootScope.$emit('refreshCreds');
+	            $uibModalInstance.dismiss('cancel');
 			}
 		})
 	}
+
+	$scope.testCred = function (host, ) {
+			var testData = {
+				'name' : $scope.data.user,
+				'password' : $scope.data.password
+			}
+        	var checkUser = bamAjaxCall.getCmdData('testConn', testData);
+    		checkUser.then(function (argument) {
+    			var jsonData = JSON.parse(argument)[0];
+    			if (jsonData.state == 'success') {
+    				$scope.isSudo =  jsonData.isSudo;
+    				$scope.pgcDir = jsonData.pgc_path;
+    				$scope.pgcVersion = jsonData.pgc_version;
+    				if($scope.pgcVersion && !$scope.editHost){
+    				    $scope.create_btn = "Associate";
+    				}
+    				$scope.root_pgc_path=jsonData.root_pgc_path;
+    				$scope.auth_err=jsonData.auth_err;
+    				$scope.not_sudoer=jsonData.not_sudoer;
+    				/*if(!$scope.pgcDir){
+	    				if($scope.isSudo){
+	    					//$scope.serviceUser = 'Postgres';
+	    					$scope.pgcDir = '/opt'
+	    				}else{
+	    					//$scope.serviceUser = $scope.userName;
+	    					$scope.pgcDir = '~/bigsql'
+	    				}
+	    			}*/
+    				$scope.tryToConnect = false;
+    				$scope.firstPhase = false;
+    				$scope.secondPhase = true;
+    			} else{
+	    			$scope.connectionError = true;
+	    			$scope.tryToConnect = false;
+    				$scope.message = jsonData.msg;
+    			}
+    		})
+    	}
 
 	$scope.deleteCredential = function (cred_uuid) {
 		var deleteCred = bamAjaxCall.postData('/api/pgc/credentials/delete/', {'cred_uuid' : cred_uuid} )
 		deleteCred.then(function (data) {
 			credentialsList();
 		})
+	}
+
+	$scope.testCredential = function () {
+		var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/testConnection.html',
+                controller: 'testConnectionController',
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+		modalInstance.user = $scope.data.user;
+		modalInstance.password = $scope.data.password;
+		modalInstance.ssh_key = $scope.data.ssh_key;
+		modalInstance.ssh_sudo_pwd = $scope.data.ssh_sudo_pwd;
 	}
 
 	$scope.openUsage = function (name) {

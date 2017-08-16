@@ -357,6 +357,33 @@ api.add_resource(pgdgHostCommand, '/api/pgdghost/<string:repo_id>/<string:pgc_cm
                  '/api/pgdghost/<string:repo_id>/<string:pgc_cmd>/<string:comp>/<string:host>')
 
 
+class TestConn(Resource):
+    @login_required
+    def get(self):
+        username = request.args.get('user')
+        password = request.args.get('password')
+        ssh_key = request.args.get('ssh_key')
+        sudo_pwd = request.args.get('ssh_sudo_pwd')
+        host = request.args.get('host')
+        from PgcRemote import PgcRemote
+        json_dict = {}
+        try:
+            remote = PgcRemote(host, username, password=password, ssh_key=ssh_key, sudo_pwd=sudo_pwd)
+            if not sudo_pwd:
+                remote.connect()
+            json_dict['state'] = "success"
+            json_dict['msg'] = "Testing Connection Successful."
+            data = json.dumps([json_dict])
+            remote.disconnect()
+        except Exception as e:
+            errmsg = "ERROR: Cannot connect to " + username + "@" + host + " - " + str(e)
+            json_dict['state'] = "error"
+            json_dict['msg'] = errmsg
+            data = json.dumps([json_dict])
+        return data
+
+api.add_resource(TestConn, '/api/testConn')
+
 class checkUser(Resource):
     @login_required
     def get(self):

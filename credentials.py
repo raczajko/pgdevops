@@ -35,7 +35,7 @@ class CreateCredential(MethodView):
             cred_uuid = args.get('cred_uuid')
             pgcCmd = "credentials ADD --type \"" + cred_type + "\" --name \"" + cred_name + "\""
             if cred_uuid:
-                pgcCmd = "credentials UPDATE --type \"" + cred_type + "\" --name \"" + cred_name + "git \" --cred_uuid \"" + cred_uuid + "\""
+                pgcCmd = "credentials UPDATE --type \"" + cred_type + "\" --name \"" + cred_name + "\" --cred_uuid \"" + cred_uuid + "\""
             if cred_user:
             	pgcCmd = pgcCmd + " --user \"" + cred_user + "\""
             if cred_pwd:
@@ -78,12 +78,9 @@ class DeleteCredentials(MethodView):
             return jsonify(json_dict)
         else:
             args= request.json.get('params')
-            print('args',args)
             cred_uuids = args.get('cred_uuids')
-            print ('cred_uuids',cred_uuids)
             result = {}
             for cred_uuid in cred_uuids:
-	            print (cred_uuid)
 	            pgcCmd = "credentials DELETE "
 	            if cred_uuid:
 	            	pgcCmd = pgcCmd + " --cred \"" + cred_uuid + "\""
@@ -92,22 +89,3 @@ class DeleteCredentials(MethodView):
     	
 
 credentials.add_url_rule('/delete/', view_func=DeleteCredentials.as_view('delete'))
-
-# class updateCredentials(MethodView):
-#     @login_required
-#     def post(self):
-#     	json_dict = {}
-#         if not current_user:
-#             json_dict['state'] = "error"
-#             json_dict['msg'] = "Access denied."
-#             return jsonify(json_dict)
-#         else:
-#             args= request.json.get('params')
-#             cred_uuid = args.get('cred_uuid')
-#             pgcCmd = " credentials Update "
-#             
-#             data = pgc.get_cmd_data(pgcCmd)
-#         return jsonify(data)
-    	
-
-# credentials.add_url_rule('/update/', view_func=DeleteCredentials.as_view('update'))

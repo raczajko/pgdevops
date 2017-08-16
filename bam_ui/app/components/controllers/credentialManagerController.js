@@ -20,6 +20,7 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 
 
 	var credentialsList = function(argument) {
+		$scope.loading = true;
 		$scope.isAllSelected = false;
 		var getCredentials = bamAjaxCall.getCmdData('pgc/credentials/list/')
 		getCredentials.then(function (data) {
@@ -78,6 +79,35 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
     $scope.optionToggled = function(name){
     	
     }
+
+    $rootScope.$on('deleteResponse', function(argument, data) {
+    	var data = JSON.parse(data[0])[0];
+    	if (data.state == 'error') {
+    		$scope.alerts.push({
+	    		msg : data.msg,
+	    		type : 'error'
+	    	})
+    	}else{
+    		$scope.alerts.push({
+	    		msg : data.msg,
+	    		type : 'warning'
+	    	})
+    	}	
+    })
+
+	$rootScope.$on('addResponse', function(argument, data) {
+    	if (data.state == 'error') {
+    		$scope.alerts.push({
+	    		msg : data.msg,
+	    		type : 'error'
+	    	})
+    	}else{
+    		$scope.alerts.push({
+	    		msg : data.msg,
+	    		type : 'success'
+	    	})
+    	}	
+    })    
 
     $scope.checkOptions = function (argument) {
     	$scope.showUpdate = false;
