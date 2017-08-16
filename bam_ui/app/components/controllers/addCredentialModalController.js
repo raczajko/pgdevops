@@ -6,7 +6,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 	// $scope.cloudTypes = {'AWS': 'AWS', 'Azure': 'Azure', 'OpenStack' : 'OpenStack', 'VMware': 'VMware', 'Rackspace':'Rackspace', 'Google':'Google'};
 
 	$scope.title = $uibModalInstance.title;
-	$scope.updateCred = $uibModalInstance.updateCred[0];
+	$scope.updateCred = $uibModalInstance.updateCred;
 	$scope.buttonType = "Add";
 
 	$scope.data = {

@@ -76,26 +76,30 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
     }
 
     $scope.optionToggled = function(name){
-    	console.log($scope.credentialsList);
+    	
     }
 
     $scope.checkOptions = function (argument) {
     	$scope.showUpdate = false;
-    	$scope.showDeleteUsageReport = false;
+    	$scope.showDeleteReport = false;
     	var selectedCreds = [];
+    	$scope.showUsage = false;
     	for (var i = $scope.credentialsList.length - 1; i >= 0; i--) {
 			if($scope.credentialsList[i].selected){
 				selectedCreds.push($scope.credentialsList[i]);
 			}
+			if ($scope.credentialsList[i].selected && $scope.credentialsList[i].hosts.length>0) {
+				$scope.showUsage = true;
+			}
 		}
 		if (selectedCreds.length==0) {
-			$scope.showDeleteUsageReport = false;
+			$scope.showDeleteReport = false;
 			$scope.showUpdate = false;
 		}else if(selectedCreds.length == 1){
 			$scope.showUpdate = true;
-			$scope.showDeleteUsageReport = true;
+			$scope.showDeleteReport = true;
 		}else{
-			$scope.showDeleteUsageReport = true;
+			$scope.showDeleteReport = true;
 		}
     }
 
@@ -153,7 +157,7 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
                 backdrop  : 'static',
             });
 			modalInstance.title = title;
-			modalInstance.updateCred = updateCreds;
+			modalInstance.updateCred = updateCreds[0];
 			modalInstance.type = type;
 		}
 	}
@@ -173,7 +177,7 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
                 backdrop  : 'static',
             });
 			modalInstance.name = name;
-			modalInstance.cred_list = host_list;
+			modalInstance.host_list = host_list;
 			modalInstance.cred_type = cred_type;
 			modalInstance.selectedCreds = selectedCreds;
 		}else{

@@ -35,7 +35,7 @@ class CreateCredential(MethodView):
             cred_uuid = args.get('cred_uuid')
             pgcCmd = "credentials ADD --type \"" + cred_type + "\" --name \"" + cred_name + "\""
             if cred_uuid:
-                pgcCmd = "credentials UPDATE --type \"" + cred_type + "\" --name \"" + cred_name + "\" --cred_uuid \"" + cred_uuid + "\""
+                pgcCmd = "credentials UPDATE --type \"" + cred_type + "\" --name \"" + cred_name + "git \" --cred_uuid \"" + cred_uuid + "\""
             if cred_user:
             	pgcCmd = pgcCmd + " --user \"" + cred_user + "\""
             if cred_pwd:

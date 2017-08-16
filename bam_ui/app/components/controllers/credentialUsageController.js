@@ -3,7 +3,7 @@ angular.module('bigSQL.components').controller('credentialUsageController', ['$r
 	$scope.alerts = [];
 
 	$scope.name = $uibModalInstance.name;
-	$scope.hosts = $uibModalInstance.cred_list;
+	$scope.hosts = $uibModalInstance.host_list;
 	$scope.cred_type = $uibModalInstance.cred_type;
 	$scope.selectedCreds = $uibModalInstance.selectedCreds;
 
