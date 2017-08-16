@@ -253,19 +253,21 @@ class ComponentAction(object):
             yield sleep(0.001)
 
     @inlineCallbacks
-    def registerHost(self, hostName, pgcDir, userName, name, password=None, key=None, sudo_pwd=None, update=None):
+    def registerHost(self, hostName, pgcDir, name, cred_name, update=None):
         """
         Method to Register remote host
         """
         if this_uname != "Windows":
             os.environ["PYTHONPATH"] = devops_lib_path
-        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST \"" + hostName + "\" \"" + pgcDir + "\" \"" + userName + "\" \"" + name + "\""
-        if password:
-            pgcCmd = pgcCmd + " --pwd=\"" + password + "\""
-        if key:
-            pgcCmd = pgcCmd + " --key=\"" + key + "\""
-        if sudo_pwd:
-            pgcCmd = pgcCmd + " --sudo_pwd=\"" + sudo_pwd + "\""
+        pgcCmd = PGC_HOME + os.sep + "pgc register --json HOST \"" + hostName + "\" \"" + pgcDir + "\" \"" + name + "\""
+        # if password:
+        #     pgcCmd = pgcCmd + " --pwd=\"" + password + "\""
+        # if key:
+        #     pgcCmd = pgcCmd + " --key=\"" + key + "\""
+        # if sudo_pwd:
+        #     pgcCmd = pgcCmd + " --sudo_pwd=\"" + sudo_pwd + "\""
+        if cred_name:
+            pgcCmd = pgcCmd + " --cred_name=\"" + cred_name + "\""
         if update:
             pgcCmd = pgcCmd + " --update=" + str(update)
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
@@ -421,7 +423,6 @@ class Components(ComponentAction):
             pgcCmd = pgcCmd + " --email " + email
         if cloud:
             pgcCmd = pgcCmd + ' --cloud "' + cloud +'"'
-        print(pgcCmd)
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
@@ -646,6 +647,13 @@ class Components(ComponentAction):
         :return: It yields the platform.
         """
         yield self.session.publish('com.bigsql.onCheckOS', platform.system())
+
+    @staticmethod
+    def get_cmd_data(command):
+        pgcCmd = PGC_HOME + os.sep + "pgc --json " + command
+        pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
+        data = pgcProcess.communicate()
+        return data
 
     @staticmethod
     def get_data(command, component=None, pgc_host=None, pwfile=None, relnotes=None, pwd=None):

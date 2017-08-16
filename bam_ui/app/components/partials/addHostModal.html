@@ -33,13 +33,25 @@
                     <input type="text" ng-model="connectionName" class="form-control" placeholder="Connection name">
                 </div>
             </div>
-            <div class="form-group" ng-show="firstPhase">
+            <!-- <div class="form-group" ng-show="firstPhase">
                 <label class="col-sm-3 control-label">User Name:<span class="requiredSymbol">*</span></label>
                 <div class="col-sm-9">
                     <input type="text" ng-model="userName" class="form-control" placeholder="Username">
                 </div>
+            </div> -->
+            <div class="form-group" ng-show="firstPhase">
+                <label class="col-sm-3 control-label">Credential:<span class="requiredSymbol">*</span></label>
+                <div class="col-sm-6">
+                    <select class="form-control" ng-model="selected_cred_name" ng-options="cred.cred_name as cred.cred_name for cred in credentialsList | filter:cred.cred_type=('pwd' || 'ssh-key')  ">
+                        <option value="">--select--</option>
+                    </select>
+                    <!-- <input type="text" ng-model="userName" class="form-control" placeholder="Username"> -->
+                </div>
+                <div class="col-sm-2 pull-right">
+                    <button class="btn btn-default" ng-click="addCred('Add Credential','')"><i class="fa fa-plus"></i> &nbsp;Add</button>
+                </div>
             </div>
-            <fieldset ng-show="firstPhase">
+            <!-- <fieldset ng-show="firstPhase">
 
                 <div class="form-group form-group-custom">
                     <label class="col-sm-3 control-label">Password:</label>
@@ -49,20 +61,20 @@
                 </div>
                 <div class="col-sm-12 text-center">
                     <strong>or</strong>
-                </div>
+                </div> -->
                 <!--<div class="form-group form-group-custom">
                     <label class="col-sm-3 control-label">SSH Key:<span class="requiredSymbol">*</span></label>
                     <div class="col-sm-9">
                         <input type="text" ng-model="ssh_key" id="ssh_key" value="/Users/naveen/" class="form-control file-loading" placeholder="PATH to ssh-key" webkitdirectory>
                     </div>
                 </div>-->
-                <div class="form-group form-group-custom">
+                <!-- <div class="form-group form-group-custom">
                     <label class="col-sm-3 control-label">SSH Key:</label>
                     <div class="col-sm-9">
                         <textarea style="height: 200px;" id="ssh_key" ng-model="ssh_key" class="form-control" placeholder="Paste your ssh-key"></textarea>
                     </div>
                 </div>
-            </fieldset>
+            </fieldset> -->
             <!--<div class="form-group row" ng-show="secondPhase">
                 <label class="col-sm-4 col-form-label">Service User</label>
                 <div class="col-sm-8">
@@ -121,7 +133,7 @@
                    <!--  <button class="btn btn-default" type="button" ng-click="cancel(); refreshHostManager()">Cancel</button> -->
                     <button class="btn btn-default" type="button" ng-show="secondPhase" ng-click="back()">Back</button>
                     <button ng-show="secondPhase && auth_err" class="btn btn-default" type="button" ng-click="verify()">Verify</button>
-                    <button ng-if="!secondPhase" class="btn btn-default" type="submit" ng-click="next()" ng-disabled="!(hostName && userName && connectionName && connectionName) || (!pgInstall && thirdPhase) ">Connect</button>
+                    <button ng-if="!secondPhase" class="btn btn-default" type="submit" ng-click="next()" ng-disabled="!(hostName && connectionName) || (!pgInstall && thirdPhase) ">Connect</button>
                     <button ng-if="secondPhase" class="btn btn-default" type="submit" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">{{ create_btn }}</button>
                     <!-- <button type="submit" ng-show="secondPhase" class="btn btn-primary" ng-disabled="!(hostName && pgcDir && userName && password && connectionName)" ng-click="addHost(hostName, pgcDir, userName, password, connectionName)">Save</button> -->
                 </div>

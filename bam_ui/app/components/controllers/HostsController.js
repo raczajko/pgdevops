@@ -33,6 +33,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.actionBtnOpen = false;
     $scope.connection = {savePwd:false};
     $scope.pgListRes = [];
+    var OpenCredentialHost = $cookies.get('OpenCredentialHost');
 
     $scope.statusColors = {
         "Stopped": "orange",
@@ -335,7 +336,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             for (var i = $scope.pgListRes.length - 1; i >= 0; i--) {
                 $scope.pgListRes[i]['isOpen'] = false;
             }
-            if (data.length > 0) {
+            if (data.length > 0 && !OpenCredentialHost) {
                 $scope.showpgList = true;
             }else{
                 $scope.showpgList = false;
@@ -701,6 +702,11 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         $scope.loadHost(0, $scope.groupsList[0].hosts.length - 1 , true);
     });
 
+    $rootScope.$on('showSelected', function (argument) {
+        $scope.showpgList = false;
+        $scope.loadHost(0, 1, true);
+    });
+
     function getGroupsList(checkStorage) {
         $http.get($window.location.origin + '/api/groups?q='+ Math.floor(Date.now() / 1000).toString())
             .success(function (data) {
@@ -731,7 +737,16 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                         for (var i = $scope.groupsList.length - 1; i >= 0; i--) {
                             $scope.groupsList[i].state = true;
                         } 
-                        if($scope.addedNewHost){
+                        if (OpenCredentialHost) {
+                            for (var i = $scope.groupsList[0].hosts.length - 1; i >= 0; i--) {
+                               if($scope.groupsList[0].hosts[i].name == OpenCredentialHost){
+                                    $scope.loadHost(0, i, false);
+                                    $cookies.put('OpenCredentialHost', '');
+                                    $scope.groupsList[0].hosts[i]['state'] = true;
+                                    break;
+                               }
+                            }
+                        }else if($scope.addedNewHost){
                             var hostNumber = $scope.groupsList[0].hosts.length - 1;
                             $scope.loadHost(0, hostNumber, false);
                             $scope.groupsList[0].hosts[hostNumber]['state'] = true;
@@ -851,7 +866,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         }
     }
 
-    $scope.open = function (p_idx, idx) {
+    $scope.open = function (p_idx, idx, cred_name) {
             if ($scope.multiHostlab) {
                 $scope.editHost = '';
                 if(idx >= 0){
@@ -866,6 +881,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                     keyboard  : false,
                     backdrop  : 'static',
                 });
+                modalInstance.cred_name = cred_name
             }else{
                 var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled').replace('{{lab}}', $scope.multiHostlabName));
 

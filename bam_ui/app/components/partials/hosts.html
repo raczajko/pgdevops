@@ -137,7 +137,7 @@
                                             <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); UpdateManager($index)" class="btn btn-default" ng-if="host.state" class="ng-binding" href="" >Package Manager</button>&nbsp;
                                             <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); showTop($index)" class="btn btn-default" ng-if="host.state" class="ng-binding" href="">Top</button>&nbsp;
                                             <div class="btn-group" uib-dropdown >
-                                                <button id="split-button " type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); open(parentIndex, $index)" class="btn btn-default " ng-if="host.host!='localhost'" >Edit Host</button>
+                                                <button id="split-button " type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); open(parentIndex, $index, host.cred_name)" class="btn btn-default " ng-if="host.host!='localhost'" >Edit Host</button>
                                                 <button type="button" ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation()" class="btn btn-default " ng-if="host.host!='localhost'"  uib-dropdown-toggle>
                                                     <span class="caret "></span>
                                                     <span class="sr-only ">Split button!</span>

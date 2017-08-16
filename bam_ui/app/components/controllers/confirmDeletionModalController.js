@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('confirmDeletionModalController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', '$window', '$http', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, $window, $http) {
+angular.module('bigSQL.components').controller('confirmDeletionModalController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', '$window', '$http', 'bamAjaxCall', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, $window, $http, bamAjaxCall) {
 
 	var session;
 
@@ -9,6 +9,7 @@ angular.module('bigSQL.components').controller('confirmDeletionModalController',
 
     var deleteFiles = $uibModalInstance.deleteFiles;
     $scope.comp = $uibModalInstance.comp;
+    $scope.deleteCred = $uibModalInstance.deleteCred;
 
     $scope.removeReports = function (argument) {
         if($scope.comp == 'pgbadger'){
@@ -28,6 +29,15 @@ angular.module('bigSQL.components').controller('confirmDeletionModalController',
                 }
             });
         }
+    }
+
+    $scope.removeCreds = function (argument) {
+        var deleteCred = bamAjaxCall.postData('/api/pgc/credentials/delete/', {'cred_uuids' : deleteFiles} )
+        deleteCred.then(function (data) {
+            $rootScope.$emit('deleteResponse', data);
+            $rootScope.$emit('refreshCreds');
+            $uibModalInstance.dismiss('cancel');
+        })
     }
 
     $scope.deleteFilesLength = deleteFiles.length;

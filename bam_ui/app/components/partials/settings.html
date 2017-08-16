@@ -63,16 +63,19 @@
                     <p class="col-md-12 col-xs-12 col-sm-12" ng-if="!lastUpdateStatus" ng-bind="lastUpdateNone"></p>
                 </div>
             </div>
-            <!-- <div class="box" ng-if="awsRdsTile">
+            <div class="box">
                 <div class="box-header with-border">
-                    <div class="col-md-8">
-                        <h4><strong> AWS Postgres RDS </strong></h4>
+                    <div class="col-md-1 col-sm-1 col-xs-1">
+                        <img style="height: 35px;" src="assets/img/cred_manager.png">
                     </div>
-                    <div class="col-md-4" style="padding: 2px;">
-                        <button type="button" id="aws-refresh" class="btn btn-default pull-right" ng-click="discoverRds('aws', '', 'AWS Postgres RDS')">Discover RDS Instances</button>
+                    <div class="col-md-7 col-sm-7 col-xs-7"> 
+                        <h4><strong>Credentials </strong></h4>
+                    </div>
+                    <div class="col-md-4 col-sm-4 col-xs-4" style="padding: 2px;">
+                        <button type="button" style="width: 97px;" id="manageCredentials" class="btn btn-default pull-right" ui-sref="components.credentials">Manage</button>
                     </div>
                 </div>
-            </div> -->
+            </div>
         </div>
         </div>
         <!-- <div class="col-md-6 col-sm-6 col-xs-6">

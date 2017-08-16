@@ -7479,3 +7479,26 @@ a.notification{
     top: 10px;
     right: 10px;
 }
+.usageCredHosts{
+  /*border: 1px solid #d2d6de;*/
+  max-height: 200px;
+  overflow: auto;
+}
+.cred_list{
+  max-height: 500px; 
+  overflow: auto;
+}
+.cred-img{
+  height: 18px; 
+  margin-left: 5px;
+}
+.cred-img-add-screen{
+  height: 20px; 
+  margin-top: 6px;
+  margin-left: -15px;
+}
+
+.cred_usage_list{
+  cursor: pointer;
+  margin: 5px;
+}
