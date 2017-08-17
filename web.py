@@ -746,16 +746,16 @@ class AddtoMetadata(Resource):
                              servergroup_id = sg.id
 
                             
-                        component_server = Server.query.filter_by(
-                            name=servername,
-                            host=component_host,
-                            servergroup_id=servergroup_id,
-                            port=component_port
-                        ).first()
-                        if component_server:
-                            is_new=False
-                        else:
-                            is_new=True
+                component_server = Server.query.filter_by(
+                    name=servername,
+                    host=component_host,
+                    servergroup_id=servergroup_id,
+                    port=component_port
+                ).first()
+                if component_server:
+                    is_new=False
+                else:
+                    is_new=True
 
                 if is_new:
                     svr = Server(user_id=current_user.id,
