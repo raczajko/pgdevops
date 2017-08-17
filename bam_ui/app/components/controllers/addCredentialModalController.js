@@ -135,13 +135,6 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
     		})
     	}
 
-	$scope.deleteCredential = function (cred_uuid) {
-		var deleteCred = bamAjaxCall.postData('/api/pgc/credentials/delete/', {'cred_uuid' : cred_uuid} )
-		deleteCred.then(function (data) {
-			credentialsList();
-		})
-	}
-
 	$scope.testCredential = function () {
 		var modalInstance = $uibModal.open({
                 templateUrl: '../app/components/partials/testConnection.html',
