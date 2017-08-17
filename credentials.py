@@ -71,10 +71,6 @@ class CreateCredential(MethodView):
             args= request.json.get('params')
             pgcCmd = self.constructCmd(args, method_type = "UPDATE")
             data = pgc.get_cmd_data(pgcCmd)
-            if data[0]['state'] == 'info':
-                data[0]['status-code'] = 200
-            else:
-                data[0]['status-code'] = 
         return jsonify(data)
 
     @login_required
