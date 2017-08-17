@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('pgInitializeController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', 'bamAjaxCall', '$http', '$window', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, bamAjaxCall, $http, $window) {
+angular.module('bigSQL.components').controller('pgInitializeController', ['$scope','$rootScope', '$uibModalInstance','MachineInfo', 'PubSubService', 'bamAjaxCall', 'pgcRestApiCall', '$http', '$window', function ($scope, $rootScope, $uibModalInstance, MachineInfo, PubSubService, bamAjaxCall, pgcRestApiCall, $http, $window) {
 
 	var session;
     var subscriptions = [];
@@ -19,9 +19,9 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
 
     function getInfoComp(argument) {
         if($scope.host == 'localhost' || $scope.host == '' || !$scope.host ){
-            var infoData = bamAjaxCall.getCmdData('info/' + $scope.comp);
+            var infoData = pgcRestApiCall.getCmdData('info ' + $scope.comp);
         } else{
-            var infoData = bamAjaxCall.getCmdData('info/' + $scope.comp + '/' +$scope.host);
+            var infoData = pgcRestApiCall.getCmdData('info ' + $scope.comp + ' --host "' + $scope.host + '"');
         }
         infoData.then(function(args) {
             var data = args[0];
@@ -98,9 +98,9 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
 
     $scope.addToMetaData = function (comp, remote_host) {
         if($scope.host == 'localhost' || $scope.host == '' || !$scope.host){
-            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp);
+            var infoComp = pgcRestApiCall.getCmdData('info ' + $scope.comp);
         }else{
-            var infoComp = bamAjaxCall.getCmdData('info/' + $scope.comp + '/' + $scope.host);
+            var infoComp = pgcRestApiCall.getCmdData('info ' + $scope.comp + ' --host "' + $scope.host + '"');
         }
         infoComp.then(function(args) { 
             if ($scope.host == '') {
@@ -131,7 +131,6 @@ angular.module('bigSQL.components').controller('pgInitializeController', ['$scop
                 var event_url =  'initpg/'  + $scope.host + '/' + $scope.comp + '/' +$scope.formData.password + '/' + $scope.userName +'/' + $scope.userPassword;
                 var eventData = bamAjaxCall.getCmdData(event_url);
                 eventData.then(function(data) {
-                    debugger
                     $scope.addToMetaData();
                     if (!$scope.autostartOn && $scope.autoStartVal) {
                         session.call('com.bigsql.autostart',[$scope.autoStartVal,$scope.comp, $scope.host]).then(function (argument) {

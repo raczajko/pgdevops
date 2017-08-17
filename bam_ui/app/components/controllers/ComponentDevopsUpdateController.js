@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentDevopsUpdateController', ['$rootScope', '$scope', '$stateParams', 'PubSubService', '$state', '$uibModalInstance', 'MachineInfo', 'UpdateBamService','$window', 'bamAjaxCall', function ($rootScope, $scope, $stateParams, PubSubService, $state, $uibModalInstance, MachineInfo, UpdateBamService,$window, bamAjaxCall) {
+angular.module('bigSQL.components').controller('ComponentDevopsUpdateController', ['$rootScope', '$scope', '$stateParams', 'PubSubService', '$state', '$uibModalInstance', 'MachineInfo', 'UpdateBamService','$window', 'pgcRestApiCall', function ($rootScope, $scope, $stateParams, PubSubService, $state, $uibModalInstance, MachineInfo, UpdateBamService,$window, pgcRestApiCall) {
 
     var subscriptions = [];
     var session;
@@ -7,7 +7,7 @@ angular.module('bigSQL.components').controller('ComponentDevopsUpdateController'
         session = val;
     });
 
-    var infoData = bamAjaxCall.getCmdData('info/devops');
+    var infoData = pgcRestApiCall.getCmdData('info pgdevops');
         infoData.then(function(info) {
             var data = info[0];
             $scope.updateVersion = data.current_version;

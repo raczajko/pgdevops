@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', '$interval', '$cookies', '$cookieStore', 'htmlMessages', '$sce', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, $interval, $cookies, $cookieStore, htmlMessages, $sce ) {
+angular.module('bigSQL.components').controller('HostsController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$interval', '$cookies', '$cookieStore', 'htmlMessages', '$sce', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $interval, $cookies, $cookieStore, htmlMessages, $sce ) {
 
     $scope.alerts = [];
 
@@ -200,7 +200,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         color: '#006994'
     }];
 
-    var getLabList = bamAjaxCall.getCmdData('lablist');
+    var getLabList = pgcRestApiCall.getCmdData('lablist');
     $scope.multiHostlab = false;
     $scope.awsRdsFeature = false;
     getLabList.then(function (argument) {
@@ -401,17 +401,17 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     $scope.updateComps =  function (p_idx, idx) {
         var remote_host = $scope.groupsList[p_idx].hosts[idx].host;
-        var status_url = 'hostcmd/status/' + remote_host;
+        var status_url = 'status --host "' + remote_host + '"';
 
         if (remote_host == "localhost") {
             status_url = 'status';
             remote_host = "";
         } else {
             remote_host = $scope.groupsList[p_idx].hosts[idx].name;
-            status_url = 'hostcmd/status/' + remote_host;
+            status_url = 'status --host "' + remote_host + '"';
         }
 
-        var statusData = bamAjaxCall.getCmdData(status_url);
+        var statusData = pgcRestApiCall.getCmdData(status_url);
         statusData.then(function(data) {
                 if ( data.length > 0 && data[0].state == 'error') {
                     $scope.hostState.active = false;
@@ -433,9 +433,9 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
     $scope.getGraphValues = function (remote_host) {
         if (remote_host == "localhost" || remote_host == "") {
-            var infoData = bamAjaxCall.getCmdData('top');
+            var infoData = pgcRestApiCall.getCmdData('top');
         } else {
-            var infoData = bamAjaxCall.getCmdData('hostcmd/top/' + remote_host);
+            var infoData = pgcRestApiCall.getCmdData('top --host ' + remote_host);
         }
         if (previousTopData == "") {
             var timeVal = new Date(Date.now());
@@ -549,7 +549,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
 
         if (isOpened) {
             var remote_host = $scope.hostsList[idx].host;
-            var status_url = 'hostcmd/status/' + remote_host;
+            var status_url = 'status --host "' + remote_host + '"';
 
 
             if (remote_host == "localhost") {
@@ -557,10 +557,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
                 remote_host = "";
             } else {
                 remote_host = $scope.hostsList[idx].name;
-                status_url = 'hostcmd/status/' + remote_host;
+                status_url = 'status --host "' + remote_host + '"';
             }
 
-            var statusData = bamAjaxCall.getCmdData(status_url);
+            var statusData = pgcRestApiCall.getCmdData(status_url);
             statusData.then(function(data) {
                 if ( data.length > 0 && data[0].state == 'error') {
                     $scope.hostState.active = false;
@@ -708,7 +708,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     });
 
     function getGroupsList(checkStorage) {
-        $http.get($window.location.origin + '/api/groups?q='+ Math.floor(Date.now() / 1000).toString())
+        $http.get($window.location.origin + '/api/pgc/register GROUP --list ?q='+ Math.floor(Date.now() / 1000).toString())
             .success(function (data) {
                 if (data[0].state == 'error') {
                     $scope.loading = false;
@@ -816,7 +816,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     })
 
     $rootScope.$on('comparePGVersion', function(argument, host) {
-        var comparePGVersion = bamAjaxCall.getCmdData('compatre_pg_versions/' + host);
+        var comparePGVersion = bamAjaxCall.getCmdData('compare_pg_versions/' + host);
         comparePGVersion.then(function (argument) {
             if (argument.result_code==1 || argument.result_code==2) {
                 var modalInstance = $uibModal.open({
