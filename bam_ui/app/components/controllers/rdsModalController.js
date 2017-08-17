@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, htmlMessages, $uibModal, $cookies) {
+angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'pgcRestApiCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, pgcRestApiCall, htmlMessages, $uibModal, $cookies) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
@@ -11,8 +11,8 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     var session;
     $scope.region = '';
     $scope.showUseConn = false;
-
-    var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
+    
+    var regions = pgcRestApiCall.getCmdData('metalist aws-regions');
     regions.then(function(data){
         $scope.loadingSpinner = false;
         $scope.regions = data;

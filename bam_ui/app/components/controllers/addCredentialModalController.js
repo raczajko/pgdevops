@@ -37,8 +37,19 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 		$scope.cloudTypes = data;
 	})
 
-	$scope.refreshData = function (argument) {
-		// $scope.data.cloud_name = 'AWS';
+	$scope.refreshData = function (type) {
+		$scope.data = {
+			'type' : type,
+			'credential_name' : '',
+			'user' : '',
+			'password' : '',
+			'ssh_key' : '',
+			'cloud_key' : '',
+			'ssh_sudo_pwd' : '',
+			'cloud_name' : '',
+			'cloud_secret' : '',
+			'region' : ''
+		}
 	}
 
 	var credentialsList = function(argument) {

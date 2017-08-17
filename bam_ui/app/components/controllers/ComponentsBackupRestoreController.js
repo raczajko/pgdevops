@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsBackupRestoreController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', 'htmlMessages','$http','$timeout', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce, htmlMessages,$http,$timeout) {
+angular.module('bigSQL.components').controller('ComponentsBackupRestoreController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', '$sce', 'htmlMessages','$http','$timeout', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, pgcRestApiCall, $cookies, $sce, htmlMessages,$http,$timeout) {
     var subscriptions = [];
     $scope.backup = {};
     $scope.backup.format = 'c';
@@ -19,7 +19,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
         return str.indexOf(suffix, str.length - suffix.length) !== -1;
     }
 
-    var getLabList = bamAjaxCall.getCmdData('lablist');
+    var getLabList = pgcRestApiCall.getCmdData('lablist');
 
     getLabList.then(function (argument) {
         for (var i = argument.length - 1; i >= 0; i--) {
@@ -42,7 +42,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
 
     var session;
 
-    var hostsList = bamAjaxCall.getCmdData('hosts');
+    var hostsList = pgcRestApiCall.getCmdData('register HOST --list');
     hostsList.then(function (data) {
         if (data.length > 0 && data[0].status == "error") {
             $scope.hosts = [];

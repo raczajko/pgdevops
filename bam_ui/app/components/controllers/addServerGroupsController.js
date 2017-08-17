@@ -15,7 +15,7 @@ angular.module('bigSQL.components').controller('addServerGroupsController', ['$s
 		$scope.type = 'Edit';
 		$scope.name = $scope.editGroup.group;
 		$scope.groupId = $scope.editGroup.group_id;
-		$http.get($window.location.origin + '/api/groups?q='+ Math.floor(Date.now() / 1000).toString())
+		$http.get($window.location.origin + '/api/pgc/register GROUP --list?q='+ Math.floor(Date.now() / 1000).toString())
 		   .success(function (data) {
 		   	  	$scope.groupsList = data;
 		   	  	$scope.editGroup = $scope.groupsList[$scope.editGroupIndex];
@@ -32,7 +32,7 @@ angular.module('bigSQL.components').controller('addServerGroupsController', ['$s
 
 
 	function getAvailableHosts(argument) {
-		$http.get($window.location.origin + '/api/hosts')
+		$http.get($window.location.origin + '/api/pgc/register HOST --list')
 	    .success(function (data) {
 	    	if($scope.groupServers.length > 0){
 	    		for (var i = 0 ; i < data.length; i++) {

@@ -1,6 +1,6 @@
 angular.module('bigSQL.menus').component('topMenu', {
     bindings: {},
-    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, bamAjaxCall, $cookies) {
+    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, pgcRestApiCall, bamAjaxCall, $cookies) {
 
         /**Below function is for displaying update badger on every page.
          **/
@@ -24,11 +24,11 @@ angular.module('bigSQL.menus').component('topMenu', {
             argument = typeof argument !== 'undefined' ? argument : "";
 
             $scope.currentHost = argument;
-            // var listData = bamAjaxCall.getCmdData('list');
+            // var listData = pgcRestApiCall.getCmdData('list');
             if (argument=="" || argument == 'localhost'){
-                var listData = bamAjaxCall.getCmdData('list');
+                var listData = pgcRestApiCall.getCmdData('list');
             } else{
-                var listData = bamAjaxCall.getCmdData('hostcmd/list/'+argument);
+                var listData = pgcRestApiCall.getCmdData('list --host "' + argument + '"');
             }
             listData.then(function(data) {
                 var Checkupdates = 0;
@@ -81,7 +81,7 @@ angular.module('bigSQL.menus').component('topMenu', {
         //     callList($scope.currentHost);   
         // });
 
-        var infoData = bamAjaxCall.getCmdData('info');
+        var infoData = pgcRestApiCall.getCmdData('info');
         infoData.then(function(data) {
             $scope.pgcInfo = data[0];
         });
