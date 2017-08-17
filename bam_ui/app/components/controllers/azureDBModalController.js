@@ -67,7 +67,7 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
                     for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
                         if ($scope.rdsList[i].is_in_pglist == true) {
                             $scope.rdsList[i].selected = true;
-                            // $scope.checked = true;
+                            $scope.checked = true;
                         }
                         $scope.availList.push($scope.rdsList[i]);
                     }
@@ -112,6 +112,7 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
     // });
 
     $scope.createConnPgadmin = function(index){
+        debugger
         $scope.addToMetadata = true;
         $scope.addToMetadataMsg = htmlMessages.getMessage('add-to-pgadmin');
         var argsJson = [];
@@ -120,10 +121,10 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
                 var args = {};
                 args['db'] = $scope.availList[i].dbname;
                 args['port'] = $scope.availList[i].port;
-                args['user'] = $scope.availList[i].master_user;
-                args['host'] = $scope.availList[i].address;
+                args['user'] = $scope.availList[i].user;
+                args['host'] = $scope.availList[i].host;
                 args['component'] = $scope.availList[i].instance;
-                args['project'] = 'aws';
+                args['project'] = 'azure';
                 args['rds'] = true;
                 args['region'] = $scope.availList[i].region;
                 argsJson.push(args);

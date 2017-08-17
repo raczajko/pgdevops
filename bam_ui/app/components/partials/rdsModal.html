@@ -21,7 +21,7 @@
             <button class="btn btn-default"  ng-click="regionChange(region)">Search <i class="fa fa-search" aria-hidden="true"></i></button>
         </div>
         <div class="col-sm-4 col-xs-4 col-md-4">
-            <button style="margin-left: 20px;" ng-if="instance == 'rds' && showUseConn && rdsList && !noRDS" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
+            <button style="margin-left: 20px;" ng-if="instance == 'db' && showUseConn && rdsList && !noRDS" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
         </div>
     </div>
     <div class="row">
@@ -139,7 +139,7 @@
                                 {{ec.name}}
                             </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
-                                {{ec.instance_type}}
+                                {{ec.type}}
                             </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;" ng-class="{ 'greenText' :ec.state_name == 'running' , 'redText' : ec.state_name != 'running'}">
                                 {{ec.state_name}}
