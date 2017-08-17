@@ -653,7 +653,7 @@ class Components(ComponentAction):
         pgcCmd = PGC_HOME + os.sep + "pgc --json " + command
         pgcProcess = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, shell=True)
         data = pgcProcess.communicate()
-        return data
+        return process_pxpect_output(data[0].strip())
 
     @staticmethod
     def get_data(command, component=None, pgc_host=None, pwfile=None, relnotes=None, pwd=None):
