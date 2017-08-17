@@ -169,6 +169,9 @@ application.register_blueprint(pgstats, url_prefix='/pgstats')
 from credentials import credentials
 application.register_blueprint(credentials, url_prefix='/api/pgc/credentials')
 
+from CloudHandler import cloud
+application.register_blueprint(cloud, url_prefix='/api/pgc/instance')
+
 
 db_session = db.session
 
