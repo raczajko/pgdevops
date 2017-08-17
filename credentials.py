@@ -12,6 +12,41 @@ from Components import Components as pgc
 credentials = Blueprint('credentials', 'credentials', url_prefix='/api/pgc/credentials')
 
 class CreateCredential(MethodView):
+
+    def constructCmd(self, args, method_type=None):
+        cred_type = args.get('type')
+        cred_name = args.get('credential_name')
+        cred_user = args.get('user')
+        cred_pwd = args.get('password')
+        ssh_key = args.get('ssh_key')
+        cloud_key = args.get('cloud_key')
+        ssh_sudo_pwd = args.get('ssh_sudo_pwd')
+        cloud_name = args.get('cloud_name')
+        cloud_secret = args.get('cloud_secret')
+        cloud_key = args.get('cloud_key')
+        region = args.get('region')
+        cred_uuid = args.get('cred_uuid')
+        pgcCmd = "credentials ADD --type \"" + cred_type + "\" --name \"" + cred_name + "\""
+        if method_type=="UPDATE":
+            pgcCmd = "credentials UPDATE --type \"" + cred_type + "\" --name \"" + cred_name + "\" --cred_uuid \"" + cred_uuid + "\""
+        if cred_user:
+            pgcCmd = pgcCmd + " --user \"" + cred_user + "\""
+        if cred_pwd:
+            pgcCmd = pgcCmd + " --pwd \"" + cred_pwd + "\""
+        if ssh_key:
+            pgcCmd = pgcCmd + " --key \"" + ssh_key + "\""
+        if cloud_key:
+            pgcCmd = pgcCmd + " --key \"" + cloud_key + "\""
+        if ssh_sudo_pwd:
+            pgcCmd = pgcCmd + " --sudo_pwd \"" + ssh_sudo_pwd + "\""
+        if cloud_name:
+            pgcCmd = pgcCmd + " --cloud \"" + cloud_name + "\""
+        if cloud_secret:
+            pgcCmd = pgcCmd + " --secret \"" + cloud_secret + "\""
+        if region:
+            pgcCmd = pgcCmd + " --region \"" + region + "\""
+        return pgcCmd
+    
     @login_required
     def post(self):
         json_dict = {}
@@ -21,66 +56,42 @@ class CreateCredential(MethodView):
             return jsonify(json_dict)
         else:
             args= request.json.get('params')
-            cred_type = args.get('type')
-            cred_name = args.get('credential_name')
-            cred_user = args.get('user')
-            cred_pwd = args.get('password')
-            ssh_key = args.get('ssh_key')
-            cloud_key = args.get('cloud_key')
-            ssh_sudo_pwd = args.get('ssh_sudo_pwd')
-            cloud_name = args.get('cloud_name')
-            cloud_secret = args.get('cloud_secret')
-            cloud_key = args.get('cloud_key')
-            region = args.get('region')
-            cred_uuid = args.get('cred_uuid')
-            pgcCmd = "credentials ADD --type \"" + cred_type + "\" --name \"" + cred_name + "\""
-            if cred_uuid:
-                pgcCmd = "credentials UPDATE --type \"" + cred_type + "\" --name \"" + cred_name + "\" --cred_uuid \"" + cred_uuid + "\""
-            if cred_user:
-            	pgcCmd = pgcCmd + " --user \"" + cred_user + "\""
-            if cred_pwd:
-            	pgcCmd = pgcCmd + " --pwd \"" + cred_pwd + "\""
-            if ssh_key:
-            	pgcCmd = pgcCmd + " --key \"" + ssh_key + "\""
-            if cloud_key:
-            	pgcCmd = pgcCmd + " --key \"" + cloud_key + "\""
-            if ssh_sudo_pwd:
-            	pgcCmd = pgcCmd + " --sudo_pwd \"" + ssh_sudo_pwd + "\""
-            if cloud_name:
-            	pgcCmd = pgcCmd + " --cloud \"" + cloud_name + "\""
-            if cloud_secret:
-            	pgcCmd = pgcCmd + " --secret \"" + cloud_secret + "\""
-            if region:
-            	pgcCmd = pgcCmd + " --region \"" + region + "\""
+            pgcCmd = self.constructCmd(args, method_type = "ADD")
             data = pgc.get_cmd_data(pgcCmd)
         return jsonify(data)
 
-
-credentials.add_url_rule('/create/', view_func=CreateCredential.as_view('create'))
-
-
-class ListCredentials(MethodView):
     @login_required
-    def get(self):
-    	data = pgc.get_cmd_data('credentials --list')
-    	return jsonify(data)
-
-
-credentials.add_url_rule('/list/', view_func=ListCredentials.as_view('list'))
-
-class DeleteCredentials(MethodView):
-    @login_required
-    def post(self):
-    	json_dict = {}
+    def put(self):
+        json_dict = {}
         if not current_user:
             json_dict['state'] = "error"
             json_dict['msg'] = "Access denied."
             return jsonify(json_dict)
         else:
             args= request.json.get('params')
-            cred_uuids = args.get('cred_uuids')
+            pgcCmd = self.constructCmd(args, method_type = "UPDATE")
+            data = pgc.get_cmd_data(pgcCmd)
+        return jsonify(data)
+
+    @login_required
+    def get(self):
+        data = pgc.get_cmd_data('credentials --list')
+        return jsonify(data)
+
+credentials.add_url_rule('/', view_func=CreateCredential.as_view('create'))
+
+
+class DeleteCredentials(MethodView):
+    @login_required
+    def delete(self, uuids):
+    	json_dict = {}
+        if not current_user:
+            json_dict['state'] = "error"
+            json_dict['msg'] = "Access denied."
+            return jsonify(json_dict)
+        else:
             result = {}
-            for cred_uuid in cred_uuids:
+            for cred_uuid in uuids.split(','):
 	            pgcCmd = "credentials DELETE "
 	            if cred_uuid:
 	            	pgcCmd = pgcCmd + " --cred \"" + cred_uuid + "\""
@@ -88,4 +99,4 @@ class DeleteCredentials(MethodView):
         return jsonify(data)
     	
 
-credentials.add_url_rule('/delete/', view_func=DeleteCredentials.as_view('delete'))
+credentials.add_url_rule('/<string:uuids>', view_func=DeleteCredentials.as_view('delete'))

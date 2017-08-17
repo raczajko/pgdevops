@@ -43,10 +43,10 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 
 	var credentialsList = function(argument) {
 		
-		var getCredentials = bamAjaxCall.getCmdData('pgc/credentials/list/')
+		var getCredentials = bamAjaxCall.getCmdData('pgc/credentials/')
 		getCredentials.then(function (data) {
 			$scope.loading = false;
-			$scope.credentialsList = JSON.parse(data[0]);
+			$scope.credentialsList = data;
 		})
 
 	}
@@ -77,17 +77,20 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 			$scope.data.cloud_name = '';
 			$scope.data.region = '';
 		}
-		var addCred = bamAjaxCall.postData('/api/pgc/credentials/create/', $scope.data)
+		if ($scope.data.cred_uuid) {
+			var addCred = bamAjaxCall.putData('/api/pgc/credentials/', $scope.data)
+		}else{
+			var addCred = bamAjaxCall.postData('/api/pgc/credentials/', $scope.data)
+		}
 		addCred.then(function (data) {
 			$scope.adding = false;
-			var data = JSON.parse(data[0])[0];
 			if (data.state == 'error') {
 				$scope.alerts.push({
 		    		msg : data.msg,
 		    		type : 'error'
 		    	})
 			}else{
-				$rootScope.$emit('addResponse', data);
+				$rootScope.$emit('addResponse', data[0]);
 	            $rootScope.$emit('refreshCreds');
 	            $uibModalInstance.dismiss('cancel');
 			}
@@ -101,7 +104,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 			}
         	var checkUser = bamAjaxCall.getCmdData('testConn', testData);
     		checkUser.then(function (argument) {
-    			var jsonData = JSON.parse(argument)[0];
+    			var jsonData = argument ;
     			if (jsonData.state == 'success') {
     				$scope.isSudo =  jsonData.isSudo;
     				$scope.pgcDir = jsonData.pgc_path;
@@ -131,13 +134,6 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
     			}
     		})
     	}
-
-	$scope.deleteCredential = function (cred_uuid) {
-		var deleteCred = bamAjaxCall.postData('/api/pgc/credentials/delete/', {'cred_uuid' : cred_uuid} )
-		deleteCred.then(function (data) {
-			credentialsList();
-		})
-	}
 
 	$scope.testCredential = function () {
 		var modalInstance = $uibModal.open({
