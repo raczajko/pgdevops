@@ -10,6 +10,7 @@ from flask import Blueprint, request, jsonify
 from flask.views import MethodView
 from pickle import dumps
 
+from responses import InvalidParameterResult, ServerErrorResult, Result
 PGC_HOME = os.getenv("PGC_HOME", "")
 this_uname = str(platform.system())
 
@@ -29,9 +30,7 @@ class BackupAPI(MethodView):
         result = {}
         args = request.json
         if not validate_backup_fields(args):
-            result['error'] = 1
-            result['msg'] = "Check the parameters provided."
-            return result
+            return InvalidParameterResult().http_response()
         try:
             from BackupRestore import BackupRestore
             backuprestore = BackupRestore()
@@ -61,17 +60,20 @@ class BackupAPI(MethodView):
                     print str(e)
                     pass
             if result['error']:
-                result['error'] = 1
-                result['msg'] = result['error']
+                #result['error'] = 1
+                #result['msg'] = result['error']
+                response = Result(500,"error",result['error'],extra_fields={'data':result})
             else:
-                result['error'] = 0
-                result['msg'] = 'Success'
+                #result['error'] = 0
+                #result['msg'] = 'Success'
+                response = Result(200, "Success", "Success", extra_fields={'data': result})
         except Exception as e:
             import traceback
-            result['error'] = 1
-            result['msg'] = str(e)
+            #result['error'] = 1
+            #result['msg'] = str(e)
+            response = ServerErrorResult(message=str(e))
         time.sleep(1)
-        return jsonify(result)
+        return response.http_response()
 _backrest.add_url_rule('/dbdump', view_func=BackupAPI.as_view('backup'))
 
 class RestoreAPI(MethodView):
@@ -80,9 +82,7 @@ class RestoreAPI(MethodView):
         result = {}
         args = request.json
         if not validate_backup_fields(args):
-            result['error'] = 1
-            result['msg'] = "Check the parameters provided."
-            return result
+            return InvalidParameterResult().http_response()
         try:
             from BackupRestore import BackupRestore
             backuprestore = BackupRestore()
@@ -112,17 +112,14 @@ class RestoreAPI(MethodView):
                     print str(e)
                     pass
             if result['error']:
-                result['error'] = 1
-                result['msg'] = result['error']
+                response = Result(500, "error", result['error'], extra_fields={'data': result})
             else:
-                result['error'] = 0
-                result['msg'] = 'Success'
+                response = Result(200, "Success", "Success", extra_fields={'data': result})
         except Exception as e:
             import traceback
-            result['error'] = 1
-            result['msg'] = str(e)
+            response = ServerErrorResult(message=str(e))
         time.sleep(1)
-        return jsonify(result)
+        return response.http_response()
 _backrest.add_url_rule('/dbrestore', view_func=RestoreAPI.as_view('restore'))
 
 class BackupRestore(object):

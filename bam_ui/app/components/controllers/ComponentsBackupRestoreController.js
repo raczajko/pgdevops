@@ -305,7 +305,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             backupDb.then(function (argument) {
                 $scope.loadingBackupAction = false;
                 $scope.showBackupBgProcess = true;
-                $rootScope.$emit('backgroundProcessStarted', argument.data.process_log_id);
+                $rootScope.$emit('backgroundProcessStarted', argument.data.data.process_log_id);
                 $scope.backupDbSpinner = false;
             });
             //$scope.backup.password = "";
@@ -334,7 +334,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
             backupDb.then(function (argument) {
                 $scope.loadingRestoreAction = false;
                 $scope.showBackupBgProcess = true;
-                $rootScope.$emit('backgroundProcessStarted', argument.data.process_log_id);
+                $rootScope.$emit('backgroundProcessStarted', argument.data.data.process_log_id);
                 $scope.backupDbSpinner = false;
             });
             //$scope.restore.password = "";
