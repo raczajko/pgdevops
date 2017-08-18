@@ -25,7 +25,7 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 		var getCredentials = bamAjaxCall.getCmdData('pgc/credentials/')
 		getCredentials.then(function (data) {
 			$scope.loading = false;
-			$scope.credentialsList = data;
+			$scope.credentialsList = data.data;
 			for (var i = $scope.credentialsList.length - 1; i >= 0; i--) {
 				$scope.credentialsList[i].selected = false;
 			}
@@ -49,24 +49,6 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 
 	credentialsList();
 
-	$scope.addCredential = function () {
-		var addCred = bamAjaxCall.postData('/api/pgc/credentials/', $scope.data)
-		addCred.then(function (data) {
-			var parseData = data;
-			if (parseData[0].state=='info') {
-				$scope.alerts.push({
-                    msg: data,
-                    type: 'success'
-                });
-			}else{
-				$scope.alerts.push({
-                    msg: data,
-                    type: 'error'
-                });
-			}
-		})
-	}
-
 	$scope.toggleAll = function() { 
         if($scope.isAllSelected){
             $scope.isAllSelected = false;
@@ -83,12 +65,12 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
     $rootScope.$on('deleteResponse', function(argument, data) {
     	if (data.state == 'error') {
     		$scope.alerts.push({
-	    		msg : data.msg,
+	    		msg : data.message,
 	    		type : 'error'
 	    	})
     	}else{
     		$scope.alerts.push({
-	    		msg : data.msg,
+	    		msg : data.message,
 	    		type : 'warning'
 	    	})
     	}	
@@ -97,12 +79,12 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 	$rootScope.$on('addResponse', function(argument, data) {
     	if (data.state == 'error') {
     		$scope.alerts.push({
-	    		msg : data.msg,
+	    		msg : data.message,
 	    		type : 'error'
 	    	})
     	}else{
     		$scope.alerts.push({
-	    		msg : data.msg,
+	    		msg : data.message,
 	    		type : 'success'
 	    	})
     	}	

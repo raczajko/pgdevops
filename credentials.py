@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify, session
 from flask.views import MethodView
 from flask_security import login_required, roles_required, current_user
 from flask import g
+from responses import ServerErrorResult, Result, InvalidParameterResult
 
 from Components import Components as pgc
 
@@ -50,33 +51,35 @@ class CreateCredential(MethodView):
     @login_required
     def post(self):
         json_dict = {}
-        if not current_user:
-            json_dict['state'] = "error"
-            json_dict['msg'] = "Access denied."
-            return jsonify(json_dict)
-        else:
-            args= request.json.get('params')
-            pgcCmd = self.constructCmd(args, method_type = "ADD")
-            data = pgc.get_cmd_data(pgcCmd)
-        return jsonify(data)
+        args= request.json.get('params')
+        pgcCmd = self.constructCmd(args, method_type = "ADD")
+        data = pgc.get_cmd_data(pgcCmd)
+        if len(data) == 0:
+            return ServerErrorResult().http_response()
+        if data[0]['state'] != 'info' or data[0]['state'] == 'success':
+            return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
+        return Result(200,data[0]['state'], data[0]['msg']).http_response()
+
 
     @login_required
     def put(self):
         json_dict = {}
-        if not current_user:
-            json_dict['state'] = "error"
-            json_dict['msg'] = "Access denied."
-            return jsonify(json_dict)
-        else:
-            args= request.json.get('params')
-            pgcCmd = self.constructCmd(args, method_type = "UPDATE")
-            data = pgc.get_cmd_data(pgcCmd)
-        return jsonify(data)
+        args= request.json.get('params')
+        pgcCmd = self.constructCmd(args, method_type = "UPDATE")
+        data = pgc.get_cmd_data(pgcCmd)
+        if len(data) == 0:
+            return ServerErrorResult().http_response()
+        if data[0]['state'] != 'info' or data[0]['state'] == 'success':
+            return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
+        return Result(200,data[0]['state'], data[0]['msg']).http_response()
+
 
     @login_required
     def get(self):
-        data = pgc.get_cmd_data('credentials --list')
-        return jsonify(data)
+        pg_response = pgc.get_cmd_data('credentials --list')
+        if len(pg_response) == 0:
+            return ServerErrorResult().http_response()
+        return Result(200,'SUCCESS','SUCCESS',extra_fields={"data":pg_response}).http_response()
 
 credentials.add_url_rule('/', view_func=CreateCredential.as_view('create'))
 
@@ -85,18 +88,17 @@ class DeleteCredentials(MethodView):
     @login_required
     def delete(self, uuids):
     	json_dict = {}
-        if not current_user:
-            json_dict['state'] = "error"
-            json_dict['msg'] = "Access denied."
-            return jsonify(json_dict)
-        else:
-            result = {}
-            for cred_uuid in uuids.split(','):
-	            pgcCmd = "credentials DELETE "
-	            if cred_uuid:
-	            	pgcCmd = pgcCmd + " --cred \"" + cred_uuid + "\""
-            		data = pgc.get_cmd_data(pgcCmd)
-        return jsonify(data)
+        result = {}
+        for cred_uuid in uuids.split(','):
+            pgcCmd = "credentials DELETE "
+            if cred_uuid:
+            	pgcCmd = pgcCmd + " --cred \"" + cred_uuid + "\""
+        	data = pgc.get_cmd_data(pgcCmd)
+                if len(data) == 0:
+                    return ServerErrorResult().http_response()
+                if data[0]['state'] != 'info' or data[0]['state'] == 'success':
+                    return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
+                return Result(200,data[0]['state'], data[0]['msg']).http_response()
     	
 
 credentials.add_url_rule('/<string:uuids>', view_func=DeleteCredentials.as_view('delete'))

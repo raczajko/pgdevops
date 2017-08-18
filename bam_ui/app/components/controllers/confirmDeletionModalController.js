@@ -34,7 +34,7 @@ angular.module('bigSQL.components').controller('confirmDeletionModalController',
     $scope.removeCreds = function (argument) {
         var deleteCred = bamAjaxCall.deleteData('/api/pgc/credentials/' + deleteFiles.toString() )
         deleteCred.then(function (data) {
-            $rootScope.$emit('deleteResponse', data[0]);
+            $rootScope.$emit('deleteResponse', data);
             $rootScope.$emit('refreshCreds');
             $uibModalInstance.dismiss('cancel');
         })

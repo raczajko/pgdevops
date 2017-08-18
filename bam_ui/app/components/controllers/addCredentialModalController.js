@@ -95,13 +95,13 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 		}
 		addCred.then(function (data) {
 			$scope.adding = false;
-			if (data.state == 'error') {
+			if (data.status == 'error') {
 				$scope.alerts.push({
-		    		msg : data.msg,
+		    		msg : data.message,
 		    		type : 'error'
 		    	})
 			}else{
-				$rootScope.$emit('addResponse', data[0]);
+				$rootScope.$emit('addResponse', data);
 	            $rootScope.$emit('refreshCreds');
 	            $uibModalInstance.dismiss('cancel');
 			}
