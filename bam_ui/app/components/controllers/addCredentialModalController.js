@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('addCredentialModalController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', 'bamAjaxCall', '$window', '$cookies', '$sce', 'htmlMessages', '$timeout', '$uibModalInstance', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, bamAjaxCall, $window, $cookies, $sce, htmlMessages, $timeout, $uibModalInstance) {
+angular.module('bigSQL.components').controller('addCredentialModalController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', 'bamAjaxCall', '$window', '$cookies', '$sce', 'htmlMessages', '$timeout', '$uibModalInstance', 'pgcRestApiCall', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, bamAjaxCall, $window, $cookies, $sce, htmlMessages, $timeout, $uibModalInstance,pgcRestApiCall) {
 
 	$scope.alerts = [];
 	
@@ -32,7 +32,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 		}
 	}
 
-	var getCloudList = bamAjaxCall.getCmdData('cloudlist');
+	var getCloudList = pgcRestApiCall.getCmdData('cloudlist');
 	getCloudList.then(function (data) {
 		$scope.cloudTypes = data;
 	})
@@ -62,7 +62,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 
 	}
 
-	var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
+	var regions = pgcRestApiCall.getCmdData('metalist aws-regions');
     regions.then(function(data){
         $scope.loading = false;
         $scope.regions = data;
