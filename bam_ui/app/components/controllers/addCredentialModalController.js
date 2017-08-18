@@ -108,7 +108,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 		})
 	}
 
-	$scope.testCred = function (host, ) {
+	$scope.testCred = function (host) {
 			var testData = {
 				'name' : $scope.data.user,
 				'password' : $scope.data.password
