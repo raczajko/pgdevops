@@ -3,21 +3,6 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 	$scope.alerts = [];
 	$scope.loading = true;
 	$scope.types = {'SSH Key' : 'ssh-key', 'Cloud' : 'cloud', 'Password' : 'pwd'};
-	// $scope.cloudTypes = {'AWS': 'AWS', 'Azure': 'Azure'};
-	
-	$scope.data = {
-		'type' : '',
-		'credential_name' : '',
-		'user' : '',
-		'password' : '',
-		'ssh_key' : '',
-		'cloud_key' : '',
-		'ssh_sudo_pwd' : '',
-		'cloud_name' : 'AWS',
-		'cloud_secret' : '',
-		'region' : ''
-	}
-
 
 	var credentialsList = function(argument) {
 		$scope.loading = true;
@@ -35,13 +20,6 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 		})
 
 	}
-
-	var regions = pgcRestApiCall.getCmdData('metalist aws-regions');
-    regions.then(function(data){
-        $scope.loading = false;
-        $scope.regions = data;
-        $scope.data.region = $scope.regions[0].region;
-    });
 
 	$rootScope.$on('refreshCreds', function (argument) {
 		credentialsList();

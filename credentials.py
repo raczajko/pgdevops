@@ -56,7 +56,7 @@ class CreateCredential(MethodView):
         data = pgc.get_cmd_data(pgcCmd)
         if len(data) == 0:
             return ServerErrorResult().http_response()
-        if data[0]['state'] != 'info' or data[0]['state'] == 'success':
+        if data[0]['state'] != 'info' or data[0]['state'] == 'completed':
             return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
         return Result(200,data[0]['state'], data[0]['msg']).http_response()
 
@@ -69,7 +69,7 @@ class CreateCredential(MethodView):
         data = pgc.get_cmd_data(pgcCmd)
         if len(data) == 0:
             return ServerErrorResult().http_response()
-        if data[0]['state'] != 'info' or data[0]['state'] == 'success':
+        if data[0]['state'] != 'info' or data[0]['state'] == 'completed':
             return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
         return Result(200,data[0]['state'], data[0]['msg']).http_response()
 
@@ -94,11 +94,11 @@ class DeleteCredentials(MethodView):
             if cred_uuid:
             	pgcCmd = pgcCmd + " --cred \"" + cred_uuid + "\""
         	data = pgc.get_cmd_data(pgcCmd)
-                if len(data) == 0:
-                    return ServerErrorResult().http_response()
-                if data[0]['state'] != 'info' or data[0]['state'] == 'success':
-                    return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
-                return Result(200,data[0]['state'], data[0]['msg']).http_response()
+        if len(data) == 0:
+            return ServerErrorResult().http_response()
+        if data[0]['state'] != 'info' or data[0]['state'] == 'completed':
+            return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
+        return Result(200,data[0]['state'], data[0]['msg']).http_response()
     	
 
 credentials.add_url_rule('/<string:uuids>', view_func=DeleteCredentials.as_view('delete'))
