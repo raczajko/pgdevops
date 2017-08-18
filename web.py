@@ -172,6 +172,9 @@ application.register_blueprint(credentials, url_prefix='/api/pgc/credentials')
 from CloudHandler import cloud
 application.register_blueprint(cloud, url_prefix='/api/pgc/instances')
 
+from BackupRestore import _backrest
+application.register_blueprint(_backrest, url_prefix='/api/pgc')
+
 
 db_session = db.session
 
@@ -920,66 +923,6 @@ class GenerateBadgerReports(Resource):
         return result
 
 api.add_resource(GenerateBadgerReports, '/api/generate_badger_reports')
-
-
-def validate_backup_fields(args):
-    if all(name in args for name in ('host','dbName','port','username','sshServer','backupDirectory','fileName','format','advOptions')):
-        return True
-    else:
-        return False
-
-
-class BackupRestoreDatabase(Resource):
-    @login_required
-    def post(self):
-        result = {}
-        args = request.json
-        if not validate_backup_fields(args):
-            result['error'] = 1
-            result['msg'] = "Check the parameters provided."
-            return result
-        try:
-            from BackupRestore import BackupRestore
-            backuprestore = BackupRestore()
-            ctime = get_current_time(format='%y%m%d%H%M%S%f')
-            import util
-            if args['host'] in ['localhost','127.0.0.1']:
-                args['host'] = util.get_host_ip()
-            result = backuprestore.backup_restore(ctime,args['action'],args['host'],args['port'],args['username'],args['dbName'],
-                                 args['sshServer'],args['backupDirectory'],
-                                 args['fileName'],args['format'],args.get('advOptions',""), password=args.get('password',None))
-            process_log_dir = result['log_dir']
-            process_status = get_process_status(process_log_dir)
-            result['pid'] = process_status.get('pid')
-            result['exit_code'] = process_status.get('exit_code')
-            result['process_log_id'] = result["process_log_id"]
-            if process_status.get('exit_code') is None:
-                result['in_progress'] = True
-                try:
-                    j = Process(
-                        pid=int(result["process_log_id"]), command=result['cmd'],
-                        logdir=result["log_dir"], desc=dumps(str(args['action'])),
-                        user_id=current_user.id, acknowledge = 'pgDevOps'
-                    )
-                    db_session.add(j)
-                    db_session.commit()
-                except Exception as e:
-                    print str(e)
-                    pass
-            if result['error']:
-                result['error'] = 1
-                result['msg'] = result['error']
-            else:
-                result['error'] = 0
-                result['msg'] = 'Success'
-        except Exception as e:
-            import traceback
-            result['error'] = 1
-            result['msg'] = str(e)
-        time.sleep(1)
-        return result
-
-api.add_resource(BackupRestoreDatabase, '/api/backup_restore_db')
 
 class ComparePGVersions(Resource):
     @login_required

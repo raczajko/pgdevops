@@ -1,8 +1,129 @@
 import os
 import platform
+import time
+
+from pgadmin.model import db, Process
+from utils import get_current_time, get_process_status
+
+from flask_security import current_user, login_required
+from flask import Blueprint, request, jsonify
+from flask.views import MethodView
+from pickle import dumps
 
 PGC_HOME = os.getenv("PGC_HOME", "")
 this_uname = str(platform.system())
+
+_backrest = Blueprint('_backrest', __name__, url_prefix='/api/pgc')
+
+def validate_backup_fields(args):
+    if all(name in args for name in ('host','dbName','port','username','sshServer','backupDirectory','fileName','format','advOptions')):
+        return True
+    else:
+        return False
+
+db_session = db.session
+
+class BackupAPI(MethodView):
+    @login_required
+    def post(self):
+        result = {}
+        args = request.json
+        if not validate_backup_fields(args):
+            result['error'] = 1
+            result['msg'] = "Check the parameters provided."
+            return result
+        try:
+            from BackupRestore import BackupRestore
+            backuprestore = BackupRestore()
+            ctime = get_current_time(format='%y%m%d%H%M%S%f')
+            import util
+            if args['host'] in ['localhost','127.0.0.1']:
+                args['host'] = util.get_host_ip()
+            result = backuprestore.backup_restore(ctime,'backup',args['host'],args['port'],args['username'],args['dbName'],
+                                 args['sshServer'],args['backupDirectory'],
+                                 args['fileName'],args['format'],args.get('advOptions',""), password=args.get('password',None))
+            process_log_dir = result['log_dir']
+            process_status = get_process_status(process_log_dir)
+            result['pid'] = process_status.get('pid')
+            result['exit_code'] = process_status.get('exit_code')
+            result['process_log_id'] = result["process_log_id"]
+            if process_status.get('exit_code') is None:
+                result['in_progress'] = True
+                try:
+                    j = Process(
+                        pid=int(result["process_log_id"]), command=result['cmd'],
+                        logdir=result["log_dir"], desc=dumps(str(args['action'])),
+                        user_id=current_user.id, acknowledge = 'pgDevOps'
+                    )
+                    db_session.add(j)
+                    db_session.commit()
+                except Exception as e:
+                    print str(e)
+                    pass
+            if result['error']:
+                result['error'] = 1
+                result['msg'] = result['error']
+            else:
+                result['error'] = 0
+                result['msg'] = 'Success'
+        except Exception as e:
+            import traceback
+            result['error'] = 1
+            result['msg'] = str(e)
+        time.sleep(1)
+        return jsonify(result)
+_backrest.add_url_rule('/dbdump', view_func=BackupAPI.as_view('backup'))
+
+class RestoreAPI(MethodView):
+    @login_required
+    def post(self):
+        result = {}
+        args = request.json
+        if not validate_backup_fields(args):
+            result['error'] = 1
+            result['msg'] = "Check the parameters provided."
+            return result
+        try:
+            from BackupRestore import BackupRestore
+            backuprestore = BackupRestore()
+            ctime = get_current_time(format='%y%m%d%H%M%S%f')
+            import util
+            if args['host'] in ['localhost','127.0.0.1']:
+                args['host'] = util.get_host_ip()
+            result = backuprestore.backup_restore(ctime,'restore',args['host'],args['port'],args['username'],args['dbName'],
+                                 args['sshServer'],args['backupDirectory'],
+                                 args['fileName'],args['format'],args.get('advOptions',""), password=args.get('password',None))
+            process_log_dir = result['log_dir']
+            process_status = get_process_status(process_log_dir)
+            result['pid'] = process_status.get('pid')
+            result['exit_code'] = process_status.get('exit_code')
+            result['process_log_id'] = result["process_log_id"]
+            if process_status.get('exit_code') is None:
+                result['in_progress'] = True
+                try:
+                    j = Process(
+                        pid=int(result["process_log_id"]), command=result['cmd'],
+                        logdir=result["log_dir"], desc=dumps(str(args['action'])),
+                        user_id=current_user.id, acknowledge = 'pgDevOps'
+                    )
+                    db_session.add(j)
+                    db_session.commit()
+                except Exception as e:
+                    print str(e)
+                    pass
+            if result['error']:
+                result['error'] = 1
+                result['msg'] = result['error']
+            else:
+                result['error'] = 0
+                result['msg'] = 'Success'
+        except Exception as e:
+            import traceback
+            result['error'] = 1
+            result['msg'] = str(e)
+        time.sleep(1)
+        return jsonify(result)
+_backrest.add_url_rule('/dbrestore', view_func=RestoreAPI.as_view('restore'))
 
 class BackupRestore(object):
     def __init__(self):
