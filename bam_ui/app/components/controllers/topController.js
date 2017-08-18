@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('topController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$sce', '$timeout', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $sce, $timeout, $interval, $rootScope, bamAjaxCall, htmlMessages) {
+angular.module('bigSQL.components').controller('topController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$sce', '$timeout', '$interval', '$rootScope', 'pgcRestApiCall', 'htmlMessages', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $sce, $timeout, $interval, $rootScope, pgcRestApiCall, htmlMessages) {
 
     var session;
     var subscriptions = [];
@@ -28,10 +28,10 @@ angular.module('bigSQL.components').controller('topController', ['$scope', '$uib
 
         if (selectedHost == "") {
             $scope.host = "localhost";
-            var infoData = bamAjaxCall.getCmdData('top');
+            var infoData = pgcRestApiCall.getCmdData('top');
         } else {
             $scope.host = selectedHost;
-            var infoData = bamAjaxCall.getCmdData('hostcmd/top/' + $scope.host_name);
+            var infoData = pgcRestApiCall.getCmdData('top --host "' + $scope.host_name + '"');
         }
 
         infoData.then(function (data) {

@@ -175,25 +175,15 @@ application.register_blueprint(cloud, url_prefix='/api/pgc/instance')
 
 db_session = db.session
 
-
-class pgcApi(Resource):
+class pgcRestApi(Resource):
     @login_required
-    def get(self, pgc_command):
-        # if 'credentials' in session:
-        rpassword = request.args.get('pwd')
-        if session.get("localhost_pwd"):
-            rpassword=session.get("localhost_pwd")
-        elif rpassword:
-            session["localhost_pwd"] = rpassword
-        data = pgc.get_data(pgc_command, pwd=rpassword)
-        if len(data)>0 and data[0].get("pwd_failed"):
-            if session.get("localhost_pwd"):
-                session.pop("localhost_pwd")
+    def get(self, arg):
+        data = pgc.get_data(arg)
         return data
 
 
-api.add_resource(pgcApi,
-                 '/api/<string:pgc_command>')
+api.add_resource(pgcRestApi,
+                 '/api/pgc/<string:arg>')
 
 
 class checkInitLogin(Resource):
@@ -206,69 +196,6 @@ class checkInitLogin(Resource):
 
 api.add_resource(checkInitLogin,
                  '/check_init_login')
-
-
-class pgcApiCom(Resource):
-    @login_required
-    def get(self, cmd, comp, pgc_host=None, password=None):
-        data = pgc.get_data(cmd, comp,pgc_host=pgc_host)
-        return data
-
-
-api.add_resource(pgcApiCom, '/api/<string:cmd>/<string:comp>', '/api/<string:cmd>/<string:comp>/<string:pgc_host>')
-
-
-class pgcApiRelnotes(Resource):
-    @login_required
-    def get(self, cmd, comp=None, pgc_host=None):
-        data = pgc.get_data(cmd, comp, relnotes='relnotes', pgc_host=pgc_host)
-        return data
-
-
-api.add_resource(pgcApiRelnotes, '/api/relnotes/<string:cmd>/<string:comp>', '/api/relnotes/<string:cmd>', '/api/relnotes/<string:cmd>/<string:comp>/<string:pgc_host>')
-
-
-class pgcApiListRelnotes(Resource):
-    @login_required
-    def get(self, cmd, pgc_host=None):
-        data = pgc.get_data(cmd, relnotes='relnotes', pgc_host=pgc_host)
-        return data
-
-
-api.add_resource(pgcApiListRelnotes, '/api/hostrelnotes/<string:cmd>/<string:pgc_host>')
-
-
-class pgcApiHosts(Resource):
-    @login_required
-    def get(self):
-        data = pgc.get_data('register HOST --list --json')
-        return data
-
-
-api.add_resource(pgcApiHosts, '/api/hosts')
-
-
-class pgcApiGroups(Resource):
-    @login_required
-    def get(self):
-        data = pgc.get_data('register GROUP --list --json')
-        return data
-
-
-api.add_resource(pgcApiGroups, '/api/groups')
-
-
-class pgcApiExtensions(Resource):
-    @login_required
-    def get(self, comp, pgc_host=None):
-        if pgc_host:
-            data = pgc.get_data('list --extensions', comp, pgc_host=pgc_host)
-        else:    
-            data = pgc.get_data('list --extensions', comp)
-        return data
-
-
-api.add_resource(pgcApiExtensions, '/api/extensions/<string:comp>', '/api/extensions/<string:comp>/<string:pgc_host>')
 
 
 class pgcUtilRelnotes(Resource):
@@ -1071,7 +998,7 @@ class ComparePGVersions(Resource):
         result['result_code'] = result_code
         return result
 
-api.add_resource(ComparePGVersions, '/api/compatre_pg_versions/<string:host>')
+api.add_resource(ComparePGVersions, '/api/compare_pg_versions/<string:host>')
 
 class GetBgProcessList(Resource):
     @login_required

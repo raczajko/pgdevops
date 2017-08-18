@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('credentialManagerController', ['$rootScope', '$scope', '$uibModal','PubSubService', 'MachineInfo', 'UpdateComponentsService', 'bamAjaxCall', '$window', '$cookies', '$sce', 'htmlMessages', '$timeout', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, bamAjaxCall, $window, $cookies, $sce, htmlMessages, $timeout) {
+angular.module('bigSQL.components').controller('credentialManagerController', ['$rootScope', '$scope', '$uibModal','PubSubService', 'MachineInfo', 'UpdateComponentsService', 'bamAjaxCall', '$window', '$cookies', '$sce', 'htmlMessages', '$timeout', 'pgcRestApiCall', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, bamAjaxCall, $window, $cookies, $sce, htmlMessages, $timeout, pgcRestApiCall) {
 
 	$scope.alerts = [];
 	$scope.loading = true;
@@ -36,7 +36,7 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 
 	}
 
-	var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
+	var regions = pgcRestApiCall.getCmdData('metalist aws-regions');
     regions.then(function(data){
         $scope.loading = false;
         $scope.regions = data;
@@ -132,32 +132,34 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 		}
     }
 
-	$scope.deleteCredential = function (cred_uuid) {
-		var selectedCreds = [];
-		for (var i = $scope.credentialsList.length - 1; i >= 0; i--) {
-			if($scope.credentialsList[i].selected){
-				selectedCreds.push($scope.credentialsList[i]);
-			}
-		}
-		if (selectedCreds.length>0) {
-			var cred_uuids = [];
+	$scope.deleteCredential = function (cred_uuid, disabled) {
+		if (!disabled) {
+			var selectedCreds = [];
 			for (var i = $scope.credentialsList.length - 1; i >= 0; i--) {
 				if($scope.credentialsList[i].selected){
-					cred_uuids.push($scope.credentialsList[i].cred_uuid);
+					selectedCreds.push($scope.credentialsList[i]);
 				}
 			}
-			var modalInstance = $uibModal.open({
-	            templateUrl: '../app/components/partials/confirmDeletionModal.html',
-	            controller: 'confirmDeletionModalController',
-	        });
-	        modalInstance.deleteFiles = cred_uuids;
-	        modalInstance.comp = 'credentials';
-	        modalInstance.deleteCred = true;
-		}else{
-			$scope.alerts.push({
-				msg: htmlMessages.getMessage('select-one-cred'),
-                type: 'warning'
-            });
+			if (selectedCreds.length>0) {
+				var cred_uuids = [];
+				for (var i = $scope.credentialsList.length - 1; i >= 0; i--) {
+					if($scope.credentialsList[i].selected){
+						cred_uuids.push($scope.credentialsList[i].cred_uuid);
+					}
+				}
+				var modalInstance = $uibModal.open({
+		            templateUrl: '../app/components/partials/confirmDeletionModal.html',
+		            controller: 'confirmDeletionModalController',
+		        });
+		        modalInstance.deleteFiles = cred_uuids;
+		        modalInstance.comp = 'credentials';
+		        modalInstance.deleteCred = true;
+			}else{
+				$scope.alerts.push({
+					msg: htmlMessages.getMessage('select-one-cred'),
+	                type: 'warning'
+	            });
+			}
 		}
 	}
 
@@ -191,30 +193,30 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 		}
 	}
 
-	$scope.openUsage = function (name, host_list, cred_type) {
-		var selectedCreds = [];
-		for (var i = $scope.credentialsList.length - 1; i >= 0; i--) {
-			if($scope.credentialsList[i].selected){
-				selectedCreds.push($scope.credentialsList[i]);
+	$scope.openUsage = function (name, host_list, cred_type, disabled) {
+			var selectedCreds = [];
+			for (var i = $scope.credentialsList.length - 1; i >= 0; i--) {
+				if($scope.credentialsList[i].selected){
+					selectedCreds.push($scope.credentialsList[i]);
+				}
 			}
-		}
-		if (name || selectedCreds.length>0) {
-			var modalInstance = $uibModal.open({
-                templateUrl: '../app/components/partials/credentialUsage.html',
-                controller: 'credentialUsageController',
-                keyboard  : false,
-                backdrop  : 'static',
-            });
-			modalInstance.name = name;
-			modalInstance.host_list = host_list;
-			modalInstance.cred_type = cred_type;
-			modalInstance.selectedCreds = selectedCreds;
-		}else{
-			$scope.alerts.push({
-				msg: htmlMessages.getMessage('select-one-cred'),
-                type: 'warning'
-            });
-		}
+			if (name || selectedCreds.length>0) {
+				var modalInstance = $uibModal.open({
+	                templateUrl: '../app/components/partials/credentialUsage.html',
+	                controller: 'credentialUsageController',
+	                keyboard  : false,
+	                backdrop  : 'static',
+	            });
+				modalInstance.name = name;
+				modalInstance.host_list = host_list;
+				modalInstance.cred_type = cred_type;
+				modalInstance.selectedCreds = selectedCreds;
+			}else{
+				$scope.alerts.push({
+					msg: htmlMessages.getMessage('select-one-cred'),
+	                type: 'warning'
+	            });
+			}
 	}
 
 	$scope.closeAlert = function (index) {

@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('RemotepgcVersionCheckModalController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', 'bamAjaxCall', '$sce', 'htmlMessages', '$cookies', 'UpdateComponentsService', '$uibModalStack', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal, bamAjaxCall, $sce, htmlMessages, $cookies, UpdateComponentsService, $uibModalStack) {
+angular.module('bigSQL.components').controller('RemotepgcVersionCheckModalController', ['$scope', '$uibModalInstance', 'PubSubService', '$rootScope', '$uibModal', 'pgcRestApiCall', '$sce', 'htmlMessages', '$cookies', 'UpdateComponentsService', '$uibModalStack', function ($scope, $uibModalInstance, PubSubService, $rootScope, $uibModal, pgcRestApiCall, $sce, htmlMessages, $cookies, UpdateComponentsService, $uibModalStack) {
 
     $scope.host = $uibModalInstance.host;
     $scope.returnCode = $uibModalInstance.returnCode;
@@ -19,9 +19,9 @@ angular.module('bigSQL.components').controller('RemotepgcVersionCheckModalContro
 
     function checkInfo(argument) {
         if ($scope.returnCode == 1){
-            var infoData = bamAjaxCall.getCmdData('hostcmd/info/'+$scope.host);
+            var infoData = pgcRestApiCall.getCmdData('info --host "' + $scope.host + '"');
         }else if($scope.returnCode == 2){
-            var infoData = bamAjaxCall.getCmdData('info');
+            var infoData = pgcRestApiCall.getCmdData('info');
         }
     }
 
