@@ -1,6 +1,6 @@
 <form class="form" name="userForm">
     <div class="col-md-1">
-        <button class="btn btn-default" ng-model="value.id" ng-disabled="value.email == $root.userInfoGlobal.email" ng-click="deleteUser(value.id)">
+        <button class="btn btn-default" ng-model="value.id" ng-disabled="value.email == $root.userInfoGlobal.email || value.new" ng-click="deleteUser(value.id)">
             <i class="fa fa-trash"></i>
         </button>
     </div>

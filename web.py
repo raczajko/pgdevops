@@ -170,7 +170,7 @@ from credentials import credentials
 application.register_blueprint(credentials, url_prefix='/api/pgc/credentials')
 
 from CloudHandler import cloud
-application.register_blueprint(cloud, url_prefix='/api/pgc/instance')
+application.register_blueprint(cloud, url_prefix='/api/pgc/instances')
 
 
 db_session = db.session
