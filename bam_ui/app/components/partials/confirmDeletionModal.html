@@ -11,7 +11,10 @@
 </form>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-danger" type="button" ng-click="cancel()">No</button>
-    <button type="submit" class="btn btn-success" ng-if="!deleteCred" ng-click="removeReports()">Yes</button>
-    <button type="submit" class="btn btn-success" ng-if="deleteCred" ng-click="removeCreds()">Yes</button>
+    <button class="btn btn-danger" type="button" ng-click="cancel()" ng-if="!deleting">No</button>
+    <button type="submit" class="btn btn-success" ng-if="!deleteCred && !deleting" ng-click="removeReports()">Yes</button>
+    <button type="submit" class="btn btn-success" ng-if="deleteCred && !deleting" ng-click="removeCreds()">Yes</button>
+    <span ng-if="deleting">
+    	<i class="fa fa-cog fa-spin"></i>&nbsp;Deleting...
+    </span>
 </div>

@@ -95,7 +95,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 		}
 		addCred.then(function (data) {
 			$scope.adding = false;
-			if (data.status == 'error') {
+			if (data.state == 'error') {
 				$scope.alerts.push({
 		    		msg : data.message,
 		    		type : 'error'
