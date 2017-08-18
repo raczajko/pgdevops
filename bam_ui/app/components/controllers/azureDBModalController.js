@@ -40,17 +40,17 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
         }
         var getData = pgcRestApiCall.getCmdData(cmd);
         getData.then(function(data){
-            if (data[0].state == 'info') {
-                $scope.discoverMsg = data[0].msg;
-            }else if (data[0].state=="error") {
+            if (data.state == 'info') {
+                $scope.discoverMsg = data.message;
+            }else if (data.state=="error") {
                 $scope.loadingSpinner = false;
-                $scope.errMsg = data[0].msg;
+                $scope.errMsg = data.message;
                 // $rootScope.$emit('disableLab', $scope.lab, 'off')
-            }else if(data[0].state=="completed"){
+            }else if(data.state=="completed"){
                 $scope.loadingSpinner = false;
                 $scope.availList = [];
                 if($scope.instance == 'db'){
-                    $scope.rdsList = data[0].data;
+                    $scope.rdsList = data.data;
                     for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
                         if ($scope.rdsList[i].is_in_pglist == true) {
                             $scope.rdsList[i].selected = true;
@@ -61,10 +61,10 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
                     $scope.newAvailList = $($scope.availList).filter(function(i,n){ return n.is_in_pglist != true });
                 }
                 else if($scope.instance == 'vm'){
-                    $scope.vmList = data[0].data;
+                    $scope.vmList = data.data;
                 }
 
-                if (data[0].data.length == 0 ) {
+                if (data.data.length == 0 ) {
                     $scope.noRDS = true;
                     if($scope.instance == 'db'){
                         $scope.noInstanceMsg = htmlMessages.getMessage('no-rds');
@@ -92,7 +92,6 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
         });
 
         session.subscribe('com.bigsql.onInstancesList', function (data) {
-            debugger
             var data = JSON.parse(data[0]);
             if (data[0].state == 'info') {
                 $scope.discoverMsg = data[0].msg;

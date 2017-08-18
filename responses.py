@@ -24,7 +24,7 @@ class Result(object):
 
     def to_json_dict(self):
         """Convert to a dict for serializing to JSON."""
-        result = {"code": self.code, "status": self.state, "message": self.message}
+        result = {"code": self.code, "state": self.state, "message": self.message}
         if self.extra_fields:
             result.update(self.extra_fields)
         return result
