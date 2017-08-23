@@ -473,15 +473,15 @@ class Components(ComponentAction):
         yield self.session.publish('com.bigsql.onRdsMetaList', data[0].strip('\n'))
 
     @inlineCallbacks
-    def createRds(self, type, region, json_obj):
+    def createInstance(self, _type, region, cloud, json_obj):
         """
         Method to get rds Instance Info
         """
         new_json_obj = json.dumps(json_obj)
-        pgcCmd = PGC_HOME + os.sep + "pgc --json create " + type + " " + region + " \'"+ str(new_json_obj) +" \'"
+        pgcCmd = PGC_HOME + os.sep +"pgc --json create " + _type + " --region " +  region + " --params  \'"+ str(new_json_obj) + " \' --cloud " + cloud
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = process.communicate()
-        yield self.session.publish('com.bigsql.onCreateRds', data[0].strip('\n'))
+        yield self.session.publish('com.bigsql.onCreateInstance', data[0].strip('\n'))
 
     @inlineCallbacks
     def dbtune(self, email, comp):

@@ -145,7 +145,7 @@ class AppSession(ApplicationSession):
 
         self.register(components.rdsInfo, 'com.bigsql.rdsInfo')
 
-        self.register(components.createRds, 'com.bigsql.createRds')
+        self.register(components.createInstance, 'com.bigsql.createInstance')
 
         self.register(components.rdsMetaList, 'com.bigsql.rdsMetaList')
 
