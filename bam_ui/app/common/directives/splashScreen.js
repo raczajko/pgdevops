@@ -25,7 +25,7 @@ angular.module('bigSQL.common').directive('splashScreen', function () {
                 });
                 modalInstance.lab = 'aws';
                 modalInstance.disp_name = 'Discover AWS Postgres RDS Instances';
-                modalInstance.instance = 'rds';
+                modalInstance.instance = 'db';
               }
 
             $scope.closeNav = function(argument){

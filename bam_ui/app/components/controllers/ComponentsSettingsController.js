@@ -190,7 +190,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
             });
             modalInstance.lab = settingName;
             modalInstance.disp_name = disp_name;
-            modalInstance.instance = 'rds';
+            modalInstance.instance = 'db';
         }
     }
 

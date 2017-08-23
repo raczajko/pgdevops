@@ -49,7 +49,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
     	session = val;
-        session.subscribe("com.bigsql.onCreateRds", function(data){
+        session.subscribe("com.bigsql.onCreateInstance", function(data){
           $scope.creating = false;
           var data = JSON.parse(data);
           if(data[0].state == 'error'){
@@ -74,7 +74,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
                 $scope.data.db_class = $scope.types[0].DBInstanceClass;
                 $scope.disableInsClass = false;
             }else if($scope.thirdStep){
-                $scope.networkSec = JSON.parse(data[0])
+                $scope.networkSec = response;
                 $scope.vpc = { select : $scope.networkSec[0].vpc }
                 $scope.vpcChange();
             }
@@ -91,7 +91,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         $scope.data.optionGroup = '';
         $scope.types = '';
         $scope.data.db_class = [];
-        session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version])
+        session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version, "aws", "db"])
         for(var i = 0; i < $scope.dbEngVersions.length; ++i){
             if($scope.dbEngVersions[i].EngineVersion == $scope.data.engine_version){
                 $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
@@ -142,17 +142,17 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         $scope.showErrMsg = false;
         var data = [];
         data.push($scope.data);
-        session.call('com.bigsql.createRds', ['db', $scope.data.region, data])
+        session.call('com.bigsql.createInstance', ['db', $scope.data.region, 'aws', data])
     }
 
     $scope.next = function(region){
         $scope.loading = true;
         if($scope.firstStep){
-            session.call('com.bigsql.rdsMetaList', ['rds-versions', '', $scope.data.region, ''])
+            session.call('com.bigsql.rdsMetaList', ['rds-versions', '', $scope.data.region, '', "aws", "db"])
             $scope.firstStep = false;
             $scope.secondStep = true;
         }else{
-            session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, ''])
+            session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '', "aws", "db"])
             $scope.secondStep = false;
             $scope.thirdStep = true;
         }

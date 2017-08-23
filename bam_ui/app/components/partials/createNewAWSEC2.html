@@ -1,0 +1,199 @@
+<div class="modal-header">
+    <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <i class="fa fa-lg fa-close cursor_pointer"></i>
+    </div>
+    <h4 class="modal-title">Create New EC2 Instance</h4>
+</div>
+<div class="modal-body" class="create-rds-modal">
+    <div ng-if="loading" class="text-center">
+        <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+    </div>
+    <div ng-if="firstStep && !loading" class="row">
+        <div class="col-md-6">
+            <form class="form-horizontal create-rds-modal">
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Region :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="select-region"  ng-change="regionChange(regionSelect.region)" ng-options="region.region as region.location for region in regions" ng-model="data.region">
+                            <option value="">--select--</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Instance Type :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="select-ins-type" ng-change="typeChange(typeSelect.type)" ng-model="data.instance_type">
+                            <option value="">--select--</option>
+                            <option value="t2.micro">t2.micro</option>
+                            <!-- <option ng-repeat="type in types" value="{{ type.DBInstanceClass }}" ng-if="!type.v_cpu">
+                                {{type.DBInstanceClass}}  
+                            </option>
+                            <option ng-repeat="type in types" value="{{ type.DBInstanceClass }}" ng-if="type.v_cpu">
+                                {{type.DBInstanceClass}} -- {{type.v_cpu}}(vCPU), {{type.memory}} GiB RAM  
+                            </option> -->
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Choose AMI :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="image_id" ng-model="data.image_id">
+                            <option value="">--select--</option>
+                            <option value="ami-aa5ebdd2">ami-aa5ebdd2</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+            <div>
+                <div class="box-header create-rds-cat-header"> <strong>Storage </strong></div>
+            </div>
+            <form class="form-horizontal create-rds-modal" name="$root.initForm">
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Size (GiB) :</label>
+                    <div class="col-sm-2">
+                        <input type="number" id="allocStroage" class="form-control" value="{{data.allocated_storage}}" ng-model="data.volume_size" name="">
+                    </div>
+                    <div class="col-sm-2" style="margin-left: -25px; margin-top: 8px;"><strong>GB</strong></div>
+                </div>
+                 <div class="form-group">
+                    <label class="col-sm-4 control-label">Volume Type :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="vol-type" ng-model="data.storage_type">
+                            <option value="gp2">General Purpose (SSD)</option>
+                            <option value="io2">Provisioned IOPS (SSD)</option>
+                            <option value="standard">Magnetic</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+            <div>
+                <div class="box-header create-rds-cat-header"> <strong>Tags </strong></div>
+            </div>
+            <form class="form-horizontal create-rds-modal" name="$root.initForm">
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Key :</label>
+                    <div class="col-sm-8">
+                        <input type="text" ng-model="data.keyname" id="tag-key" class="form-control" name="">
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label class="col-sm-4 control-label">Value :</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="tag-value" name="">
+                    </div>
+                </div>
+            </form>
+            <div>
+                <div class="box-header create-rds-cat-header"> <strong>Network & Security </strong></div>
+            </div>
+            <form class="form-horizontal create-rds-modal">
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">VPC :</label>
+                    <div class="col-sm-4">
+                        <select class="form-control" id="vpc" ng-model="vpc.select" ng-change="vpcChange()">
+                            <option ng-repeat="dat in networkSec" value="{{dat.vpc}}">{{dat.vpc}}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Subnet Group:</label>
+                    <div class="col-sm-8">
+                        <input type="text" id="sbGroup" class="form-control" ng-model="data.subnet_group" value="{{data.subnet_group}}" name="" placeholder="Subnet Group">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <div>
+                <div class="box-header create-rds-cat-header"> <strong>Configure Instance Details </strong></div>
+            </div>
+            <form class="form-horizontal create-rds-modal">
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Number of instances :</label>
+                    <div class="col-sm-2">
+                       <input class="form-control" id="num-instances" ng-model="data.instance_count" type="number" name="">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Network :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Subnet :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Auto-assign Public IP :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">IAM role :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Shutdown behavior :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-6 control-label">Enable termination protection :</label>
+                    <div class="col-sm-6">
+                        <input type="checkbox" name="">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Monitoring :</label>
+                    <div class="col-sm-8">
+                        <input type="checkbox" name="" ng-model="data.monitoring">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Tenancy :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            
+        </div>
+        <div class="col-md-6">
+            
+        </div>
+    </div>
+    <div class="row">
+    </div>
+    </div>
+    <div class="alert alert-danger" role="alert" ng-if="showErrMsg">
+        {{errMsg}}
+    </div>
+</div>
+<div class="modal-footer" ng-if="!loading">
+    <div class="pull-right">
+        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating" ng-click="createEC2()">
+           Create
+        </button>
+    </div>
+</div>

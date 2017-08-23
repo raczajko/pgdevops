@@ -14,7 +14,7 @@
         <div class="col-sm-4 col-xs-4 col-md-3" style="margin-right: -100px; margin-top: 5px; margin-left:10px;"><strong>Select Location :</strong> </div>
         <div class="col-sm-4 col-xs-4 col-md-4">
             <select class="form-control" ng-options="region.region as region.location for region in regions" ng-model="region">
-                <option value="">All Location</option>
+                <option value="">All Locations</option>
             </select>
         </div>
         <div class="col-sm-4 col-xs-4 col-md-1">
@@ -53,13 +53,13 @@
                         <div class="col-md-4 col-sm-4 col-xs-4">
                             <input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected" name="">
                         </div>
-                        <div class="col-md-8 col-sm-8 col-xs-8"><strong>Location</strong></div>
+                        <div class="col-md-8 col-sm-8 col-xs-8"><strong>Region</strong></div>
                     </div>
                     <div class="col-md-10 col-sm-10 col-xs-10">
                         <div class="col-md-2 col-sm-2 col-xs-2"><strong>Instance</strong></div>
-                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Version</strong></div>
-                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>User</strong></div>
-                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Domain</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Status</strong></div>
+                        <div class="col-md-4 col-sm-4 col-xs-4"><strong>Class</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>DBName</strong></div>
                     </div>
                     </div>
                 </div>
@@ -72,21 +72,21 @@
                                 <input type="checkbox" ng-checked="true" ng-disabled="true" ng-if="rds.is_in_pglist" name=""> 
                             </div>
                             <div class="col-md-8 col-sm-8 col-xs-8" style="white-space: nowrap;">
-                                {{rds.location}}
+                                {{rds.region}}
                             </div>
                         </div>
                         <div class="col-md-10 col-sm-10 col-xs-10">
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap; cursor: pointer;">
-                                <a>{{rds.name}}</a>
+                                <a>{{rds.instance}}</a>
                             </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
-                                {{rds.version}}
+                                {{rds.status}}
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-4" style="white-space: nowrap;">
+                                {{rds.db_class}}
                             </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
-                                {{rds.administrator_login}}
-                            </div>
-                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
-                                {{rds.fully_qualified_domain_name}}
+                                {{rds.dbname}}
                             </div>
                         </div>
                         </div>
@@ -105,13 +105,11 @@
                         <div class="col-md-4 col-sm-4 col-xs-4">
                             <input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected" name="">
                         </div>
-                        <div class="col-md-8 col-sm-8 col-xs-8"><strong>Location</strong></div>
+                        <div class="col-md-8 col-sm-8 col-xs-8"><strong>Region</strong></div>
                     </div>
                     <div class="col-md-10 col-sm-10 col-xs-10">
                         <div class="col-md-5 col-sm-5 col-xs-5"><strong>Name</strong></div>
-                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Size</strong></div>
-                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Status</strong></div>
-                        <div class="col-md-3 col-sm-3 col-xs-3"><strong>Key Name</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Type</strong></div>
                     </div>
                     </div>
                 </div>
@@ -123,7 +121,7 @@
                                 <input type="checkbox" ng-model="vm.selected" ng-change="optionToggled()" name="">
                             </div>
                             <div class="col-md-8 col-sm-8 col-xs-8" style="white-space: nowrap;">
-                                {{vm.location}}
+                                {{vm.region}}
                             </div>
                         </div>
                         <div class="col-md-10 col-sm-10 col-xs-10">
@@ -131,13 +129,7 @@
                                 {{vm.name}}
                             </div>
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
-                                {{vm.vm_size}}
-                            </div>
-                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;" ng-class="{ 'greenText' :ec.state_name == 'running' , 'redText' : ec.state_name != 'running'}">
-                                {{vm.state_name}}
-                            </div>
-                            <div class="col-md-3 col-sm-3 col-xs-3" style="white-space: nowrap;" >
-                                {{vm.keyname}}
+                                {{vm.type}}
                             </div>
                         </div>
                         </div>

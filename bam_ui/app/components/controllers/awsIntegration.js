@@ -44,4 +44,14 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
             });
     }
 
+    $scope.createNewEC2 = function(){
+        var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/createNewAWSEC2.html',
+                controller: 'createNewAWSEC2Controller',
+                keyboard  : false,
+                windowClass : 'rds-modal',
+                backdrop  : 'static',
+            });
+    }
+
 }])

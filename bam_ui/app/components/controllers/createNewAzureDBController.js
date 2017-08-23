@@ -56,7 +56,7 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
     	session = val;
-        session.subscribe("com.bigsql.onCreateRds", function(data){
+        session.subscribe("com.bigsql.onCreateInstance", function(data){
           $scope.creating = false;
           var data = JSON.parse(data);
           if(data[0].state == 'error'){
@@ -149,7 +149,7 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
         $scope.showErrMsg = false;
         var data = [];
         data.push($scope.data);
-        session.call('com.bigsql.createRds', ['db', $scope.data.region, data])
+        session.call('com.bigsql.createInstance', ['db', $scope.data.region, data])
     }
 
     $scope.next = function(region){

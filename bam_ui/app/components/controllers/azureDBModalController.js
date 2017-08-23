@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('azureDBModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, htmlMessages, $uibModal, $cookies) {
+angular.module('bigSQL.components').controller('azureDBModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'pgcRestApiCall', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, pgcRestApiCall, bamAjaxCall, htmlMessages, $uibModal, $cookies) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
@@ -11,7 +11,7 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
     var session;
     $scope.region = '';
     $scope.showUseConn = false;
-    var regions = bamAjaxCall.getCmdData('metalist/azure-regions');
+    var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
     regions.then(function(data){
         $scope.loadingSpinner = false;
         $scope.regions = data;
@@ -34,24 +34,64 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
         $scope.checked = false;
         $scope.discoverMsg = 'Searching';
         if (region) {
+            var cmd = 'instances '+ $scope.instance +' --email '+$scope.userInfo.email+' --region '+region + ' --cloud '+$scope.lab;
+        }else{
+            var cmd = 'instances '+ $scope.instance +' --email '+$scope.userInfo.email + ' --cloud '+$scope.lab
+        }
+        var getData = pgcRestApiCall.getCmdData(cmd);
+        getData.then(function(data){
+            if (data.state == 'info') {
+                $scope.discoverMsg = data.message;
+            }else if (data.state=="error") {
+                $scope.loadingSpinner = false;
+                $scope.errMsg = data.message;
+                // $rootScope.$emit('disableLab', $scope.lab, 'off')
+            }else if(data.state=="completed"){
+                $scope.loadingSpinner = false;
+                $scope.availList = [];
+                if($scope.instance == 'db'){
+                    $scope.rdsList = data.data;
+                    for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
+                        if ($scope.rdsList[i].is_in_pglist == true) {
+                            $scope.rdsList[i].selected = true;
+                            $scope.checked = true;
+                        }
+                        $scope.availList.push($scope.rdsList[i]);
+                    }
+                    $scope.newAvailList = $($scope.availList).filter(function(i,n){ return n.is_in_pglist != true });
+                }
+                else if($scope.instance == 'vm'){
+                    $scope.vmList = data.data;
+                }
+
+                if (data.data.length == 0 ) {
+                    $scope.noRDS = true;
+                    if($scope.instance == 'db'){
+                        $scope.noInstanceMsg = htmlMessages.getMessage('no-rds');
+                    }else{
+                        $scope.noInstanceMsg = htmlMessages.getMessage('no-ec2');
+                    }
+                }
+           }
+        });
+        /*if (region) {
             session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, region, $scope.lab]);
         }else{
             session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, '', $scope.lab]);
-        }
+        }*/
         $scope.region = region;
     }
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
-        var userInfoData = bamAjaxCall.getCmdData('userinfo');
+        var userInfoData = pgcRestApiCall.getCmdData('userinfo');
         userInfoData.then(function(data) {
             $scope.userInfo = data;
             // session.call('com.bigsql.instancesList', [$scope.userInfo.email]);
         });
 
         session.subscribe('com.bigsql.onInstancesList', function (data) {
-            debugger
             var data = JSON.parse(data[0]);
             if (data[0].state == 'info') {
                 $scope.discoverMsg = data[0].msg;
@@ -67,7 +107,7 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
                     for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
                         if ($scope.rdsList[i].is_in_pglist == true) {
                             $scope.rdsList[i].selected = true;
-                            // $scope.checked = true;
+                            $scope.checked = true;
                         }
                         $scope.availList.push($scope.rdsList[i]);
                     }
@@ -91,7 +131,7 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
 
     });
 
-    // var rdslist = bamAjaxCall.getCmdData('rdslist');
+    // var rdslist = pgcRestApiCall.getCmdData('rdslist');
     // rdslist.then(function (data) {
     //     $scope.loadingSpinner = false;
     //     if (data[0].state=="error") {
@@ -112,6 +152,7 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
     // });
 
     $scope.createConnPgadmin = function(index){
+        debugger
         $scope.addToMetadata = true;
         $scope.addToMetadataMsg = htmlMessages.getMessage('add-to-pgadmin');
         var argsJson = [];
@@ -120,10 +161,10 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
                 var args = {};
                 args['db'] = $scope.availList[i].dbname;
                 args['port'] = $scope.availList[i].port;
-                args['user'] = $scope.availList[i].master_user;
-                args['host'] = $scope.availList[i].address;
+                args['user'] = $scope.availList[i].user;
+                args['host'] = $scope.availList[i].host;
                 args['component'] = $scope.availList[i].instance;
-                args['project'] = 'aws';
+                args['project'] = 'azure';
                 args['rds'] = true;
                 args['region'] = $scope.availList[i].region;
                 argsJson.push(args);
