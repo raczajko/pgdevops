@@ -386,6 +386,7 @@ class checkHostAccess(Resource):
         pgc_ssh_key = ""
         if cred_info.get("ssh_key"):
             pgc_ssh_key = decrypt(cred_info.get("ssh_key"), enc_key)
+        util.update_cred_used(cred_info.get("cred_uuid"))
         
 
         from PgcRemote import PgcRemote
@@ -433,6 +434,7 @@ class initPGComp(Resource):
             if cred_info.get("ssh_sudo_pwd"):
                 sudo_pwd = decrypt(cred_info.get("ssh_sudo_pwd"), enc_key)
             is_sudo = pgc_host_info.get('is_sudo')
+            util.update_cred_used(cred_info.get("cred_uuid"))
         try:
             remote = PgcRemote(ssh_host, ssh_username, password=ssh_password, ssh_key=ssh_key)
             remote.connect()

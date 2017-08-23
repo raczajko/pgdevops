@@ -12,6 +12,10 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 			$scope.loading = false;
 			$scope.credentialsList = data.data;
 			for (var i = $scope.credentialsList.length - 1; i >= 0; i--) {
+				if ($scope.credentialsList[i].last_used) {
+					var dateTime = new Date($scope.credentialsList[i].last_used + ' UTC');
+					$scope.credentialsList[i].last_used_local = dateTime.toString();
+				}
 				$scope.credentialsList[i].selected = false;
 			}
 			if ($scope.credentialsList.length == 0) {

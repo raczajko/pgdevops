@@ -189,13 +189,20 @@ class ComponentAction(object):
             pgcCmd = pgcCmd.split(' --datadir')[0]
         if host:
             pgc_host_info = util.get_pgc_host(host)
-            ssh_host = pgc_host_info[3]
-            ssh_host_name = pgc_host_info[4]
-            ssh_username = pgc_host_info[1]
-            ssh_password = pgc_host_info[2]
-            ssh_key = pgc_host_info[5]
-            sudo_pwd = pgc_host_info[7]
-            is_sudo = pgc_host_info[6]
+            cred_info = util.get_credentials_by_uuid(pgc_host_info.get('ssh_cred_id'))
+            enc_secret = util.get_value("GLOBAL", "SECRET", "")
+            enc_key = "{0}{1}".format(enc_secret, cred_info.get("cred_uuid"))
+            ssh_username = cred_info.get("ssh_user")
+            password= ""
+            if cred_info.get("ssh_passwd"):
+                ssh_password = util.decrypt(cred_info.get("ssh_passwd"),enc_key)
+            ssh_key = ""
+            if cred_info.get("ssh_key"):
+                ssh_key = util.decrypt(cred_info.get("ssh_key"), enc_key)
+            sudo_pwd = ""
+            if cred_info.get("ssh_sudo_pwd"):
+                sudo_pwd = util.decrypt(cred_info.get("ssh_sudo_pwd"), enc_key)
+            ssh_host = pgc_host_info.get('host')
             from PgcRemote import PgcRemote
             remote = PgcRemote(ssh_host, ssh_username, password=ssh_password, ssh_key=ssh_key)
             remote.connect()
@@ -470,15 +477,15 @@ class Components(ComponentAction):
         yield self.session.publish('com.bigsql.onRdsMetaList', data[0].strip('\n'))
 
     @inlineCallbacks
-    def createRds(self, type, region, json_obj):
+    def createInstance(self, _type, region, cloud, json_obj):
         """
         Method to get rds Instance Info
         """
         new_json_obj = json.dumps(json_obj)
-        pgcCmd = PGC_HOME + os.sep + "pgc --json create " + type + " " + region + " \'"+ str(new_json_obj) +" \'"
+        pgcCmd = PGC_HOME + os.sep +"pgc --json create " + _type + " --region " +  region + " --params  \'"+ str(new_json_obj) + " \' --cloud " + cloud
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = process.communicate()
-        yield self.session.publish('com.bigsql.onCreateRds', data[0].strip('\n'))
+        yield self.session.publish('com.bigsql.onCreateInstance', data[0].strip('\n'))
 
     @inlineCallbacks
     def dbtune(self, email, comp):
