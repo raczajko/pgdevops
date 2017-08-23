@@ -448,7 +448,7 @@ class Components(ComponentAction):
         returnValue(1)
 
     @inlineCallbacks
-    def rdsMetaList(self, _type, instance=None, region=None, version=None):
+    def rdsMetaList(self, _type, instance=None, region=None, version=None, cloud = None, instance_type = None):
         """
         Method to get rds Instance Info
         """
@@ -461,6 +461,10 @@ class Components(ComponentAction):
             pgcCmd = pgcCmd + " --region=" + region
         if version:
             pgcCmd = pgcCmd + " --version=" + version
+        if cloud:
+            pgcCmd = pgcCmd + " --cloud " + cloud
+        if instance_type:
+            pgcCmd = pgcCmd + " --instance_type " + instance_type
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = process.communicate()
         yield self.session.publish('com.bigsql.onRdsMetaList', data[0].strip('\n'))

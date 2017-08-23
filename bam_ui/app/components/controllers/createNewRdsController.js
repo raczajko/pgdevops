@@ -91,7 +91,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         $scope.data.optionGroup = '';
         $scope.types = '';
         $scope.data.db_class = [];
-        session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version])
+        session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version, "aws", "db"])
         for(var i = 0; i < $scope.dbEngVersions.length; ++i){
             if($scope.dbEngVersions[i].EngineVersion == $scope.data.engine_version){
                 $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
@@ -148,11 +148,11 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     $scope.next = function(region){
         $scope.loading = true;
         if($scope.firstStep){
-            session.call('com.bigsql.rdsMetaList', ['rds-versions', '', $scope.data.region, ''])
+            session.call('com.bigsql.rdsMetaList', ['rds-versions', '', $scope.data.region, '', "aws", "db"])
             $scope.firstStep = false;
             $scope.secondStep = true;
         }else{
-            session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, ''])
+            session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '', "aws", "db"])
             $scope.secondStep = false;
             $scope.thirdStep = true;
         }

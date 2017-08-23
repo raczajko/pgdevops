@@ -14,21 +14,6 @@ class CloudHandler(MethodView):
         print("In post")
         return "Post"
     def get(self, cmd):
-        '''data = request.args
-        cmd = "instances"
-        errors = []
-        if data.get('instanceType'):
-            cmd = cmd + ' "'+data.get('instanceType')+'"'
-        else:
-            errors.append("instanceType is required")
-        if data.get('provider'):
-            cmd = cmd + ' --cloud "'+data.get('provider')+'"'
-        else:
-            errors.append("provider is required")
-        if data.get('region'):
-            cmd = cmd + ' --region "'+data.get('region')+'"'
-        if len(errors) > 0:
-            return InvalidParameterResult(errors = errors).http_response()'''
         pg_response = pgc.get_data('instances '+cmd)
         if len(pg_response) == 0:
             return ServerErrorResult().http_response()
