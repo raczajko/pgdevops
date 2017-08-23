@@ -440,11 +440,13 @@ class Components(ComponentAction):
         returnValue(1)
 
     @inlineCallbacks
-    def rdsInfo(self, region, instance):
+    def rdsInfo(self, region, instance, cloud = None):
         """
         Method to get rds Instance Info
         """
-        pgcCmd = PGC_HOME + os.sep + "pgc dblist rds --json  --region " + region + " --instance " + instance
+        pgcCmd = PGC_HOME + os.sep + "pgc dblist db --json  --region " + region + " --instance " + instance
+        if cloud:
+            pgcCmd = pgcCmd + " --cloud " + cloud
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.process = process
         for line in iter(process.stdout.readline, ''):
