@@ -107,7 +107,6 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
                 $rootScope.$emit("RdsCreated", data[0].msg);
                 $uibModalInstance.dismiss('cancel');
               }
-              $scope.$apply();
         })
     }
 
