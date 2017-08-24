@@ -77,8 +77,6 @@ class CreateCredential(MethodView):
     @login_required
     def get(self):
         pg_response = pgc.get_cmd_data('credentials --list')
-        if len(pg_response) == 0:
-            return ServerErrorResult().http_response()
         return Result(200,'SUCCESS','SUCCESS',extra_fields={"data":pg_response}).http_response()
 
 credentials.add_url_rule('/', view_func=CreateCredential.as_view('create'))

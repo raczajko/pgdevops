@@ -20,7 +20,7 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'update-pgc-host-completed' : 'PGC update completed successfully',
         'coming-soon': 'Coming Soon',
         'no-credentials': 'You haven\'t added any credentials.',
-        'select-one-cred' : 'Please select atleast one credentials.',
+        'select-one-cred' : 'You must select one credential.',
         'no-usage-creds' : 'Selected credential(s) not using any where.'
     };
 

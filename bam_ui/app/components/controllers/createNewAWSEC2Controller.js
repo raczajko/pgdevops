@@ -97,7 +97,7 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         $scope.showErrMsg = false;
         var data = [];
         data.push($scope.data);
-        var createEC2 = pgcRestApiCall.getCmdData('create vm --region ' + $scope.data.region + ' --params \'' + JSON.stringify(data) + '\' --cloud aws' )
+        var createEC2 = pgcRestApiCall.getCmdData('create vm --params \'' + JSON.stringify(data) + '\' --cloud aws' )
         createEC2.then(function (data) {
             $scope.creating = false;
             if(data[0].state == 'error'){

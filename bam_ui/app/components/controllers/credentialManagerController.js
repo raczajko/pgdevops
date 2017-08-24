@@ -154,6 +154,11 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 			modalInstance.title = title;
 			modalInstance.updateCred = updateCreds[0];
 			modalInstance.type = type;
+		}else{
+			$scope.alerts.push({
+				msg: htmlMessages.getMessage('select-one-cred'),
+                type: 'warning'
+            });
 		}
 	}
 

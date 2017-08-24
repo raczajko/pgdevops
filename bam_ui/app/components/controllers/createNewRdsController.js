@@ -142,7 +142,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         $scope.showErrMsg = false;
         var data = [];
         data.push($scope.data);
-        session.call('com.bigsql.createInstance', ['db', $scope.data.region, 'aws', data])
+        session.call('com.bigsql.createInstance', ['db', 'aws', data])
     }
 
     $scope.next = function(region){
