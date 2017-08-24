@@ -35,8 +35,27 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
     sessionPromise.then(function (val) {
     	session = val;
     });
-
-
+    var skuMapping = {
+        'CentOS6.5' : {
+            'offer': 'CentOS',
+            'publisher':'OpenLogic',
+            'sku':'6.5',
+            'version':'latest'
+        },
+        'UbuntuServer' : {
+            'offer': 'UbuntuServer',
+            'publisher':'Canonical',
+            'sku':'16.04.0-LTS',
+            'version':'latest'
+        }
+    }
+    $scope.publisherChange = function(os){
+        var skuTemp = skuMapping[os];
+        $scope.data['offer'] = skuTemp['offer'];
+        $scope.data['publisher'] = skuTemp['publisher'];
+        $scope.data['sku'] = skuTemp['sku'];
+        $scope.data['version'] = skuTemp['version'];
+    }
     $scope.regionChange = function (region) {
         session.call('com.bigsql.rdsMetaList', ['instance-class', '', $scope.data.region, '9.6.3']);  
         session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '']); 
