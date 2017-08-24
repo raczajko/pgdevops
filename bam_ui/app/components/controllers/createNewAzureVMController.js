@@ -12,7 +12,7 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
 
     $scope.data = {
-        'region' : '',
+        'region' : 'southcentralus',
         'group_name' : 'Default-Storage-SouthCentralUS',
         'vm_size' : 'Basic_A0',
         'computer_name' : '',
@@ -23,13 +23,13 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         'admin_username':'bigsql',
         'password':'B!gSQL3210123'
     };
-
-    var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
+    $scope.loading = false;
+    /*var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
     regions.then(function(data){
         $scope.loading = false;
         $scope.regions = data;
         $scope.data.region = $scope.regions[0].region;
-    });
+    });*/
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {

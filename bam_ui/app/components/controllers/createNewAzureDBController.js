@@ -12,21 +12,21 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
 
     $scope.data = {
-        'region' : '',
+        'region' : 'southcentralus',
         'master_user' : '',
         'instance' : '',
         'password' : '',
         'engine_version' : '',
         'group_name' : ''
     };
+    $scope.loading = false;
 
-
-    var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
+    /*var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
     regions.then(function(data){
         $scope.loading = false;
         $scope.regions = data;
         $scope.data.region = $scope.regions[0].region;
-    });
+    });*/
 
 
     $scope.cancel = function () {
