@@ -16,9 +16,9 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         'group_name' : 'Default-Storage-SouthCentralUS',
         'vm_size' : 'Basic_A0',
         'computer_name' : '',
-        'publisher':'Canonical',
-        'offer' : 'UbuntuServer',
-        'sku':'16.04.0-LTS',
+        'publisher':'OpenLogic',
+        'offer' : 'CentOS',
+        'sku':'6.5',
         'version':'latest',
         'admin_username':'bigsql',
         'password':'B!gSQL3210123'
