@@ -44,4 +44,14 @@ angular.module('bigSQL.components').controller('azureIntegrationController', ['$
             });
     }
 
+    $scope.createNewVM = function(){
+        var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/createNewAzureVM.html',
+                controller: 'createNewAzureVMController',
+                keyboard  : false,
+                windowClass : 'rds-modal',
+                backdrop  : 'static',
+            });
+    }
+
 }])

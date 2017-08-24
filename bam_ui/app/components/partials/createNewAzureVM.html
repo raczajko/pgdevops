@@ -1,0 +1,128 @@
+<div class="modal-header">
+    <div ng-click="cancel()" class="close-modal pull-right" data-dismiss="modal" aria-hidden="true">
+        <i class="fa fa-lg fa-close cursor_pointer"></i>
+    </div>
+    <h4 class="modal-title">Create Azure VM Instance</h4>
+</div>
+<div class="modal-body" class="create-rds-modal">
+    <div ng-if="loading" class="text-center">
+        <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+    </div>
+    <div ng-if="firstStep && !loading" class="row">
+        <div class="col-md-6">
+            <div>
+                <div class="box-header create-rds-cat-header"> <strong>Instance Specifications </strong></div>
+            </div>
+            <form class="form-horizontal create-rds-modal">
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Region :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="select-region"  ng-change="regionChange(regionSelect.region)" ng-options="region.region as region.location for region in regions" ng-model="data.region">
+                            <option value="">--select--</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Instance Name :</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="computer_name" ng-model="data.computer_name"></input>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Instance Type :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="select-ins-type" ng-change="typeChange(data.vm_size)" ng-model="data.vm_size">
+                            <option value="">--select--</option>
+                            <option value="Basic_A0">Basic_A0</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Choose Group :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="image_id" ng-model="data.group_name">
+                            <option value="">--select--</option>
+                            <option value="Default-Storage-SouthCentralUS">Default-Storage-SouthCentralUS</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Publisher :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="publisher" ng-change="publisherChange(data.publisher)" ng-model="data.publisher">
+                            <option value="">--select--</option>
+                            <option value="Canonical">Canonical</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Offer :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="offer" ng-change="publisherChange(data.offer)" ng-model="data.offer">
+                            <option value="">--select--</option>
+                            <option value="UbuntuServer">UbuntuServer</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">SKU :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="sku" ng-change="publisherChange(data.publisher)" ng-model="data.sku">
+                            <option value="">--select--</option>
+                            <option value="16.04.0-LTS">16.04.0-LTS</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Version :</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="version" ng-change="publisherChange(data.version)" ng-model="data.version">
+                            <option value="">--select--</option>
+                            <option value="latest">latest</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+
+
+        </div>
+        <div class="col-md-6">
+            <div>
+                <div class="box-header create-rds-cat-header"> <strong>Settings </strong></div>
+            </div>
+            <form class="form-horizontal create-rds-modal">
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Admin User :</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="admin_username" ng-model="data.admin_username"></input>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Password :</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="password" ng-model="data.password"></input>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            
+        </div>
+        <div class="col-md-6">
+            
+        </div>
+    </div>
+    <div class="row">
+    </div>
+    </div>
+    <div class="alert alert-danger" role="alert" ng-if="showErrMsg">
+        {{errMsg}}
+    </div>
+</div>
+<div class="modal-footer" ng-if="!loading">
+    <div class="pull-right">
+        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating" ng-click="createVM()">
+           Create
+        </button>
+    </div>
+</div>
