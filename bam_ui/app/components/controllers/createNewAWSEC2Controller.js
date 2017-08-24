@@ -10,10 +10,11 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
     $scope.secondStep = false;
     $scope.disableInsClass = true;
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
+    $scope.instance = { 'name': '' };
 
     $scope.data = {
         'region' : '',
-        'image_id' : 'ami-aa5ebdd2',
+        'image_id' : 'ami-ae7bfdb8',
         'instance_type' : 't2.micro',
         'kernal_id' : '',
         'keyname' : '',
@@ -31,7 +32,8 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         'db_class': '',
         'storage_type' : 'gp2',
         'volume_size' : 8,
-        'instance_count' : 1
+        'instance_count' : 1,
+        'tags' : {}
     };
 
 
@@ -93,6 +95,7 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
     };
 
     $scope.createEC2 = function(){
+        $scope.data.tags['Name'] = $scope.instance.name;
         $scope.creating = true;
         $scope.showErrMsg = false;
         var data = [];
