@@ -20,8 +20,8 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         'offer' : 'CentOS',
         'sku':'6.5',
         'version':'latest',
-        'admin_username':'bigsql',
-        'password':'B!gSQL3210123'
+        'admin_username':'',
+        'password':''
     };
     $scope.loading = false;
     /*var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
@@ -115,7 +115,6 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
                 $rootScope.$emit("RdsCreated", data[0].msg);
                 $uibModalInstance.dismiss('cancel');
               }
-              $scope.$apply();
         })
     }
 
