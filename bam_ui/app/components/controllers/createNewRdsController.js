@@ -11,6 +11,21 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     $scope.disableInsClass = true;
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
 
+    $scope.backup = {
+        'backup_window_show' : 'no',
+        'backup_window_hours' : '00',
+        'backup_window_mins' : '00',
+        'backup_window_duration' : '00',
+    }
+
+    $scope.maintanance = {
+        'main_window_show' : 'no',
+        'main_window_day' : 'mon',
+        'main_window_hours': '00',
+        'main_window_mins' : '00',
+        'main_window_duration': '00',
+    }
+
     $scope.data = {
         'engine' : 'postgres',
         'allocated_storage' : 5,
@@ -19,22 +34,14 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         'copy_tags' : false,
         'storage_type' : 'gp2',
         'multi_az' : false,
-        'vpcGroup' : 'default',
+        'vpc_group' : 'default',
         'backup_retention_period' : 7,
-        'enableMon' : false,
+        'enable_mon' : false,
         'version_upgrade' : false,
         'storage_encrypted' : false,
         'monitoring_interval' : 60,
         'monitoring_role' : 'default',
-        'mainWindow' : 'no',
-        'backupWindow' : 'no',
-        'mainWindowDay' : 'mon',
-        'mainWindowHours': '00',
-        'mainWindowMins' : '00',
-        'mainWindowDuration': '00',
-        'backupWindowHours' : '00',
-        'backupWindowMins' : '00',
-        'backupWindowDuration' : '00',
+        'backup_window' : 'no',
         'monitor_arn' : 'Default'
     };
 
@@ -88,7 +95,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         $scope.dbGroups = [];
         $scope.optionGroups = '';
         $scope.data.db_parameter_group = [];
-        $scope.data.optionGroup = '';
+        $scope.data.option_group = '';
         $scope.types = '';
         $scope.data.db_class = [];
         session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version, "aws", "db"])
@@ -97,7 +104,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
                 $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
                 $scope.optionGroups = $scope.dbEngVersions[i].OptionGroups;
                 $scope.data.db_parameter_group = $scope.dbGroups[0].DBParameterGroupName;
-                $scope.data.optionGroup = $scope.optionGroups[0].OptionGroupName;
+                $scope.data.option_group = $scope.optionGroups[0].OptionGroupName;
             }
         }
     }
@@ -128,15 +135,15 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
             $scope.data.monitoring_interval = 0;
             $scope.data.monitor_arn = '';
         }
-        if($scope.data.backupWindow=='yes'){
-            var backTotalTime = parseInt($scope.data.backupWindowHours) + parseInt($scope.data.backupWindowDuration);
+        if($scope.backup.backup_window_show=='yes'){
+            var backTotalTime = parseInt($scope.backup.backup_window_hours) + parseInt($scope.backup.backup_window_duration);
             if(backTotalTime<10){backTotalTime="0"+backTotalTime};
-            $scope.data.backup_window = $scope.data.backupWindowHours + ':' + $scope.data.backupWindowMins + '-' + backTotalTime + ':' + $scope.data.backupWindowMins;
+            $scope.data.backup_window = $scope.backup.backup_window_hours + ':' + $scope.backup.backup_window_mins + '-' + backTotalTime + ':' + $scope.backup.backup_window_mins;
         }
-        if($scope.data.mainWindow=='yes'){
-            var mainTotalTime = parseInt($scope.data.mainWindowHours) + parseInt($scope.data.mainWindowDuration);
+        if($scope.maintanance.main_window_show=='yes'){
+            var mainTotalTime = parseInt($scope.maintanance.main_window_hours) + parseInt($scope.maintanance.main_window_duration);
             if(mainTotalTime<10){mainTotalTime="0"+mainTotalTime};
-            $scope.data.maintanance_window = $scope.data.mainWindowDay + ':' + $scope.data.mainWindowHours + ':' + $scope.data.mainWindowMins + '-' + $scope.data.mainWindowDay + ':' + mainTotalTime + ':' + $scope.data.mainWindowMins;
+            $scope.data.maintanance_window = $scope.maintanance.main_window_day + ':' + $scope.maintanance.main_window_hours + ':' + $scope.maintanance.main_window_mins + '-' + $scope.maintanance.main_window_day + ':' + mainTotalTime + ':' + $scope.maintanance.main_window_mins;
         }
         $scope.creating = true;
         $scope.showErrMsg = false;
