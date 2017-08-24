@@ -479,7 +479,7 @@ class Components(ComponentAction):
         yield self.session.publish('com.bigsql.onRdsMetaList', data[0].strip('\n'))
 
     @inlineCallbacks
-    def createInstance(self, _type, region, cloud, json_obj):
+    def createInstance(self, _type, cloud, json_obj):
         """
         Method to get rds Instance Info
         """
