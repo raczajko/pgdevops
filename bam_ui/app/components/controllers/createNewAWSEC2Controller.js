@@ -54,26 +54,6 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '']); 
     }
 
-    $scope.versionChange = function(argument){
-        $scope.disableInsClass = true;
-        $scope.data.db_class = '';
-        $scope.dbGroups = [];
-        $scope.optionGroups = '';
-        $scope.data.db_parameter_group = [];
-        $scope.data.optionGroup = '';
-        $scope.types = '';
-        $scope.data.db_class = [];
-        session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version])
-        for(var i = 0; i < $scope.dbEngVersions.length; ++i){
-            if($scope.dbEngVersions[i].EngineVersion == $scope.data.engine_version){
-                $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
-                $scope.optionGroups = $scope.dbEngVersions[i].OptionGroups;
-                $scope.data.db_parameter_group = $scope.dbGroups[0].DBParameterGroupName;
-                $scope.data.optionGroup = $scope.optionGroups[0].OptionGroupName;
-            }
-        }
-    }
-
     $scope.vpcChange = function(argument){
         for (var i = 0; i < $scope.networkSec.length; ++i) {
             if($scope.networkSec[i].vpc == $scope.vpc.select){
