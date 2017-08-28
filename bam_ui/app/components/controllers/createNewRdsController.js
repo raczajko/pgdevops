@@ -145,7 +145,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     $scope.createRDS = function(){
         $scope.data.vpc_security_group_ids = [];
         // $scope.data.security_groups = [];
-        $scope.data.maintanance_window = '';
+        $scope.data.maintenance_window = '';
         $scope.data.backup_window = '';
         if(!$scope.data.enableMon){
             $scope.data.monitoring_interval = 0;
@@ -159,7 +159,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         if($scope.maintanance.main_window_show=='yes'){
             var mainTotalTime = parseInt($scope.maintanance.main_window_hours) + parseInt($scope.maintanance.main_window_duration);
             if(mainTotalTime<10){mainTotalTime="0"+mainTotalTime};
-            $scope.data.maintanance_window = $scope.maintanance.main_window_day + ':' + $scope.maintanance.main_window_hours + ':' + $scope.maintanance.main_window_mins + '-' + $scope.maintanance.main_window_day + ':' + mainTotalTime + ':' + $scope.maintanance.main_window_mins;
+            $scope.data.maintenance_window = $scope.maintanance.main_window_day + ':' + $scope.maintanance.main_window_hours + ':' + $scope.maintanance.main_window_mins + '-' + $scope.maintanance.main_window_day + ':' + mainTotalTime + ':' + $scope.maintanance.main_window_mins;
         }
         $scope.creating = true;
         $scope.showErrMsg = false;
