@@ -26,6 +26,9 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         'main_window_duration': '00',
     }
 
+    $scope.vpc_security = {group_ids: ''};
+    $scope.security = {groups_list: ''};
+
     $scope.data = {
         'engine' : 'postgres',
         'allocated_storage' : 5,
@@ -34,7 +37,6 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         'copy_tags' : false,
         'storage_type' : 'gp2',
         'multi_az' : false,
-        'vpc_group' : 'default',
         'backup_retention_period' : 7,
         'enable_mon' : false,
         'version_upgrade' : false,
@@ -42,7 +44,19 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         'monitoring_interval' : 60,
         'monitoring_role' : 'default',
         'backup_window' : 'no',
-        'monitor_arn' : 'Default'
+        'monitor_arn' : 'Default',
+        'vpc_security_group_ids': [],
+        // 'security_groups' : [],
+        'licence_model': '',
+        'iops' : '',
+        'option_group_name' : '',
+        'charset' : '',
+        'tags' : '',
+        'cluster_identifier' : '',
+        'tde_arn' : '',
+        'tde_arn_pwd' : '',
+        'kms_key_id' : '',
+        'iam_role' : ''
     };
 
 
@@ -129,6 +143,8 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     };
 
     $scope.createRDS = function(){
+        $scope.data.vpc_security_group_ids = [];
+        // $scope.data.security_groups = [];
         $scope.data.maintanance_window = '';
         $scope.data.backup_window = '';
         if(!$scope.data.enableMon){
@@ -149,6 +165,12 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         $scope.showErrMsg = false;
         var data = [];
         data.push($scope.data);
+        // if ($scope.security.groups_list) {
+        //     data[0].security_groups.push($scope.security.groups_list);
+        // }
+        if ($scope.vpc_security.group_ids) {
+            data[0].vpc_security_group_ids.push($scope.vpc_security.group_ids);
+        }
         session.call('com.bigsql.createInstance', ['db', 'aws', data])
     }
 
