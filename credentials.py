@@ -20,11 +20,9 @@ class CreateCredential(MethodView):
         cred_user = args.get('user')
         cred_pwd = args.get('password')
         ssh_key = args.get('ssh_key')
-        cloud_key = args.get('cloud_key')
         ssh_sudo_pwd = args.get('ssh_sudo_pwd')
         cloud_name = args.get('cloud_name')
-        cloud_secret = args.get('cloud_secret')
-        cloud_key = args.get('cloud_key')
+        credentials = args.get('credentials')
         region = args.get('region')
         cred_uuid = args.get('cred_uuid')
         pgcCmd = "credentials ADD --type \"" + cred_type + "\" --name \"" + cred_name + "\""
@@ -36,16 +34,13 @@ class CreateCredential(MethodView):
             pgcCmd = pgcCmd + " --pwd \"" + cred_pwd + "\""
         if ssh_key:
             pgcCmd = pgcCmd + " --key \"" + ssh_key + "\""
-        if cloud_key:
-            pgcCmd = pgcCmd + " --key \"" + cloud_key + "\""
         if ssh_sudo_pwd:
             pgcCmd = pgcCmd + " --sudo_pwd \"" + ssh_sudo_pwd + "\""
         if cloud_name:
             pgcCmd = pgcCmd + " --cloud \"" + cloud_name + "\""
-        if cloud_secret:
-            pgcCmd = pgcCmd + " --secret \"" + cloud_secret + "\""
-        if region:
-            pgcCmd = pgcCmd + " --region \"" + region + "\""
+        if credentials:
+            import json
+            pgcCmd = pgcCmd + " --credentials \'" + json.dumps(credentials) + "\'"
         return pgcCmd
     
     @login_required
@@ -90,7 +85,7 @@ class DeleteCredentials(MethodView):
         for cred_uuid in uuids.split(','):
             pgcCmd = "credentials DELETE "
             if cred_uuid:
-            	pgcCmd = pgcCmd + " --cred \"" + cred_uuid + "\""
+            	pgcCmd = pgcCmd + " --cred_uuid \"" + cred_uuid + "\""
         	data = pgc.get_cmd_data(pgcCmd)
         if len(data) == 0:
             return ServerErrorResult().http_response()

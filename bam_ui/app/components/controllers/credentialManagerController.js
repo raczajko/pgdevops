@@ -14,7 +14,7 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 			for (var i = $scope.credentialsList.length - 1; i >= 0; i--) {
 				if ($scope.credentialsList[i].last_used) {
 					var dateTime = new Date(($scope.credentialsList[i].last_used).split('.')[0].replace(/-/gi,'/')+' UTC');
-					$scope.credentialsList[i].last_used_local = $scope.credentialsList[i].last_used;
+					$scope.credentialsList[i].last_used_local = dateTime.toString();
 				}
 				$scope.credentialsList[i].selected = false;
 			}
@@ -164,12 +164,16 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 
 	$scope.openUsage = function (name, host_list, cred_type, disabled) {
 			var selectedCreds = [];
+			var openModel = false;
 			for (var i = $scope.credentialsList.length - 1; i >= 0; i--) {
 				if($scope.credentialsList[i].selected){
 					selectedCreds.push($scope.credentialsList[i]);
 				}
+				if ($scope.credentialsList[i].selected && $scope.credentialsList[i].hosts.length>0) {
+					openModel = true;
+				}
 			}
-			if (name || selectedCreds.length>0) {
+			if ((name || selectedCreds.length>0) && openModel) {
 				var modalInstance = $uibModal.open({
 	                templateUrl: '../app/components/partials/credentialUsage.html',
 	                controller: 'credentialUsageController',
@@ -180,6 +184,11 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 				modalInstance.host_list = host_list;
 				modalInstance.cred_type = cred_type;
 				modalInstance.selectedCreds = selectedCreds;
+			}else if (!openModel && selectedCreds.length>0) {
+				$scope.alerts.push({
+					msg: htmlMessages.getMessage('no-usage-creds'),
+	                type: 'warning'
+	            });
 			}else{
 				$scope.alerts.push({
 					msg: htmlMessages.getMessage('select-one-cred'),
