@@ -92,7 +92,9 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
                 $scope.versionChange();
             }else if($scope.secondStep && $scope.data.engine_version){
                 $scope.types = response;
-                $scope.data.db_class = $scope.types[0].DBInstanceClass;
+                if ($scope.types.length>0) {
+                    $scope.data.db_class = 'db.t2.micro';
+                }
                 $scope.disableInsClass = false;
             }else if($scope.thirdStep){
                 $scope.networkSec = response;
