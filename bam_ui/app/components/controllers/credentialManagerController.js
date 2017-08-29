@@ -173,7 +173,7 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 					openModel = true;
 				}
 			}
-			if ((name || selectedCreds.length>0) && openModel) {
+			if ((name || selectedCreds.length>0) && (name ||openModel)) {
 				var modalInstance = $uibModal.open({
 	                templateUrl: '../app/components/partials/credentialUsage.html',
 	                controller: 'credentialUsageController',
