@@ -60,7 +60,7 @@
                     <div class="col-sm-2">
                         <input type="number" id="allocStroage" class="form-control" value="{{data.allocated_storage}}" ng-model="data.volume_size" name="">
                     </div>
-                    <div class="col-sm-2" style="margin-left: -25px; margin-top: 8px;"><strong>GB</strong></div>
+                    <div class="col-sm-2" style="margin-left: -25px; margin-top: 5px;"><strong>GB</strong></div>
                     <div class="col-sm-1">
                         <i tooltip-append-to-body="true" uib-tooltip="Volume size must be greater than zero or the size of the snapshot used. Provisioned IOPS (SSD) volumes must be at least 4 GiB in size." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -45px;"></i> 
                     </div>
@@ -186,9 +186,10 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-sm-6 control-label">Enable termination protection :</label>
-                    <div class="col-sm-1">
-                        <input type="checkbox" name="">
+                    <label class="col-sm-5 control-label">Enable termination protection :</label>
+                    <div class="col-sm-6" style="margin-top: 5px;">
+                        <input type="checkbox" name=""> <span style="font-size: 0.81em;
+    white-space: pre;">Protect against accidental termination</span>
                     </div>
                     <div class="col-sm-1">                             
                         <i tooltip-append-to-body="true" uib-tooltip="You can protect instances from being accidentally terminated. Once enabled, you won't be able to terminate this instance via the API or the AWS Management Console until termination protection has been disabled." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> 
@@ -196,8 +197,9 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Monitoring :</label>
-                    <div class="col-sm-1">
-                        <input type="checkbox" name="" ng-model="data.monitoring">
+                    <div class="col-sm-7" style="margin-top: 5px;">
+                        <input type="checkbox" name="" ng-model="data.monitoring"> <span style="font-size: 0.81em;
+    white-space: pre;">Enable CloudWatch detailed monitoring</span>
                     </div>
                     <div class="col-sm-1">                             
                         <i tooltip-append-to-body="true" uib-tooltip="Enables you to monitor, collect, and analyze metrics about your instances through Amazon CloudWatch. Additional charges apply if you enable this option." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> 

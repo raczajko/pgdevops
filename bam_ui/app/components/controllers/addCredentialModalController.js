@@ -75,13 +75,15 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 		$scope.data.cloud_name = $scope.updateCred.cloud_type;
 		$scope.data.type = $scope.updateCred.cred_type;
 		$scope.data.credential_name = $scope.updateCred.cred_name;
-		$scope.data.credentials.access_key_id = $scope.updateCred.credentials.access_key_id;
-		$scope.data.credentials.region = $scope.updateCred.credentials.region;
-		$scope.data.credentials.secret_access_key = $scope.updateCred.credentials.secret_access_key;
-		$scope.data.credentials.client_id = $scope.updateCred.credentials.client_id;
-		$scope.data.credentials.client_secret = $scope.updateCred.credentials.client_secret;
-		$scope.data.credentials.subscription_id = $scope.updateCred.credentials.subscription_id;
-		$scope.data.credentials.tenant_id = $scope.updateCred.credentials.tenant_id;
+		if ($scope.data.type == 'cloud'){
+			$scope.data.credentials.access_key_id = $scope.updateCred.credentials.access_key_id;
+			$scope.data.credentials.region = $scope.updateCred.credentials.region;
+			$scope.data.credentials.secret_access_key = $scope.updateCred.credentials.secret_access_key;
+			$scope.data.credentials.client_id = $scope.updateCred.credentials.client_id;
+			$scope.data.credentials.client_secret = $scope.updateCred.credentials.client_secret;
+			$scope.data.credentials.subscription_id = $scope.updateCred.credentials.subscription_id;
+			$scope.data.credentials.tenant_id = $scope.updateCred.credentials.tenant_id;
+		}
 		$scope.data.user = $scope.updateCred.ssh_user;
 		$scope.data.cred_uuid = $scope.updateCred.cred_uuid;
 	}else{
