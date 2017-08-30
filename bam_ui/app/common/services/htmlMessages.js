@@ -21,7 +21,8 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'coming-soon': 'Coming Soon',
         'no-credentials': 'You haven\'t added any credentials.',
         'select-one-cred' : 'You must select only one credential.',
-        'no-usage-creds' : 'Selected credential(s) are currently not in use.'
+        'no-usage-creds' : 'Selected credential(s) are currently not in use.',
+        'loading-azure-pg' : 'Loading...'
     };
 
     return {

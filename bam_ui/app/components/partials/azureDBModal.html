@@ -5,24 +5,15 @@
     <div>
         <h4 class="modal-title pull-left"> {{disp_name}} </h4>
     </div>
+    <div class="pull-right">
+        <button style="margin-left: 20px;" class="btn btn-primary" ng-if="instance == 'db' && showUseConn && rdsList && !noRDS" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
+    </div>
 </div>
 <uib-alert ng-repeat="alert in alerts" type="{{ alert.type }}" dismiss-on-timeout="8000" close="closeAlert()"
            class="uib-text">{{ alert.msg }}</uib-alert>
 
 <div class="modal-body">
     <div class="row" ng-if="!loadingSpinner">
-        <div class="col-sm-4 col-xs-4 col-md-3" style="margin-right: -100px; margin-top: 5px; margin-left:10px;"><strong>Select Location :</strong> </div>
-        <div class="col-sm-4 col-xs-4 col-md-4">
-            <select class="form-control" ng-options="region.region as region.location for region in regions" ng-model="region">
-                <option value="">All Locations</option>
-            </select>
-        </div>
-        <div class="col-sm-4 col-xs-4 col-md-1">
-            <button class="btn btn-default"  ng-click="regionChange(region)">Search <i class="fa fa-search" aria-hidden="true"></i></button>
-        </div>
-        <div class="col-sm-4 col-xs-4 col-md-4">
-            <button style="margin-left: 20px;" class="btn btn-primary" ng-if="instance == 'db' && showUseConn && rdsList && !noRDS" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
-        </div>
     </div>
     <div class="row">
         <div class="col-md-12 col-xs-12" ng-if="loadingSpinner">
