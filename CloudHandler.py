@@ -4,7 +4,8 @@
 
 from flask import Blueprint, request
 from flask.views import MethodView
-from flask_security import login_required
+from flask_security import login_required, auth_token_required, auth_required
+from flask_login import current_user
 
 from Components import Components as pgc
 from responses import ServerErrorResult, Result, InvalidParameterResult
@@ -15,7 +16,8 @@ class CloudHandler(MethodView):
         print("In post")
         return "Post"
 
-    @login_required
+    #@auth_token_required
+    @auth_required('token', 'session')
     def get(self, cmd):
         pg_response = pgc.get_data('instances '+cmd)
         if len(pg_response) == 0:
