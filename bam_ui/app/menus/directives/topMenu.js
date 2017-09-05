@@ -38,7 +38,7 @@ angular.module('bigSQL.menus').component('topMenu', {
                     if ($scope.components[i].component != 'pgdevops') {
                         Checkupdates += $scope.components[i].updates;
                     }
-                    if ($scope.components[i].component == 'pgdevops' && $scope.components[i].updates == 1) {
+                    if ($scope.components[i].component == 'pgdevops' && $scope.components[i].updates == 1 && ($scope.currentHost == '' || $scope.currentHost == 'localhost')) {
                         $scope.pgdevopsUpdate = true;
                     }
                 }
