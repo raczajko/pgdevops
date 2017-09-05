@@ -22,7 +22,7 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     $scope.sudo_password = {text: ''};
 	if($scope.editHost){
 		$scope.type = 'Edit';
-		$scope.create_btn = "Update";
+		$scope.create_btn = "Save";
 		$scope.hostName = $scope.editHost.host;
 		$scope.pgcDir = $scope.editHost.pgc_home;
 		$scope.userName = $scope.editHost.user;
