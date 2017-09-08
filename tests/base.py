@@ -36,7 +36,6 @@ class BaseTest(unittest.TestCase):
         self.auth_token = response['authentication_token']
 
     def validate_response(self,response, command):
-        response.json()
         for resp in response.json():
             if 'state' in resp and resp['state'] == 'error':
                 logger.error('Unexpected exception raised in %s : %s'%(command, resp['msg']))
