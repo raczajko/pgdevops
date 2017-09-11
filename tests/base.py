@@ -6,11 +6,11 @@ import logging.config
 
 logger = logging.getLogger(__name__)
 
-with open("logging.json", 'rt') as f:
+with open("test_conf.json", 'rt') as f:
     config = json.load(f)
-logging.config.dictConfig(config)
+logging.config.dictConfig(config['logging'])
 
-PGC_API = "http://localhost:8051/"
+PGC_API = config['base_url']
 
 class Singleton(object):
     _instance = None
@@ -19,8 +19,8 @@ class Singleton(object):
             cls._instance = super(Singleton, cls).__new__(
                             cls, *args, **kwargs)
             payload = {
-                "email": "naveen.koppula@openscg.com",
-                "password": "6442naveen"
+                "email": config['username'],
+                "password": config['password']
             }
             headers = {
                 "Content-Type": "application/json"

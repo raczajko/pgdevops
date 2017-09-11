@@ -1,4 +1,8 @@
 {
+  "base_url":"http://localhost:8051/",
+  "username":"naveen.koppula@openscg.com",
+  "password":"6442naveen",
+  "logging":{
     "version": 1,
     "disable_existing_loggers": false,
     "formatters": {
@@ -26,4 +30,5 @@
         "level": "INFO",
         "handlers": ["file_handler"]
     }
+}
 }
