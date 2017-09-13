@@ -26,6 +26,7 @@ from flask_security import login_required
 from pgadmin.utils import PgAdminModule
 from pgadmin.utils import get_storage_directory
 from pgadmin.utils.ajax import make_json_response
+from pgadmin.utils.preferences import Preferences
 
 # Checks if platform is Windows
 if _platform == "win32":
@@ -144,6 +145,20 @@ class FileManagerModule(PgAdminModule):
             'file_items': []
         }
 
+    def get_exposed_url_endpoints(self):
+        """
+        Returns:
+            list: a list of url endpoints exposed to the client.
+        """
+        return [
+            'file_manager.filemanager',
+            'file_manager.index',
+            'file_manager.get_trans_id',
+            'file_manager.delete_trans_id',
+            'file_manager.save_last_dir',
+            'file_manager.save_file_dialog_view'
+        ]
+
     def get_file_size_preference(self):
         return self.file_upload_size
 
@@ -159,13 +174,20 @@ class FileManagerModule(PgAdminModule):
             gettext("Last directory visited"), 'text', '/',
             category_label=gettext('Options')
         )
+        self.file_dialog_view = self.preference.register(
+            'options', 'file_dialog_view',
+            gettext("File dialog view"), 'options', 'list',
+            category_label=gettext('Options'),
+            options=[{'label': gettext('List'), 'value': 'list'},
+                     {'label': gettext('Grid'), 'value': 'grid'}]
+        )
 
 
 # Initialise the module
 blueprint = FileManagerModule(MODULE_NAME, __name__)
 
 
-@blueprint.route("/")
+@blueprint.route("/", endpoint='index')
 @login_required
 def index():
     """Render the preferences dialog."""
@@ -219,14 +241,20 @@ def file_manager_config(trans_id):
     """render the required json"""
     # trans_id = Filemanager.create_new_transaction()
     data = Filemanager.get_trasaction_selection(trans_id)
+    pref = Preferences.module('file_manager')
+    file_dialog_view = pref.preference('file_dialog_view').get()
+
     return Response(response=render_template(
         "file_manager/js/file_manager_config.json", _=gettext,
-        data=data),
+        data=data,
+        file_dialog_view=file_dialog_view),
         status=200,
         mimetype="application/json")
 
 
-@blueprint.route("/get_trans_id", methods=["GET", "POST"])
+@blueprint.route(
+    "/get_trans_id", methods=["GET", "POST"], endpoint='get_trans_id'
+)
 @login_required
 def get_trans_id():
     if len(req.data) != 0:
@@ -239,7 +267,10 @@ def get_trans_id():
     )
 
 
-@blueprint.route("/del_trans_id/<int:trans_id>", methods=["GET", "POST"])
+@blueprint.route(
+    "/del_trans_id/<int:trans_id>",
+    methods=["GET", "POST"], endpoint='delete_trans_id'
+)
 @login_required
 def delete_trans_id(trans_id):
     Filemanager.release_transaction(trans_id)
@@ -248,10 +279,23 @@ def delete_trans_id(trans_id):
     )
 
 
-@blueprint.route("/save_last_dir/<int:trans_id>", methods=["POST"])
+@blueprint.route(
+    "/save_last_dir/<int:trans_id>", methods=["POST"], endpoint='save_last_dir'
+)
 @login_required
 def save_last_directory_visited(trans_id):
     blueprint.last_directory_visited.set(req.json['path'])
+    return make_json_response(
+        data={'status': True}
+    )
+
+@blueprint.route(
+    "/save_file_dialog_view/<int:trans_id>", methods=["POST"],
+    endpoint='save_file_dialog_view'
+)
+@login_required
+def save_file_dialog_view(trans_id):
+    blueprint.file_dialog_view.set(req.json['view'])
     return make_json_response(
         data={'status': True}
     )
@@ -889,10 +933,14 @@ class Filemanager(object):
             newName = u"{0}{1}".format(orig_path, file_name)
 
             with open(newName, 'wb') as f:
-                f.write(file_obj.read())
+                while True:
+                    data = file_obj.read(4194304)  # 4MB chunk (4 * 1024 * 1024 Bytes)
+                    if not data:
+                        break
+                    f.write(data)
         except Exception as e:
             code = 0
-            err_msg = u"Error: {0}".format(e.strerror)
+            err_msg = u"Error: {0}".format(e.strerror if hasattr(e, 'strerror') else u'Unknown')
 
         try:
             Filemanager.check_access_permission(dir, path)
@@ -1125,7 +1173,10 @@ class Filemanager(object):
         return res
 
 
-@blueprint.route("/filemanager/<int:trans_id>/", methods=["GET", "POST"])
+@blueprint.route(
+    "/filemanager/<int:trans_id>/",
+    methods=["GET", "POST"], endpoint='filemanager'
+)
 @login_required
 def file_manager(trans_id):
     """

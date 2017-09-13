@@ -3,36 +3,38 @@
   if (typeof define === 'function' && define.amd) {
     define([
       'sources/gettext', 'underscore', 'jquery', 'backbone', 'backform', 'backgrid', 'alertify',
-      'moment', 'bignumber', 'bootstrap.datetimepicker'
+      'moment', 'bignumber', 'bootstrap.datetimepicker', 'bootstrap.switch'
     ],
      function(gettext, _, $, Backbone, Backform, Backgrid, Alertify, moment, BigNumber) {
       // Export global even in AMD case in case this script is loaded with
       // others that may still expect a global Backform.
-      return factory(root, gettext, _, $, Backbone, Backform, Alertify, moment, BigNumber);
+      return factory(root, gettext, _, $, Backbone, Backform, Backgrid, Alertify, moment, BigNumber);
     });
 
   // Next for Node.js or CommonJS. jQuery may not be needed as a module.
   } else if (typeof exports !== 'undefined') {
-    var _ = require('underscore') || root._,
+    var gettext = require('sources/gettext'),
+      _ = require('underscore') || root._,
       $ = root.jQuery || root.$ || root.Zepto || root.ender,
       Backbone = require('backbone') || root.Backbone,
-      Backform = require('backform') || root.Backform;
-      Alertify = require('alertify') || root.Alertify;
+      Backform = require('backform') || root.Backform,
+      Backgrid = require('backgrid') || root.Backgrid,
+      Alertify = require('alertify') || root.Alertify,
       moment = require('moment') || root.moment;
-    factory(root, gettext, _, $, Backbone, Backform, Alertify, moment);
+    factory(root, gettext, _, $, Backbone, Backform, Backgrid, Alertify, moment);
 
   // Finally, as a browser global.
   } else {
-    factory(root, root.gettext, root._, (root.jQuery || root.Zepto || root.ender || root.$), root.Backbone, root.Backform);
+    factory(root, root.gettext, root._, (root.jQuery || root.Zepto || root.ender || root.$), root.Backbone, root.Backform, root.Alertify, root.moment);
   }
-} (this, function(root, gettext, _, $, Backbone, Backform, Alertify, moment, BigNumber) {
+} (this, function(root, gettext, _, $, Backbone, Backform, Backgrid, Alertify, moment, BigNumber) {
   /*
      * Add mechanism in backgrid to render different types of cells in
      * same column;
    */
 
   // Add new property cellFunction in Backgrid.Column.
-  _.extend(Backgrid.Column.prototype.defaults, { cellFunction: undefined });
+  _.extend(Backgrid.Column.prototype.defaults, {cellFunction: undefined});
 
   // Add tooltip to cell if cell content is larger than
   // cell width
@@ -117,6 +119,7 @@
         // extract the values from the models
 
         var l = func(left, attr), r = func(right, attr), t;
+        if (_.isUndefined(l) || _.isUndefined(r)) return;
 
         var types = ['number-cell', 'integer-cell'];
         if (_.include(types, type)) {
@@ -213,13 +216,15 @@
     },
     postRender: function(model, column) {
       var editor = this,
-          el = this.el;
-          columns_length = this.columns_length;
+          el = this.el,
+          columns_length = this.columns_length,
+          // To render schema directly from Backgrid cell we use columns schema attribute
+          schema = this.schema.length ? this.schema : this.column.get('schema');
 
       if (column != null && column.get("name") != this.column.get("name"))
         return false;
 
-      if (!_.isArray(this.schema)) throw new TypeError("schema must be an array");
+      if (!_.isArray(schema)) throw new TypeError("schema must be an array");
 
       // Create a Backbone model from our object if it does not exist
       var $dialog = this.createDialog(columns_length);
@@ -229,10 +234,10 @@
       $dialog.find('div.subnode-body').append($form);
 
       // Call Backform to prepare dialog
-      back_el = $dialog.find('form.form-dialog');
+      var back_el = $dialog.find('form.form-dialog');
 
       this.objectView = new Backform.Dialog({
-        el: back_el, model: this.model, schema: this.schema,
+        el: back_el, model: this.model, schema: schema,
         tabPanelClassName: function() {
           return 'sub-node-form col-sm-12';
         }
@@ -279,7 +284,7 @@
     // It's possible to render an option group or use a
     // function to provide option values too.
     optionValues: function() {
-      var res = [];
+      var res = [],
           opts = _.result(this.column.attributes, 'options');
       _.each(opts, function(o) {
         res.push([o.label, o.value]);
@@ -391,7 +396,7 @@
       },
       deleteRow: function (e) {
         e.preventDefault();
-        that = this;
+        var that = this;
         // We will check if row is deletable or not
         var canDeleteRow = (!_.isUndefined(this.column.get('canDeleteRow')) &&
                             _.isFunction(this.column.get('canDeleteRow')) ) ?
@@ -445,6 +450,7 @@
   /**
     SwitchCell renders a Bootstrap Switch in backgrid cell
   */
+  $.fn.bootstrapSwitch = jQuery.fn.bootstrapSwitch;
   var SwitchCell = Backgrid.Extension.SwitchCell = Backgrid.BooleanCell.extend({
     defaults: {
       options: _.defaults({
@@ -643,7 +649,7 @@
             ),
           selectTpl = _.template('<select <%=multiple ? "multiple" : "" %>></select>');
 
-      $select = self.$select = $(selectTpl({
+      var $select = self.$select = $(selectTpl({
         multiple: select2_opts.multiple
       })).appendTo(self.$el);
 
@@ -766,7 +772,7 @@
         "click": "addHeaderIcon"
       },
       addHeaderIcon: function (e) {
-        self = this;
+        var self = this,
         m = new (this.collection.model);
         this.collection.add(m)
         e.preventDefault();
@@ -873,7 +879,7 @@
           }, 10);
 
 
-        }},10);
+        } },10);
       return;
     }
   });
@@ -1006,7 +1012,7 @@
 
         if (deps && _.isArray(deps)) {
           _.each(deps, function(d) {
-            attrArr = d.split('.');
+            var attrArr = d.split('.'),
             name = attrArr.shift();
             self.listenTo(self.model, "change:" + name, self.dependentChanged);
           });
@@ -1019,8 +1025,8 @@
 
         if (deps && _.isArray(deps)) {
           _.each(deps, function(d) {
-            attrArr = d.split('.');
-            name = attrArr.shift();
+            var attrArr = d.split('.'),
+              name = attrArr.shift();
 
             self.stopListening(self.model, "change:" + name, self.dependentChanged);
           });
@@ -1357,9 +1363,9 @@
     },
     closeIt: function(ev) {
       var formatter = this.formatter,
-          model = this.model;
-          column = this.column;
-          val = this.$el.val();
+          model = this.model,
+          column = this.column,
+          val = this.$el.val(),
           newValue = formatter.toRaw(val, model);
 
       if (this.is_closing)
@@ -1397,7 +1403,7 @@
 
         this.render();
 
-        is_editable = _.isFunction(editable) ? !!editable.apply(column, [model]) : !!editable;
+        var is_editable = _.isFunction(editable) ? !!editable.apply(column, [model]) : !!editable;
         setTimeout(function() {
           self.$el.removeClass("editor");
           if (is_editable){ self.$el.addClass("editable"); }

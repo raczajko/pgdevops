@@ -27,6 +27,14 @@ if sys.version_info < (2, 7):
 else:
     import unittest as unit_test
 
+if sys.version_info[0] >= 3:
+    import builtins
+else:
+    import __builtin__ as builtins
+
+# Ensure the global server mode is set.
+builtins.SERVER_MODE = None
+
 logger = logging.getLogger(__name__)
 file_name = os.path.basename(__file__)
 

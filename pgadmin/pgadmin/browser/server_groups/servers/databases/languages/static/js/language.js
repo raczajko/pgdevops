@@ -1,6 +1,6 @@
 define('pgadmin.node.language', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
-  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
+  'underscore.string', 'sources/pgadmin', 'pgadmin.browser', 'alertify',
   'pgadmin.browser.collection', 'pgadmin.browser.server.privilege'
 ], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, alertify) {
 
@@ -217,7 +217,7 @@ define('pgadmin.node.language', [
             }
             return true;
           }
-        }, pgBrowser.SecurityGroupUnderSchema, {
+        }, {
           id: 'lanacl', label: gettext('Privileges'), type: 'collection',
           group: 'security', control: 'unique-col-collection', mode: ['edit', 'create'],
           model: pgBrowser.Node.PrivilegeRoleModel.extend({

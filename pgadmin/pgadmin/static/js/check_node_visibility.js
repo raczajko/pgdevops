@@ -24,13 +24,13 @@ define(['jquery', 'underscore', 'underscore.string'],
 
       // Exclude non-applicable nodes
       var nodes_not_supported = [
-        "server-group", "server", "catalog_object_column"
+        "server_group", "server", "catalog_object_column"
       ];
       if(_.indexOf(nodes_not_supported, node_type) >= 0) {
         return true;
       }
 
-      preference = pgBrowser.get_preference("browser", 'show_node_'+node_type);
+      var preference = pgBrowser.get_preference("browser", 'show_node_'+node_type);
 
       if (preference) {
         return preference.value

@@ -25,7 +25,7 @@ from pgadmin.utils.ajax import make_json_response, bad_request, \
 from pgadmin.utils.driver import get_driver
 from pgadmin.utils.sqlautocomplete.autocomplete import SQLAutoComplete
 from pgadmin.misc.file_manager import Filemanager
-
+from pgadmin.utils.menu import MenuItem
 
 from config import PG_DEFAULT_DRIVER, ON_DEMAND_RECORD_COUNT
 
@@ -61,7 +61,14 @@ class SqlEditorModule(PgAdminModule):
     LABEL = gettext("SQL Editor")
 
     def get_own_menuitems(self):
-        return {}
+        return {'tools': [
+            MenuItem(name='mnu_query_tool',
+                     label=gettext('Query tool'),
+                     priority=100,
+                     callback='show_query_tool',
+                     icon='fa fa-question',
+                     url=url_for('help.static', filename='index.html'))
+        ]}
 
     def get_own_javascripts(self):
         return [{
@@ -69,6 +76,7 @@ class SqlEditorModule(PgAdminModule):
             'path': url_for('sqleditor.index') + "sqleditor",
             'when': None
         }]
+
 
     def get_panels(self):
         return []
@@ -249,7 +257,8 @@ def check_transaction_status(trans_id):
 
     try:
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(trans_obj.sid)
-        conn = manager.connection(did=trans_obj.did, conn_id=trans_obj.conn_id)
+        conn = manager.connection(did=trans_obj.did, conn_id=trans_obj.conn_id,
+                                  use_binary_placeholder=True)
     except Exception as e:
         return False, internal_server_error(errormsg=str(e)), None, None, None
 
@@ -388,7 +397,8 @@ def start_query_tool(trans_id):
 
         try:
             manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(trans_obj.sid)
-            conn = manager.connection(did=trans_obj.did, conn_id=conn_id)
+            conn = manager.connection(did=trans_obj.did, conn_id=conn_id,
+                                      use_binary_placeholder=True)
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
@@ -518,7 +528,6 @@ def poll(trans_id):
     rows_fetched_from = 0
     rows_fetched_to = 0
     has_more_rows = False
-    additional_result = []
     columns = dict()
     columns_info = None
     primary_keys = None
@@ -630,29 +639,22 @@ def poll(trans_id):
         status = 'NotConnected'
         result = error_msg
 
-    # Procedure/Function output may comes in the form of Notices from the
-    # database server, so we need to append those outputs with the
-    # original result.
-
-    if status == 'Success' and result is None:
-        result = conn.status_message()
-        messages = conn.messages()
-        if messages:
-            additional_result = ''.join(messages)
-        else:
-            additional_result = ''
-        if result != 'SELECT 1' and result is not None:
-            result = additional_result + result
-        else:
-            result = additional_result
-
     # There may be additional messages even if result is present
     # eg: Function can provide result as well as RAISE messages
     additional_messages = None
-    if status == 'Success' and result is not None:
+    if status == 'Success':
         messages = conn.messages()
         if messages:
             additional_messages = ''.join(messages)
+
+    # Procedure/Function output may comes in the form of Notices from the
+    # database server, so we need to append those outputs with the
+    # original result.
+    if status == 'Success' and result is None:
+        result = conn.status_message()
+        if (result != 'SELECT 1' or result != 'SELECT 0') \
+            and result is not None and additional_messages:
+            result = additional_messages + result
 
     return make_json_response(
         data={
@@ -1490,14 +1492,15 @@ def load_file():
             errormsg=gettext("File type not supported")
         )
 
-    with codecs.open(file_path, 'r', encoding=enc) as fileObj:
-        data = fileObj.read()
+    def gen():
+        with codecs.open(file_path, 'r', encoding=enc) as fileObj:
+            while True:
+                data = fileObj.read(4194304)  # 4MB chunk (4 * 1024 * 1024 Bytes)
+                if not data:
+                    break
+                yield data
 
-    return make_json_response(
-        data={
-            'status': True, 'result': data,
-        }
-    )
+    return Response(gen(), mimetype='text/plain')
 
 
 @blueprint.route('/save_file/', methods=["PUT", "POST"], endpoint='save_file')

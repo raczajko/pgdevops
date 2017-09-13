@@ -1,6 +1,6 @@
 define('pgadmin.node.fts_template', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
-  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
+  'underscore.string', 'sources/pgadmin', 'pgadmin.browser', 'alertify',
   'pgadmin.browser.collection'
 ], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, alertify) {
 
@@ -153,8 +153,8 @@ define('pgadmin.node.fts_template', [
 
           if ('coll-fts_template' == d._type) {
             //Check if we are not child of catalog
-            prev_i = t.hasParent(i) ? t.parent(i) : null;
-            prev_d = prev_i ? t.itemData(prev_i) : null;
+            var prev_i = t.hasParent(i) ? t.parent(i) : null,
+              prev_d = prev_i ? t.itemData(prev_i) : null;
             if( prev_d._type == 'catalog') {
               return false;
             } else {

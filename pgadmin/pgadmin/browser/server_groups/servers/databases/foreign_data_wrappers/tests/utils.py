@@ -58,7 +58,8 @@ def create_fdw(server, db_name, fdw_name):
                                        server['username'],
                                        server['db_password'],
                                        server['host'],
-                                       server['port'])
+                                       server['port'],
+                                       server['sslmode'])
         old_isolation_level = connection.isolation_level
         connection.set_isolation_level(0)
         pg_cursor = connection.cursor()
@@ -96,7 +97,8 @@ def verify_fdw(server, db_name, fdw_name):
                                        server['username'],
                                        server['db_password'],
                                        server['host'],
-                                       server['port'])
+                                       server['port'],
+                                       server['sslmode'])
         pg_cursor = connection.cursor()
         pg_cursor.execute(
             "SELECT oid FROM pg_foreign_data_wrapper WHERE fdwname = '%s'"
@@ -106,3 +108,26 @@ def verify_fdw(server, db_name, fdw_name):
         return fdw
     except Exception:
         traceback.print_exc(file=sys.stderr)
+
+
+def delete_fdw(server, db_name, fdw_name):
+    """
+    This function delete FDW.
+    :param server: server details
+    :type server: dict
+    :param db_name: database name
+    :type db_name: str
+    :param fdw_name: fdw name to be deleted
+    :type fdw_name: str
+    :return: None
+    """
+    connection = get_db_connection(db_name,
+                                   server['username'],
+                                   server['db_password'],
+                                   server['host'],
+                                   server['port'],
+                                   server['sslmode'])
+    pg_cursor = connection.cursor()
+    pg_cursor.execute("DROP FOREIGN DATA WRAPPER %s" % fdw_name)
+    connection.commit()
+    connection.close()

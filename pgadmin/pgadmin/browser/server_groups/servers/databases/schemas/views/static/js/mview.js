@@ -1,10 +1,8 @@
 define('pgadmin.node.mview', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
-  'underscore.string', 'pgadmin', 'alertify', 'pgadmin.browser', 'codemirror',
-  'sources/alerts/alertify_wrapper',
-
+  'underscore.string', 'sources/pgadmin', 'pgadmin.alertifyjs', 'pgadmin.browser', 'codemirror',
   'pgadmin.browser.server.privilege'
-], function(gettext, url_for, $, _, S, pgAdmin, alertify, pgBrowser, CodeMirror, AlertifyWrapper) {
+], function(gettext, url_for, $, _, S, pgAdmin, alertify, pgBrowser, CodeMirror) {
 
   /**
     Create and add a view collection into nodes
@@ -150,7 +148,7 @@ define('pgadmin.node.mview', [
         },{
           id: 'system_view', label: gettext('System view?'), cell: 'string',
           type: 'switch', disabled: true, mode: ['properties'],
-        }, pgBrowser.SecurityGroupUnderSchema, {
+        }, pgBrowser.SecurityGroupSchema, {
           id: 'acl', label: gettext('Privileges'),
           mode: ['properties'], type: 'text', group: gettext('Security')
         },{
@@ -261,8 +259,8 @@ define('pgadmin.node.mview', [
           if ('coll-mview' == d._type) {
 
             // Check if we are not child of view
-            prev_i = t.hasParent(i) ? t.parent(i) : null;
-            prev_d = prev_i ? t.itemData(prev_i) : null;
+            var prev_i = t.hasParent(i) ? t.parent(i) : null,
+              prev_d = prev_i ? t.itemData(prev_i) : null;
             if( prev_d._type == 'catalog') {
               return false;
             } else {
@@ -294,8 +292,7 @@ define('pgadmin.node.mview', [
           dataType: "json",
           success: function(res) {
             if (res.success == 1) {
-              var alertifyWrapper = new AlertifyWrapper();
-              alertifyWrapper.success('View refreshed successfully');
+              alertify.success('View refreshed successfully');
             }
             else {
               alertify.alert(

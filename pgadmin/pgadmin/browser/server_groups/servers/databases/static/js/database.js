@@ -1,11 +1,9 @@
 define('pgadmin.node.database', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
-  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
-  'sources/alerts/alertify_wrapper',
-
+  'underscore.string', 'sources/pgadmin', 'pgadmin.browser.utils', 'pgadmin.alertifyjs',
   'pgadmin.browser.collection', 'pgadmin.browser.server.privilege',
-  'pgadmin.browser.server.variable',
-], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Alertify, AlertifyWrapper) {
+  'pgadmin.browser.server.variable'
+], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Alertify) {
 
   if (!pgBrowser.Nodes['coll-database']) {
     var databases = pgBrowser.Nodes['coll-database'] =
@@ -173,11 +171,11 @@ define('pgadmin.node.database', [
         },
         /* Disconnect the database */
         disconnect_database: function(args) {
-          var input = args || {};
-          obj = this,
-          t = pgBrowser.tree,
-          i = input.item || t.selected(),
-          d = i && i.length == 1 ? t.itemData(i) : undefined;
+          var input = args || {},
+            obj = this,
+            t = pgBrowser.tree,
+            i = input.item || t.selected(),
+            d = i && i.length == 1 ? t.itemData(i) : undefined;
 
           if (!d)
             return false;
@@ -193,8 +191,7 @@ define('pgadmin.node.database', [
                 success: function(res) {
                   if (res.success == 1) {
                     var prv_i = t.parent(i);
-                    var alertifyWrapper = new AlertifyWrapper();
-                    alertifyWrapper.success(res.info);
+                    Alertify.success(res.info);
                     t.removeIcon(i);
                     data.connected = false;
                     data.icon = 'icon-database-not-connected';
@@ -208,8 +205,7 @@ define('pgadmin.node.database', [
                   }
                   else {
                     try {
-                      var alertifyWrapper = new AlertifyWrapper();
-                      alertifyWrapper.error(res.errormsg);
+                      Alertify.error(res.errormsg);
                     } catch (e) {}
                     t.unload(i);
                   }
@@ -218,8 +214,7 @@ define('pgadmin.node.database', [
                   try {
                     var err = $.parseJSON(xhr.responseText);
                     if (err.success == 0) {
-                      var alertifyWrapper = new AlertifyWrapper();
-                      alertifyWrapper.error(err.errormsg);
+                      Alertify.error(err.errormsg);
                     }
                   } catch (e) {}
                   t.unload(i);
@@ -473,6 +468,20 @@ define('pgadmin.node.database', [
       })
     });
 
+    pgBrowser.SecurityGroupSchema = {
+      id: 'security', label: gettext('Security'), type: 'group',
+      // Show/Hide security group for nodes under the catalog
+      visible: function(args) {
+        if (args && 'node_info' in args) {
+          // If node_info is not present in current object then it might in its
+          // parent in case if we used sub node control
+          var node_info = args.node_info || args.handler.node_info;
+          return 'catalog' in node_info ? false : true;
+        }
+        return true;
+      }
+    };
+
     function connect_to_database(obj, data, tree, item, interactive) {
         connect(obj, data, tree, item)
     }
@@ -516,8 +525,7 @@ define('pgadmin.node.database', [
                 tree.addIcon(item, {icon: data.icon});
               }
 
-              var alertifyWrapper = new AlertifyWrapper();
-              alertifyWrapper.success(res.info);
+              Alertify.success(res.info);
               obj.trigger('connected', obj, item, data);
               pgBrowser.Events.trigger(
                 'pgadmin:database:connected', item, data

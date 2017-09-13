@@ -259,7 +259,8 @@ def delete(uid):
 
     """
     usr = User.query.get(uid)
-    if current_user.id == uid or not usr:
+
+    if not usr:
         abort(404)
 
     try:

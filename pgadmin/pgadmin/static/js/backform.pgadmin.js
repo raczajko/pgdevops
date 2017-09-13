@@ -5,8 +5,7 @@
     define([
       'sources/gettext', 'underscore', 'underscore.string', 'jquery',
       'backbone', 'backform', 'backgrid', 'codemirror', 'pgadmin.backgrid',
-      'codemirror/mode/sql/sql', 'select2', 'codemirror/addon/edit/matchbrackets',
-      'codemirror/addon/edit/closebrackets'
+      'select2'
       ],
      function(gettext, _, S, $, Backbone, Backform, Backgrid, CodeMirror) {
       // Export global even in AMD case in case this script is loaded with
@@ -20,13 +19,11 @@
       $ = root.jQuery || root.$ || root.Zepto || root.ender,
       Backbone = require('backbone') || root.Backbone,
       Backform = require('backform') || root.Backform,
-      Backgrid = require('backgrid') || root.Backgrid;
-      CodeMirror = require('codemirror') || root.CodeMirror;
-      pgAdminBackgrid = require('pgadmin.backgrid');
+      Backgrid = require('backgrid') || root.Backgrid,
+      CodeMirror = require('codemirror') || root.CodeMirror,
       S = require('underscore.string'),
       gettext = require('sources/gettext');
     factory(root, gettext, _, S, $, Backbone, Backform, Backgrid, CodeMirror);
-
   // Finally, as a browser global.
   } else {
     factory(root, root.gettext, root._, root.s, (root.jQuery || root.Zepto || root.ender || root.$), root.Backbone, root.Backform, root.Backgrid, root.CodeMirror);
@@ -59,7 +56,7 @@
     });
 
   var controlMapper = Backform.controlMapper = {
-    'int': ['uneditable-input', 'numeric', 'numeric'],
+    'int': ['uneditable-input', 'numeric', 'integer'],
     'text': ['uneditable-input', 'input', 'string'],
     'numeric': ['uneditable-input', 'numeric', 'numeric'],
     'date': 'datepicker',
@@ -125,8 +122,8 @@
 
       if (deps && _.isArray(deps)) {
         _.each(deps, function(d) {
-          attrArr = d.split('.');
-          name = attrArr.shift();
+          var attrArr = d.split('.');
+          var name = attrArr.shift();
           self.listenTo(self.model, "change:" + name, self.render);
         });
       }
@@ -143,8 +140,8 @@
       if (deps && _.isArray(deps)) {
         _.each(deps, function(d) {
 
-          attrArr = d.split('.');
-          name = attrArr.shift();
+          var attrArr = d.split('.');
+          var name = attrArr.shift();
 
           self.stopListening(self.model, "change:" + name, self.render);
         });
@@ -230,10 +227,10 @@
       });
 
       // Clean up first
-      this.$el.removeClass(Backform.hiddenClassname);
+      this.$el.removeClass(Backform.hiddenClassName);
 
       if (!data.visible)
-        this.$el.addClass(Backform.hiddenClassname);
+        this.$el.addClass(Backform.hiddenClassName);
 
       this.$el.html(this.template(data)).addClass(field.name);
       this.updateInvalid();
@@ -349,10 +346,10 @@
     }
 
     // Clean up first
-    this.$el.removeClass(Backform.hiddenClassname);
+    this.$el.removeClass(Backform.hiddenClassName);
 
     if (!data.visible)
-      this.$el.addClass(Backform.hiddenClassname);
+      this.$el.addClass(Backform.hiddenClassName);
 
     this.$el.html(this.template(data)).addClass(field.name);
     this.updateInvalid();
@@ -807,7 +804,7 @@
 
         // Check if unique columns provided are also in model attributes.
         if (uniqueCol.length > _.intersection(columns, uniqueCol).length) {
-            errorMsg = "Developer: Unique columns [ "+_.difference(uniqueCol, columns)+" ] not found in collection model [ " + columns +" ]."
+            var errorMsg = "Developer: Unique columns [ "+_.difference(uniqueCol, columns)+" ] not found in collection model [ " + columns +" ]."
             alert (errorMsg);
         }
 
@@ -873,7 +870,7 @@
         if (newModel != model) {
           var duplicateAttrValues = []
           _.each(uniqueCol, function(attr) {
-            attrValue = newModel.get(attr);
+            var attrValue = newModel.get(attr);
             if (!_.isUndefined(attrValue) && attrValue == model.get(attr)) {
               duplicateAttrValues.push(attrValue)
             }
@@ -961,7 +958,7 @@
       this.control_data = _.clone(data);
 
       // Show Backgrid Control
-      grid = this.showGridControl(data);
+      var grid = this.showGridControl(data);
 
       this.$el.html(grid).addClass(field.name);
       this.updateInvalid();
@@ -1054,7 +1051,7 @@
       });
 
       // Render subNode grid
-      subNodeGrid = self.grid.render().$el;
+      var subNodeGrid = self.grid.render().$el;
 
       // Combine Edit and Delete Cell
       if (data.canDelete && data.canEdit) {
@@ -1062,7 +1059,7 @@
         $(subNodeGrid).find("th.pg-backform-edit").attr("colspan", "2");
       }
 
-      $dialog =  gridBody.append(subNodeGrid);
+      var $dialog =  gridBody.append(subNodeGrid);
 
       // Add button callback
       if (!(data.disabled || data.canAdd == false)) {
@@ -1179,13 +1176,13 @@
         canDelete: evalF(data.canDelete, data, this.model)
       });
       // Show Backgrid Control
-      grid = (data.subnode == undefined) ? "" : this.showGridControl(data);
+      var grid = (data.subnode == undefined) ? "" : this.showGridControl(data);
 
       // Clean up first
-      this.$el.removeClass(Backform.hiddenClassname);
+      this.$el.removeClass(Backform.hiddenClassName);
 
       if (!data.visible)
-        this.$el.addClass(Backform.hiddenClassname);
+        this.$el.addClass(Backform.hiddenClassName);
 
       this.$el.html(grid).addClass(field.name);
       this.updateInvalid();
@@ -1229,7 +1226,7 @@
           gridHeader = ["<div class='subnode-header'>",
           "  <label class='control-label pg-el-sm-10'>" + data.label + "</label>" ,
           "  <button class='btn-sm btn-default add fa fa-plus'></button>",
-          "</div>"].join("\n");
+          "</div>"].join("\n"),
         gridBody = $("<div class='pgadmin-control-group backgrid form-group pg-el-xs-12 object subnode'></div>").append(gridHeader);
 
       var subnode = data.subnode.schema ? data.subnode : data.subnode.prototype,
@@ -1318,7 +1315,7 @@
       });
 
       // Render subNode grid
-      subNodeGrid = grid.render().$el;
+      var subNodeGrid = grid.render().$el;
 
       // Combine Edit and Delete Cell
       if (data.canDelete && data.canEdit) {
@@ -1326,7 +1323,7 @@
         $(subNodeGrid).find("th.pg-backform-edit").attr("colspan", "2");
       }
 
-      $dialog =  gridBody.append(subNodeGrid);
+      var $dialog =  gridBody.append(subNodeGrid);
 
       // Add button callback
       $dialog.find('button.add').click(function(e) {
@@ -1710,7 +1707,8 @@
     defaults: _.extend({}, Backform.SelectControl.prototype.defaults, {
       select2: {
         first_empty: true,
-        multiple: false
+        multiple: false,
+        emptyOptions: false
       }
     }),
     formatter: Select2Formatter,
@@ -1764,7 +1762,8 @@
       data.select2 = data.select2 || {};
       _.defaults(data.select2, this.defaults.select2, {
         first_empty: true,
-        multiple: false
+        multiple: false,
+        emptyOptions: false
       });
 
       // Evaluate the disabled, visible, and required option
@@ -1788,10 +1787,10 @@
       }
 
       // Clean up first
-      this.$el.removeClass(Backform.hiddenClassname);
+      this.$el.removeClass(Backform.hiddenClassName);
 
       if (!data.visible)
-        this.$el.addClass(Backform.hiddenClassname);
+        this.$el.addClass(Backform.hiddenClassName);
 
       this.$el.html(this.template(data)).addClass(field.name);
 
@@ -1810,7 +1809,28 @@
        * Add empty option as Select2 requires any empty '<option><option>' for
        * some of its functionality to work and initialize select2 control.
        */
+
+      if (data.select2.tags && data.select2.emptyOptions) {
+        select2Opts.data = data.rawValue;
+      }
+
       this.$sel = this.$el.find("select").select2(select2Opts);
+
+      // Add or remove tags from select2 control
+      if (data.select2.tags && data.select2.emptyOptions) {
+        this.$sel.val(data.rawValue);
+        this.$sel.trigger('change.select2');
+        this.$sel.on('select2:unselect', function(evt) {
+
+          $(this).find('option[value="'+evt.params.data.text.replace("'","\\'").replace('"','\\"')+'"]').remove();
+          $(this).trigger('change.select2');
+          if ($(this).val() == null) {
+            $(this).empty();
+          }
+        });
+
+
+      }
 
       // Select the highlighted item on Tab press.
       if (this.$sel) {
@@ -1859,8 +1879,8 @@
 
       if (deps && _.isArray(deps)) {
         _.each(deps, function(d) {
-          attrArr = d.split('.');
-          name = attrArr.shift();
+          var attrArr = d.split('.'),
+            name = attrArr.shift();
           self.listenTo(self.model, "change:" + name, self.render);
         });
       }
@@ -2045,7 +2065,7 @@
       }
 
       if (!isVisible)
-        self.$el.addClass(Backform.hiddenClassname);
+        self.$el.addClass(Backform.hiddenClassName);
 
       // There is an issue with the Code Mirror SQL.
       //
@@ -2160,7 +2180,7 @@
       });
     },
     onSelect: function(ev) {
-      var dialog_type = this.field.get('dialog_type');
+      var dialog_type = this.field.get('dialog_type'),
           supp_types = this.field.get('supp_types'),
           btn_primary = this.field.get('btn_primary'),
           dialog_title = this.field.get('dialog_title'),
@@ -2181,6 +2201,16 @@
 
       // Set selected value into the model
       this.model.set(name, decodeURI(value));
+    },
+    clearInvalid: function() {
+      Backform.InputControl.prototype.clearInvalid.apply(this, arguments);
+      this.$el.removeClass("pgadmin-file-has-error");
+      return this;
+    },
+    updateInvalid: function() {
+      Backform.InputControl.prototype.updateInvalid.apply(this, arguments);
+      // Introduce a new class to fix the error icon placement on the control
+      this.$el.addClass("pgadmin-file-has-error");
     }
   });
 
@@ -2193,7 +2223,11 @@
         format: "YYYY-MM-DD HH:mm:ss Z",
         showClear: true,
         showTodayButton: true,
-        toolbarPlacement: 'top'
+        toolbarPlacement: 'top',
+        widgetPositioning: {
+          horizontal: 'auto',
+          vertical: 'bottom'
+        },
       },
       placeholder: "YYYY-MM-DD HH:mm:ss Z",
       extraClasses: [],
@@ -2257,14 +2291,14 @@
       if (this.has_datepicker)
         this.$el.find("input").datetimepicker('destroy');
       this.$el.empty();
-      this.$el.removeClass(Backform.hiddenClassname);
+      this.$el.removeClass(Backform.hiddenClassName);
 
 
       this.$el.html(this.template(data)).addClass(field.name);
 
       if (!data.visible) {
         this.has_datepicker = false;
-        this.$el.addClass(Backform.hiddenClassname);
+        this.$el.addClass(Backform.hiddenClassName);
       } else {
         this.has_datepicker = true;
         var self = this;

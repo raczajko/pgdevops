@@ -143,6 +143,7 @@ class MViewModule(ViewModule):
         super(MViewModule, self).__init__(*args, **kwargs)
         self.min_ver = 90300
         self.max_ver = None
+        self.min_gpdbver = 1000000000
 
 
 view_blueprint = ViewModule(__name__)
@@ -176,11 +177,13 @@ def check_precondition(f):
             kwargs['did'] in self.manager.db_info else 0
 
         # Set template path for sql scripts
-        self.template_path = self.template_initial + '/' + (
-            self.ppas_template_path(self.manager.version)
-            if self.manager.server_type == 'ppas' else
-            self.pg_template_path(self.manager.version)
-        )
+        if self.manager.server_type == 'gpdb':
+            _temp = self.gpdb_template_path(self.manager.version)
+        elif self.manager.server_type == 'ppas':
+            _temp = self.ppas_template_path(self.manager.version)
+        else:
+            _temp = self.pg_template_path(self.manager.version)
+        self.template_path = self.template_initial + '/' + _temp
 
         self.column_template_path = 'column/sql/#{0}#'.format(self.manager.version)
 
@@ -312,6 +315,13 @@ class ViewNode(PGChildNodeView, VacuumSettings):
         Returns the template path for PostgreSQL servers.
         """
         return 'pg/#{0}#'.format(ver)
+
+    @staticmethod
+    def gpdb_template_path(ver):
+        """
+        Returns the template path for GreenPlum servers.
+        """
+        return '#gpdb#{0}#'.format(ver)
 
     @check_precondition
     def list(self, gid, sid, did, scid):
@@ -859,6 +869,9 @@ class ViewNode(PGChildNodeView, VacuumSettings):
         generate their sql and render
         into sql tab
         """
+        if self.manager.server_type == 'gpdb':
+            return ''
+
         from pgadmin.browser.server_groups.servers.databases.schemas.utils \
             import trigger_definition
 
@@ -901,6 +914,7 @@ class ViewNode(PGChildNodeView, VacuumSettings):
             # data.table and not data.relname so compatibility add new key as
             # table in res_rows.
             res_rows['table'] = res_rows['relname']
+            res_rows['schema'] = self.view_schema
 
             # Get trigger function with its schema name
             SQL = render_template("/".join([self.trigger_temp_path,
@@ -999,6 +1013,7 @@ class ViewNode(PGChildNodeView, VacuumSettings):
 
         # merging formated result with main result again
         result.update(frmtd_reslt)
+        self.view_schema = result.get('schema')
 
         # Fetch all privileges for view
         SQL = render_template("/".join(

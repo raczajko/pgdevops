@@ -1,5 +1,6 @@
-define([
-  'sources/gettext', 'underscore', 'underscore.string', 'jquery', 'pgadmin.browser', 'backgrid',
+define('misc.statistics', [
+  'sources/gettext', 'underscore', 'underscore.string', 'jquery',
+  'pgadmin.browser', 'backgrid',
   'alertify', 'sources/size_prettify'
 ], function(gettext, _, S, $, pgBrowser, Backgrid, Alertify, sizePrettify) {
 
@@ -324,14 +325,23 @@ define([
       this.columns = [];
       for (var idx in columns) {
         var rawColumn = columns[idx],
-            col = {
+        cell_type = typeCellMapper[rawColumn['type_code']] || 'string';
+
+        // Don't show PID comma separated
+        if(rawColumn['name'] == 'PID') {
+          cell_type = cell_type.extend({
+            orderSeparator: ''
+          });
+        }
+
+        var col = {
             editable: false,
             name: rawColumn['name'],
-            cell: typeCellMapper[rawColumn['type_code']] || 'string'
-           };
-           if (_.indexOf(prettifyFields, rawColumn['name']) != -1) {
-            col['formatter'] = SizeFormatter
-           }
+            cell: cell_type
+        };
+        if (_.indexOf(prettifyFields, rawColumn['name']) != -1) {
+          col['formatter'] = SizeFormatter
+        }
         this.columns.push(col);
 
       }
@@ -341,7 +351,7 @@ define([
 
     __createSingleLineStatistics: function(data, prettifyFields) {
       var row = data['rows'][0],
-          columns = data['columns']
+          columns = data['columns'],
           res = [];
 
       this.columns = this.statistic_columns;

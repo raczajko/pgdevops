@@ -1,6 +1,6 @@
 // Domain Module: Collection and Node.
 define('pgadmin.node.domain', [
-  'sources/gettext', 'sources/url_for', 'jquery', 'underscore', 'underscore.string', 'pgadmin',
+  'sources/gettext', 'sources/url_for', 'jquery', 'underscore', 'underscore.string', 'sources/pgadmin',
   'pgadmin.browser', 'alertify', 'pgadmin.browser.collection'
 ], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, alertify) {
 
@@ -123,7 +123,7 @@ define('pgadmin.node.domain', [
           var isNew = (_.size(attrs) === 0);
           if (isNew) {
             // Set Selected Schema
-            schema = args.node_info.schema.label
+            var schema = args.node_info.schema.label
             this.set({'basensp': schema}, {silent: true});
 
             // Set Current User
@@ -263,7 +263,7 @@ define('pgadmin.node.domain', [
           model: ConstraintModel, canAdd: true, canDelete: true,
           canEdit: false, columns: ['conname','consrc', 'convalidated']
         },
-        pgBrowser.SecurityGroupUnderSchema,
+        pgBrowser.SecurityGroupSchema,
         {
           id: 'seclabels', label: gettext('Security Labels'),
           model: pgBrowser.SecLabelModel, type: 'collection',
@@ -306,8 +306,8 @@ define('pgadmin.node.domain', [
 
           if ('coll-domain' == d._type) {
             //Check if we are not child of catalog
-            prev_i = t.hasParent(i) ? t.parent(i) : null;
-            prev_d = prev_i ? t.itemData(prev_i) : null;
+            var prev_i = t.hasParent(i) ? t.parent(i) : null,
+              prev_d = prev_i ? t.itemData(prev_i) : null;
             if( prev_d._type == 'catalog') {
               return false;
             } else {

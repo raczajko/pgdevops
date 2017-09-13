@@ -143,8 +143,8 @@ class DatabaseView(PGChildNodeView):
                     self.db_allow_connection = True
                     # If connection to database is not allowed then
                     # provide generic connection
-                    if kwargs['did'] in self.conn.manager.db_info:
-                        self._db = self.conn.manager.db_info[kwargs['did']]
+                    if kwargs['did'] in self.manager.db_info:
+                        self._db = self.manager.db_info[kwargs['did']]
                         if self._db['datallowconn'] is False:
                             self.conn = self.manager.connection()
                             self.db_allow_connection = False
@@ -166,11 +166,18 @@ class DatabaseView(PGChildNodeView):
             (self.manager.db_info[self.manager.did])['datlastsysoid'] \
             if self.manager.db_info is not None and \
             self.manager.did in self.manager.db_info else 0
+
+        db_disp_res = None
+        params = None
+        if self.manager and self.manager.db_res:
+            db_disp_res = ", ".join(['%s'] * len(self.manager.db_res.split(',')))
+            params = tuple(self.manager.db_res.split(','))
+
         SQL = render_template(
             "/".join([self.template_path, 'properties.sql']),
-            conn=self.conn, last_system_oid=last_system_oid
+            conn=self.conn, last_system_oid=last_system_oid, db_restrictions=db_disp_res
         )
-        status, res = self.conn.execute_dict(SQL)
+        status, res = self.conn.execute_dict(SQL, params)
 
         if not status:
             return internal_server_error(errormsg=res)
@@ -188,12 +195,19 @@ class DatabaseView(PGChildNodeView):
                 if self.manager.db_info is not None and \
                 self.manager.did in self.manager.db_info else 0
             )
+        server_node_res = self.manager
 
+        db_disp_res = None
+        params = None
+        if server_node_res and server_node_res.db_res:
+            db_disp_res = ", ".join(['%s']*len(server_node_res.db_res.split(',')))
+            params = tuple(server_node_res.db_res.split(','))
         SQL = render_template(
             "/".join([self.template_path, 'nodes.sql']),
-            last_system_oid=last_system_oid
+            last_system_oid=last_system_oid,
+            db_restrictions=db_disp_res
         )
-        status, rset = self.conn.execute_dict(SQL)
+        status, rset = self.conn.execute_dict(SQL, params)
 
         if not status:
             return internal_server_error(errormsg=rset)
@@ -281,13 +295,12 @@ class DatabaseView(PGChildNodeView):
 
     @check_precondition(action="properties")
     def properties(self, gid, sid, did):
-        conn = self.manager.connection()
 
         SQL = render_template(
             "/".join([self.template_path, 'properties.sql']),
-            did=did, conn=conn, last_system_oid=0
+            did=did, conn=self.conn, last_system_oid=0
         )
-        status, res = conn.execute_dict(SQL)
+        status, res = self.conn.execute_dict(SQL)
 
         if not status:
             return internal_server_error(errormsg=res)
@@ -299,9 +312,9 @@ class DatabaseView(PGChildNodeView):
 
         SQL = render_template(
             "/".join([self.template_path, 'acl.sql']),
-            did=did, conn=conn
+            did=did, conn=self.conn
         )
-        status, dataclres = conn.execute_dict(SQL)
+        status, dataclres = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
 
@@ -309,9 +322,9 @@ class DatabaseView(PGChildNodeView):
 
         SQL = render_template(
             "/".join([self.template_path, 'defacl.sql']),
-            did=did, conn=conn
+            did=did, conn=self.conn
         )
-        status, defaclres = conn.execute_dict(SQL)
+        status, defaclres = self.conn.execute_dict(SQL)
         if not status:
             return internal_server_error(errormsg=res)
 
@@ -321,10 +334,10 @@ class DatabaseView(PGChildNodeView):
         # Fetching variable for database
         SQL = render_template(
             "/".join([self.template_path, 'get_variables.sql']),
-            did=did, conn=conn
+            did=did, conn=self.conn
         )
 
-        status, res1 = conn.execute_dict(SQL)
+        status, res1 = self.conn.execute_dict(SQL)
 
         if not status:
             return internal_server_error(errormsg=res1)
@@ -851,12 +864,17 @@ class DatabaseView(PGChildNodeView):
             if self.manager.db_info is not None and \
             self.manager.did in self.manager.db_info else 0
 
+        db_disp_res = None
+        params = None
+        if self.manager and self.manager.db_res:
+            db_disp_res = ", ".join(['%s'] * len(self.manager.db_res.split(',')))
+            params = tuple(self.manager.db_res.split(','))
+
         conn = self.manager.connection()
-        status, res = conn.execute_dict(
-            render_template(
-                "/".join([self.template_path, 'stats.sql']),
-                did=did, conn=conn, last_system_oid=last_system_oid
-            )
+        status, res = conn.execute_dict(render_template(
+            "/".join([self.template_path, 'stats.sql']),
+            did=did, conn=conn, last_system_oid=last_system_oid, db_restrictions=db_disp_res
+            ),params
         )
 
         if not status:

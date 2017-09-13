@@ -41,6 +41,10 @@ class ServerType(object):
         ServerType.registry[server_type] = self
 
     @property
+    def icon(self):
+        return "%s.svg" % self.stype
+
+    @property
     def server_type(self):
         return self.stype
 
@@ -54,7 +58,7 @@ class ServerType(object):
 
         for key in cls.registry:
             st = cls.registry[key]
-            default_path = config.DEFAULT_BINARY_PATHS[st.stype] or ""
+            default_path = config.DEFAULT_BINARY_PATHS.get(st.stype, "")
 
             st.utility_path = paths.register(
                 'bin_paths', st.stype + '_bin_dir',
@@ -83,7 +87,8 @@ class ServerType(object):
         return [
             render_template(
                 "css/server_type.css",
-                server_type=self.stype
+                server_type=self.stype,
+                icon=self.icon
             )
         ]
 

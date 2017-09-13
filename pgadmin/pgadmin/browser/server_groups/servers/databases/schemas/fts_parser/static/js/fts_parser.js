@@ -1,6 +1,6 @@
 define('pgadmin.node.fts_parser', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
-  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
+  'underscore.string', 'sources/pgadmin', 'pgadmin.browser', 'alertify',
   'pgadmin.browser.collection'
 ], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, alertify) {
 
@@ -112,7 +112,6 @@ define('pgadmin.node.fts_parser', [
           type: 'text', disabled: function(m) { return !m.isNew(); },
           control: 'node-ajax-options', url: 'end_functions',
           group: gettext('Definition'), cache_level: 'database',
-          cache_node: 'schema',
           cache_node: 'schema'
         },{
           id: 'prslextype', label: gettext('Lextypes function'),
@@ -214,8 +213,8 @@ define('pgadmin.node.fts_parser', [
 
           if ('coll-fts_parser' == d._type) {
             //Check if we are not child of catalog
-            prev_i = t.hasParent(i) ? t.parent(i) : null;
-            prev_d = prev_i ? t.itemData(prev_i) : null;
+            var prev_i = t.hasParent(i) ? t.parent(i) : null,
+              prev_d = prev_i ? t.itemData(prev_i) : null;
             if( prev_d._type == 'catalog') {
               return false;
             } else {

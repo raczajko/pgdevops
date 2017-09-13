@@ -1,7 +1,7 @@
 /* Create and Register Function Collection and Node. */
 define('pgadmin.node.function', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
-  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
+  'underscore.string', 'sources/pgadmin', 'pgadmin.browser', 'alertify',
   'pgadmin.browser.collection', 'pgadmin.browser.server.privilege'
 ], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, alertify) {
 
@@ -34,7 +34,7 @@ define('pgadmin.node.function', [
         'node-ajax-options', cellHeaderClasses: 'width_percent_30',
         control: 'node-ajax-options', type: 'text', url: 'get_types',
         editable: function(m) {
-          node_info = this.get('node_info');
+          var node_info = this.get('node_info');
           if(node_info && 'catalog' in node_info) {
             return false;
           }
@@ -49,7 +49,7 @@ define('pgadmin.node.function', [
           {'label': 'INOUT', 'value': 'INOUT'},
           {'label': 'VARIADIC', 'value': 'VARIADIC'}
         ], editable: function(m) {
-             node_info = this.get('node_info');
+             var node_info = this.get('node_info');
              if(node_info && 'catalog' in node_info) {
                return false;
              }
@@ -65,7 +65,7 @@ define('pgadmin.node.function', [
     ],
     toJSON: Backbone.Model.prototype.toJSON,
     isInCatalog: function(m){
-      node_info = this.get('node_info');
+      var node_info = this.get('node_info');
       if(node_info && 'catalog' in node_info) {
         return false;
       }
@@ -131,7 +131,7 @@ define('pgadmin.node.function', [
           var isNew = (_.size(attrs) === 0);
           if (isNew) {
             // Set Selected Schema
-            schema_id = args.node_info.schema._id
+            var schema_id = args.node_info.schema._id;
             this.set({'pronamespace': schema_id}, {silent: true});
 
             // Set Current User
@@ -217,7 +217,7 @@ define('pgadmin.node.function', [
           mode: ['create'], visible: 'isVisible'
         },{
           id: 'prorettypename', label: gettext('Return type'), cell: 'string',
-          type: 'text', group: gettext('Definition'), disabled: true,
+          type: 'text', group: gettext('Definition'),
           mode: ['properties', 'edit'], disabled: 'isDisabled', visible: 'isVisible'
         },  {
           id: 'lanname', label: gettext('Language'), cell: 'string',
@@ -316,7 +316,7 @@ define('pgadmin.node.function', [
           model: pgBrowser.Node.VariableModel,
           mode: ['edit', 'create'], canAdd: 'canVarAdd', canEdit: false,
           canDelete: true, disabled: 'isDisabled'
-        }, pgBrowser.SecurityGroupUnderSchema, {
+        }, pgBrowser.SecurityGroupSchema, {
           id: 'acl', label: gettext('Privileges'), editable: false,
           model: pgBrowser.Node.PrivilegeRoleModel.extend({
             privileges: ['X']
@@ -457,8 +457,8 @@ define('pgadmin.node.function', [
 
           if ('coll-function' == d._type) {
             //Check if we are not child of catalog
-            prev_i = t.hasParent(i) ? t.parent(i) : null;
-            prev_d = prev_i ? t.itemData(prev_i) : null;
+            var prev_i = t.hasParent(i) ? t.parent(i) : null,
+              prev_d = prev_i ? t.itemData(prev_i) : null;
             if( prev_d._type == 'catalog') {
               return false;
             } else {

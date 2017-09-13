@@ -1,7 +1,7 @@
 /* Create and Register Function Collection and Node. */
 define('pgadmin.node.trigger_function', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
-  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
+  'underscore.string', 'sources/pgadmin', 'pgadmin.browser', 'alertify',
   'pgadmin.browser.collection', 'pgadmin.browser.server.privilege'
 ], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, alertify) {
 
@@ -64,7 +64,7 @@ define('pgadmin.node.trigger_function', [
           var isNew = (_.size(attrs) === 0);
           if (isNew) {
             // Set Selected Schema
-            schema_id = args.node_info.schema._id
+            var schema_id = args.node_info.schema._id
             this.set({'pronamespace': schema_id}, {silent: true});
 
             // Set Current User
@@ -153,7 +153,7 @@ define('pgadmin.node.trigger_function', [
           ]
         },{
           id: 'prorettypename', label: gettext('Return type'), cell: 'string',
-          type: 'text', group: gettext('Definition'), disabled: true,
+          type: 'text', group: gettext('Definition'),
           mode: ['properties', 'edit'], disabled: 'isDisabled', visible: 'isVisible'
         },  {
           id: 'lanname', label: gettext('Language'), cell: 'string',
@@ -227,7 +227,7 @@ define('pgadmin.node.trigger_function', [
           id: 'proleakproof', label: gettext('Leak proof?'),
           group: gettext('Options'), cell:'boolean', type: 'switch', min_version: 90200,
           disabled: 'isDisabled'
-        }, pgBrowser.SecurityGroupUnderSchema, {
+        }, pgBrowser.SecurityGroupSchema, {
           id: 'proacl', label: gettext('Privileges'), mode: ['properties'],
            group: gettext('Security'), type: 'text'
         },{
@@ -378,8 +378,8 @@ define('pgadmin.node.trigger_function', [
 
           if ('coll-trigger_function' == d._type) {
             //Check if we are not child of catalog
-            prev_i = t.hasParent(i) ? t.parent(i) : null;
-            prev_d = prev_i ? t.itemData(prev_i) : null;
+            var prev_i = t.hasParent(i) ? t.parent(i) : null,
+              prev_d = prev_i ? t.itemData(prev_i) : null;
             if( prev_d._type == 'catalog') {
               return false;
             } else {

@@ -1,6 +1,6 @@
 define('pgadmin.node.sequence', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
-  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
+  'underscore.string', 'sources/pgadmin', 'pgadmin.browser', 'alertify',
   'pgadmin.browser.collection'
 ], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, alertify) {
 
@@ -74,8 +74,8 @@ define('pgadmin.node.sequence', [
 
             if ('coll-sequence' == d._type) {
               //Check if we are not child of catalog
-              prev_i = t.hasParent(i) ? t.parent(i) : null;
-              prev_d = prev_i ? t.itemData(prev_i) : null;
+              var prev_i = t.hasParent(i) ? t.parent(i) : null,
+                prev_d = prev_i ? t.itemData(prev_i) : null;
               if( prev_d._type == 'catalog') {
                 return false;
               } else {
@@ -177,7 +177,7 @@ define('pgadmin.node.sequence', [
             'onColor': 'success', 'offColor': 'primary',
             'size': 'small'
           }
-        }, pgBrowser.SecurityGroupUnderSchema,{
+        }, pgBrowser.SecurityGroupSchema,{
           id: 'acl', label: gettext('Privileges'), type: 'text',
           group: gettext('Security'), mode: ['properties'], disabled: true
         },{
@@ -202,7 +202,7 @@ define('pgadmin.node.sequence', [
         validate: function() {
           var msg = undefined,
               minimum = this.get('minimum'),
-              maximum = this.get('maximum');
+              maximum = this.get('maximum'),
               start = this.get('start');
 
           if (_.isUndefined(this.get('name'))
