@@ -7510,3 +7510,7 @@ a.notification{
 .disabled {
   cursor: not-allowed;
 }
+
+.back-red{
+  border-color: red;
+}

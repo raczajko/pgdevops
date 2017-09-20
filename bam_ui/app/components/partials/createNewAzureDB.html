@@ -101,7 +101,7 @@
 </div>
 <div class="modal-footer" ng-if="!loading">
     <div class="pull-right">
-        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating || !pwdValid || !instanceNameValid" ng-click="createVM()">
+        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating || !pwdValid || !instanceNameValid || !data.group_name || !data.engine_version " ng-click="createVM()">
            <i class="fa fa-spin fa-cog" ng-if="creating"></i> Create
         </button>
     </div>
