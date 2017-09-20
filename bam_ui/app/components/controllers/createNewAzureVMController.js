@@ -94,6 +94,17 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         })
     }
 
+    var pwdRegExp = new RegExp("^(?=.*?[A-Za-z])(?=.*?[0-9])(?=.*?[~$@£!%*#?&^<>()\\[\\]\\=/{}`|_+,.:;])[A-Za-z0-9~$@£!%*#?&^<>()\\[\\]\\=/{}`|_+,.:;]{12,72}$(?!.*['/-])");
+    $scope.pwdValid = false;
+
+    $scope.validationInputPwdText = function(value) {
+        if (pwdRegExp.test(value)) {
+            $scope.pwdValid = true;
+        }else{
+            $scope.pwdValid = false
+        }
+    };
+
     $scope.next = function(region){
         $scope.firstStep = false;
         $scope.secondStep = true;

@@ -50,6 +50,11 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
     $scope.createVM = function(){
         $scope.creating = true;
         $scope.showErrMsg = false;
+        if ($scope.data.publicly_accessible) {
+            $scope.data.publicly_accessible = "Yes";
+        }else{
+            $scope.data.publicly_accessible = "No";
+        }
         var data = [];
         data.push($scope.data);
         var createAzureDB = pgcRestApiCall.getCmdData('create db --params \'' + JSON.stringify(data) + '\' --cloud azure' )
@@ -63,6 +68,27 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
                 $uibModalInstance.dismiss('cancel');
               }
         })
+    }
+
+    var pwdRegExp = new RegExp("^(?=.*?[A-Za-z])(?=.*?[0-9])(?=.*?[~$@£!%*#?&^<>()\\[\\]\\=/{}`|_+,.:;])[A-Za-z0-9~$@£!%*#?&^<>()\\[\\]\\=/{}`|_+,.:;]{12,72}$(?!.*['/-])");
+    var InsRegExp = new RegExp("^[a-z0-9]+$");
+    $scope.pwdValid = false;
+    $scope.instanceNameValid = false;
+
+    $scope.validationInputPwdText = function(value) {
+        if (pwdRegExp.test(value)) {
+            $scope.pwdValid = true;
+        }else{
+            $scope.pwdValid = false
+        }
+    };
+
+    $scope.validateInsName = function (value) {
+        if (InsRegExp.test(value)) {
+            $scope.instanceNameValid = true;
+        }else{
+            $scope.instanceNameValid = false
+        }
     }
 
     $scope.regionChange();

@@ -78,7 +78,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Password :</label>
                     <div class="col-sm-8">
-                        <input type="password" class="form-control" id="password" ng-model="data.password"></input>
+                        <input type="password" id="password" class="form-control form-control-success" value="{{data.password}}" name="password" ng-model="data.password" placeholder="Password" ng-minLength="12" ng-maxLength="72" required ng-change="validationInputPwdText(data.password)" ng-class="pwdValid? '' : 'back-red'" uib-tooltip="Password must have 3 of the following: 1 lower case character, 1 upper case character, 1 number, and 1 special character that is not '\' or '-'. Value must be between 12 and 72 characters long." tooltip-enable="!pwdValid" />
                     </div>
                 </div>
             </form>
@@ -99,7 +99,7 @@
 </div>
 <div class="modal-footer" ng-if="!loading">
     <div class="pull-right">
-        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating" ng-click="createVM()">
+        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating || !pwdValid" ng-click="createVM()">
           <i class="fa fa-spin fa-cog" ng-if="creating"></i> Create
         </button>
     </div>
