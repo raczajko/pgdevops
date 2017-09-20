@@ -9,6 +9,7 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
     $scope.firstStep = true;
     $scope.secondStep = false;
     $scope.disableInsClass = true;
+    $scope.loadingResGroups = true;
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
 
     $scope.data = {
@@ -30,6 +31,19 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         $scope.regions = data;
         $scope.data.region = $scope.regions[0].region;
     });*/
+
+    $scope.regionChange = function(){
+        $scope.loadingResGroups = true;
+        if($scope.data.region){
+            var resource_groups = pgcRestApiCall.getCmdData('metalist res-group --cloud azure --region '+ $scope.data.region )
+        }else{
+            var resource_groups = pgcRestApiCall.getCmdData('metalist res-group --cloud azure')
+        }
+        resource_groups.then(function (data) {
+            $scope.res_groups = data;
+            $scope.loadingResGroups = false;
+        });
+    }
 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
@@ -56,45 +70,7 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         $scope.data['sku'] = skuTemp['sku'];
         $scope.data['version'] = skuTemp['version'];
     }
-    $scope.regionChange = function (region) {
-        session.call('com.bigsql.rdsMetaList', ['instance-class', '', $scope.data.region, '9.6.3']);  
-        session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '']); 
-    }
 
-    $scope.versionChange = function(argument){
-        $scope.disableInsClass = true;
-        $scope.data.db_class = '';
-        $scope.dbGroups = [];
-        $scope.optionGroups = '';
-        $scope.data.db_parameter_group = [];
-        $scope.data.optionGroup = '';
-        $scope.types = '';
-        $scope.data.db_class = [];
-        session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version])
-        for(var i = 0; i < $scope.dbEngVersions.length; ++i){
-            if($scope.dbEngVersions[i].EngineVersion == $scope.data.engine_version){
-                $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
-                $scope.optionGroups = $scope.dbEngVersions[i].OptionGroups;
-                $scope.data.db_parameter_group = $scope.dbGroups[0].DBParameterGroupName;
-                $scope.data.optionGroup = $scope.optionGroups[0].OptionGroupName;
-            }
-        }
-    }
-
-    $scope.vpcChange = function(argument){
-        for (var i = 0; i < $scope.networkSec.length; ++i) {
-            if($scope.networkSec[i].vpc == $scope.vpc.select){
-                $scope.data.subnet_group = $scope.networkSec[i].subnet_group;
-                $scope.availableZones = $scope.networkSec[i].zones;
-                if($scope.availableZones.length > 0){
-                    $scope.data.availability_zone = $scope.availableZones[0].name;
-                }
-                for (var j = 0; j < $scope.availableZones.length; ++j) {
-
-                }
-            };
-        }
-    }
 
     $scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');
@@ -135,6 +111,8 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
             $scope.showErrMsg = false;
         }
     }
+
+    $scope.regionChange();
 
 
 }]);

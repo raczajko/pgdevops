@@ -43,12 +43,15 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Group Name :</label>
-                    <div class="col-sm-8">
+                    <div class="col-sm-8" ng-if="!loadingResGroups">
                         <select class="form-control" id="group_name" ng-model="data.group_name">
                             <option value="">--select--</option>
-                            <option value="Default-Storage-SouthCentralUS">Default-Storage-SouthCentralUS</option>
+                            <option ng-repeat="res_group in res_groups" value="{{ res_group.name }}">
+                                {{res_group.name}}
+                            </option>
                         </select>
                     </div>
+                    <div class="col-sm-2" ng-if="loadingResGroups"><i class="fa fa-spinner fa-pulse fa-2x"></i></div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Engine Version :</label>
@@ -57,6 +60,29 @@
                             <option value="">--select--</option>
                             <option value="9.6">Postgres 9.6</option>
                         </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <div>
+                <div class="box-header create-rds-cat-header"> <strong>Connection security</strong></div>
+            </div>
+            <form class="form-horizontal create-rds-modal">
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Enforce SSL :</label>
+                    <div class="col-sm-8">
+                        <input type="radio" ng-model="data.ssl_mode" value="Enabled"> Enable
+                        <input type="radio" ng-model="data.ssl_mode" value="Disabled"> Disable
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Default Firewall :</label>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" id="start_ip" ng-model="data.start_ip" placeholder="START IP"></input>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" id="end_ip" ng-model="data.end_ip" placeholder="END IP"></input>
                     </div>
                 </div>
             </form>

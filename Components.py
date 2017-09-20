@@ -470,10 +470,10 @@ class Components(ComponentAction):
             pgcCmd = pgcCmd + " --region=" + region
         if version:
             pgcCmd = pgcCmd + " --version=" + version
-        '''if cloud:
+        if cloud:
             pgcCmd = pgcCmd + " --cloud " + cloud
         if instance_type:
-            pgcCmd = pgcCmd + " --type " + instance_type'''
+            pgcCmd = pgcCmd + " --type " + instance_type
         process = subprocess.Popen(pgcCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = process.communicate()
         yield self.session.publish('com.bigsql.onRdsMetaList', data[0].strip('\n'))

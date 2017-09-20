@@ -9,15 +9,18 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
     $scope.firstStep = true;
     $scope.secondStep = false;
     $scope.disableInsClass = true;
+    $scope.loadingResGroups = true;
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
-
     $scope.data = {
         'region' : 'southcentralus',
         'master_user' : '',
         'instance' : '',
         'password' : '',
         'engine_version' : '',
-        'group_name' : ''
+        'group_name' : '',
+        'ssl_mode' : "Disabled",
+        'start_ip':"0.0.0.0",
+        'end_ip':"255.255.255.255"
     };
     $scope.loading = false;
 
@@ -28,7 +31,18 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
         $scope.data.region = $scope.regions[0].region;
     });*/
 
-
+    $scope.regionChange = function(){
+        $scope.loadingResGroups = true;
+        if($scope.data.region){
+            var resource_groups = pgcRestApiCall.getCmdData('metalist res-group --cloud azure --region '+ $scope.data.region )
+        }else{
+            var resource_groups = pgcRestApiCall.getCmdData('metalist res-group --cloud azure')
+        }
+        resource_groups.then(function (data) {
+            $scope.res_groups = data;
+            $scope.loadingResGroups = false;
+        });
+    }
     $scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');
     };
@@ -50,6 +64,8 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
               }
         })
     }
+
+    $scope.regionChange();
 
 
 }]);
