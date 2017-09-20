@@ -20,7 +20,8 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
         'group_name' : '',
         'ssl_mode' : "Disabled",
         'start_ip':"0.0.0.0",
-        'end_ip':"255.255.255.255"
+        'end_ip':"255.255.255.255",
+        'publicly_accessible' : true
     };
     $scope.loading = false;
 
