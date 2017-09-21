@@ -290,7 +290,7 @@ def create_app(app_name=None):
         # Run migration for the first time i.e. create database
         from config import SQLITE_PATH
         db_upgrade(app)
-        '''if not os.path.exists(SQLITE_PATH):
+        if not os.path.exists(SQLITE_PATH):
             db_upgrade(app)
         else:
             version = Version.query.filter_by(name='ConfigDB').first()
@@ -305,7 +305,7 @@ def create_app(app_name=None):
             if CURRENT_SCHEMA_VERSION > schema_version:
                 version = Version.query.filter_by(name='ConfigDB').first()
                 version.value = CURRENT_SCHEMA_VERSION
-                db.session.commit()'''
+                db.session.commit()
 
     Mail(app)
 
