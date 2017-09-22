@@ -68,5 +68,5 @@ class ServerErrorResult(Result):
 class InvalidSessionResult(Result):
     def __init__(self, state = "INVALID_SESSION" ,message=None):
         if not message:
-            message = "Invalied Session."
+            message = "Invalid Session."
         super(InvalidSessionResult, self).__init__(401, state, message)

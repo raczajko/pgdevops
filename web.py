@@ -8,6 +8,7 @@ import os
 from flask_triangle import Triangle
 from flask_restful import reqparse, abort, Api, Resource
 from flask_login import user_logged_in
+from flask_security import auth_token_required, auth_required
 
 import json
 from Components import Components as pgc
@@ -79,6 +80,8 @@ application.config['SECURITY_REGISTERABLE'] = True
 application.config['SECURITY_REGISTER_URL'] = '/register'
 application.config['SECURITY_CONFIRMABLE'] = False
 application.config['SECURITY_SEND_REGISTER_EMAIL'] = False
+
+application.config['SECURITY_TOKEN_MAX_AGE'] = 600
 
 application.permanent_session_lifetime = timedelta(minutes=10)
 
@@ -181,11 +184,13 @@ application.register_blueprint(cloud, url_prefix='/api/pgc/instances')
 from BackupRestore import _backrest
 application.register_blueprint(_backrest, url_prefix='/api/pgc')
 
+from user_controller import _user
+application.register_blueprint(_user, url_prefix='/api/login')
 
 db_session = db.session
 
 class pgcRestApi(Resource):
-    @login_required
+    @auth_required('token', 'session')
     def get(self, arg):
         data = pgc.get_data(arg)
         return data
@@ -1145,3 +1150,10 @@ def home():
     return render_template('index.html',
                            user=current_user,
                            is_admin=current_user.has_role("Administrator"))
+
+from responses import InvalidSessionResult
+
+def unauth_handler():
+    return InvalidSessionResult().http_response()
+
+security.unauthorized_handler(unauth_handler)
