@@ -12,11 +12,6 @@ from responses import ServerErrorResult, Result, InvalidParameterResult
 cloud = Blueprint('cloud', 'cloud', url_prefix='/api/pgc/instances')
 
 class CloudHandler(MethodView):
-    def post(self):
-        print("In post")
-        return "Post"
-
-    #@auth_token_required
     @auth_required('token', 'session')
     def get(self, cmd):
         pg_response = pgc.get_data('instances '+cmd)

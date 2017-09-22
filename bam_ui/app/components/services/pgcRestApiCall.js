@@ -49,17 +49,26 @@ angular.module('bigSQL.components').factory('pgcRestApiCall', function ($q, $htt
             data_params['_pgd'] = Math.floor(Date.now() / 1000);
             if(Object.keys(data_params).length>0){
                 config = {
-                params: data_params,
-                headers : {'Accept' : 'application/json'}
-
+                    data: data_params,
+                    headers : {
+                        'Accept' : 'application/json',
+                        'Content-Type': 'application/json'
+                    }
                 };
             }
-            $http.post($window.location.origin +'/api/pgc/' + cmd, config)
+            $http({
+                contentType: "application/json; charset=utf-8",
+                method: "POST",
+                url: $window.location.origin +'/api/pgc/' + cmd,
+                data:data_params,
+            })
             .success(function(data) {
-                resolve(data);
+               resolve(data);
             }).error(function (data) {
-                resolve('error');
+               resolve('error');
             });
+            //$http.post($window.location.origin +'/api/pgc/' + cmd, config)
+
 
 
         });
@@ -67,6 +76,7 @@ angular.module('bigSQL.components').factory('pgcRestApiCall', function ($q, $htt
 
 
     return {
-        getCmdData: getCmdData
+        getCmdData: getCmdData,
+        postData: postData
     }
 });

@@ -58,14 +58,19 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
         }
         var data = [];
         data.push($scope.data);
-        var createAzureDB = pgcRestApiCall.getCmdData('create db --params \'' + JSON.stringify(data) + '\' --cloud azure' )
+        var requestData = {
+            'cloud' : 'azure',
+            'type' : 'db',
+            'params' : data
+        }
+        var createAzureDB = pgcRestApiCall.postData('create',requestData)
         createAzureDB.then(function (data) {
             $scope.creating = false;
-            if(data[0].state == 'error'){
+            if(data.code != 200){
                 $scope.showErrMsg = true;
-                $scope.errMsg = data[0].msg;
+                $scope.errMsg = data.message;
               }else{
-                $rootScope.$emit("AzureDBCreated", data[0].msg);
+                $rootScope.$emit("AzureDBCreated", data.message);
                 $uibModalInstance.dismiss('cancel');
               }
         })

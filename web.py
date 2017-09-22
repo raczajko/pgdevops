@@ -181,6 +181,9 @@ application.register_blueprint(credentials, url_prefix='/api/pgc/credentials')
 from CloudHandler import cloud
 application.register_blueprint(cloud, url_prefix='/api/pgc/instances')
 
+from CloudCreateHandler import _cloud_create
+application.register_blueprint(_cloud_create, url_prefix='/api/pgc/create')
+
 from BackupRestore import _backrest
 application.register_blueprint(_backrest, url_prefix='/api/pgc')
 
