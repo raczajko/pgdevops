@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('createNewAzureVMController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'pgcRestApiCall', '$uibModalInstance', '$uibModal', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, pgcRestApiCall, $uibModalInstance, $uibModal) {
+angular.module('bigSQL.components').controller('createNewAzureVMController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'pgcRestApiCall', '$uibModalInstance', '$uibModal', 'htmlMessages', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, pgcRestApiCall, $uibModalInstance, $uibModal, htmlMessages) {
 
     var session;
     $scope.showErrMsg = false;
@@ -12,6 +12,8 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
     $scope.loadingResGroups = true;
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
 
+    $scope.creatingAzureVM = htmlMessages.getMessage('create-azure-vm');
+
     $scope.data = {
         'region' : 'southcentralus',
         'group_name' : 'Default-Storage-SouthCentralUS',
@@ -19,7 +21,7 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         'computer_name' : '',
         'publisher':'OpenLogic',
         'offer' : 'CentOS',
-        'sku':'6.5',
+        'sku': '7.3',
         'version':'latest',
         'admin_username':'',
         'password':''
@@ -45,30 +47,33 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         });
     }
 
+    // var regionsList = pgcRestApiCall.getCmdData('metalist azure-regions');
+    // regionsList.then(function (argument) {
+    //     $scope.regionsList = argument;
+    // });
+
+    $scope.skuMapping = [
+        {"sku": "6.5", "publisher": "OpenLogic", "version": "latest", "offer": "CentOS"}, 
+        {"sku": "7.3", "publisher": "OpenLogic", "version": "latest", "offer": "CentOS"}, 
+        {"sku": "16.04.0-LTS", "publisher": "Canonical", "version": "latest", "offer": "UbuntuServer"}
+    ]
+
+    // var imagesList = pgcRestApiCall.getCmdData('metalist azure-images');
+    // imagesList.then(function (argument) {
+    //     $scope.skuMapping = argument;
+    // });
+
+
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
     	session = val;
     });
-    var skuMapping = {
-        'CentOS6.5' : {
-            'offer': 'CentOS',
-            'publisher':'OpenLogic',
-            'sku':'6.5',
-            'version':'latest'
-        },
-        'UbuntuServer' : {
-            'offer': 'UbuntuServer',
-            'publisher':'Canonical',
-            'sku':'16.04.0-LTS',
-            'version':'latest'
-        }
-    }
-    $scope.publisherChange = function(os){
-        var skuTemp = skuMapping[os];
-        $scope.data['offer'] = skuTemp['offer'];
-        $scope.data['publisher'] = skuTemp['publisher'];
-        $scope.data['sku'] = skuTemp['sku'];
-        $scope.data['version'] = skuTemp['version'];
+    
+    $scope.publisherChange = function(sku){
+        $scope.data['offer'] = sku.offer;
+        $scope.data['publisher'] = sku.publisher;
+        $scope.data['sku'] = sku.sku;
+        $scope.data['version'] = sku.version;
     }
 
 

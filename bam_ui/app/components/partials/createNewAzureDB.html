@@ -13,7 +13,7 @@
             <div>
                 <div class="box-header create-rds-cat-header"> <strong>Instance Specifications </strong></div>
             </div>
-            <form class="form-horizontal create-rds-modal">
+            <form class="form-horizontal create-rds-modal" name="$root.initForm">
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Region :</label>
                     <div class="col-sm-8">
@@ -26,19 +26,26 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Instance Name :</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-success" value="{{data.instance}}" name="instance" ng-model="data.instance" required ng-change="validateInsName(data.instance)" ng-class="instanceNameValid? '' : 'back-red'" uib-tooltip="Instance name should not contain upper case and special characters." tooltip-enable="!instanceNameValid" />
+                        <input type="text" class="form-control form-control-success" value="{{data.instance}}" name="instance" ng-model="data.instance" required ng-change="validateInsName(data.instance)" ng-class="instanceNameValid? '' : 'back-red'" uib-tooltip="Instance name should not contain upper case and special characters." placeholder="Name" tooltip-enable="!instanceNameValid" />
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Master User :</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" id="master_user" ng-model="data.master_user"></input>
+                        <input type="text" class="form-control" id="master_user" placeholder="User" ng-model="data.master_user"></input>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Password :</label>
                     <div class="col-sm-8">
                         <input type="password" id="password" class="form-control form-control-success" value="{{data.password}}" name="password" ng-model="data.password" placeholder="Password" ng-minLength="12" ng-maxLength="72" required ng-change="validationInputPwdText(data.password)" ng-class="pwdValid? '' : 'back-red'" uib-tooltip="Password must have 3 of the following: 1 lower case character, 1 upper case character, 1 number, and 1 special character that is not '\' or '-'. Value must be between 12 and 72 characters long." tooltip-enable="!pwdValid" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Confirm Password :</label>
+                    <div class="col-sm-8">
+                        <input type="password" class="form-control" id="password_c" name="password_c" value="{{data.password_c}}" ng-model="data.password_c" placeholder="Password" valid-password-c required  />
+                        <p style="color: red;" ng-show="!initForm.password_c.$error.required && initForm.password_c.$error.noMatch && initForm.password.$dirty">Passwords do not match.</p>
                     </div>
                 </div>
                 <div class="form-group">
@@ -77,9 +84,9 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-sm-4 control-label">Publicly Accessible : </label>
+                    <label class="col-sm-4 control-label">Publicly Accessible :</label>
                     <div class="col-sm-1">
-                        <input type="checkbox" ng-model="data.publicly_accessible" name="">
+                        <input type="checkbox" ng-model="data.publicly_accessible" ng-change="changePubAcs()"  name="">
                     </div>
                 </div>
                 <div class="form-group">
@@ -100,9 +107,12 @@
     </div>
 </div>
 <div class="modal-footer" ng-if="!loading">
+    <div class="pull-left" ng-if="creating">
+        <span> <i class="fa fa-spinner fa-2x  fa-pulse"></i> {{creatingAzureDB}}</span>
+    </div>
     <div class="pull-right">
         <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating || !pwdValid || !instanceNameValid || !data.group_name || !data.engine_version " ng-click="createVM()">
-           <i class="fa fa-spin fa-cog" ng-if="creating"></i> Create
+           Create
         </button>
     </div>
 </div>

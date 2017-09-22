@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('createNewAzureDBController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'bamAjaxCall', '$uibModalInstance', '$uibModal', 'pgcRestApiCall', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, bamAjaxCall, $uibModalInstance, $uibModal, pgcRestApiCall) {
+angular.module('bigSQL.components').controller('createNewAzureDBController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'bamAjaxCall', '$uibModalInstance', '$uibModal', 'pgcRestApiCall', 'htmlMessages', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, bamAjaxCall, $uibModalInstance, $uibModal, pgcRestApiCall, htmlMessages) {
 
     var session;
     $scope.showErrMsg = false;
@@ -16,7 +16,7 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
         'master_user' : '',
         'instance' : '',
         'password' : '',
-        'engine_version' : '',
+        'engine_version' : '9.6',
         'group_name' : '',
         'ssl_mode' : "Disabled",
         'start_ip':"0.0.0.0",
@@ -31,6 +31,18 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
         $scope.regions = data;
         $scope.data.region = $scope.regions[0].region;
     });*/
+
+    $scope.creatingAzureDB = htmlMessages.getMessage('create-azure-db');
+
+    $scope.changePubAcs = function () {
+        if (!$scope.data.publicly_accessible) {
+            $scope.data.start_ip = '';
+            $scope.data.end_ip = '';
+        }else{
+            $scope.data.start_ip = "0.0.0.0";
+            $scope.data.end_ip = "255.255.255.255";
+        }
+    }
 
     $scope.regionChange = function(){
         $scope.loadingResGroups = true;

@@ -21,6 +21,15 @@ angular.module('bigSQL.components').controller('azureIntegrationController', ['$
     };
 
 	$rootScope.$on('AzureDBCreated', function (argument, data) {
+        $scope.discover('azure', 'Discover Azure PostgreSQL Instances', 'db');
+        $scope.alerts.push({
+                    msg: data,
+                    type: 'success'
+                });
+    })
+    
+    $rootScope.$on('RdsCreated', function (argument, data) {
+        $scope.discover('azure', 'Discover Azure VM instances', 'vm');
         $scope.alerts.push({
                     msg: data,
                     type: 'success'
