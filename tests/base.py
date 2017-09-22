@@ -25,7 +25,7 @@ class Singleton(object):
             headers = {
                 "Content-Type": "application/json"
             }
-            response = requests.post('http://localhost:8051/api/login/', json=payload, headers=headers)
+            response = requests.post(PGC_API + 'api/login/', json=payload, headers=headers)
             cls.response = response.json()
         return cls._instance
 
