@@ -19,13 +19,14 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         'group_name' : 'Default-Storage-SouthCentralUS',
         'vm_size' : 'Basic_A0',
         'computer_name' : '',
-        'publisher':'OpenLogic',
-        'offer' : 'CentOS',
-        'sku': '7.3',
+        'publisher':'',
+        'offer' : '',
+        'sku': '',
         'version':'latest',
         'admin_username':'',
         'password':''
     };
+
     $scope.loading = false;
     /*var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
     regions.then(function(data){
@@ -99,7 +100,7 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         })
     }
 
-    var pwdRegExp = new RegExp("^(?=.*?[A-Za-z])(?=.*?[0-9])(?=.*?[~$@£!%*#?&^<>()\\[\\]\\=/{}`|_+,.:;])[A-Za-z0-9~$@£!%*#?&^<>()\\[\\]\\=/{}`|_+,.:;]{12,72}$(?!.*['/-])");
+    var pwdRegExp = new RegExp("^(?=.*?[A-Za-z])(?=.*?[0-9])(?=.*?[~$@£!*?&^<>()\\[\\]\\=/{}`|_+,.:;])[A-Za-z0-9~$@£!*?&^<>()\\[\\]\\=/{}`|_+,.:;]{12,72}$(?!.*['%/#-])");
     $scope.pwdValid = false;
 
     $scope.validationInputPwdText = function(value) {

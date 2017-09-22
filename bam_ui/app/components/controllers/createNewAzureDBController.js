@@ -83,7 +83,7 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
         })
     }
 
-    var pwdRegExp = new RegExp("^(?=.*?[A-Za-z])(?=.*?[0-9])(?=.*?[~$@£!%*#?&^<>()\\[\\]\\=/{}`|_+,.:;])[A-Za-z0-9~$@£!%*#?&^<>()\\[\\]\\=/{}`|_+,.:;]{12,72}$(?!.*['/-])");
+    var pwdRegExp = new RegExp("^(?=.*?[A-Za-z])(?=.*?[0-9])(?=.*?[~$@£!*?&^<>()\\[\\]\\=/{}`|_+,.:;])[A-Za-z0-9~$@£!*?&^<>()\\[\\]\\=/{}`|_+,.:;]{12,72}$(?!.*['%/#-])");
     var InsRegExp = new RegExp("^[a-z0-9]+$");
     $scope.pwdValid = false;
     $scope.instanceNameValid = false;

@@ -98,13 +98,13 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Password :</label>
                     <div class="col-sm-8">
-                        <input type="password" id="password" class="form-control form-control-success" value="{{data.password}}" name="password" ng-model="data.password" placeholder="Password" ng-minLength="12" ng-maxLength="72" required ng-change="validationInputPwdText(data.password)" ng-class="pwdValid? '' : 'back-red'" uib-tooltip="Password must have 3 of the following: 1 lower case character, 1 upper case character, 1 number, and 1 special character that is not '\' or '-'. Value must be between 12 and 72 characters long." tooltip-enable="!pwdValid" />
+                        <input type="password" id="password" class="form-control form-control-success" value="{{data.password}}" name="password" ng-model="data.password" placeholder="Password" ng-minLength="12" ng-maxLength="72" required ng-change="validationInputPwdText(data.password)" ng-class="pwdValid? '' : 'back-red'" uib-tooltip="Password must have 3 of the following: 1 lower case character, 1 upper case character, 1 number, and 1 special character that is not '\', '#', '%' or '-'. Value must be between 12 and 72 characters long." tooltip-enable="!pwdValid" />
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Confirm Password :</label>
                     <div class="col-sm-8">
-                        <input type="password" class="form-control" id="password_c" name="password_c" value="{{data.password_c}}" ng-model="data.password_c" placeholder="Password" valid-password-c required  />
+                        <input type="password" class="form-control" id="password_c" name="password_c" value="{{password_c}}" ng-model="password_c" placeholder="Password" valid-password-c required  />
                         <p style="color: red;" ng-show="!initForm.password_c.$error.required && initForm.password_c.$error.noMatch && initForm.password.$dirty">Passwords do not match.</p>
                     </div>
                 </div>
@@ -131,7 +131,7 @@
         </div>
     </div>
     <div class="pull-right">
-        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating || !pwdValid || !data.admin_username || !data.group_name || !data.region || !data.computer_name || !data.vm_size" ng-click="createVM()">
+        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating || !pwdValid || !data.admin_username || !data.group_name || !data.region || !data.computer_name || !data.offer || !data.vm_size || !($root.initForm.password.$valid && data.password == $root.initForm.password_c.$viewValue)" ng-click="createVM()">
             Create
         </button>
     </div>
