@@ -29,7 +29,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Instance Name :</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" placeholder="Name" id="computer_name" ng-model="data.computer_name"></input>
+                        <input type="text" class="form-control" placeholder="Name" id="computer_name" ng-model="data.computer_name" ng-change="validateInsName(data.computer_name)" ng-class="instanceNameValid? '' : 'back-red'" uib-tooltip="Instance name should not contain upper case and special characters." placeholder="Name" tooltip-enable="!instanceNameValid"></input>
                     </div>
                 </div>
                 <div class="form-group">
@@ -92,7 +92,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Admin User :</label>
                     <div class="col-sm-8">
-                        <input type="text" placeholder="Name" class="form-control" id="admin_username" ng-model="data.admin_username"></input>
+                        <input type="text" placeholder="Name" class="form-control" id="admin_username" ng-model="data.admin_username" ng-change="validateUserName(data.admin_username)" ng-class="userNameValid ? '' : 'back-red'" uib-tooltip="User name shouldn't contain any special characters or numbers." tooltip-enable="!userNameValid"></input>
                     </div>
                 </div>
                 <div class="form-group">
@@ -131,7 +131,7 @@
         </div>
     </div>
     <div class="pull-right">
-        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating || !pwdValid || !data.admin_username || !data.group_name || !data.region || !data.computer_name || !data.offer || !data.vm_size || !($root.initForm.password.$valid && data.password == $root.initForm.password_c.$viewValue)" ng-click="createVM()">
+        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating || !pwdValid || !data.admin_username || !data.group_name || !data.region || !data.computer_name || !data.offer || !data.vm_size || !userNameValid || !instanceNameValid || !($root.initForm.password.$valid && data.password == $root.initForm.password_c.$viewValue)" ng-click="createVM()">
             Create
         </button>
     </div>
