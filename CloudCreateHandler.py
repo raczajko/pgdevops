@@ -22,7 +22,7 @@ class CloudCreateHandler(MethodView):
             data = pgc.get_cmd_data(pgcCmd)
             if len(data) == 0:
                 return ServerErrorResult().http_response()
-            if data[0]['state'] != 'info' or data[0]['state'] == 'completed':
+            if data[0]['state'] != 'complete':
                 return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
             return Result(200,'SUCCESS','SUCCESS').http_response()
         except Exception as ex:
