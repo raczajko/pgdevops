@@ -5,9 +5,9 @@
     <div ng-show="loadingSpinner">
         <h4 class="control-label" ng-hide="noUpdates"><i class="fa fa-spinner fa-2x  fa-pulse"></i>&#160;&#160;&#160; Checking for updates..</h4>
     </div>
-    <h4 class="control-label" ng-hide="noUpdates || loadingSpinner">{{totalUpdates}} Update(s) Available</h4>
+    <h4 class="control-label" ng-hide="noUpdates || loadingSpinner || error.show">{{totalUpdates}} Update(s) Available</h4>
     <div class="pull-right" style="margin-top: -35px; margin-right: 30px;">
-        <button class="btn btn-sm" type="button" ng-click="selectedUpdate()" ng-hide="noUpdates || loadingSpinner">Update All</button>
+        <button class="btn btn-sm" type="button" ng-click="selectedUpdate()" ng-hide="noUpdates || loadingSpinner || error.show">Update All</button>
     </div>
 </div>
 <div class="modal-body">
