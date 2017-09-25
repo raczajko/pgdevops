@@ -124,6 +124,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         session.subscribe("com.bigsql.onUpdatesCheck", function (argument) {
             var data = JSON.parse(argument[0]);
             if (data[0].state == 'error') {
+                $scope.loadingSpinner = false;
                 $scope.error.show = true;
                 $scope.errorMsg = data[0].msg;
             }else if (data[0].status == 'completed'){
