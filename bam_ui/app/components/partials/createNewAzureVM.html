@@ -34,17 +34,18 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Instance Type :</label>
-                    <div class="col-sm-8">
-                        <select class="form-control" id="select-ins-type" ng-change="typeChange(data.vm_size)" ng-model="data.vm_size">
+                    <div class="col-sm-8" ng-disabled="!data.region" ng-if="!loadingInsType">
+                        <select class="form-control" ng-disabled="!data.region" id="select-ins-type" ng-change="typeChange(data.vm_size)" ng-model="data.vm_size" ng-options="ins.name as ins.name for ins in ins_types">
                             <option value="">--select--</option>
-                            <option value="Basic_A0">Basic_A0</option>
+                            <!-- <option value="Basic_A0">Basic_A0</option> -->
                         </select>
                     </div>
+                    <div class="col-sm-2" ng-if="loadingInsType"><i class="fa fa-spinner fa-pulse fa-2x"></i></div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Group Name :</label>
                     <div class="col-sm-8" ng-if="!loadingResGroups">
-                        <select class="form-control" id="group_name" ng-model="data.group_name">
+                        <select class="form-control" ng-disabled="!data.region" id="group_name" ng-change="storageChange()" ng-model="data.group_name">
                             <option value="">--select--</option>
                             <option ng-repeat="res_group in res_groups" value="{{ res_group.name }}">
                                 {{res_group.name}}
@@ -52,6 +53,18 @@
                         </select>
                     </div>
                     <div class="col-sm-2" ng-if="loadingResGroups"><i class="fa fa-spinner fa-pulse fa-2x"></i></div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Storage Account :</label>
+                    <div class="col-sm-8" ng-if="!loadingStorageAccounts">
+                        <select class="form-control" id="group_name" ng-disabled="!data.group_name || res_groups.length < 0" ng-model="data.storage_account">
+                            <option value="">--select--</option>
+                            <option ng-repeat="storage_ac in storageAccounts" value="{{ storage_ac.name }}">
+                                {{storage_ac.name}}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-sm-2" ng-if="loadingStorageAccounts"><i class="fa fa-spinner fa-pulse fa-2x"></i></div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Operating System :</label>

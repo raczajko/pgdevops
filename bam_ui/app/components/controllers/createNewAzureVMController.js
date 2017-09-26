@@ -16,7 +16,7 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
 
     $scope.data = {
         'region' : 'southcentralus',
-        'group_name' : 'Default-Storage-SouthCentralUS',
+        'group_name' : '',
         'vm_size' : 'Basic_A0',
         'computer_name' : '',
         'publisher':'',
@@ -24,7 +24,8 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         'sku': '',
         'version':'latest',
         'admin_username':'',
-        'password':''
+        'password':'',
+        'storage_account' : ''
     };
 
     $scope.loading = false;
@@ -33,10 +34,13 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         $scope.loading = false;
         $scope.regionsList = data;
         $scope.data.region = 'southcentralus';
+        $scope.getInstanceType('southcentralus');
     });
 
     $scope.regionChange = function(){
         $scope.loadingResGroups = true;
+        $scope.loadingInsType = true;
+        $scope.loadingStorageAccounts =true;
         if($scope.data.region){
             var resource_groups = pgcRestApiCall.getCmdData('metalist res-group --cloud azure --region '+ $scope.data.region )
         }else{
@@ -45,6 +49,34 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         resource_groups.then(function (data) {
             $scope.res_groups = data;
             $scope.loadingResGroups = false;
+            $scope.loadingInsType = false;
+            $scope.loadingStorageAccounts = false;
+            if ($scope.res_groups.length > 0) {
+                $scope.data.group_name = $scope.res_groups[0].name; 
+                $scope.storageChange();               
+            }else{
+                $scope.data.group_name = '';
+                $scope.data.storage_account = '';
+            }
+        });
+    }
+
+    $scope.storageChange = function (argument) {
+        $scope.loadingStorageAccounts = true;
+        var getStorageAcs = pgcRestApiCall.getCmdData('metalist storage-accounts --cloud azure --region '+ $scope.data.region  + ' --group ' + $scope.data.group_name + ' --type vm');
+        getStorageAcs.then(function (data) {
+            $scope.storageAccounts = data;
+            $scope.loadingStorageAccounts = false;
+        });
+    }
+
+    $scope.loadingInsType = true;
+    $scope.getInstanceType = function (region) {
+        $scope.loadingInsType = true;
+        var ins_types = pgcRestApiCall.getCmdData('metalist instance-type --region ' + $scope.data.region +' --cloud azure --type vm' );
+        ins_types.then(function (data) {
+            $scope.ins_types = data;
+            $scope.loadingInsType = false;
         });
     }
 

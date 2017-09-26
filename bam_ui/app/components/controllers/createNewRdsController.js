@@ -97,9 +97,11 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
                 }
                 $scope.disableInsClass = false;
             }else if($scope.thirdStep){
-                $scope.networkSec = response;
-                $scope.vpc = { select : $scope.networkSec[0].vpc }
-                $scope.vpcChange();
+                if(response.length > 0){
+                    $scope.networkSec = response;
+                    $scope.vpc = { select : $scope.networkSec[0].vpc }
+                    $scope.vpcChange();
+                }
             }
             $scope.$apply();
         });
