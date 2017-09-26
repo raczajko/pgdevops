@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('createNewRdsController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'pgcRestApiCall', '$uibModalInstance', '$uibModal', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, pgcRestApiCall, $uibModalInstance, $uibModal) {
+angular.module('bigSQL.components').controller('createNewRdsController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'pgcRestApiCall', '$uibModalInstance', '$uibModal', '$cookies', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, pgcRestApiCall, $uibModalInstance, $uibModal, $cookies) {
 
     var session;
     $scope.showErrMsg = false;
@@ -70,18 +70,18 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
     	session = val;
-        session.subscribe("com.bigsql.onCreateInstance", function(data){
-          $scope.creating = false;
-          var data = JSON.parse(data);
-          if(data[0].state == 'error'){
-            $scope.showErrMsg = true;
-            $scope.errMsg = data[0].msg;
-          }else{
-            $rootScope.$emit("RdsCreated", data[0].msg);
-            $uibModalInstance.dismiss('cancel');
-          }
-          $scope.$apply();
-        })
+        // session.subscribe("com.bigsql.onCreateInstance", function(data){
+        //   $scope.creating = false;
+        //   var data = JSON.parse(data);
+        //   if(data[0].state == 'error'){
+        //     $scope.showErrMsg = true;
+        //     $scope.errMsg = data[0].msg;
+        //   }else{
+        //     $rootScope.$emit("RdsCreated", data[0].msg);
+        //     $uibModalInstance.dismiss('cancel');
+        //   }
+        //   $scope.$apply();
+        // })
 
         session.subscribe("com.bigsql.onRdsMetaList", function (data) {
             $scope.loading = false;
@@ -165,6 +165,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         }
         $scope.creating = true;
         $scope.showErrMsg = false;
+        $cookies.put('lastSelRegion', $scope.data.region);
         var data = [];
         data.push($scope.data);
         // if ($scope.security.groups_list) {
@@ -173,7 +174,23 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         if ($scope.vpc_security.group_ids) {
             data[0].vpc_security_group_ids.push($scope.vpc_security.group_ids);
         }
-        session.call('com.bigsql.createInstance', ['db', 'aws', data])
+        var requestData = {
+            'cloud' : 'aws',
+            'type' : 'db',
+            'params' : data
+        }
+        var createdb = pgcRestApiCall.postData('create',requestData)
+        createdb.then(function (data) {
+            $scope.creating = false;
+            if(data.code != 200){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data.message;
+            }else{
+                $rootScope.$emit("PostgresRdsCreated", data.message);
+                $uibModalInstance.dismiss('cancel');
+            }
+        });
+        // session.call('com.bigsql.createInstance', ['db', 'aws', data])
     }
 
     $scope.next = function(region){

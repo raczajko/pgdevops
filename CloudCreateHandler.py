@@ -24,7 +24,7 @@ class CloudCreateHandler(MethodView):
                 return ServerErrorResult().http_response()
             if data[0]['state'] != 'complete':
                 return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
-            return Result(200,'SUCCESS','SUCCESS').http_response()
+            return Result(200,'SUCCESS',message=data[0].get('msg')).http_response()
         except Exception as ex:
             return ServerErrorResult(message = str(ex)).http_response()
 

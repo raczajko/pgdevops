@@ -17,9 +17,12 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Region :</label>
                     <div class="col-sm-8">
-                        <select class="form-control" id="select-region"  ng-change="regionChange(regionSelect.region)" ng-model="data.region">
+                        <!-- <select class="form-control" id="select-region"  ng-change="regionChange(regionSelect.region)" ng-model="data.region">
                             <option value="">--select--</option>
                             <option value="southcentralus">South Central US</option>
+                        </select> -->
+                        <select class="form-control" id="select-region"  ng-change="regionChange()" ng-model="data.region" ng-options="region.region as region.location for region in regions">
+                            <option value="">--select--</option>
                         </select>
                     </div>
                 </div>
@@ -38,7 +41,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Password :</label>
                     <div class="col-sm-8">
-                        <input type="password" id="password" class="form-control form-control-success" value="{{data.password}}" name="password" ng-model="data.password" placeholder="Password" ng-minLength="12" ng-maxLength="72" required ng-change="validationInputPwdText(data.password)" ng-class="pwdValid? '' : 'back-red'" uib-tooltip="Password must have 3 of the following: 1 lower case character, 1 upper case character, 1 number, and 1 special character that is not '\', '#', '%' or '-'. Value must be between 12 and 72 characters long." tooltip-enable="!pwdValid" />
+                        <input type="password" id="password" class="form-control form-control-success" value="{{data.password}}" name="password" ng-model="data.password" placeholder="Password" ng-minLength="12" ng-maxLength="72" required ng-change="validationInputPwdText(data.password)" ng-class="pwdValid? '' : 'back-red'" uib-tooltip="Password must have 3 of the following: 1 lower case character, 1 upper case character, 1 number, and 1 special character that is not '\', '#', '%' or '-'. Value must be between 12 and 72 characters long. Your password cannot contain all or part of the master user name. Part of a master user name is defined as three or more consecutive alphanumeric characters." tooltip-enable="!pwdValid" />
                     </div>
                 </div>
                 <div class="form-group">

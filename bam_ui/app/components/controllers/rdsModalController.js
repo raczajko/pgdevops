@@ -4,6 +4,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     $scope.lab = $uibModalInstance.lab;
     $scope.disp_name = $uibModalInstance.disp_name;
     $scope.instance = $uibModalInstance.instance;
+    $scope.searchEvent = $uibModalInstance.searchEvent;
     $scope.availList = [];
     var addList = [];
     $scope.addToMetadata = false;
@@ -19,6 +20,9 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         var regionCookie = $cookies.get('lastSelRegion');
         if(regionCookie){
             $scope.region = regionCookie;
+        }
+        if ($scope.searchEvent) {
+            $scope.regionChange($scope.region);
         }
     });
 

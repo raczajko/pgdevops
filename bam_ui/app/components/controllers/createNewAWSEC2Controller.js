@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'pgcRestApiCall', '$uibModalInstance', '$uibModal', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, pgcRestApiCall, $uibModalInstance, $uibModal) {
+angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'pgcRestApiCall', '$uibModalInstance', '$uibModal', '$cookies', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, pgcRestApiCall, $uibModalInstance, $uibModal, $cookies) {
 
     var session;
     $scope.showErrMsg = false;
@@ -78,15 +78,21 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         $scope.creating = true;
         $scope.showErrMsg = false;
         var data = [];
+        $cookies.put('lastSelRegion', $scope.data.region);
         data.push($scope.data);
-        var createEC2 = pgcRestApiCall.getCmdData('create vm --params \'' + JSON.stringify(data) + '\' --cloud aws' )
+        var requestData = {
+            'cloud' : 'aws',
+            'type' : 'vm',
+            'params' : data
+        }
+        var createEC2 = pgcRestApiCall.postData('create',requestData)
         createEC2.then(function (data) {
             $scope.creating = false;
-            if(data[0].state == 'error'){
+            if(data.code != 200){
                 $scope.showErrMsg = true;
-                $scope.errMsg = data[0].msg;
+                $scope.errMsg = data.message;
               }else{
-                $rootScope.$emit("RdsCreated", data[0].msg);
+                $rootScope.$emit("RdsCreated", data.message);
                 $uibModalInstance.dismiss('cancel');
               }
         })

@@ -28,12 +28,12 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
     };
 
     $scope.loading = false;
-    /*var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
+    var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
     regions.then(function(data){
         $scope.loading = false;
-        $scope.regions = data;
-        $scope.data.region = $scope.regions[0].region;
-    });*/
+        $scope.regionsList = data;
+        $scope.data.region = 'southcentralus';
+    });
 
     $scope.regionChange = function(){
         $scope.loadingResGroups = true;
@@ -48,21 +48,10 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         });
     }
 
-    // var regionsList = pgcRestApiCall.getCmdData('metalist azure-regions');
-    // regionsList.then(function (argument) {
-    //     $scope.regionsList = argument;
-    // });
-
-    $scope.skuMapping = [
-        {"sku": "6.5", "publisher": "OpenLogic", "version": "latest", "offer": "CentOS"}, 
-        {"sku": "7.3", "publisher": "OpenLogic", "version": "latest", "offer": "CentOS"}, 
-        {"sku": "16.04.0-LTS", "publisher": "Canonical", "version": "latest", "offer": "UbuntuServer"}
-    ]
-
-    // var imagesList = pgcRestApiCall.getCmdData('metalist azure-images');
-    // imagesList.then(function (argument) {
-    //     $scope.skuMapping = argument;
-    // });
+    var imagesList = pgcRestApiCall.getCmdData('metalist azure-images');
+    imagesList.then(function (argument) {
+        $scope.skuMapping = argument;
+    });
 
 
     var sessionPromise = PubSubService.getSession();
@@ -126,7 +115,6 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         }else{
             $scope.instanceNameValid = false
         }
-        console.log($scope.instanceNameValid);
     }
 
     $scope.validateUserName = function (value) {

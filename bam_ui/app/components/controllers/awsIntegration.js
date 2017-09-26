@@ -1,7 +1,7 @@
 angular.module('bigSQL.components').controller('awsIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', '$cookies', '$uibModal', '$timeout', 'htmlMessages', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, $cookies, $uibModal, $timeout, htmlMessages) {
 
 	$scope.alerts = [];
-	$scope.discover =  function (settingName, disp_name, instance) {
+	$scope.discover =  function (settingName, disp_name, instance, searchEvent) {
 
 		var modalInstance = $uibModal.open({
 	        templateUrl: '../app/components/partials/rdsModal.html',
@@ -14,6 +14,7 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
 	    modalInstance.lab = settingName;
 	    modalInstance.disp_name = disp_name;
 	    modalInstance.instance = instance;
+        modalInstance.searchEvent = searchEvent;
 	}
 
 	$scope.closeAlert = function (index) {
@@ -21,6 +22,15 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
     };
 
 	$rootScope.$on('RdsCreated', function (argument, data) {
+        $scope.discover('aws', 'Discover AWS EC2 Instances', 'vm', 'searchEvent');
+        $scope.alerts.push({
+                    msg: data,
+                    type: 'success'
+                });
+    })
+
+    $rootScope.$on('PostgresRdsCreated', function (argument, data) {
+        $scope.discover('aws', 'Discover AWS Postgres RDS', 'db', 'searchEvent');
         $scope.alerts.push({
                     msg: data,
                     type: 'success'

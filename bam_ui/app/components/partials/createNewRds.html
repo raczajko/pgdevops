@@ -379,7 +379,7 @@
 </div>
 <div class="modal-footer" ng-if="!loading">
     <div class="pull-right">
-        <button class="btn btn-default" ng-if="!firstStep" ng-click="previous()">Previous</button>
+        <button class="btn btn-default" ng-if="!firstStep" ng-disabled="creating" ng-click="previous()">Previous</button>
         <button class="btn btn-primary" ng-if="!thirdStep && secondStep" ng-disabled=" !data.master_user || !data.instance || !($root.initForm.password.$valid && $root.initForm.password.$viewValue == $root.initForm.password_c.$viewValue)" ng-click="next()">Next Step</button>
         <button class="btn btn-primary" ng-if="!thirdStep && !secondStep" ng-click="next()">Next Step</button>
         <button class="btn btn-primary" ng-if="thirdStep" ng-disabled="creating" ng-click="createRDS()"> <i ng-if="creating" class="fa fa-spinner fa-pulse"></i> Create</button>

@@ -23,8 +23,8 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'select-one-cred' : 'You must select only one credential.',
         'no-usage-creds' : 'Selected credential(s) are currently not in use.',
         'loading-azure-pg' : 'Loading...',
-        'create-azure-db' : 'Creating Postgres instance, this may take couple of minutes.',
-        'create-azure-vm' : 'Creating VM, this may take couple of minutes.'
+        'create-azure-db' : 'Creating Postgres instance, this may take a couple of minutes.',
+        'create-azure-vm' : 'Creating VM, this may take a couple of minutes.'
     };
 
     return {

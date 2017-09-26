@@ -25,12 +25,12 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
     };
     $scope.loading = false;
 
-    /*var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
+    var regions = pgcRestApiCall.getCmdData('metalist azure-regions');
     regions.then(function(data){
         $scope.loading = false;
         $scope.regions = data;
-        $scope.data.region = $scope.regions[0].region;
-    });*/
+        $scope.data.region = 'southcentralus';
+    });
 
     $scope.creatingAzureDB = htmlMessages.getMessage('create-azure-db');
 
