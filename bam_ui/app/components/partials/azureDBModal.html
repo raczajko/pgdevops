@@ -101,6 +101,9 @@
                     <div class="col-md-10 col-sm-10 col-xs-10">
                         <div class="col-md-5 col-sm-5 col-xs-5"><strong>Name</strong></div>
                         <div class="col-md-2 col-sm-2 col-xs-2"><strong>Type</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Public IP's</strong></div>
+                        <div class="col-md-2 col-sm-2 col-xs-2"><strong>Private IP's</strong></div>
+
                     </div>
                     </div>
                 </div>
@@ -122,6 +125,13 @@
                             <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
                                 {{vm.type}}
                             </div>
+                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
+                                {{vm.public_ips}}
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-2" style="white-space: nowrap;">
+                                {{vm.private_ips}}
+                            </div>
+
                         </div>
                         </div>
                     </div>
