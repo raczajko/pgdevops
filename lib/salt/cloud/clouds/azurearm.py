@@ -70,6 +70,7 @@ from salt.exceptions import (
     SaltCloudExecutionFailure,
     SaltCloudExecutionTimeout,
 )
+import collections
 
 # Import 3rd-party libs
 HAS_LIBS = False
@@ -1617,9 +1618,14 @@ def pages_to_list(items):
     while True:
         try:
             page = items.next()  # pylint: disable=incompatible-py3-code
-            for item in page:
-                objs.append(item)
+            if isinstance(page, collections.Iterable):
+                for item in page:
+                    objs.append(item)
+            else:
+                objs.append(page)
         except GeneratorExit:
+            break
+        except StopIteration:
             break
     return objs
 
