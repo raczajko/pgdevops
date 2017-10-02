@@ -17,17 +17,22 @@ class ProvisionHandler(MethodView):
     def post(self):
         try:
             json_body = request.json
-            pgcCmd = "provision pgha3 "
-            if json_body.get("availability"):
-                pcgCmd  = pgcCmd + " --availability " + json_body.get("availability")
-            if json_body.get("cluster"):
-                pcgCmd  = pgcCmd + " --cluster " + json_body.get("cluster")
-            if json_body.get("provider"):
-                pcgCmd  = pgcCmd + " --provider " + json_body.get("provider")
-            if json_body.get("size"):
-                pcgCmd  = pgcCmd + " --size " + json_body.get("size")
-            if json_body.get("overwrite"):
-                pcgCmd  = pgcCmd + " --overwrite "
+            acceptable_params = ["availability", "cluster", "provider", "size", "overwrite"]
+            pgc_cmd = "provision pgha3 "
+            cmd_list = []
+            cmd_list.append(pgc_cmd)
+            invalid_params = []
+            for key in json_body.keys():
+                if str(key) in acceptable_params:
+                    cmd = "--{0} {1}".format(str(key), str(json_body.get(key)))
+                    cmd_list.append(cmd)
+                else:
+                    invalid_params.append(str(key))
+
+            if len(invalid_params)>0:
+                return ServerErrorResult(message="Invalid parameters received : " + str(invalid_params)).http_response()
+
+            pgcCmd = " ".join(cmd_list)
             data = pgc.get_cmd_data(pgcCmd)
             if len(data) == 0:
                 return ServerErrorResult().http_response()
