@@ -78,25 +78,29 @@
 
 
         </div>
-        <!-- <div class="col-md-6">
+        <div class="col-md-6">
             <div>
                 <div class="box-header create-rds-cat-header"> <strong>Configure Instance Details </strong></div>
             </div>
             <form class="form-horizontal create-rds-modal">
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Network :</label>
-                    <div class="col-sm-8">
-                        <select class="form-control"></select>
+                    <div class="col-sm-8" ng-if="!loadingStorageAccounts">
+                        <select class="form-control" id="offer" ng-options="sub.vpc as sub.vpc for sub in subnets"  ng-change="changeSubnet()" ng-model="data.network_name">
+                            <option value="">--select--</option>
+                        </select>
                     </div>
+                    <div class="col-sm-2" ng-if="loadingStorageAccounts"><i class="fa fa-spinner fa-pulse fa-2x"></i></div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Subnet :</label>
-                    <div class="col-sm-8">
-                         <select class="form-control"></select>
+                    <div class="col-sm-8" ng-if="!loadingStorageAccounts">
+                         <input type="text" class="form-control" ng-model="subnet_group" name="">
                     </div>
+                    <div class="col-sm-2" ng-if="loadingStorageAccounts"><i class="fa fa-spinner fa-pulse fa-2x"></i></div>
                 </div>
             </form>
-        </div> -->
+        </div>
         <div class="col-md-6">
             <div>
                 <div class="box-header create-rds-cat-header"> <strong>Settings </strong></div>
