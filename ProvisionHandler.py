@@ -35,12 +35,12 @@ class ProvisionHandler(MethodView):
             pgcCmd = " ".join(cmd_list)
             data = pgc.get_cmd_data(pgcCmd)
             if len(data) == 0:
-                return ServerErrorResult().http_response()
+                return ServerErrorResult().http_response(pretty=1)
             if data[0]['state'] != 'complete':
-                return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
+                return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response(pretty=1)
             del data[0]['state']
-            return Result(200,'SUCCESS',message=data[0].get('msg'),extra_fields={'data':data[0]}).http_response()
+            return Result(200,'SUCCESS',message=data[0].get('msg'),extra_fields={'data':data[0]}).http_response(pretty=1)
         except Exception as ex:
-            return ServerErrorResult(message = str(ex)).http_response()
+            return ServerErrorResult(message = str(ex)).http_response(pretty=1)
 
 _pgc_provision.add_url_rule('', view_func=ProvisionHandler.as_view('provision'))
