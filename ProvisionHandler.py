@@ -17,7 +17,9 @@ class ProvisionHandler(MethodView):
     def post(self):
         try:
             json_body = request.json
-            acceptable_params = ["availability", "cluster", "provider", "size", "overwrite"]
+            acceptable_params = ["availability", "cluster", "provider", "size",
+                                 "overwrite"]
+            boolean_param  = ['provision', 'init', 'deploy', 'start']
             pgc_cmd = "provision pgha3 "
             cmd_list = []
             cmd_list.append(pgc_cmd)
@@ -26,6 +28,10 @@ class ProvisionHandler(MethodView):
                 if str(key) in acceptable_params:
                     cmd = "--{0} {1}".format(str(key), str(json_body.get(key)))
                     cmd_list.append(cmd)
+                elif str(key) in boolean_param:
+                    if json_body.get(key) is False:
+                        cmd = "--no-{0}".format(str(key))
+                        cmd_list.append(cmd)
                 else:
                     invalid_params.append(str(key))
 

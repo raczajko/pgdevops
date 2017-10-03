@@ -33,7 +33,7 @@ class Result(object):
         """Serialize to JSON."""
         if pretty == 1:
             return json.dumps(self.to_json_dict(), indent=2)
-        return json.dumps(self.to_json_dict())
+        return json.dumps(self.to_json_dict(), indent=2)
 
     def http_response(self, pretty=0, status_code=200):
         response = Response(self.to_json(pretty), status=status_code,mimetype='application/json')

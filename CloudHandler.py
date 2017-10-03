@@ -20,6 +20,6 @@ class CloudHandler(MethodView):
         if pg_response[0]['state'] != 'completed':
             return ServerErrorResult(state=pg_response[0]['state'],message=pg_response[0].get('msg')).http_response()
         extra_fields = pg_response[0]['data']
-        return Result(200,pg_response[0]['state'],'SUCCESS',extra_fields={"data":extra_fields}).http_response()
+        return Result(200,pg_response[0]['state'],'SUCCESS',extra_fields={"data":extra_fields}).http_response(pretty=1)
 
 cloud.add_url_rule(' <string:cmd>', view_func=CloudHandler.as_view('instances'))
