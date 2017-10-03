@@ -31,12 +31,16 @@
 
     <!-- Base template stylesheets -->
     <!-- Base template stylesheets -->
-    <link type="text/css" rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css"/>
-
-    <!--<link type="text/css" rel="stylesheet"
-          href="/admin{{ url_for('static', filename='vendor/alertifyjs/alertify.css' if config.DEBUG else 'vendor/alertifyjs/alertify.min.css') }}"/> -->
-    <link type="text/css" rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css"/>
-    <link type="text/css" rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css"/>
+    <link type="text/css" rel="stylesheet"
+          href="/admin{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.css' if config.DEBUG else 'vendor/bootstrap/css/bootstrap.min.css')}}"/>
+    <link type="text/css" rel="stylesheet"
+          href="/admin{{ url_for('static', filename='vendor/alertifyjs/alertify.css' if config.DEBUG else 'vendor/alertifyjs/alertify.min.css') }}"/>
+    <link type="text/css" rel="stylesheet"
+          href="/admin{{ url_for('static', filename='vendor/alertifyjs/themes/bootstrap.css' if config.DEBUG else 'vendor/alertifyjs/themes/bootstrap.min.css') }}"/>
+    <link type="text/css" rel="stylesheet"
+          href="/admin{{ url_for('static', filename='vendor/bootstrap/css/bootstrap-theme.css' if config.DEBUG else 'vendor/bootstrap/css/bootstrap-theme.min.css') }}"/>
+    <link type="text/css" rel="stylesheet"
+          href="/admin{{ url_for('static', filename='vendor/font-awesome/css/font-awesome.css' if config.DEBUG else 'vendor/font-awesome/css/font-awesome.min.css') }}"/>
 
     <!-- View specified stylesheets -->
     {% for stylesheet in current_app.stylesheets %}
