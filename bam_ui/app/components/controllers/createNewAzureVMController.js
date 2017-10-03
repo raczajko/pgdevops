@@ -63,11 +63,32 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
 
     $scope.storageChange = function (argument) {
         $scope.loadingStorageAccounts = true;
+        $scope.subnet_group = ''
         var getStorageAcs = pgcRestApiCall.getCmdData('metalist storage-accounts --cloud azure --region '+ $scope.data.region  + ' --group ' + $scope.data.group_name + ' --type vm');
         getStorageAcs.then(function (data) {
-            $scope.storageAccounts = data;
+            if (data.length > 0) {
+                $scope.storageAccounts = data;
+            }else{
+                $scope.storage_account = '';
+            }
             $scope.loadingStorageAccounts = false;
         });
+        var getSubnet = pgcRestApiCall.getCmdData('metalist vpc-list --cloud azure --type vm --group ' + $scope.data.group_name );
+        getSubnet.then(function (data) {
+            $scope.subnets = data;
+        });
+    }
+
+    $scope.changeSubnet = function (argument) {
+        if ($scope.data.network_name) {
+            for (var i = $scope.subnets.length - 1; i >= 0; i--) {
+               if($scope.subnets[i].vpc == $scope.data.network_name){
+                $scope.subnet_group = $scope.subnets[i].subnet_group;
+               }
+            }
+        }else{
+            $scope.subnet_group = '';
+        }
     }
 
     $scope.loadingInsType = true;
