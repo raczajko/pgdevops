@@ -55,12 +55,12 @@ APP_REVISION = 0
 
 # Application version suffix, e.g. 'beta1', 'dev'. Usually an empty string
 # for GA releases.
-APP_SUFFIX = 'rc1'
+APP_SUFFIX = ''
 
 # Numeric application version for upgrade checks. Should be in the format:
 # [X]XYYZZ, where X is the release version, Y is the revision, with a leading
 # zero if needed, and Z represents the suffix, with a leading zero if needed
-APP_VERSION_INT = 20001
+APP_VERSION_INT = 20003
 
 # DO NOT CHANGE!
 # The application version string, constructed from the components
@@ -114,6 +114,7 @@ NODE_BLACKLIST = []
 #       you may also need to redefine any values below that are derived
 #       from it, notably various paths such as LOG_FILE and anything
 #       using DATA_DIR.
+
 try:
     if builtins.SERVER_MODE is None:
         SERVER_MODE = True
@@ -122,7 +123,6 @@ try:
 except Exception as e:
     SERVER_MODE = True
     pass
-
 # User ID (email address) to use for the default user in desktop mode.
 # The default should be fine here, as it's not exposed in the app.
 DESKTOP_USER = 'pgadmin4@pgadmin.org'

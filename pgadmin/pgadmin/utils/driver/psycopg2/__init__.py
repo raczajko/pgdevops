@@ -50,31 +50,65 @@ else:
 
 _ = gettext
 
+unicode_type_for_record = psycopg2.extensions.new_type(
+    (2249,),
+    "RECORD",
+    psycopg2.extensions.UNICODE
+)
+
+unicode_array_type_for_record_array = psycopg2.extensions.new_array_type(
+    (2287,),
+    "ARRAY_RECORD",
+    unicode_type_for_record
+)
+
 # This registers a unicode type caster for datatype 'RECORD'.
-psycopg2.extensions.register_type(
-    psycopg2.extensions.new_type((2249,), "RECORD",
-                                 psycopg2.extensions.UNICODE)
+psycopg2.extensions.register_type(unicode_type_for_record)
+
+# This registers a array unicode type caster for datatype 'ARRAY_RECORD'.
+psycopg2.extensions.register_type(unicode_array_type_for_record_array)
+
+
+# define type caster to convert various pg types into string type
+pg_types_to_string_type = psycopg2.extensions.new_type(
+    (
+        # To cast bytea, interval type
+        17, 1186,
+
+        # to cast int4range, int8range, numrange tsrange, tstzrange, daterange
+        3904, 3926, 3906, 3908, 3910, 3912, 3913,
+
+        # date, timestamp, timestamptz, bigint, double precision
+        1700, 1082, 1114, 1184, 20, 701,
+
+        # real
+        700
+    ),
+    'TYPECAST_TO_STRING', psycopg2.STRING
+)
+
+# define type caster to convert pg array types of above types into
+# array of string type
+pg_array_types_to_array_of_string_type = psycopg2.extensions.new_array_type(
+    (
+        # To cast bytea[] type
+        1001,
+
+        # bigint[]
+        1016,
+
+        # double precision[], real[]
+        1022, 1021
+    ),
+    'TYPECAST_TO_ARRAY_OF_STRING', pg_types_to_string_type
 )
 
 # This registers a type caster to convert various pg types into string type
-psycopg2.extensions.register_type(
-    psycopg2.extensions.new_type(
-        (
-            # To cast bytea, bytea[] and interval type
-            17, 1001, 1186,
+psycopg2.extensions.register_type(pg_types_to_string_type)
 
-            # to cast int4range, int8range, numrange tsrange, tstzrange,
-            # daterange
-            3904, 3926, 3906, 3908, 3910, 3912, 3913,
-
-            # date, timestamp, timestamptz, bigint, double precision, bigint[]
-            1700, 1082, 1114, 1184, 20, 701, 1016,
-
-            # double precision[], real, real[]
-            1022, 700, 1021
-         ),
-        'TYPECAST_TO_STRING', psycopg2.STRING)
-)
+# This registers a type caster to convert various pg array types into
+# array of string type
+psycopg2.extensions.register_type(pg_array_types_to_array_of_string_type)
 
 
 def register_string_typecasters(connection):
@@ -144,6 +178,7 @@ def register_binary_typecasters(connection):
             lambda value, cursor: 'binary data[]' if value is not None else None),
         connection
     )
+
 
 class Connection(BaseConnection):
     """
@@ -295,9 +330,11 @@ class Connection(BaseConnection):
 
         pg_conn = None
         password = None
+        passfile = None
         mgr = self.manager
 
         encpass = kwargs['password'] if 'password' in kwargs else None
+        passfile = kwargs['passfile'] if 'passfile' in kwargs else None
 
         if encpass is None:
             encpass = self.password or getattr(mgr, 'password', None)
@@ -342,19 +379,23 @@ class Connection(BaseConnection):
             import os
             os.environ['PGAPPNAME'] = '{0} - {1}'.format(config.APP_NAME, conn_id)
 
-            pg_dict = dict()
-            pg_dict['host'] = mgr.host
-            if mgr.hostaddr:
-                pg_dict['hostaddr'] = mgr.hostaddr
-            pg_dict['port'] = mgr.port
-            pg_dict['database'] = database
-            pg_dict['user'] = user
-            pg_dict['password'] = password
-            pg_dict['async'] = self.async
-            pg_dict['sslmode'] = mgr.ssl_mode
-            pg_dict['connect_timeout'] = 20
-
-            pg_conn = psycopg2.connect(**pg_dict)
+            pg_conn = psycopg2.connect(
+                host=mgr.host,
+                hostaddr=mgr.hostaddr,
+                port=mgr.port,
+                database=database,
+                user=user,
+                password=password,
+                async=self.async,
+                connect_timeout=20,
+                passfile=passfile,
+                sslmode=mgr.ssl_mode,
+                sslcert=mgr.sslcert,
+                sslkey=mgr.sslkey,
+                sslrootcert=mgr.sslrootcert,
+                sslcrl=mgr.sslcrl,
+                sslcompression=True if mgr.sslcompression else False
+            )
 
             # If connection is asynchronous then we will have to wait
             # until the connection is ready to use.
@@ -1189,16 +1230,21 @@ Failed to execute query (execute_void) for the server #{server_id} - {conn_id}
             password = decrypt(password, user.password).decode()
 
         try:
-            pg_dict = dict()
-            pg_dict['host'] = mgr.host
-            if mgr.hostaddr:
-                pg_dict['hostaddr'] = mgr.hostaddr
-            pg_dict['port'] = mgr.port
-            pg_dict['database'] = self.db
-            pg_dict['user'] = mgr.user
-            pg_dict['password'] = password
-
-            pg_conn = psycopg2.connect(**pg_dict)
+            pg_conn = psycopg2.connect(
+                host=mgr.host,
+                hostaddr=mgr.hostaddr,
+                port=mgr.port,
+                database=self.db,
+                user=mgr.user,
+                password=password,
+                passfile=mgr.passfile,
+                sslmode=mgr.ssl_mode,
+                sslcert=mgr.sslcert,
+                sslkey=mgr.sslkey,
+                sslrootcert=mgr.sslrootcert,
+                sslcrl=mgr.sslcrl,
+                sslcompression=True if mgr.sslcompression else False
+            )
 
         except psycopg2.Error as e:
             msg = e.pgerror if e.pgerror else e.message \
@@ -1460,16 +1506,22 @@ Failed to reset the connection to the server due to following error:
                 password = decrypt(password, user.password).decode()
 
             try:
-                pg_dict = dict()
-                pg_dict['host'] = self.manager.host
-                if self.manager.hostaddr:
-                    pg_dict['hostaddr'] = self.manager.hostaddr
-                pg_dict['port'] = self.manager.port
-                pg_dict['database'] = self.db
-                pg_dict['user'] = self.manager.user
-                pg_dict['password'] = password
-
-                pg_conn = psycopg2.connect(**pg_dict)
+                pg_conn = psycopg2.connect(
+                    host=self.manager.host,
+                    hostaddr=self.manager.hostaddr,
+                    port=self.manager.port,
+                    database=self.db,
+                    user=self.manager.user,
+                    password=password,
+                    passfile=self.manager.passfile,
+                    sslmode=self.manager.ssl_mode,
+                    sslcert=self.manager.sslcert,
+                    sslkey=self.manager.sslkey,
+                    sslrootcert=self.manager.sslrootcert,
+                    sslcrl=self.manager.sslcrl,
+                    sslcompression=True if self.manager.sslcompression
+                    else False
+                )
 
                 # Get the cursor and run the query
                 cur = pg_conn.cursor()
@@ -1509,6 +1561,22 @@ Failed to reset the connection to the server due to following error:
             resp.append(self.__notices.pop(0))
         return resp
 
+    def decode_to_utf8(self, value):
+        """
+        This method will decode values to utf-8
+        Args:
+            value: String to be decode
+
+        Returns:
+            Decoded string
+        """
+        if hasattr(str, 'decode'):
+            try:
+                value = value.decode('utf-8')
+            except:
+                pass
+        return value
+
     def _formatted_exception_msg(self, exception_obj, formatted_msg):
         """
         This method is used to parse the psycopg2.Error object and returns the
@@ -1520,7 +1588,6 @@ Failed to reset the connection to the server due to following error:
             formatted_msg: if True then function return the formatted exception message
 
         """
-
         if exception_obj.pgerror:
             errmsg = exception_obj.pgerror
         elif exception_obj.diag.message_detail:
@@ -1528,60 +1595,72 @@ Failed to reset the connection to the server due to following error:
         else:
             errmsg = str(exception_obj)
         # errmsg might contains encoded value, lets decode it
-        if hasattr(str, 'decode'):
-            errmsg = errmsg.decode('utf-8')
+        errmsg = self.decode_to_utf8(errmsg)
 
         # if formatted_msg is false then return from the function
         if not formatted_msg:
             return errmsg
 
-        errmsg += u'********** Error **********\n\n'
+        # Do not append if error starts with `ERROR:` as most pg related
+        # error starts with `ERROR:`
+        if not errmsg.startswith(u'ERROR:'):
+            errmsg = u'ERROR:  ' + errmsg + u'\n\n'
 
         if exception_obj.diag.severity is not None \
                 and exception_obj.diag.message_primary is not None:
-            errmsg += u"{}: {}".format(
+            ex_diag_message = u"{0}:  {1}".format(
                 exception_obj.diag.severity,
-                exception_obj.diag.message_primary.decode('utf-8') if
-                hasattr(str, 'decode') else exception_obj.diag.message_primary)
-
+                self.decode_to_utf8(exception_obj.diag.message_primary)
+            )
+            # If both errors are different then only append it
+            if errmsg and ex_diag_message and \
+                ex_diag_message.strip().strip('\n').lower() not in \
+                    errmsg.strip().strip('\n').lower():
+                errmsg += ex_diag_message
         elif exception_obj.diag.message_primary is not None:
-            errmsg += exception_obj.diag.message_primary.decode('utf-8') if \
-                hasattr(str, 'decode') else exception_obj.diag.message_primary
+            message_primary = self.decode_to_utf8(
+                exception_obj.diag.message_primary
+            )
+            if message_primary.lower() not in errmsg.lower():
+                errmsg += message_primary
 
         if exception_obj.diag.sqlstate is not None:
-            if not errmsg[:-1].endswith('\n'):
+            if not errmsg.endswith('\n'):
                 errmsg += '\n'
             errmsg += gettext('SQL state: ')
-            errmsg += exception_obj.diag.sqlstate.decode('utf-8') if \
-                hasattr(str, 'decode') else exception_obj.diag.sqlstate
+            errmsg += self.decode_to_utf8(exception_obj.diag.sqlstate)
 
         if exception_obj.diag.message_detail is not None:
-            if not errmsg[:-1].endswith('\n'):
-                errmsg += '\n'
-            errmsg += gettext('Detail: ')
-            errmsg += exception_obj.diag.message_detail.decode('utf-8') if \
-                hasattr(str, 'decode') else exception_obj.diag.message_detail
+            if 'Detail:'.lower() not in errmsg.lower():
+                if not errmsg.endswith('\n'):
+                    errmsg += '\n'
+                errmsg += gettext('Detail: ')
+                errmsg += self.decode_to_utf8(
+                    exception_obj.diag.message_detail
+                )
 
         if exception_obj.diag.message_hint is not None:
-            if not errmsg[:-1].endswith('\n'):
-                errmsg += '\n'
-            errmsg += gettext('Hint: ')
-            errmsg += exception_obj.diag.message_hint.decode('utf-8') if \
-                hasattr(str, 'decode') else exception_obj.diag.message_hint
+            if 'Hint:'.lower() not in errmsg.lower():
+                if not errmsg.endswith('\n'):
+                    errmsg += '\n'
+                errmsg += gettext('Hint: ')
+                errmsg += self.decode_to_utf8(exception_obj.diag.message_hint)
 
         if exception_obj.diag.statement_position is not None:
-            if not errmsg[:-1].endswith('\n'):
-                errmsg += '\n'
-            errmsg += gettext('Character: ')
-            errmsg += exception_obj.diag.statement_position.decode('utf-8') if \
-                hasattr(str, 'decode') else exception_obj.diag.statement_position
+            if 'Character:'.lower() not in errmsg.lower():
+                if not errmsg.endswith('\n'):
+                    errmsg += '\n'
+                errmsg += gettext('Character: ')
+                errmsg += self.decode_to_utf8(
+                    exception_obj.diag.statement_position
+                )
 
         if exception_obj.diag.context is not None:
-            if not errmsg[:-1].endswith('\n'):
-                errmsg += '\n'
-            errmsg += gettext('Context: ')
-            errmsg += exception_obj.diag.context.decode('utf-8') if \
-                hasattr(str, 'decode') else exception_obj.diag.context
+            if 'Context:'.lower() not in errmsg.lower():
+                if not errmsg.endswith('\n'):
+                    errmsg += '\n'
+                errmsg += gettext('Context: ')
+                errmsg += self.decode_to_utf8(exception_obj.diag.context)
 
         return errmsg
 
@@ -1623,6 +1702,12 @@ class ServerManager(object):
         self.db_info = dict()
         self.server_types = None
         self.db_res = server.db_res
+        self.passfile = server.passfile
+        self.sslcert = server.sslcert
+        self.sslkey = server.sslkey
+        self.sslrootcert = server.sslrootcert
+        self.sslcrl = server.sslcrl
+        self.sslcompression = True if server.sslcompression else False
 
         for con in self.connections:
             self.connections[con]._release()

@@ -2,6 +2,7 @@
 
 /* Ensure simple forms don't hit the top of the screen */
 body {
+    font-family: 'Open Sans';
     padding-top: 50px;
     padding-bottom: 20px;
 }
@@ -104,7 +105,7 @@ iframe {
     border-width: 5px 0 5px 5px;
     border-left-color: #cccccc;
     margin-top: 5px;
-    margin-right: -2px;
+    margin-right: -10px;
 }
 
 .dropdown-submenu:hover>a:after {
@@ -150,10 +151,6 @@ iframe {
 .dropdown-menu > hr {
     margin-top: 0;
     margin-bottom: 0;
-}
-
-.dropdown-menu > li > a {
-  padding: 3px 5px;
 }
 
 .dropdown-menu > li > a > i {
@@ -1005,7 +1002,7 @@ ul.nav.nav-tabs {
 }
 
 span.button-label {
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-family: 'Open Sans';
   font-size: initial;
 }
 
@@ -1015,7 +1012,7 @@ span.button-label {
   border-radius: 3px;
   color: #333;
   display: block;
-  font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
+  font-family: 'Source Code Pro';
   font-size: 12px;
   line-height: 1.42857;
   margin: 0 0 10px;
@@ -1343,4 +1340,9 @@ body {
 /* Security label's label column font size */
 .override_label_class_font_size {
   font-size: inherit !important;
+}
+
+/* To align 'X' in alert on login page */
+.alert-dismissable, .alert-dismissible {
+  padding-right: 35px !important;
 }

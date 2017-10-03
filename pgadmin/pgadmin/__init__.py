@@ -17,7 +17,7 @@ from importlib import import_module
 from flask import Flask, abort, request, current_app, session, url_for
 from flask_babel import Babel, gettext
 from flask_htmlmin import HTMLMIN
-from flask_login import user_logged_in
+from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_mail import Mail
 from flask_security.utils import login_user
@@ -330,7 +330,7 @@ def create_app(app_name=None):
     app.config.update(dict(SECRET_KEY=config.SECRET_KEY))
     app.config.update(dict(SECURITY_PASSWORD_SALT=config.SECURITY_PASSWORD_SALT))
 
-    security.init_app(app)
+    security.init_app(app, user_datastore)
 
     #app.session_interface = create_session_interface(app)
     app.session_interface = SqliteSessionInterface(config.SESSION_DB_PATH)
@@ -371,7 +371,6 @@ def create_app(app_name=None):
     ##########################################################################
     @user_logged_in.connect_via(app)
     def on_user_logged_in(sender, user):
-
         # Keep hold of the user ID
         user_id = user.id
 
@@ -500,6 +499,10 @@ def create_app(app_name=None):
         except:
             pass
 
+    @user_logged_in.connect_via(app)
+    @user_logged_out.connect_via(app)
+    def force_session_write(app, user):
+        session.force_write = True
 
     ##########################################################################
     # Load plugin modules
