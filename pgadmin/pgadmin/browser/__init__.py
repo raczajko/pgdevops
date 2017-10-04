@@ -569,7 +569,7 @@ def utils():
             editor_wrap_code=editor_wrap_code,
             editor_brace_matching=brace_matching,
             editor_insert_pair_brackets=insert_pair_brackets,
-            app_name=config.APP_NAME
+            app_name=config.PGADMIN_APP_NAME
         ),
         200, {'Content-Type': 'application/x-javascript'})
 

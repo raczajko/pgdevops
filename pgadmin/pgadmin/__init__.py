@@ -288,6 +288,7 @@ def create_app(app_name=None):
     ##########################################################################
     with app.app_context():
         # Run migration for the first time i.e. create database
+        db_upgrade(app)
         from config import SQLITE_PATH
         if not os.path.exists(SQLITE_PATH):
             db_upgrade(app)
