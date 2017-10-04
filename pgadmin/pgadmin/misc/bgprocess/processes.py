@@ -483,7 +483,7 @@ class BatchProcess(object):
 
     @staticmethod
     def list():
-        processes = Process.query.filter_by(user_id=current_user.id)
+        processes = Process.query.filter_by(user_id=current_user.id, acknowledge = None)
         changed = False
 
         res = []

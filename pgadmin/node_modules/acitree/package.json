@@ -1,0 +1,8 @@
+{
+  "name": "acitree",
+  "version": "4.5.0-rc.7",
+  "main": "index.js",
+  "repository": "https://github.com/imsurinder90/jquery-aciTree.git",
+  "author": "Surinder Kumar <imsurinder90@gmail.com>",
+  "license": "MIT"
+}

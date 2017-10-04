@@ -1,0 +1,29 @@
+{
+	"name": "backform",
+	"description": "Backform takes a Backbone model and transforms it into an HTML form. Any changes to the form are relfected back to the model and vice versa.",
+	"author": "Martin Drapeau and contributors <martindrapeau@gmail.com>",
+	"homepage": "http://amiliaapp.github.io/backform/",
+	"bugs": {
+		"url": "https://github.com/AmiliaApp/backform/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/AmiliaApp/backform"
+	},
+	"version": "0.2.0",
+	"keywords": [
+		"backbone",
+		"bootstrap",
+		"form",
+		"html",
+		"javascript"
+	],
+	"files": [
+		"src/backform.js"
+	],
+	"license": {
+		"type": "MIT",
+		"url": "https://github.com/AmiliaApp/backform/blob/gh-pages/LICENSE"
+	},
+	"readme": "Backform takes a Backbone model and transforms it into an HTML form. Any changes to the form are relfected back to the model and vice versa. It comes with built-in controls for input, select, radio buttons, checkbox, etc. Backform controls are Backbone views and extensible. Backform even supports nested objects. Backform is built with Bootstrap 3 markup. Supports Bootstrap 2.3. Adaptable to any markup framework.\nDocumentation and examples available here: http://amiliaapp.github.io/backform/"
+}

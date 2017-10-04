@@ -379,29 +379,23 @@ class Connection(BaseConnection):
             import os
             os.environ['PGAPPNAME'] = '{0} - {1}'.format(config.APP_NAME, conn_id)
 
-            pg_conn_dict = {}
-
-            pg_conn_dict['host'] = mgr.host
-            if mgr.hostaddr:
-                pg_conn_dict['hostaddr'] = mgr.hostaddr
-            pg_conn_dict['port'] = mgr.port
-            pg_conn_dict['database'] = database
-            pg_conn_dict['user'] = user
-            pg_conn_dict['password'] = password
-            pg_conn_dict['async'] = mgr.async
-            pg_conn_dict['connect_timeout'] = 20
-            if passfile:
-                pg_conn_dict['passfile'] = passfile
-
-            pg_conn_dict['sslmode'] = mgr.ssl_mode
-            pg_conn_dict['sslcert'] = mgr.sslcert
-            pg_conn_dict['sslkey'] = mgr.sslkey
-            pg_conn_dict['sslrootcert'] = mgr.sslrootcert
-            pg_conn_dict['sslcrl'] = mgr.sslcrl
-            pg_conn_dict['sslcompression'] = True if mgr.sslcompression else False
-
-
-            pg_conn = psycopg2.connect(**pg_conn_dict)
+            pg_conn = psycopg2.connect(
+                host=mgr.host,
+                hostaddr=mgr.hostaddr,
+                port=mgr.port,
+                database=database,
+                user=user,
+                password=password,
+                async=self.async,
+                connect_timeout=20
+                passfile=passfile,
+                sslmode=mgr.ssl_mode,
+                sslcert=mgr.sslcert,
+                sslkey=mgr.sslkey,
+                sslrootcert=mgr.sslrootcert,
+                sslcrl=mgr.sslcrl,
+                sslcompression=True if mgr.sslcompression else False
+            )
 
             # If connection is asynchronous then we will have to wait
             # until the connection is ready to use.
@@ -1236,26 +1230,21 @@ Failed to execute query (execute_void) for the server #{server_id} - {conn_id}
             password = decrypt(password, user.password).decode()
 
         try:
-            pg_conn_dict = {}
-
-            pg_conn_dict['host'] = mgr.host
-            if mgr.hostaddr:
-                pg_conn_dict['hostaddr'] = mgr.hostaddr
-            pg_conn_dict['port'] = mgr.port
-            pg_conn_dict['database'] = self.db
-            pg_conn_dict['user'] = mgr.user
-            pg_conn_dict['password'] = password
-            if mgr.passfile:
-                pg_conn_dict['passfile'] = mgr.passfile
-
-            pg_conn_dict['sslmode'] = mgr.ssl_mode
-            pg_conn_dict['sslcert'] = mgr.sslcert
-            pg_conn_dict['sslkey'] = mgr.sslkey
-            pg_conn_dict['sslrootcert'] = mgr.sslrootcert
-            pg_conn_dict['sslcrl'] = mgr.sslcrl
-            pg_conn_dict['sslcompression'] = True if mgr.sslcompression else False
-
-            pg_conn = psycopg2.connect(**pg_conn_dict)
+            pg_conn = psycopg2.connect(
+                host=mgr.host,
+                hostaddr=mgr.hostaddr,
+                port=mgr.port,
+                database=self.db,
+                user=mgr.user,
+                password=password,
+                passfile=mgr.passfile,
+                sslmode=mgr.ssl_mode,
+                sslcert=mgr.sslcert,
+                sslkey=mgr.sslkey,
+                sslrootcert=mgr.sslrootcert,
+                sslcrl=mgr.sslcrl,
+                sslcompression=True if mgr.sslcompression else False
+            )
 
         except psycopg2.Error as e:
             msg = e.pgerror if e.pgerror else e.message \
@@ -1517,26 +1506,22 @@ Failed to reset the connection to the server due to following error:
                 password = decrypt(password, user.password).decode()
 
             try:
-                pg_conn_dict = {}
-
-                pg_conn_dict['host'] = self.manager.host
-                if mgr.hostaddr:
-                    pg_conn_dict['hostaddr'] = self.manager.hostaddr
-                pg_conn_dict['port'] = self.manager.port
-                pg_conn_dict['database'] = self.db
-                pg_conn_dict['user'] = self.manager.user
-                pg_conn_dict['password'] = password
-                if self.manager.passfile:
-                    pg_conn_dict['passfile'] = self.manager.passfile
-
-                pg_conn_dict['sslmode'] = self.manager.ssl_mode
-                pg_conn_dict['sslcert'] = self.manager.sslcert
-                pg_conn_dict['sslkey'] = self.manager.sslkey
-                pg_conn_dict['sslrootcert'] = self.manager.sslrootcert
-                pg_conn_dict['sslcrl'] = self.manager.sslcrl
-                pg_conn_dict['sslcompression'] = True if self.manager.sslcompression else False
-
-                pg_conn = psycopg2.connect(**pg_conn_dict)
+                pg_conn = psycopg2.connect(
+                    host=self.manager.host,
+                    hostaddr=self.manager.hostaddr,
+                    port=self.manager.port,
+                    database=self.db,
+                    user=self.manager.user,
+                    password=password,
+                    passfile=self.manager.passfile,
+                    sslmode=self.manager.ssl_mode,
+                    sslcert=self.manager.sslcert,
+                    sslkey=self.manager.sslkey,
+                    sslrootcert=self.manager.sslrootcert,
+                    sslcrl=self.manager.sslcrl,
+                    sslcompression=True if self.manager.sslcompression
+                    else False
+                )
 
                 # Get the cursor and run the query
                 cur = pg_conn.cursor()
