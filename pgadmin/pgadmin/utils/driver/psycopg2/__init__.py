@@ -387,7 +387,7 @@ class Connection(BaseConnection):
                 user=user,
                 password=password,
                 async=self.async,
-                connect_timeout=20
+                connect_timeout=20,
                 passfile=passfile,
                 sslmode=mgr.ssl_mode,
                 sslcert=mgr.sslcert,
