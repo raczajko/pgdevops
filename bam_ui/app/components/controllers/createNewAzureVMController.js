@@ -63,7 +63,7 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
 
     $scope.storageChange = function (argument) {
         $scope.loadingStorageAccounts = true;
-        $scope.subnet_group = ''
+        $scope.data.subnet_name = ''
         var getStorageAcs = pgcRestApiCall.getCmdData('metalist storage-accounts --cloud azure --region '+ $scope.data.region  + ' --group ' + $scope.data.group_name + ' --type vm');
         getStorageAcs.then(function (data) {
             if (data.length > 0) {
@@ -83,11 +83,11 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         if ($scope.data.network_name) {
             for (var i = $scope.subnets.length - 1; i >= 0; i--) {
                if($scope.subnets[i].vpc == $scope.data.network_name){
-                $scope.subnet_group = $scope.subnets[i].subnet_group;
+                $scope.data.subnet_name = $scope.subnets[i].subnet_group;
                }
             }
         }else{
-            $scope.subnet_group = '';
+            $scope.data.subnet_name = '';
         }
     }
 

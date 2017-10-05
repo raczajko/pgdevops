@@ -46,7 +46,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
         var nonPgComps = [];
 
         for (var i = 0; i < comps.length; i++) {
-            if(comps[i]['category_desc'] == 'PostgreSQL' && comps[i]['stage'] == 'prod'){
+            if(comps[i]['category_desc'] == 'PostgreSQL' && comps[i]['stage'] == 'prod' && comps[i]['component'] != 'pg10'){
                 pgComps.push(comps[i]);
             }else if(comps[i]['category_desc'] != 'PostgreSQL'){
                 nonPgComps.push(comps[i]);
