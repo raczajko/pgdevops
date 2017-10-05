@@ -96,7 +96,7 @@
                     </div>
                 </div>
             </form> -->
-            <div>
+           <!--  <div>
                 <div class="box-header create-rds-cat-header"> <strong>Network & Security </strong></div>
             </div>
             <form class="form-horizontal create-rds-modal">
@@ -104,17 +104,19 @@
                     <label class="col-sm-4 control-label">VPC :</label>
                     <div class="col-sm-4">
                         <select class="form-control" id="vpc" ng-model="vpc.select" ng-change="vpcChange()">
-                            <option ng-repeat="dat in networkSec" value="{{dat.vpc}}">{{dat.vpc}}</option>
+                            <option ng-repeat="dat in vpc_subnet_groups" value="{{dat.vpc}}">{{dat.vpc}}</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Subnet Group:</label>
                     <div class="col-sm-8">
-                        <input type="text" id="sbGroup" class="form-control" ng-model="data.subnet_group" value="{{data.subnet_group}}" name="" placeholder="Subnet Group">
+                        <select class="form-control" id="subnet_group" ng-model="data.subnet_group" >
+                            <option ng-repeat="dat in vpc_subnet_groups" value="{{dat.subnet_group}}">{{dat.subnet_group}}</option>
+                        </select>
                     </div>
                 </div>
-            </form>
+            </form> -->
         </div>
         <div class="col-md-6">
             <div>
@@ -133,8 +135,8 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Network :</label>
                     <div class="col-sm-7">
-                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
-                            <option></option>
+                        <select class="form-control"  ng-options="sub.vpc as sub.vpc for sub in subnets" ng-model="data.network_name">
+                            <option value="">--select--</option>
                         </select>
                     </div>
                     <div class="col-sm-1">                             
@@ -144,9 +146,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Subnet :</label>
                     <div class="col-sm-7">
-                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
-                            <option></option>
-                        </select>
+                        <input type="text" class="form-control" ng-model="data.subnet_name" name="">
                     </div>
                     <div class="col-sm-1">                             
                         <i tooltip-append-to-body="true" uib-tooltip="A range of IP addresses in your VPC that can be used to isolate different EC2 resources from each other or from the Internet. Each subnet resides in one Availability Zone." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> 
@@ -177,8 +177,8 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Shutdown behavior :</label>
                     <div class="col-sm-7">
-                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
-                            <option></option>
+                        <select class="form-control" ng-options="val as key for (key, val) in shutDownBehaviours" ng-model="data.shutdown_behaviour">
+                            <option value="">--select--</option>
                         </select>
                     </div>
                     <div class="col-sm-1">                             
@@ -198,7 +198,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Monitoring :</label>
                     <div class="col-sm-7" style="margin-top: 5px;">
-                        <input type="checkbox" name="" ng-model="data.monitoring"> <span style="font-size: 0.81em;
+                        <input type="checkbox" name="" ng-model="data.monitoring.Enabled"> <span style="font-size: 0.81em;
     white-space: pre;">Enable CloudWatch detailed monitoring</span>
                     </div>
                     <div class="col-sm-1">                             

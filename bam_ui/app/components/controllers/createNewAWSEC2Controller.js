@@ -11,6 +11,7 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
     $scope.disableInsClass = true;
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
     $scope.instance = { 'name': '' };
+    $scope.shutDownBehaviours = {'Stop':'stop', 'Terminate':'terminate'}
 
     $scope.data = {
         'region' : '',
@@ -43,10 +44,29 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         $scope.data.region = $scope.regions[0].region;
     });
 
+    $scope.getVpc = function (argument) {
+        var vpc_subnet = pgcRestApiCall.getCmdData('metalist vpc-list --region=' + $scope.data.region + ' --type=vm --cloud=aws');
+        vpc_subnet.then(function(data){
+            $scope.subnets = data;
+        });
+    }
+
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
     	session = val;
     });
+
+    // $scope.changeSubnet = function (argument) {
+    //     if ($scope.data.network_name) {
+    //         for (var i = $scope.subnets.length - 1; i >= 0; i--) {
+    //            if($scope.subnets[i].vpc == $scope.data.network_name){
+    //             $scope.data.subnet_name = $scope.subnets[i].subnet_group;
+    //            }
+    //         }
+    //     }else{
+    //         $scope.data.subnet_name = '';
+    //     }
+    // }
 
 
     $scope.regionChange = function (region) {
