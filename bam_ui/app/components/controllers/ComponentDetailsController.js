@@ -76,7 +76,7 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
         $scope.currentHost = remote_host;
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
         $scope.currentHost = remote_host;
-        if (remote_host == "" || remote_host == "localhost") {
+        if (remote_host == "" || remote_host == "localhost" || $scope.currentComponent == "pgdevops") {
             $scope.currentHost = "localhost";
             var infoData = pgcRestApiCall.getCmdData('info --relnotes ' + $scope.currentComponent);
         } else {

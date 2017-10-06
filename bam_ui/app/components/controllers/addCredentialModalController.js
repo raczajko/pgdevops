@@ -24,12 +24,11 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 	}
 
 	$scope.cloudTypeChange = function (type) {
-		if (['azure', 'aws'].indexOf($scope.data.cloud_name) == -1) {
-			$scope.alerts.push({
-                    msg: 'Coming Soon',
-                    type: 'warning'
-                });
-		}
+		$scope.alerts = [];
+		$scope.alerts.push({
+            msg: 'Coming Soon',
+            type: 'warning'
+        });
 	}
 
 	var getCloudList = pgcRestApiCall.getCmdData('cloudlist');
@@ -38,6 +37,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 	})
 
 	$scope.refreshData = function (type) {
+		$scope.alerts = [];
 		$scope.data = {
 			'type' : type,
 			'credential_name' : '',
@@ -174,7 +174,6 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
                 controller: 'credentialUsageController',
                 keyboard  : false,
                 backdrop  : 'static',
-                // size : 'lg'
             });
 		modalInstance.name = name;
 	}
