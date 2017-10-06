@@ -52,6 +52,7 @@ angular.module('bigSQL.components').controller('ComponentsViewController', ['$sc
                 nonPgComps.push(comps[i]);
             };
         }
+        // For displaying pg10 component as first Item in package manager using below condition
         if(comps.length > 0 && comps[0]['component'] == 'pg10'){
             pgComps.push(comps[0]);
         }
