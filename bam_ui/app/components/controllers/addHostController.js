@@ -22,7 +22,7 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     $scope.sudo_password = {text: ''};
 	if($scope.editHost){
 		$scope.type = 'Edit';
-		$scope.create_btn = "Update";
+		$scope.create_btn = "Save";
 		$scope.hostName = $scope.editHost.host;
 		$scope.pgcDir = $scope.editHost.pgc_home;
 		$scope.userName = $scope.editHost.user;
@@ -244,9 +244,11 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 		var getCredentials = bamAjaxCall.getCmdData('pgc/credentials/')
 		getCredentials.then(function (data) {
 			$scope.gettingCreds = false;
-			$scope.credentialsList = $(data.data).filter(function(i,n){ return n.cred_type != "cloud" ;})
-			if ($scope.cred_name) {
-				$scope.selected_cred_name = $scope.cred_name;
+			if (data.data.length>0) {
+				$scope.credentialsList = $(data.data).filter(function(i,n){ return n.cred_type != "cloud" ;})
+				if ($scope.cred_name) {
+					$scope.selected_cred_name = $scope.cred_name;
+				}
 			}
 		})
 	}
