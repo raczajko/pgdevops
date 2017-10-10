@@ -118,12 +118,6 @@ def no_admin_users():
 
 @user_registered.connect_via(application)
 def on_user_registerd(app, user, confirm_token):
-    import util
-    util.set_value('labs', 'aws', 'on')
-    util.set_value('labs', 'azure', 'on')
-    util.set_value('labs', 'dumprest', 'on')
-    util.set_value('labs', 'multi-host-mgr', 'on')
-    util.set_value('labs', 'pgdg-repos', 'on')
     sg = ServerGroup(
         user_id=user.id,
         name="Servers")
