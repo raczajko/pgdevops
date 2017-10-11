@@ -104,10 +104,10 @@ VALUES(1, 'Administrators', 'pgAdmin Administrators Role')
 INSERT INTO "roles_users"
 VALUES(1, 1);
     """)
-    db.engine.execute("""
+    '''db.engine.execute("""
 INSERT INTO "servergroup"
 VALUES(1, 1, 'Servers')
-""")
+""")'''
 
     email, password, active = user_info()
     current_salt = getattr(
