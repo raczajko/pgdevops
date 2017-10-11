@@ -7,6 +7,12 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 	var credentialsList = function(argument) {
 		$scope.loading = true;
 		$scope.isAllSelected = false;
+		$scope.options = {
+	    	master : false
+	    }
+	    $scope.model = {
+	    	selectedLabelList : []
+	    }
 		var getCredentials = bamAjaxCall.getCmdData('pgc/credentials/')
 		getCredentials.then(function (data) {
 			$scope.loading = false;
@@ -31,18 +37,40 @@ angular.module('bigSQL.components').controller('credentialManagerController', ['
 
 	credentialsList();
 
-	$scope.toggleAll = function() { 
-        if($scope.isAllSelected){
-            $scope.isAllSelected = false;
-        }else{
-            $scope.isAllSelected = true;
-        }
-        angular.forEach($scope.credentialsList, function(itm){ itm.selected = $scope.isAllSelected; });
+	$scope.model = {
+    	selectedLabelList : []
     }
+    $scope.options = {
+    	master : false
+    }
+    $scope.isSelectAll = function(){
+    	$scope.model = {
+	    	selectedLabelList : []
+	    }
+	    if($scope.options.master){
+			$scope.options.master = true;
+	    	for(var i=0;i<$scope.credentialsList.length;i++){
+				$scope.model.selectedLabelList.push($scope.credentialsList[i].cred_name);		
+			}
+	    }else{$scope.options.master = false;}
+	   	angular.forEach($scope.credentialsList, function (item) {
+			    item.selected = $scope.options.master;
+	   	});
 
-    $scope.optionToggled = function(name){
-    	
-    }
+	}
+    
+  $scope.isLabelChecked = function(){
+		var _name = this.cred.cred_name;
+		if(this.cred.selected){
+			$scope.model.selectedLabelList.push(_name);
+			if($scope.model.selectedLabelList.length == $scope.credentialsList.length ){$scope.options.master = true;}
+		}else{
+			$scope.options.master = false;
+			var index = $scope.model.selectedLabelList.indexOf(_name);
+			$scope.model.selectedLabelList.splice(index, 1);
+		}
+	}
+
 
     $rootScope.$on('deleteResponse', function(argument, data) {
     	if (data.state == 'error') {
