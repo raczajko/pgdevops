@@ -20,13 +20,19 @@ angular.module('bigSQL.menus').component('topMenu', {
 
         $scope.checkVersion = function (){
             $scope.notSupported = htmlMessages.getMessage('windows7-not-supported');
-            var os = $scope.pgcInfo['os'];
-            if(os.toLowerCase().contains('windows 7')){
-                $scope.alerts.push({
-                    msg : $scope.notSupported,
-                    type : 'warning'
-                });
+            if(!$scope.pgcInfo){
                 $scope.supported = false;
+            }
+            else{
+                var os = $scope.pgcInfo['os'];
+                if(os.toLowerCase().contains('windows 7')){
+                    debugger
+                    $scope.alerts.push({
+                        msg : $scope.notSupported,
+                        type : 'warning'
+                    });
+                    $scope.supported = false;
+                }
             }
         };
 
