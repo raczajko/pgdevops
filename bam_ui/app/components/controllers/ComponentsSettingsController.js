@@ -34,6 +34,7 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     };
 
     $scope.lastUpdateNone = htmlMessages.getMessage('last-update-none');
+    $scope.notSupported = htmlMessages.getMessage('windows-not-supported');
     // var infoData = pgcRestApiCall.getCmdData('info')
     // infoData.then(function(data) {
     //     $scope.pgcInfo = data[0];
@@ -195,17 +196,31 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
     }
 
     $scope.changeSetting = function (settingName, value, disp_name) {
-        var getLablist = pgcRestApiCall.getCmdData('lablist');
-        if (settingName == 'aws') {
-            $rootScope.$emit('hideAwsNav', value);
-        }else if(settingName == 'dumprest'){
-            $rootScope.$emit('hideBackupRestoreNav', value);
-        }else if(settingName == 'azure'){
-            $rootScope.$emit('hideAzureNav', value);
+        if ((settingName == 'aws' || settingName == 'azure') && value == "on" && $scope.pgcInfo.platform == 'win') {
+            this.lab.enabled = "";
+            $scope.alerts.push({
+                msg: $scope.notSupported,
+                type: 'warning'
+            });
+        }else{
+            if (settingName == 'aws') {
+                $rootScope.$emit('hideAwsNav', value);
+            }else if(settingName == 'dumprest'){
+                $rootScope.$emit('hideBackupRestoreNav', value);
+            }else if(settingName == 'azure'){
+                $rootScope.$emit('hideAzureNav', value);
+            }
+            if (value) {
+                session.call('com.bigsql.setLabSetting', [settingName, value]);            
+            }
         }
-        if (value) {
-            session.call('com.bigsql.setLabSetting', [settingName, value]);            
-        }
+        var refreshLablist = pgcRestApiCall.getCmdData('lablist');
+        refreshLablist.then(function function_name(argument) {
+            $scope.lablist = argument;
+            for (var i = $scope.lablist.length - 1; i >= 0; i--) {
+                $scope.lablist[i]['markdownDesc'] = $sce.trustAsHtml($scope.lablist[i].short_desc);
+            }
+        })
     }
 
     $scope.openCredentialManager = function (argument) {
