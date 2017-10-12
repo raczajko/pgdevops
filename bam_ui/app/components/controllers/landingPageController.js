@@ -1,8 +1,13 @@
-angular.module('bigSQL.components').controller('bamLoading', ['$scope', '$rootScope', '$window', '$timeout', 'pgcRestApiCall', '$http', '$uibModal', function ($scope,  $rootScope, $window, $timeout, pgcRestApiCall, $http, $uibModal) {
+angular.module('bigSQL.components').controller('bamLoading', ['$scope', '$rootScope', '$window', '$timeout', 'pgcRestApiCall', '$http', '$uibModal','htmlMessages', function ($scope,  $rootScope, $window, $timeout, pgcRestApiCall, $http, $uibModal,htmlMessages) {
 
-	$scope.bamLoading = true;
+  $scope.bamLoading = true;
   $scope.showSplash = false;
+  $scope.supported = true;
+  $scope.alerts = [];
 
+  $scope.closeAlert = function (index) {
+    $scope.alerts.splice(index, 1);
+  };
   var getLablist = pgcRestApiCall.getCmdData('lablist');
   getLablist.then(function function_name(lablist) {
       for (var i = lablist.length - 1; i >= 0; i--) {
@@ -16,6 +21,18 @@ angular.module('bigSQL.components').controller('bamLoading', ['$scope', '$rootSc
           }
       }
   })
+
+  $scope.checkVersion = function (){
+    $scope.notSupported = htmlMessages.getMessage('windows7-not-supported');
+    var os = $rootScope.pgcInfo['os'];
+    if(os.toLowerCase().contains('windows 7')){
+        $scope.alerts.push({
+            msg : $scope.notSupported,
+            type : 'warning'
+        });
+        $scope.supported = false;
+    }
+  };
 
   var serverStatus = pgcRestApiCall.getCmdData('status');
   serverStatus.then(function (args) {
