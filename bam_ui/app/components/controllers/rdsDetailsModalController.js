@@ -11,7 +11,7 @@ angular.module('bigSQL.components').controller('rdsDetailsModalController', ['$s
 
 	sessPromise.then(function (sessParam) {
         session = sessParam;
-        session.call('com.bigsql.rdsInfo', [ $scope.region, $scope.instance]);
+        session.call('com.bigsql.rdsInfo', [ $scope.region, $scope.instance, "aws"]);
         session.call('com.bigsql.rdsMetaList', ['aws-rds', $scope.db_class])
 
         session.subscribe("com.bigsql.onRdsMetaList", function (data) {

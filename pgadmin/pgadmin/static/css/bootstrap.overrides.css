@@ -2,6 +2,7 @@
 
 /* Ensure simple forms don't hit the top of the screen */
 body {
+    font-family: 'Open Sans';
     padding-top: 50px;
     padding-bottom: 20px;
 }
@@ -71,7 +72,7 @@ iframe {
 }
 
 /*
- * Bootstrap 3 remove submenus as they don't work overly well on Mobile. The 
+ * Bootstrap 3 remove submenus as they don't work overly well on Mobile. The
  * following CSS adds them back in - for our purposes they actually work fine
  * on Mobile and are perfectly responsive
  */
@@ -570,7 +571,7 @@ fieldset[disabled] .form-control {
 }
 
 .backgrid.presentation td.renderable {
-    padding: 3px;
+    padding: 6px 3px 3px 3px;
     font-size: 12px;
 }
 
@@ -984,7 +985,7 @@ ul.nav.nav-tabs {
   background-position: 0px 2px;
 }
 
-/* This rule will stop Chrome apply highlighting to elements such as DIV's used as modals */ 
+/* This rule will stop Chrome apply highlighting to elements such as DIV's used as modals */
 *:focus {
   outline: none;
 }
@@ -993,7 +994,7 @@ ul.nav.nav-tabs {
 .alert-info-panel {
   border: 2px solid #a1a1a1;
   margin-top: 2em;
-  padding: 5px 5px; 
+  padding: 5px 5px;
   background: #dddddd;
   border-radius: 5px;
   height: 8em;
@@ -1001,7 +1002,7 @@ ul.nav.nav-tabs {
 }
 
 span.button-label {
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-family: 'Open Sans';
   font-size: initial;
 }
 
@@ -1011,7 +1012,7 @@ span.button-label {
   border-radius: 3px;
   color: #333;
   display: block;
-  font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
+  font-family: 'Source Code Pro';
   font-size: 12px;
   line-height: 1.42857;
   margin: 0 0 10px;
@@ -1320,4 +1321,28 @@ body {
 .pg-panel-depends-container table,
 .pg-panel-depends-container table {
     font-size: 12px !important;
+}
+
+.backgrid tr th button {
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 0;
+}
+
+/* Latest backgrid adds column name like `label` to td element, override color*/
+.backgrid td.label {
+  color: #333;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+/* Security label's label column font size */
+.override_label_class_font_size {
+  font-size: inherit !important;
+}
+
+/* To align 'X' in alert on login page */
+.alert-dismissable, .alert-dismissible {
+  padding-right: 35px !important;
 }

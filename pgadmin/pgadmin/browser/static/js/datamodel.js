@@ -1,5 +1,5 @@
 define(
-   ['underscore', 'underscore.string', 'pgadmin', 'jquery', 'backbone'],
+   ['underscore', 'underscore.string', 'sources/pgadmin', 'jquery', 'backbone'],
 function(_, S, pgAdmin, $, Backbone) {
   var pgBrowser = pgAdmin.Browser = pgAdmin.Browser || {};
 
@@ -52,8 +52,6 @@ function(_, S, pgAdmin, $, Backbone) {
                     }
                   }
                   else {
-                    if (obj)
-                      delete obj;
                     obj = null;
                   }
                   self.set(s.id, obj, {silent: true});
@@ -81,8 +79,6 @@ function(_, S, pgAdmin, $, Backbone) {
                     }
                     obj.set(val, {parse: true, silent: true});
                   } else {
-                    if (obj)
-                      delete obj;
                     obj = null;
                   }
                   res[s.id] = obj;
@@ -258,19 +254,16 @@ function(_, S, pgAdmin, $, Backbone) {
         if (opts && opts.stop)
             this.stopSession();
 
-        for(id in this.objects) {
+        for(var id in this.objects) {
           obj = this.get(id);
 
           if (obj) {
             if (obj instanceof pgBrowser.DataModel) {
               obj.reset(opts);
-              delete obj;
             } else if (obj instanceof Backbone.Model) {
               obj.clear(opts);
-              delete obj;
             } else if (obj instanceof pgBrowser.DataCollection) {
               obj.reset(opts);
-              delete obj;
             } else if (obj instanceof Backbone.Collection) {
               obj.each(function(m) {
                 if (m instanceof Backbone.DataModel) {
@@ -280,7 +273,6 @@ function(_, S, pgAdmin, $, Backbone) {
               });
               if (!(opts instanceof Array)){ opts = [opts] }
               Backbone.Collection.prototype.reset.apply(obj, opts);
-              delete obj;
             }
           }
         }
@@ -331,7 +323,7 @@ function(_, S, pgAdmin, $, Backbone) {
               self = this,
               msg;
 
-          attrChanged = function(v, k) {
+          var attrChanged = function(v, k) {
             if (k in self.objects) {
               return;
             }
@@ -366,14 +358,15 @@ function(_, S, pgAdmin, $, Backbone) {
             if (!msg) {
               msg = self.validate(_.keys(attrs));
             }
+          }
 
-            /*
-             * If any parent present, we will need to inform the parent - that
-             * I have some issues/fixed the issue.
-             *
-             * If not parent found, we will raise the issue
-             */
-            if (_.size(self.errorModel.attributes) == 0) {
+          /*
+           * If any parent present, we will need to inform the parent - that
+           * I have some issues/fixed the issue.
+           *
+           * If not parent found, we will raise the issue
+           */
+          if (_.size(self.errorModel.attributes) == 0) {
               if (self.collection || self.handler) {
                 (self.collection || self.handler).trigger(
                     'pgadmin-session:model:valid', self, (self.collection || self.handler)
@@ -391,7 +384,6 @@ function(_, S, pgAdmin, $, Backbone) {
                 self.trigger('pgadmin-session:invalid', msg, self);
               }
             }
-          }
 
           return res;
         }
@@ -520,7 +512,7 @@ function(_, S, pgAdmin, $, Backbone) {
           if (!objName) {
             var hasPrimaryKey = obj.primary_key &&
                   typeof(obj.primary_key) === 'function';
-                key = hasPrimaryKey ? obj.primary_key() : obj.cid,
+              var key = hasPrimaryKey ? obj.primary_key() : obj.cid,
                 comparator = hasPrimaryKey ?
                   function(k) {
                     var o = self.get('k');
@@ -570,7 +562,7 @@ function(_, S, pgAdmin, $, Backbone) {
           if (!objName) {
               var hasPrimaryKey = (obj.primary_key &&
                 (typeof(obj.primary_key) === 'function'));
-              key = hasPrimaryKey ? obj.primary_key() : obj.cid,
+              var key = hasPrimaryKey ? obj.primary_key() : obj.cid,
               comparator = hasPrimaryKey ?
                 function(k) {
                   var o = self.get('k');
@@ -614,7 +606,7 @@ function(_, S, pgAdmin, $, Backbone) {
               };
 
           if (obj instanceof Backbone.Collection) {
-            for (idx in obj.models) {
+            for (var idx in obj.models) {
               if (validate(obj.models[idx]))
                 break;
             }
@@ -1248,7 +1240,7 @@ function(_, S, pgAdmin, $, Backbone) {
           self.clearInvalidSessionIfModelValid(m);
         }
 
-        new_conflicting_models = self.where(condition);
+        var new_conflicting_models = self.where(condition);
         if (new_conflicting_models.length == 0) {
           self.clearInvalidSessionIfModelValid(model);
         } else if (new_conflicting_models.length == 1) {

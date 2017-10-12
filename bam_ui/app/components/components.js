@@ -132,6 +132,25 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
                 templateUrl: '../app/components/partials/awsIntegration.html',
             }
         }
+    })
+    .state('components.credentials', {
+        url: '/credentials',
+        views: {
+            "sub": {
+                controller: 'credentialManagerController',
+                templateUrl: '../app/components/partials/credentialManager.html',
+            }
+        }    
+    })
+    .state('components.azureIntegration', {
+        url: '/azureIntegration',
+        views: {
+            "sub": {
+                controller: 'azureIntegrationController',
+                templateUrl: '../app/components/partials/azureIntegration.html',
+
+            }
+        }
     });
 }).controller('ComponentsController', ['$scope', function ($scope) {
 

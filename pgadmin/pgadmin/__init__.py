@@ -14,14 +14,15 @@ import os, sys
 from collections import defaultdict
 from importlib import import_module
 
-from flask import Flask, abort, request, current_app, session
+from flask import Flask, abort, request, current_app, session, url_for
 from flask_babel import Babel, gettext
 from flask_htmlmin import HTMLMIN
-from flask_login import user_logged_in
+from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_mail import Mail
 from flask_security.utils import login_user
 from werkzeug.datastructures import ImmutableDict
+from flask_paranoid import Paranoid
 
 from pgadmin.utils import PgAdminModule, driver
 from pgadmin.utils.versioned_template_loader import VersionedTemplateLoader
@@ -32,7 +33,9 @@ from werkzeug.utils import find_modules
 
 from pgadmin.utils.preferences import Preferences
 
-from pgadmin.model import db, Role, Server, ServerGroup, User, Keys
+from pgadmin.model import db, Role, Server, ServerGroup, \
+    User, Keys, Version, SCHEMA_VERSION as CURRENT_SCHEMA_VERSION
+
 
 # If script is running under python3, it will not have the xrange function
 # defined
@@ -89,13 +92,39 @@ class PgAdmin(Flask):
 
     @property
     def exposed_endpoint_url_map(self):
+        #############################################################
+        # To handle WSGI paths
+        # If user has setup application under WSGI alias
+        # like 'localhost/pgadmin4' then we have to append '/pgadmin4'
+        # into endpoints
+        #############################################################
+        import config
+        is_wsgi_root_present = False
+        if config.SERVER_MODE:
+            pgadmin_root_path = url_for('browser.index')
+            if pgadmin_root_path != '/browser/':
+                is_wsgi_root_present = True
+                wsgi_root_path = pgadmin_root_path.replace(
+                    '/browser/', ''
+                )
+
+        def get_full_url_path(url):
+            """
+            Generate endpoint URL at per WSGI alias
+            """
+            if is_wsgi_root_present and url:
+                return wsgi_root_path + url
+            else:
+                return url
+
+        # Fetch all endpoints and their respective url
         for rule in current_app.url_map.iter_rules('static'):
-            yield rule.endpoint, rule.rule
+            yield rule.endpoint, get_full_url_path(rule.rule)
 
         for module in self.submodules:
             for endpoint in module.exposed_endpoints:
                 for rule in current_app.url_map.iter_rules(endpoint):
-                    yield rule.endpoint, rule.rule
+                    yield rule.endpoint, get_full_url_path(rule.rule)
 
     @property
     def javascripts(self):
@@ -257,7 +286,26 @@ def create_app(app_name=None):
     ##########################################################################
     # Upgrade the schema (if required)
     ##########################################################################
-    db_upgrade(app)
+    with app.app_context():
+        # Run migration for the first time i.e. create database
+        db_upgrade(app)
+        from config import SQLITE_PATH
+        if not os.path.exists(SQLITE_PATH):
+            db_upgrade(app)
+        else:
+            version = Version.query.filter_by(name='ConfigDB').first()
+            schema_version = version.value
+
+            # Run migration if current schema version is greater than the
+            # schema version stored in version table
+            if CURRENT_SCHEMA_VERSION >= schema_version:
+                db_upgrade(app)
+
+            # Update schema version to the latest
+            if CURRENT_SCHEMA_VERSION > schema_version:
+                version = Version.query.filter_by(name='ConfigDB').first()
+                version.value = CURRENT_SCHEMA_VERSION
+                db.session.commit()
 
     Mail(app)
 
@@ -282,10 +330,15 @@ def create_app(app_name=None):
     app.config.update(dict(SECRET_KEY=config.SECRET_KEY))
     app.config.update(dict(SECURITY_PASSWORD_SALT=config.SECURITY_PASSWORD_SALT))
 
-    security.init_app(app)
+    security.init_app(app, user_datastore)
 
     #app.session_interface = create_session_interface(app)
     app.session_interface = SqliteSessionInterface(config.SESSION_DB_PATH)
+
+    # Make the Session more secure against XSS & CSRF when running in web mode
+    if config.SERVER_MODE:
+        paranoid = Paranoid(app)
+        paranoid.redirect_view = 'browser.index'
 
     ##########################################################################
     # Load all available server drivers
@@ -318,7 +371,6 @@ def create_app(app_name=None):
     ##########################################################################
     @user_logged_in.connect_via(app)
     def on_user_logged_in(sender, user):
-
         # Keep hold of the user ID
         user_id = user.id
 
@@ -447,6 +499,10 @@ def create_app(app_name=None):
         except:
             pass
 
+    @user_logged_in.connect_via(app)
+    @user_logged_out.connect_via(app)
+    def force_session_write(app, user):
+        session.force_write = True
 
     ##########################################################################
     # Load plugin modules
@@ -528,6 +584,5 @@ def create_app(app_name=None):
     ##########################################################################
     # All done!
     ##########################################################################
-    app.logger.debug('URL map: %s' % app.url_map)
 
     return app

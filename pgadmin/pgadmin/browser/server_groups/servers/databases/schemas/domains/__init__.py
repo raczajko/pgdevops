@@ -56,6 +56,7 @@ class DomainModule(SchemaChildModule):
         super(DomainModule, self).__init__(*args, **kwargs)
         self.min_ver = None
         self.max_ver = None
+        self.min_gpdbver = 1000000000
 
     def get_nodes(self, gid, sid, did, scid):
         """
@@ -492,7 +493,8 @@ AND relname = typname AND relkind != 'c') AND
 relnamespace=typnamespace AND relname = substring(typname FROM 2)::name
 AND relkind != 'c'))"""
 
-        if self.blueprint.show_system_objects:
+        # To show hidden objects
+        if not self.blueprint.show_system_objects:
             condition += " AND nsp.nspname != 'information_schema'"
 
         # Get Types

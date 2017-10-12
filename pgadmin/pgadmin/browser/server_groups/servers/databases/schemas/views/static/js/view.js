@@ -1,6 +1,6 @@
 define('pgadmin.node.view', [
   'sources/gettext',
-  'sources/url_for', 'jquery', 'underscore', 'underscore.string', 'pgadmin',
+  'sources/url_for', 'jquery', 'underscore', 'underscore.string', 'sources/pgadmin',
   'pgadmin.browser', 'codemirror', 'pgadmin.browser.server.privilege',
   'pgadmin.node.rule'
 ], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, CodeMirror) {
@@ -113,8 +113,7 @@ define('pgadmin.node.view', [
           id: 'schema', label: gettext('Schema'), cell: 'string', first_empty: false,
           control: 'node-list-by-name', type: 'text', cache_level: 'database',
           node: 'schema', disabled: 'notInSchema', mode: ['create', 'edit'],
-          select2: { allowClear: false }, cache_node: 'database',
-          cache_level: 'database'
+          select2: { allowClear: false }, cache_node: 'database'
         },{
           id: 'system_view', label: gettext('System view?'), cell: 'string',
           type: 'switch', disabled: true, mode: ['properties']
@@ -148,7 +147,7 @@ define('pgadmin.node.view', [
           type: 'text', mode: ['create', 'edit'], group: gettext('Definition'),
           control: Backform.SqlFieldControl,
           disabled: 'notInSchema'
-        }, pgBrowser.SecurityGroupUnderSchema, {
+        }, pgBrowser.SecurityGroupSchema, {
           // Add Privilege Control
           id: 'datacl', label: gettext('Privileges'), type: 'collection',
           model: pgBrowser.Node.PrivilegeRoleModel.extend({
@@ -221,8 +220,8 @@ define('pgadmin.node.view', [
           if ('coll-view' == d._type) {
 
             // Check if we are not child of view
-            prev_i = t.hasParent(i) ? t.parent(i) : null;
-            prev_d = prev_i ? t.itemData(prev_i) : null;
+            var prev_i = t.hasParent(i) ? t.parent(i) : null,
+              prev_d = prev_i ? t.itemData(prev_i) : null;
             if( prev_d._type == 'catalog') {
               return false;
             } else {

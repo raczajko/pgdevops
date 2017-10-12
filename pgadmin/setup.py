@@ -12,7 +12,18 @@ and settings database."""
 
 import os
 import sys
+from pgadmin.model import db, Version, SCHEMA_VERSION as CURRENT_SCHEMA_VERSION
 
+if sys.version_info[0] >= 3:
+    import builtins
+else:
+    import __builtin__ as builtins
+
+# Grab the SERVER_MODE if it's been set by the runtime
+if 'SERVER_MODE' in globals():
+    builtins.SERVER_MODE = globals()['SERVER_MODE']
+else:
+    builtins.SERVER_MODE = None
 
 # We need to include the root directory in sys.path to ensure that we can
 # find everything we need when running in the standalone runtime.
@@ -40,4 +51,22 @@ if __name__ == '__main__':
     print(u"======================================\n")
 
     with app.app_context():
+        # Run migration for the first time i.e. create database
         db_upgrade(app)
+        from config import SQLITE_PATH
+        if not os.path.exists(SQLITE_PATH):
+            db_upgrade(app)
+        else:
+            version = Version.query.filter_by(name='ConfigDB').first()
+            schema_version = version.value
+
+            # Run migration if current schema version is greater than the
+            # schema version stored in version table
+            if CURRENT_SCHEMA_VERSION >= schema_version:
+                db_upgrade(app)
+
+            # Update schema version to the latest
+            if CURRENT_SCHEMA_VERSION > schema_version:
+                version = Version.query.filter_by(name='ConfigDB').first()
+                version.value = CURRENT_SCHEMA_VERSION
+                db.session.commit()

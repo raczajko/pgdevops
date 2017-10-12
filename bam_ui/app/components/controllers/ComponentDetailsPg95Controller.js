@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'bamAjaxCall', '$uibModal', '$sce', '$cookies', '$http', 'userInfoService', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, bamAjaxCall, $uibModal, $sce, $cookies, $http, userInfoService) {
+angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval', 'MachineInfo', '$window', 'pgcRestApiCall', '$uibModal', '$sce', '$cookies', '$http', 'userInfoService', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, $window, pgcRestApiCall, $uibModal, $sce, $cookies, $http, userInfoService) {
 
     $scope.alerts = [];
     var subscriptions = [];
@@ -48,9 +48,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
         $scope.currentHost = remote_host;
         if (remote_host == "" || remote_host == "localhost") {
-            var checkStatus = bamAjaxCall.getCmdData('status/' + $stateParams.component);    
+            var checkStatus = pgcRestApiCall.getCmdData('status ' + $stateParams.component);    
         }else{
-            var checkStatus = bamAjaxCall.getCmdData('status/' + $stateParams.component + '/' + remote_host);
+            var checkStatus = pgcRestApiCall.getCmdData('status ' + $stateParams.component + ' --host "' + remote_host + '"');
         }
         
         checkStatus.then(function (data) {
@@ -60,9 +60,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 $scope.releaseTabEvent();
             }
             if (remote_host == "" || remote_host == "localhost") {
-                var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component);
+                var infoData = pgcRestApiCall.getCmdData('info ' + $stateParams.component);
             } else {
-                var infoData = bamAjaxCall.getCmdData('info/' + $stateParams.component + "/" + remote_host);
+                var infoData = pgcRestApiCall.getCmdData('info ' + $stateParams.component + ' --host "' + remote_host + '"');
             }
 
             infoData.then(function (data) {
@@ -117,12 +117,12 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
 
         if (remote_host == "" || remote_host == "localhost") {
-            var statusData = bamAjaxCall.getCmdData('status');
+            var statusData = pgcRestApiCall.getCmdData('status');
         } else {
-            var statusData = bamAjaxCall.getCmdData('hostcmd/status/'+ remote_host);
+            var statusData = pgcRestApiCall.getCmdData('status --host "' + remote_host + '"');
         }
 
-        // var statusData = bamAjaxCall.getCmdData('status');
+        // var statusData = pgcRestApiCall.getCmdData('status');
         statusData.then(function (data) {
             componentStatus = getCurrentObject(data, $stateParams.component);
             $rootScope.$emit('componentStatus', componentStatus);
@@ -299,9 +299,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
         $scope.performanceTabEvent = function (args) {
             $scope.sshPgcInfo = '';
             if ($scope.currentHost == "" || $scope.currentHost == "localhost") {
-                var sshHostInfo = bamAjaxCall.getCmdData('info');
+                var sshHostInfo = pgcRestApiCall.getCmdData('info');
             }else{
-                var sshHostInfo = bamAjaxCall.getCmdData('hostcmd/info/'+$scope.currentHost);  
+                var sshHostInfo = pgcRestApiCall.getCmdData('info --host "'+$scope.currentHost + '"');  
             }
             sshHostInfo.then(function (argument) {
                     $scope.sshPgcInfo = argument[0];
@@ -391,9 +391,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsPg95Controller',
                 remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
 
                 if (remote_host == "" || remote_host == "localhost") {
-                    var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component );
+                    var relnotes = pgcRestApiCall.getCmdData('info --relnotes ' + $stateParams.component );
                 } else{
-                    var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $stateParams.component + '/' + remote_host );
+                    var relnotes = pgcRestApiCall.getCmdData('info --relnotes ' + $stateParams.component + ' --host "' + remote_host + '"' );
                 }             
                 relnotes.then(function (data) {
                     $scope.relnotes = $sce.trustAsHtml(data[0].rel_notes);

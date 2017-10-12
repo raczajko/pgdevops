@@ -18,7 +18,15 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'rds-not-available' : 'Instances is not available',
         'update-pgc-host-msg' : 'Updating PGC on host {{host}}',
         'update-pgc-host-completed' : 'PGC update completed successfully',
-        'coming-soon': 'Coming Soon'
+        'coming-soon': 'Coming Soon',
+        'no-credentials': 'You haven\'t added any credentials.',
+        'select-one-cred' : 'You must select only one credential.',
+        'no-usage-creds' : 'Selected credential(s) are currently not in use.',
+        'loading-azure-pg' : 'Loading...',
+        'create-azure-db' : 'Creating Postgres instance, this may take a couple of minutes.',
+        'create-azure-vm' : 'Creating VM, this may take a couple of minutes.',
+        'windows-not-supported' : 'Sorry! This feature is currently not supported on Windows.',
+        'windows7-not-supported' : 'Sorry! This feature is currently not supported on Windows7.'
     };
 
     return {

@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('createNewRdsController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'bamAjaxCall', '$uibModalInstance', '$uibModal', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, bamAjaxCall, $uibModalInstance, $uibModal) {
+angular.module('bigSQL.components').controller('createNewRdsController', ['$scope', '$stateParams', 'PubSubService', '$rootScope', '$interval','MachineInfo', 'pgcRestApiCall', '$uibModalInstance', '$uibModal', '$cookies', function ($scope, $stateParams, PubSubService, $rootScope, $interval, MachineInfo, pgcRestApiCall, $uibModalInstance, $uibModal, $cookies) {
 
     var session;
     $scope.showErrMsg = false;
@@ -11,6 +11,24 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     $scope.disableInsClass = true;
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
 
+    $scope.backup = {
+        'backup_window_show' : 'no',
+        'backup_window_hours' : '00',
+        'backup_window_mins' : '00',
+        'backup_window_duration' : '00',
+    }
+
+    $scope.maintanance = {
+        'main_window_show' : 'no',
+        'main_window_day' : 'mon',
+        'main_window_hours': '00',
+        'main_window_mins' : '00',
+        'main_window_duration': '00',
+    }
+
+    $scope.vpc_security = {group_ids: ''};
+    $scope.security = {groups_list: ''};
+
     $scope.data = {
         'engine' : 'postgres',
         'allocated_storage' : 5,
@@ -19,55 +37,51 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         'copy_tags' : false,
         'storage_type' : 'gp2',
         'multi_az' : false,
-        'vpcGroup' : 'default',
         'backup_retention_period' : 7,
-        'enableMon' : false,
+        'enable_mon' : false,
         'version_upgrade' : false,
         'storage_encrypted' : false,
         'monitoring_interval' : 60,
         'monitoring_role' : 'default',
-        'mainWindow' : 'no',
-        'backupWindow' : 'no',
-        'mainWindowDay' : 'mon',
-        'mainWindowHours': '00',
-        'mainWindowMins' : '00',
-        'mainWindowDuration': '00',
-        'backupWindowHours' : '00',
-        'backupWindowMins' : '00',
-        'backupWindowDuration' : '00',
-        'monitor_arn' : 'Default'
+        'backup_window' : 'no',
+        'monitor_arn' : 'Default',
+        'vpc_security_group_ids': [],
+        // 'security_groups' : [],
+        'licence_model': '',
+        'iops' : '',
+        'option_group_name' : '',
+        'charset' : '',
+        'tags' : '',
+        'cluster_identifier' : '',
+        'tde_arn' : '',
+        'tde_arn_pwd' : '',
+        'kms_key_id' : '',
+        'iam_role' : ''
     };
 
 
-    var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
+    var regions = pgcRestApiCall.getCmdData('metalist aws-regions');
     regions.then(function(data){
         $scope.loading = false;
         $scope.regions = data;
         $scope.data.region = $scope.regions[0].region;
     });
 
-    // var types = bamAjaxCall.getCmdData('metalist/aws-rds')
-    // types.then(function(data){
-    //     $scope.types = data;
-    //     $scope.data.db_class = $scope.types[0].instance;
-    // });
-
-
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
     	session = val;
-        session.subscribe("com.bigsql.onCreateRds", function(data){
-          $scope.creating = false;
-          var data = JSON.parse(data);
-          if(data[0].state == 'error'){
-            $scope.showErrMsg = true;
-            $scope.errMsg = data[0].msg;
-          }else{
-            $rootScope.$emit("RdsCreated", data[0].msg);
-            $uibModalInstance.dismiss('cancel');
-          }
-          $scope.$apply();
-        })
+        // session.subscribe("com.bigsql.onCreateInstance", function(data){
+        //   $scope.creating = false;
+        //   var data = JSON.parse(data);
+        //   if(data[0].state == 'error'){
+        //     $scope.showErrMsg = true;
+        //     $scope.errMsg = data[0].msg;
+        //   }else{
+        //     $rootScope.$emit("RdsCreated", data[0].msg);
+        //     $uibModalInstance.dismiss('cancel');
+        //   }
+        //   $scope.$apply();
+        // })
 
         session.subscribe("com.bigsql.onRdsMetaList", function (data) {
             $scope.loading = false;
@@ -78,12 +92,16 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
                 $scope.versionChange();
             }else if($scope.secondStep && $scope.data.engine_version){
                 $scope.types = response;
-                $scope.data.db_class = $scope.types[0].DBInstanceClass;
+                if ($scope.types.length>0) {
+                    $scope.data.db_class = 'db.t2.micro';
+                }
                 $scope.disableInsClass = false;
             }else if($scope.thirdStep){
-                $scope.networkSec = JSON.parse(data[0])
-                $scope.vpc = { select : $scope.networkSec[0].vpc }
-                $scope.vpcChange();
+                if(response.length > 0){
+                    $scope.networkSec = response;
+                    $scope.vpc = { select : $scope.networkSec[0].vpc }
+                    $scope.vpcChange();
+                }
             }
             $scope.$apply();
         });
@@ -95,16 +113,16 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         $scope.dbGroups = [];
         $scope.optionGroups = '';
         $scope.data.db_parameter_group = [];
-        $scope.data.optionGroup = '';
+        $scope.data.option_group = '';
         $scope.types = '';
         $scope.data.db_class = [];
-        session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version])
+        session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version, "aws", "db"])
         for(var i = 0; i < $scope.dbEngVersions.length; ++i){
             if($scope.dbEngVersions[i].EngineVersion == $scope.data.engine_version){
                 $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
                 $scope.optionGroups = $scope.dbEngVersions[i].OptionGroups;
                 $scope.data.db_parameter_group = $scope.dbGroups[0].DBParameterGroupName;
-                $scope.data.optionGroup = $scope.optionGroups[0].OptionGroupName;
+                $scope.data.option_group = $scope.optionGroups[0].OptionGroupName;
             }
         }
     }
@@ -129,37 +147,62 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     };
 
     $scope.createRDS = function(){
-        $scope.data.maintanance_window = '';
+        $scope.data.vpc_security_group_ids = [];
+        // $scope.data.security_groups = [];
+        $scope.data.maintenance_window = '';
         $scope.data.backup_window = '';
         if(!$scope.data.enableMon){
             $scope.data.monitoring_interval = 0;
             $scope.data.monitor_arn = '';
         }
-        if($scope.data.backupWindow=='yes'){
-            var backTotalTime = parseInt($scope.data.backupWindowHours) + parseInt($scope.data.backupWindowDuration);
+        if($scope.backup.backup_window_show=='yes'){
+            var backTotalTime = parseInt($scope.backup.backup_window_hours) + parseInt($scope.backup.backup_window_duration);
             if(backTotalTime<10){backTotalTime="0"+backTotalTime};
-            $scope.data.backup_window = $scope.data.backupWindowHours + ':' + $scope.data.backupWindowMins + '-' + backTotalTime + ':' + $scope.data.backupWindowMins;
+            $scope.data.backup_window = $scope.backup.backup_window_hours + ':' + $scope.backup.backup_window_mins + '-' + backTotalTime + ':' + $scope.backup.backup_window_mins;
         }
-        if($scope.data.mainWindow=='yes'){
-            var mainTotalTime = parseInt($scope.data.mainWindowHours) + parseInt($scope.data.mainWindowDuration);
+        if($scope.maintanance.main_window_show=='yes'){
+            var mainTotalTime = parseInt($scope.maintanance.main_window_hours) + parseInt($scope.maintanance.main_window_duration);
             if(mainTotalTime<10){mainTotalTime="0"+mainTotalTime};
-            $scope.data.maintanance_window = $scope.data.mainWindowDay + ':' + $scope.data.mainWindowHours + ':' + $scope.data.mainWindowMins + '-' + $scope.data.mainWindowDay + ':' + mainTotalTime + ':' + $scope.data.mainWindowMins;
+            $scope.data.maintenance_window = $scope.maintanance.main_window_day + ':' + $scope.maintanance.main_window_hours + ':' + $scope.maintanance.main_window_mins + '-' + $scope.maintanance.main_window_day + ':' + mainTotalTime + ':' + $scope.maintanance.main_window_mins;
         }
         $scope.creating = true;
         $scope.showErrMsg = false;
+        $cookies.put('lastSelRegion', $scope.data.region);
         var data = [];
         data.push($scope.data);
-        session.call('com.bigsql.createRds', ['db', $scope.data.region, data])
+        // if ($scope.security.groups_list) {
+        //     data[0].security_groups.push($scope.security.groups_list);
+        // }
+        if ($scope.vpc_security.group_ids) {
+            data[0].vpc_security_group_ids.push($scope.vpc_security.group_ids);
+        }
+        var requestData = {
+            'cloud' : 'aws',
+            'type' : 'db',
+            'params' : data
+        }
+        var createdb = pgcRestApiCall.postData('create',requestData)
+        createdb.then(function (data) {
+            $scope.creating = false;
+            if(data.code != 200){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data.message;
+            }else{
+                $rootScope.$emit("PostgresRdsCreated", data.message);
+                $uibModalInstance.dismiss('cancel');
+            }
+        });
+        // session.call('com.bigsql.createInstance', ['db', 'aws', data])
     }
 
     $scope.next = function(region){
         $scope.loading = true;
         if($scope.firstStep){
-            session.call('com.bigsql.rdsMetaList', ['rds-versions', '', $scope.data.region, ''])
+            session.call('com.bigsql.rdsMetaList', ['rds-versions', '', $scope.data.region, '', "aws", "db"])
             $scope.firstStep = false;
             $scope.secondStep = true;
         }else{
-            session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, ''])
+            session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '', "aws", "db"])
             $scope.secondStep = false;
             $scope.thirdStep = true;
         }

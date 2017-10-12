@@ -1,7 +1,7 @@
 /* Create and Register Procedure Collection and Node. */
 define('pgadmin.node.procedure', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
-  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
+  'underscore.string', 'sources/pgadmin', 'pgadmin.browser', 'alertify',
   'pgadmin.node.function', 'pgadmin.browser.collection',
   'pgadmin.browser.server.privilege'
 ], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, alertify, Function) {
@@ -17,7 +17,7 @@ define('pgadmin.node.procedure', [
       });
   };
 
-  pgSchemaNode = pgBrowser.Nodes['schema'];
+  var pgSchemaNode = pgBrowser.Nodes['schema'];
 
   // Inherit Functions Node
   if (!pgBrowser.Nodes['procedure']) {

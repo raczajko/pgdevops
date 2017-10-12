@@ -1,6 +1,6 @@
 angular.module('bigSQL.menus').component('devOpsUpdate', {
     bindings: {},
-    controller: function ($rootScope, $scope, PubSubService, MachineInfo, $uibModal, UpdateComponentsService, UpdateBamService, bamAjaxCall) {
+    controller: function ($rootScope, $scope, PubSubService, MachineInfo, $uibModal, UpdateComponentsService, UpdateBamService, pgcRestApiCall) {
 
         var subscriptions = [];
 
@@ -8,7 +8,7 @@ angular.module('bigSQL.menus').component('devOpsUpdate', {
 
         /**Below function is for displaying update badger on every page.
          **/
-        var infoData = bamAjaxCall.getCmdData('info/devops');
+        var infoData = pgcRestApiCall.getCmdData('info devops');
         infoData.then(function(info) {
             var data = info[0];
             if ( data.component == "devops" && data.is_current == 0 && data.current_version ) {

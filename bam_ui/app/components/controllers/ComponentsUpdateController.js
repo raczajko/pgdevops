@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'bamAjaxCall', '$rootScope', '$cookies', '$uibModal', '$sce', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, bamAjaxCall, $rootScope, $cookies, $uibModal, $sce) {
+angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$window', 'pgcRestApiCall', '$rootScope', '$cookies', '$uibModal', '$sce', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $window, pgcRestApiCall, $rootScope, $cookies, $uibModal, $sce) {
 
     var session;
     var subscriptions = [];
@@ -18,9 +18,9 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         argument = typeof argument !== 'undefined' ? argument : "";
         $scope.currentHost = argument;
         if (argument=="localhost" || argument == ''){
-            var listData = bamAjaxCall.getCmdData('relnotes/list');
+            var listData = pgcRestApiCall.getCmdData('list --relnotes');
         } else{
-            var listData = bamAjaxCall.getCmdData('hostrelnotes/list/'+argument);
+            var listData = pgcRestApiCall.getCmdData('list --relnotes --host "' + argument + '"');
         }
         $scope.loadingSpinner = true;
         $scope.body = false;
@@ -75,7 +75,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         });
     };
 
-    var hostsList = bamAjaxCall.getCmdData('hosts');
+    var hostsList = pgcRestApiCall.getCmdData('hosts');
 
     hostsList.then(function (data) {
         if (data.length > 0 && data[0].status == "error") {
@@ -124,6 +124,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
         session.subscribe("com.bigsql.onUpdatesCheck", function (argument) {
             var data = JSON.parse(argument[0]);
             if (data[0].state == 'error') {
+                $scope.loadingSpinner = false;
                 $scope.error.show = true;
                 $scope.errorMsg = data[0].msg;
             }else if (data[0].status == 'completed'){
@@ -225,7 +226,7 @@ angular.module('bigSQL.components').controller('ComponentsUpdateController', ['$
             }else {
                 session.call(sessionKey, [compName, $scope.currentHost]);
                 // var event_url =  'upgrade/' + compName + '/' + $scope.currentHost ;
-                // var eventData = bamAjaxCall.getCmdData(event_url);
+                // var eventData = pgcRestApiCall.getCmdData(event_url);
                 // eventData.then(function(data) {
                 //     getList($scope.currentHost);
                 // });

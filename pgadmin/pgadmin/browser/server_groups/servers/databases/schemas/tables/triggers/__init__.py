@@ -62,6 +62,7 @@ class TriggerModule(CollectionNodeModule):
         """
         self.min_ver = None
         self.max_ver = None
+        self.min_gpdbver = 1000000000
         super(TriggerModule, self).__init__(*args, **kwargs)
 
     def BackendSupported(self, manager, **kwargs):
@@ -69,6 +70,8 @@ class TriggerModule(CollectionNodeModule):
         Load this module if vid is view, we will not load it under
         material view
         """
+        if manager.server_type == 'gpdb':
+            return False
         if super(TriggerModule, self).BackendSupported(manager, **kwargs):
             conn = manager.connection(did=kwargs['did'])
 
@@ -111,6 +114,14 @@ class TriggerModule(CollectionNodeModule):
     def node_inode(self):
         """
         Load the module node as a leaf node
+        """
+        return False
+
+    @property
+    def module_use_template_javascript(self):
+        """
+        Returns whether Jinja2 template is used for generating the javascript
+        module.
         """
         return False
 
@@ -941,7 +952,7 @@ class TriggerView(PGChildNodeView):
             # We know that trigger has more than 1 argument, let's join them
             data['tgargs'] = self._format_args(data['custom_tgargs'])
 
-        if len(data['tgattr']) > 1:
+        if len(data['tgattr']) >= 1:
             columns = ', '.join(data['tgattr'].split(' '))
             data['columns'] = self._column_details(tid, columns)
 

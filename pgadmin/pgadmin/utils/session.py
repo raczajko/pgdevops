@@ -22,6 +22,7 @@ import hashlib
 import os
 import random
 import string
+import time
 from uuid import uuid4
 
 try:
@@ -56,6 +57,8 @@ class ManagedSession(CallbackDict, SessionMixin):
         self.new = new
         self.modified = False
         self.randval = randval
+        self.last_write = None
+        self.force_write = False
         self.hmac_digest = hmac_digest
 
     def sign(self, secret):
@@ -153,9 +156,10 @@ class CachingSessionManager(SessionManager):
 
 class FileBackedSessionManager(SessionManager):
 
-    def __init__(self, path, secret):
+    def __init__(self, path, secret, disk_write_delay):
         self.path = path
         self.secret = secret
+        self.disk_write_delay = disk_write_delay
         if not os.path.exists(self.path):
             os.makedirs(self.path)
 
@@ -212,10 +216,17 @@ class FileBackedSessionManager(SessionManager):
         )
 
     def put(self, session):
-        'Store a managed session'
+        """Store a managed session"""
+        current_time = time.time()
         if not session.hmac_digest:
             session.sign(self.secret)
+        elif not session.force_write:
+            if session.last_write is not None \
+                    and (current_time - float(session.last_write)) < self.disk_write_delay:
+                return
 
+        session.last_write = current_time
+        session.force_write = False
         fname = os.path.join(self.path, session.sid)
         with open(fname, 'wb') as f:
             dump(
@@ -281,7 +292,8 @@ def create_session_interface(app, skip_paths=[]):
         CachingSessionManager(
             FileBackedSessionManager(
                 app.config['SESSION_DB_PATH'],
-                app.config['SECRET_KEY']
+                app.config['SECRET_KEY'],
+                app.config.get('PGADMIN_SESSION_DISK_WRITE_DELAY', 10)
             ),
             1000
         ), skip_paths,

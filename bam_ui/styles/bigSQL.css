@@ -6754,6 +6754,14 @@ span.new-comp-wrapper {
     margin-right: 7px;
   }
 
+  .bgs-azure-menu {
+    background-image: url('../assets/img/azure.png');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    margin-left: -2px;
+    margin-right: 7px;
+  }
+
   .bgs-pgbadger-menu {
     background-image: url('../assets/img/pgbadger15.png');
     background-repeat: no-repeat;
@@ -7362,6 +7370,10 @@ fieldset
     padding-top:2px;
 }
 
+.create-rds-modal .form-control {
+    height: 30px;
+}
+
 .create-rds-cat-header {
     border-bottom: 1px solid #e5e5e5;
     padding-bottom:3px;
@@ -7470,4 +7482,35 @@ a.notification{
     position: absolute;
     top: 10px;
     right: 10px;
+}
+.usageCredHosts{
+  /*border: 1px solid #d2d6de;*/
+  max-height: 200px;
+  overflow: auto;
+}
+.cred_list{
+  max-height: 500px; 
+  overflow: auto;
+}
+.cred-img{
+  height: 18px; 
+  margin-left: 5px;
+}
+.cred-img-add-screen{
+  height: 20px; 
+  margin-top: 6px;
+  margin-left: -15px;
+}
+
+.cred_usage_list{
+  cursor: pointer;
+  margin: 5px;
+}
+
+.disabled {
+  cursor: not-allowed;
+}
+
+.back-red{
+  border-color: red;
 }

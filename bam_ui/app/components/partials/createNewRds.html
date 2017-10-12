@@ -62,7 +62,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">License Model :</label>
                     <div class="col-sm-8">
-                        <select class="form-control" ng-model="db.license">
+                        <select class="form-control" ng-model="db.licence_model">
                             <option value="">postgresql-license</option>
                         </select>
                     </div>
@@ -187,7 +187,7 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">VPC Security Group(s) : </label>
-                    <div class="col-sm-8" ng-model="data.vpcGroup">
+                    <div class="col-sm-8" ng-model="data.vpc_security_group_ids">
                         <select class="form-control" id="leftValues" size="5" multiple>
                             <option value="">default (VPC)</option>
                         </select>
@@ -203,7 +203,7 @@
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Database Name:</label>
                     <div class="col-sm-7">
-                        <input type="text" id="dbName" class="form-control" ng-model="data.dbname" name="" value="{{data.dbname}}" placeholder="Database Name">
+                        <input type="text" id="dbName" class="form-control" ng-model="data.db_name" name="" value="{{data.db_name}}" placeholder="Database Name">
                     </div>
                 </div>
                 <div class="form-group">
@@ -221,7 +221,7 @@
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Option Group :</label>
                     <div class="col-sm-7">
-                        <select class="form-control" ng-model="data.optionGroup" ng-options="option.OptionGroupName as option.OptionGroupName for option in optionGroups"></select>
+                        <select class="form-control" ng-model="data.option_group" ng-options="option.OptionGroupName as option.OptionGroupName for option in optionGroups"></select>
                     </div>
                 </div>
                 <div class="form-group">
@@ -249,7 +249,7 @@
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Enable Enhanced Monitoring : </label>
                     <div class="col-sm-2">
-                        <select class="form-control" ng-model="data.enableMon" ng-options="val.v as val.n for val in [{ n: 'No', v: false }, { n: 'Yes', v: true }]">
+                        <select class="form-control" ng-model="data.enable_mon" ng-options="val.v as val.n for val in [{ n: 'No', v: false }, { n: 'Yes', v: true }]">
                         </select>
                     </div>
                 </div>
@@ -286,27 +286,27 @@
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Maintenance Window :</label>
                     <div class="col-sm-7">
-                        <select class="form-control" ng-model="data.mainWindow">
+                        <select class="form-control" ng-model="maintanance.main_window_show">
                             <option value="yes">Select Window</option>
                             <option value="no">No Preference</option>
                         </select>
-                        <div ng-if="data.mainWindow == 'yes'">
+                        <div ng-if="maintanance.main_window_show == 'yes'">
                             <div class="col-md-12">
                             <label class="col-sm-4 control-label">Start Day :</label>
                             <div class="col-sm-8">
-                                <select style="margin:5px;" ng-model="data.mainWindowDay" ng-options="val as key for (key, val) in days">
+                                <select style="margin:5px;" ng-model="maintanance.main_window_day" ng-options="val as key for (key, val) in days">
                                 </select>
                             </div>
                             </div>
                             <div class="col-md-12">
                             <label class="col-sm-4 control-label">Start Time :</label>
                             <div class="col-sm-3">
-                                <select style="margin:5px;" ng-model="data.mainWindowHours" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:25">
+                                <select style="margin:5px;" ng-model="maintanance.main_window_hours" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:25">
                                 </select>
                             </div>
                                 <span class="col-sm-1" style="margin-top:5px;"><strong>:</strong></span>
                             <div class="col-sm-2">
-                                <select style="margin:5px 5px 5px -21px;" ng-model="data.mainWindowMins" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:60">
+                                <select style="margin:5px 5px 5px -21px;" ng-model="maintanance.main_window_mins" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:60">
                                 </select>
                             </div>
                             <div class="col-sm-1" style="margin-left: -11px; margin-top: 6px;">UTC</div>
@@ -314,7 +314,7 @@
                             <div class="col-md-12">
                             <label class="col-sm-4 control-label">Duration :</label>
                             <div class="col-sm-4">
-                                <select style="margin:5px;" ng-model="data.mainWindowDuration" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:13">
+                                <select style="margin:5px;" ng-model="maintanance.main_window_duration" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:13">
                                 </select>
                             </div>
                                 <div class="col-sm-2" style="margin-left: -11px; margin-top: 6px;">hours</div>
@@ -340,20 +340,20 @@
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Backup Window:</label>
                     <div class="col-sm-7">
-                        <select class="form-control" ng-model="data.backupWindow">
+                        <select class="form-control" ng-model="backup.backup_window_show">
                             <option value="yes">Select Window</option>
                             <option value="no">No Preference</option>
                         </select>
-                        <div ng-if="data.backupWindow == 'yes'">
+                        <div ng-if="backup.backup_window_show == 'yes'">
                             <div class="col-md-12">
                             <label class="col-sm-4 control-label">Start Time :</label>
                             <div class="col-sm-3">
-                                <select style="margin:5px;" ng-model="data.backupWindowHours" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:25">
+                                <select style="margin:5px;" ng-model="backup.backup_window_hours" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:25">
                                 </select>
                             </div>
                                 <span class="col-sm-1" style="margin-top:5px;"><strong>:</strong></span>
                             <div class="col-sm-2">
-                                <select style="margin:5px 5px 5px -21px;" ng-model="data.backupWindowMins" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:60">
+                                <select style="margin:5px 5px 5px -21px;" ng-model="backup.backup_window_mins" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:60">
                                 </select>
                             </div>
                             <div class="col-sm-1" style="margin-left: -11px; margin-top: 6px;">UTC</div>
@@ -361,7 +361,7 @@
                             <div class="col-md-12">
                             <label class="col-sm-4 control-label">Duration :</label>
                             <div class="col-sm-4">
-                                <select style="margin:5px;" ng-model="data.backupWindowDuration" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:13">
+                                <select style="margin:5px;" ng-model="backup.backup_window_duration" ng-options="('00'+n).slice(-2)  as ('00'+n).slice(-2)  for n in [] | range:13">
                                 </select>
                             </div>
                                 <div class="col-sm-2" style="margin-left: -11px; margin-top: 6px;">hours</div>
@@ -379,7 +379,7 @@
 </div>
 <div class="modal-footer" ng-if="!loading">
     <div class="pull-right">
-        <button class="btn btn-default" ng-if="!firstStep" ng-click="previous()">Previous</button>
+        <button class="btn btn-default" ng-if="!firstStep" ng-disabled="creating" ng-click="previous()">Previous</button>
         <button class="btn btn-primary" ng-if="!thirdStep && secondStep" ng-disabled=" !data.master_user || !data.instance || !($root.initForm.password.$valid && $root.initForm.password.$viewValue == $root.initForm.password_c.$viewValue)" ng-click="next()">Next Step</button>
         <button class="btn btn-primary" ng-if="!thirdStep && !secondStep" ng-click="next()">Next Step</button>
         <button class="btn btn-primary" ng-if="thirdStep" ng-disabled="creating" ng-click="createRDS()"> <i ng-if="creating" class="fa fa-spinner fa-pulse"></i> Create</button>

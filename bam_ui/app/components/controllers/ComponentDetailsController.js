@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'bamAjaxCall', '$sce', '$cookies', '$uibModalInstance', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, bamAjaxCall, $sce, $cookies, $uibModalInstance) {
+angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'pgcRestApiCall', '$sce', '$cookies', '$uibModalInstance', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, pgcRestApiCall, $sce, $cookies, $uibModalInstance) {
 
     var subscriptions = [];
     var session;
@@ -61,9 +61,9 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
         $scope.currentHost = remote_host;
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
         if (remote_host == "" || remote_host == "localhost") {
-            var pgcInfo = bamAjaxCall.getCmdData('info')
+            var pgcInfo = pgcRestApiCall.getCmdData('info')
         }else{
-            var pgcInfo = bamAjaxCall.getCmdData('info/' + remote_host)
+            var pgcInfo = pgcRestApiCall.getCmdData('info "' + remote_host + '"')
         }
 
         pgcInfo.then(function (data) {
@@ -76,15 +76,13 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
         $scope.currentHost = remote_host;
         remote_host = typeof remote_host !== 'undefined' ? remote_host : "";
         $scope.currentHost = remote_host;
-        if (remote_host == "" || remote_host == "localhost") {
+        if (remote_host == "" || remote_host == "localhost" || $scope.currentComponent == "pgdevops") {
             $scope.currentHost = "localhost";
-            // var infoData = bamAjaxCall.getCmdData('info/' + $scope.currentComponent);
-            var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $scope.currentComponent);
+            var infoData = pgcRestApiCall.getCmdData('info --relnotes ' + $scope.currentComponent);
         } else {
-            var infoData = bamAjaxCall.getCmdData('relnotes/info/' + $scope.currentComponent + "/" + remote_host);
+            var infoData = pgcRestApiCall.getCmdData('info --relnotes ' + $scope.currentComponent + ' --host "' + remote_host + '"');
         }
 
-        //var infoData = bamAjaxCall.getCmdData('info/' + $scope.currentComponent);
         infoData.then(function(data) {
             $scope.loading = false;
             if($scope.currentComponent == data[0].component){
@@ -96,18 +94,13 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                     var ins_date = new Date($scope.component.install_date.replace(/-/g,'/')).toString().split(' ',[4]).splice(1).join(' ');
                     $scope.component.install_date = ins_date.split(' ')[0] + ' ' + ins_date.split(' ')[1].replace(/^0+/, '') + ', ' + ins_date.split(' ')[2];
                 }
-                $scope.rel_notes = $sce.trustAsHtml($scope.component.rel_notes);
-                // var relnotes = bamAjaxCall.getCmdData('relnotes/info/' + $scope.currentComponent )
-                // relnotes.then(function (data) {
-                //     var data = JSON.parse(data)[0];
-                //     $scope.relnotes = $sce.trustAsHtml(data.text);
-                // });
+                $scope.rel_notes = $sce.trustAsHtml($scope.component.rel_notes); 
             }
         });
     };
 
     function callStatus(argument) {
-        var statusData = bamAjaxCall.getCmdData('status')
+        var statusData = pgcRestApiCall.getCmdData('status')
         statusData.then(function(data) {
             componentStatus = getCurrentObject(data, $scope.currentComponent);
             if(componentStatus != undefined){

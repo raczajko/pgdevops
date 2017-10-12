@@ -76,7 +76,7 @@
 }
 
 .fileinfo table#contents tr td p {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Open Sans";
 }
 
 .fileinfo > h1 {
@@ -221,7 +221,7 @@ div.clip {
   background: -webkit-linear-gradient(top, rgba(44, 118, 180, 0.71) 0%,rgba(44, 118, 180, 0.98) 100%); /* Chrome10+,Safari5.1+ */
   background: -o-linear-gradient(top, rgba(44, 118, 180, 0.71) 0%,rgba(44, 118, 180, 0.98) 100%); /* Opera 11.10+ */
   background: -ms-linear-gradient(top, rgba(44, 118, 180, 0.71) 0%,rgba(44, 118, 180, 0.98) 100%); /* IE10+ */
-  background: linear-gradient(to bottom, rgba(44, 118, 180, 0.71) 0%,rgba(44, 118, 180, 0.98) 100%)
+  background: linear-gradient(to bottom, rgba(44, 118, 180, 0.71) 0%,rgba(44, 118, 180, 0.98) 100%);
   border-bottom: 1px solid #ccc;
   display: inline-block;
   width: 100%;
@@ -470,12 +470,16 @@ button.list span {
 }
 
 .file_manager .upload_file #multiple-uploads {
-  background: black;
-  color: white;
-  padding: 0px !important;
   height: calc(100% - 20px);
+  background: #000;
+  color: #fff;
+  padding: 0px !important;
   overflow: auto;
   width: 100%;
+}
+
+.file_manager .upload_file #multiple-uploads .dz-message {
+  text-align: center;
 }
 
 .fileinfo .prompt-info {
@@ -551,7 +555,6 @@ button.list span {
 
 .allowed_file_types .change_file_types label {
   float: right;
-  padding-top: 3px;
 }
 
 .upload_file .file_upload_main {
@@ -591,8 +594,9 @@ button.list span {
 }
 
 .file_upload_main .dz-progress {
+  float: left;
+  width: 100%;
   height: 21px !important;
-  top: 83px !important;
   border: 1px solid #8a6d3b;
   border-radius: 0 !important;
   -moz-border-radius: 0 !important;
@@ -606,6 +610,8 @@ button.list span {
 
 .file_upload_main .dz-progress .dz-upload.success {
   background: green !important;
+  float: left;
+  width: 100%;
 }
 
 a.dz-remove {
@@ -718,4 +724,8 @@ a.dz-remove {
   width: 100%;
   height: 100%;
   background: #ccc;
+}
+
+div.change_file_types span {
+  padding-left:10px;
 }

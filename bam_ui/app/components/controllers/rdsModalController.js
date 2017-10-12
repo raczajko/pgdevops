@@ -1,9 +1,10 @@
-angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, htmlMessages, $uibModal, $cookies) {
+angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'pgcRestApiCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, pgcRestApiCall, htmlMessages, $uibModal, $cookies) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
     $scope.disp_name = $uibModalInstance.disp_name;
     $scope.instance = $uibModalInstance.instance;
+    $scope.searchEvent = $uibModalInstance.searchEvent;
     $scope.availList = [];
     var addList = [];
     $scope.addToMetadata = false;
@@ -11,14 +12,17 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     var session;
     $scope.region = '';
     $scope.showUseConn = false;
-
-    var regions = bamAjaxCall.getCmdData('metalist/aws-regions');
+    
+    var regions = pgcRestApiCall.getCmdData('metalist aws-regions');
     regions.then(function(data){
         $scope.loadingSpinner = false;
         $scope.regions = data;
         var regionCookie = $cookies.get('lastSelRegion');
         if(regionCookie){
             $scope.region = regionCookie;
+        }
+        if ($scope.searchEvent) {
+            $scope.regionChange($scope.region);
         }
     });
 
@@ -36,9 +40,9 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         $scope.checked = false;
         $scope.discoverMsg = 'Searching';
         if (region) {
-            session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, region]);
+            session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, region, $scope.lab]);
         }else{
-            session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, '']);
+            session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, '', $scope.lab]);
         }
         $scope.region = region;
     }
@@ -68,18 +72,18 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                     if($scope.rdsList[i].status == 'available'){
                         if ($scope.rdsList[i].is_in_pglist == true) {
                             $scope.rdsList[i].selected = true;
-                            // $scope.checked = true;
+                            $scope.checked = true;
                         }
                         $scope.availList.push($scope.rdsList[i]);
                     }
                 }
                 $scope.newAvailList = $($scope.availList).filter(function(i,n){ return n.is_in_pglist != true });
-                if($scope.instance == 'ec2'){
+                if($scope.instance == 'vm'){
                     $scope.ec2List = data[0].data;
                 }
                 if (data[0].data.length == 0 ) {
                     $scope.noRDS = true;
-                    if($scope.instance == 'rds'){
+                    if($scope.instance == 'db'){
                         $scope.noInstanceMsg = htmlMessages.getMessage('no-rds');
                     }else{
                         $scope.noInstanceMsg = htmlMessages.getMessage('no-ec2');
@@ -120,8 +124,8 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                 var args = {};
                 args['db'] = $scope.availList[i].dbname;
                 args['port'] = $scope.availList[i].port;
-                args['user'] = $scope.availList[i].master_user;
-                args['host'] = $scope.availList[i].address;
+                args['user'] = $scope.availList[i].user;
+                args['host'] = $scope.availList[i].host;
                 args['component'] = $scope.availList[i].instance;
                 args['project'] = 'aws';
                 args['rds'] = true;

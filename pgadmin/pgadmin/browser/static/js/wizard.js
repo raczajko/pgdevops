@@ -1,5 +1,5 @@
 define(
-    ['underscore', 'backbone', 'pgadmin', 'pgadmin.browser'],
+    ['underscore', 'backbone', 'sources/pgadmin', 'pgadmin.browser'],
 function(_, Backbone, pgAdmin, pgBrowser) {
 
   pgBrowser = pgBrowser || pgAdmin.Browser || {};
@@ -88,8 +88,16 @@ function(_, Backbone, pgAdmin, pgBrowser) {
        + "          </div>"
        + "        </div>"
        + "      </div>"
-       + "      <div class='col-sm-12 error_msg_div'>"
-       + "       <p></p>"
+       + "      <div class='col-sm-12 pg-prop-status-bar' style='visibility:hidden'>"
+       + "        <div class='media error-in-footer bg-red-1 border-red-2 font-red-3 text-14'>"
+       + "          <div class='media-body media-middle'>"
+       + "            <div class='alert-icon error-icon'>"
+       + "              <i class='fa fa-exclamation-triangle' aria-hidden='true'></i>"
+       + "            </div>"
+       + "            <div class='alert-text'>"
+       + "            </div>"
+       + "          </div>"
+       + "        </div>"
        + "      </div>"
        + "      <div class='footer col-sm-12'>"
        + "        <div class='row'>"
@@ -133,7 +141,7 @@ function(_, Backbone, pgAdmin, pgBrowser) {
       this.options.disable_prev = (this.options.disable_prev ? true : this.evalASFunc(this.currPage.disable_prev));
       this.options.disable_cancel = (this.currPage.canCancel ? true : this.evalASFunc(this.currPage.disable_cancel));
 
-      that = this;
+      var that = this;
 
       /* HTML Content */
       if (data.html) { data.content = data.html; }
@@ -149,10 +157,9 @@ function(_, Backbone, pgAdmin, pgBrowser) {
       return this;
     },
     nextPage: function() {
-      this.options.curr_page.el = this.$el;
       if (!this.beforeNext()) { return false; }
 
-      page_id = this.onNext();
+      var page_id = this.onNext();
 
       if (page_id ) {
         this.currPage = this.collection.get(page_id).toJSON();
@@ -171,7 +178,7 @@ function(_, Backbone, pgAdmin, pgBrowser) {
     prevPage: function() {
       if (!this.beforePrev()) { return false; }
 
-      page_id = this.onPrev();
+      var page_id = this.onPrev();
 
       if (page_id){
         this.currPage = this.collection.get(page_id).toJSON();
@@ -264,16 +271,16 @@ function(_, Backbone, pgAdmin, pgBrowser) {
     },
     onDialogHelp: function() {
       // See if we can find an existing panel, if not, create one
-      pnlDialogHelp = pgBrowser.docker.findPanels('pnl_online_help')[0];
+      var pnlDialogHelp = pgBrowser.docker.findPanels('pnl_online_help')[0];
 
       if (pnlDialogHelp == null) {
-        pnlProperties = pgBrowser.docker.findPanels('properties')[0];
+        var pnlProperties = pgBrowser.docker.findPanels('properties')[0];
         pgBrowser.docker.addPanel('pnl_online_help', wcDocker.DOCK.STACKED, pnlProperties);
         pnlDialogHelp = pgBrowser.docker.findPanels('pnl_online_help')[0];
       }
 
       // Update the panel
-      iframe = $(pnlDialogHelp).data('embeddedFrame');
+      var iframe = $(pnlDialogHelp).data('embeddedFrame');
 
       pnlDialogHelp.focus();
       iframe.openURL(this.options.wizard_help);

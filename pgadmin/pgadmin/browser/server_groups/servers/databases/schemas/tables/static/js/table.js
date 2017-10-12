@@ -1,12 +1,10 @@
 define('pgadmin.node.table', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
-  'underscore.string', 'pgadmin', 'pgadmin.browser', 'alertify',
-  'sources/alerts/alertify_wrapper',
+  'underscore.string', 'sources/pgadmin', 'pgadmin.browser', 'pgadmin.alertifyjs',
   'pgadmin.browser.collection', 'pgadmin.node.column',
   'pgadmin.node.constraints', 'pgadmin.browser.table.partition.utils'
 ], function(
-  gettext, url_for, $, _, S, pgAdmin, pgBrowser, alertify, AlertifyWrapper
-) {
+  gettext, url_for, $, _, S, pgAdmin, pgBrowser, alertify) {
 
   if (!pgBrowser.Nodes['coll-table']) {
     var databases = pgBrowser.Nodes['coll-table'] =
@@ -114,7 +112,7 @@ define('pgadmin.node.table', [
         set_triggers: function(args, params) {
           // This function will send request to enable or
           // disable triggers on table level
-          var input = args || {};
+          var input = args || {},
           obj = this,
           t = pgBrowser.tree,
           i = input.item || t.selected(),
@@ -129,8 +127,7 @@ define('pgadmin.node.table', [
             dataType: "json",
             success: function(res) {
               if (res.success == 1) {
-                var alertifyWrapper = new AlertifyWrapper();
-                alertifyWrapper.success(res.info);
+                alertify.success(res.info);
                 t.unload(i);
                 t.setInode(i);
                 t.deselect(i);
@@ -143,8 +140,7 @@ define('pgadmin.node.table', [
               try {
                 var err = $.parseJSON(xhr.responseText);
                 if (err.success == 0) {
-                  var alertifyWrapper = new AlertifyWrapper();
-                  alertifyWrapper.error(err.errormsg);
+                  alertify.error(err.errormsg);
                 }
               } catch (e) {}
               t.unload(i);
@@ -162,7 +158,7 @@ define('pgadmin.node.table', [
             this.callbacks.truncate.apply(this, [args, params]);
         },
         truncate: function(args, params) {
-          var input = args || {};
+          var input = args || {},
           obj = this,
           t = pgBrowser.tree,
           i = input.item || t.selected(),
@@ -184,8 +180,7 @@ define('pgadmin.node.table', [
                 dataType: "json",
                 success: function(res) {
                   if (res.success == 1) {
-                    var alertifyWrapper = new AlertifyWrapper();
-                    alertifyWrapper.success(res.info);
+                    alertify.success(res.info);
                     t.removeIcon(i);
                     data.icon = data.is_partitioned ? 'icon-partition': 'icon-table';
                     t.addIcon(i, {icon: data.icon});
@@ -202,8 +197,7 @@ define('pgadmin.node.table', [
                   try {
                     var err = $.parseJSON(xhr.responseText);
                     if (err.success == 0) {
-                      var alertifyWrapper = new AlertifyWrapper();
-                      alertifyWrapper.error(err.errormsg);
+                      alertify.error(err.errormsg);
                     }
                   } catch (e) {}
                   t.unload(i);
@@ -234,8 +228,7 @@ define('pgadmin.node.table', [
                   type:'DELETE',
                   success: function(res) {
                     if (res.success == 1) {
-                      var alertifyWrapper = new AlertifyWrapper();
-                      alertifyWrapper.success(res.info);
+                      alertify.success(res.info);
                       t.removeIcon(i);
                       data.icon = data.is_partitioned ? 'icon-partition': 'icon-table';
                       t.addIcon(i, {icon: data.icon});
@@ -252,8 +245,7 @@ define('pgadmin.node.table', [
                     try {
                       var err = $.parseJSON(xhr.responseText);
                       if (err.success == 0) {
-                        var alertifyWrapper = new AlertifyWrapper();
-                        alertifyWrapper.error(err.errormsg);
+                        alertify.error(err.errormsg);
                       }
                     } catch (e) {}
                     t.unload(i);
@@ -708,7 +700,7 @@ define('pgadmin.node.table', [
           }]
         },{
           id: 'typname', label: gettext('Of type'), type: 'text',
-          control: 'node-ajax-options', mode: ['properties', 'create', 'edit'],
+          mode: ['properties', 'create', 'edit'],
           disabled: 'checkOfType', url: 'get_oftype', group: gettext('Advanced'),
           deps: ['coll_inherits'], transform: function(data, cell) {
             var control = cell || this,
@@ -1059,7 +1051,7 @@ define('pgadmin.node.table', [
         },{
           id: 'relacl_str', label: gettext('Privileges'), disabled: 'inSchema',
           type: 'text', mode: ['properties'], group: gettext('Security')
-        }, pgBrowser.SecurityGroupUnderSchema,{
+        }, pgBrowser.SecurityGroupSchema,{
           id: 'relacl', label: gettext('Privileges'), type: 'collection',
           group: 'security', control: 'unique-col-collection',
           model: pgBrowser.Node.PrivilegeRoleModel.extend({
@@ -1244,7 +1236,7 @@ define('pgadmin.node.table', [
           var self = this,
               url = 'get_columns',
               m = self.model.top || self.model,
-              old_columns = _.clone(m.get('columns'))
+              old_columns = _.clone(m.get('columns')),
               data = undefined,
               node = this.field.get('schema_node'),
               node_info = this.field.get('node_info'),
@@ -1291,7 +1283,7 @@ define('pgadmin.node.table', [
 
             if ('coll-table' == d._type) {
               //Check if we are not child of catalog
-              prev_i = t.hasParent(i) ? t.parent(i) : null;
+              var prev_i = t.hasParent(i) ? t.parent(i) : null,
               prev_d = prev_i ? t.itemData(prev_i) : null;
               if( prev_d._type == 'catalog') {
                 return false;

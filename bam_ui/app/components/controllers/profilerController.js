@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', '$cookies', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, $cookies) {
+angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $cookies) {
 
     $scope.alerts = [];
     $scope.successAlerts = [];
@@ -35,14 +35,14 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
 
     function getInstanceInfo(comp) {
     
-        var instanceInfo = bamAjaxCall.getCmdData('status/'+ comp);
+        var instanceInfo = pgcRestApiCall.getCmdData('status '+ comp);
         instanceInfo.then(function (argument) {
             $scope.pgPort = argument.port;
         })
     }
 
     function checkplProfilerStatus(argument) {
-        var compStatus = bamAjaxCall.getCmdData('status/'+ $scope.component);
+        var compStatus = pgcRestApiCall.getCmdData('status '+ $scope.component);
             compStatus.then(function (data) {
                 if (data.state != "Installed") {
                     $scope.disableDatabases = true;

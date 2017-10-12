@@ -1,4 +1,4 @@
-angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjaxCall, $rootScope) {
+angular.module('bigSQL.common').directive('serverInfoDetails', function (pgcRestApiCall, $rootScope) {
 
 
     return {
@@ -15,9 +15,9 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
                 selectedHost = typeof selectedHost !== 'undefined' ? selectedHost : "";
 
                 if (selectedHost == "" || selectedHost == 'localhost' || $scope.title=="Log Tailer") {
-                    var infoData = bamAjaxCall.getCmdData('info');
+                    var infoData = pgcRestApiCall.getCmdData('info');
                 } else {
-                    var infoData = bamAjaxCall.getCmdData('hostcmd/info/' + selectedHost);
+                    var infoData = pgcRestApiCall.getCmdData('info --host "' + selectedHost + '"');
                 }
 
                 infoData.then(function (data) {
@@ -34,7 +34,7 @@ angular.module('bigSQL.common').directive('serverInfoDetails', function (bamAjax
             }
             
 
-            var hostsList = bamAjaxCall.getCmdData('hosts');
+            var hostsList = pgcRestApiCall.getCmdData('register HOST --list');
 
             hostsList.then(function (data) {
                 if (data.length > 0 && data[0].status == "error") {

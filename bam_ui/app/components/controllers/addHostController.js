@@ -11,6 +11,8 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	$scope.type = 'Add';
 	$scope.alerts = [];
 
+	$scope.cred_name = $uibModalInstance.cred_name;
+
 	$scope.hostName = '';
 	$scope.pgcDir = '';
 	$scope.userName = '';
@@ -20,7 +22,7 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     $scope.sudo_password = {text: ''};
 	if($scope.editHost){
 		$scope.type = 'Edit';
-		$scope.create_btn = "Update";
+		$scope.create_btn = "Save";
 		$scope.hostName = $scope.editHost.host;
 		$scope.pgcDir = $scope.editHost.pgc_home;
 		$scope.userName = $scope.editHost.user;
@@ -43,9 +45,9 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
         		$scope.pgcDir = $scope.pgcDir.split('~/')[1];
         	}
 	        if(!$scope.editHost){
-	        	session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.connectionName, $scope.password, $scope.ssh_key, $scope.sudo_password.text]);
+	        	session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.connectionName, $scope.selected_cred_name]);
 	    	}else{
-	    		session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.userName, $scope.connectionName, $scope.password, $scope.ssh_key, $scope.sudo_password.text, $scope.editHost.host_id]);
+	    		session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.connectionName, $scope.selected_cred_name, $scope.editHost.host_id]);
 	    	}
 	    	$scope.tryToConnect = true;
 
@@ -108,57 +110,41 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     	if($scope.firstPhase){
     		var data = {
              hostname:$scope.hostName,
-             username:$scope.userName
+             cred_name:$scope.selected_cred_name
             };
-            if ($scope.password){
-             data.password=$scope.password;
-            }
-
-            if ($scope.ssh_key){
-             data.ssh_key=$scope.ssh_key;
-            }
-
-            if ($scope.password && $scope.ssh_key) {
-            	var msg = htmlMessages.getMessage('pwd-or-ssh-msg');
-            	$scope.alerts.push({
-	                msg : msg,
-	                type : 'danger'
-	            });
-            }else{
-            	$scope.tryToConnect = true;
-    			$scope.connectionError = false;
-            	var checkUser = bamAjaxCall.getCmdData('checkUser', data);
-	    		checkUser.then(function (argument) {
-	    			var jsonData = JSON.parse(argument)[0];
-	    			if (jsonData.state == 'success') {
-	    				$scope.isSudo =  jsonData.isSudo;
-	    				$scope.pgcDir = jsonData.pgc_path;
-	    				$scope.pgcVersion = jsonData.pgc_version;
-	    				if($scope.pgcVersion && !$scope.editHost){
-	    				    $scope.create_btn = "Associate";
+        	$scope.tryToConnect = true;
+			$scope.connectionError = false;
+        	var checkUser = bamAjaxCall.getCmdData('checkUser', data);
+    		checkUser.then(function (argument) {
+    			var jsonData = JSON.parse(argument)[0];
+    			if (jsonData.state == 'success') {
+    				$scope.isSudo =  jsonData.isSudo;
+    				$scope.pgcDir = jsonData.pgc_path;
+    				$scope.pgcVersion = jsonData.pgc_version;
+    				if($scope.pgcVersion && !$scope.editHost){
+    				    $scope.create_btn = "Associate";
+    				}
+    				$scope.root_pgc_path=jsonData.root_pgc_path;
+    				$scope.auth_err=jsonData.auth_err;
+    				$scope.not_sudoer=jsonData.not_sudoer;
+    				/*if(!$scope.pgcDir){
+	    				if($scope.isSudo){
+	    					//$scope.serviceUser = 'Postgres';
+	    					$scope.pgcDir = '/opt'
+	    				}else{
+	    					//$scope.serviceUser = $scope.userName;
+	    					$scope.pgcDir = '~/bigsql'
 	    				}
-	    				$scope.root_pgc_path=jsonData.root_pgc_path;
-	    				$scope.auth_err=jsonData.auth_err;
-	    				$scope.not_sudoer=jsonData.not_sudoer;
-	    				/*if(!$scope.pgcDir){
-		    				if($scope.isSudo){
-		    					//$scope.serviceUser = 'Postgres';
-		    					$scope.pgcDir = '/opt'
-		    				}else{
-		    					//$scope.serviceUser = $scope.userName;
-		    					$scope.pgcDir = '~/bigsql'
-		    				}
-		    			}*/
-	    				$scope.tryToConnect = false;
-	    				$scope.firstPhase = false;
-	    				$scope.secondPhase = true;
-	    			} else{
-		    			$scope.connectionError = true;
-		    			$scope.tryToConnect = false;
-	    				$scope.message = jsonData.msg;
-	    			}
-	    		})
-            }
+	    			}*/
+    				$scope.tryToConnect = false;
+    				$scope.firstPhase = false;
+    				$scope.secondPhase = true;
+    			} else{
+	    			$scope.connectionError = true;
+	    			$scope.tryToConnect = false;
+    				$scope.message = jsonData.msg;
+    			}
+    		})
     	}else if($scope.secondPhase){
     		$scope.secondPhase = false;
     		$scope.thirdPhase = true;
@@ -252,6 +238,22 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 
     }
 
+    var credentialsList = function(argument) {
+    	$scope.gettingCreds = true;
+		$scope.isAllSelected = false;
+		var getCredentials = bamAjaxCall.getCmdData('pgc/credentials/')
+		getCredentials.then(function (data) {
+			$scope.gettingCreds = false;
+			if (data.data.length>0) {
+				$scope.credentialsList = $(data.data).filter(function(i,n){ return n.cred_type != "cloud" ;})
+				if ($scope.cred_name) {
+					$scope.selected_cred_name = $scope.cred_name;
+				}
+			}
+		})
+	}
+	credentialsList();
+
     $scope.back = function (argument) {
     	if($scope.secondPhase){
     		$scope.secondPhase = false;
@@ -262,6 +264,20 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     		$scope.secondPhase = true;
     	}
     }
+
+    $scope.addCred = function (title) {
+		var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/addCredentialModal.html',
+                controller: 'addCredentialModalController',
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+		modalInstance.title = title;
+	}
+
+	$rootScope.$on('refreshCreds', function (argument) {
+		credentialsList();
+	})
 
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);

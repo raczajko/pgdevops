@@ -10,10 +10,11 @@
 import React from 'react';
 import Shapes from '../react_shapes';
 import moment from 'moment';
+import PropTypes from 'prop-types';
 
 export default class QueryHistoryEntry extends React.Component {
   formatDate(date) {
-    return (moment(date).format('MMM D YYYY [–] HH:mm:ss'));
+    return (moment(date).format('HH:mm:ss'));
   }
 
   renderWithClasses(outerDivStyle) {
@@ -54,5 +55,5 @@ export default class QueryHistoryEntry extends React.Component {
 
 QueryHistoryEntry.propTypes = {
   historyEntry: Shapes.historyDetail,
-  isSelected: React.PropTypes.bool,
+  isSelected: PropTypes.bool,
 };

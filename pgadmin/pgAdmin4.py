@@ -14,11 +14,22 @@ to start a web server."""
 import os
 import sys
 
+if sys.version_info[0] >= 3:
+    import builtins
+else:
+    import __builtin__ as builtins
+
 # We need to include the root directory in sys.path to ensure that we can
 # find everything we need when running in the standalone runtime.
 root = os.path.dirname(os.path.realpath(__file__))
 if sys.path[0] != root:
     sys.path.insert(0, root)
+
+# Grab the SERVER_MODE if it's been set by the runtime
+if 'SERVER_MODE' in globals():
+    builtins.SERVER_MODE = globals()['SERVER_MODE']
+else:
+    builtins.SERVER_MODE = None
 
 import config
 from pgadmin import create_app
@@ -119,11 +130,19 @@ if __name__ == '__main__':
         if IS_WIN:
             os.environ['PYTHONHOME'] = sys.prefix
 
+    # Initialize Flask service only once
+    # If `WERKZEUG_RUN_MAIN` is None, i.e: app is initializing for first time
+    # so set `use_reloader` = False, thus reload won't call.
+    # Reference:
+    # https://github.com/pallets/werkzeug/issues/220#issuecomment-11176538
     try:
         app.run(
             host=config.DEFAULT_SERVER,
             port=server_port,
-            use_reloader=((not PGADMIN_RUNTIME) and app.debug),
+            use_reloader=(
+                (not PGADMIN_RUNTIME) and app.debug
+                and os.environ.get("WERKZEUG_RUN_MAIN") is not None
+            ),
             threaded=config.THREADED_MODE
         )
     except IOError:
