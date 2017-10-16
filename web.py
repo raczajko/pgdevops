@@ -13,7 +13,7 @@ from flask_security import auth_token_required, auth_required
 import json
 from Components import Components as pgc
 
-from flask_security import login_required, roles_required, current_user
+from flask_security import login_required, roles_required, current_user, roles_accepted
 # from flask_login import current_user
 from flask_mail import Mail
 from flask_babel import Babel, gettext
@@ -1146,6 +1146,7 @@ def status():
 
 @application.route('/')
 @login_required
+@roles_accepted('Administrator','User','Dev')
 def home():
     return render_template('index.html',
                            user=current_user,

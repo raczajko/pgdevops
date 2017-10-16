@@ -15,7 +15,7 @@ from flask import current_app, render_template, url_for, make_response, flash,\
     Response
 from flask_babel import gettext
 from flask_login import current_user
-from flask_security import login_required
+from flask_security import login_required, roles_accepted
 from flask_gravatar import Gravatar
 from pgadmin.settings import get_setting
 from pgadmin.utils import PgAdminModule
@@ -454,6 +454,7 @@ class BrowserPluginModule(PgAdminModule):
 
 @blueprint.route("/")
 @login_required
+@roles_accepted('Administrator','User','Ops')
 def index():
     """Render and process the main browser window."""
     # Get the Gravatar
