@@ -104,6 +104,16 @@ VALUES(1, 'Administrators', 'pgAdmin Administrators Role')
 INSERT INTO "roles_users"
 VALUES(1, 1);
     """)
+    db.engine.execute("""
+INSERT INTO role ( name, description )
+VALUES ('Ops', 'pgDevOps User Role')
+        """)
+    db.engine.execute("""
+INSERT INTO role ( name, description )
+VALUES ('Dev', 'pgAdmin User Role')
+        """)
+
+
     '''db.engine.execute("""
 INSERT INTO "servergroup"
 VALUES(1, 1, 'Servers')

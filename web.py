@@ -18,7 +18,7 @@ from flask_security import login_required, roles_required, current_user, roles_a
 from flask_mail import Mail
 from flask_babel import Babel, gettext
 from pgadmin.utils.session import create_session_interface
-from pgadmin.model import db, Role, User, Server, ServerGroup, Process
+from pgadmin.model import db, Role, User, Server, ServerGroup, Process, roles_users
 from pgadmin.utils.crypto import encrypt, decrypt, pqencryptpassword
 from flask_security import Security, SQLAlchemyUserDatastore
 from pgadmin.utils.sqliteSessions import SqliteSessionInterface
@@ -1146,11 +1146,14 @@ def status():
 
 @application.route('/')
 @login_required
-@roles_accepted('Administrator','User','Dev')
+# @roles_accepted('Administrator','User','Ops')
 def home():
-    return render_template('index.html',
-                           user=current_user,
-                           is_admin=current_user.has_role("Administrator"))
+    if current_user.has_role("Administrator") or current_user.has_role("User") or current_user.has_role("Ops"):
+        return render_template('index.html',
+                               user=current_user,
+                               is_admin=current_user.has_role("Administrator"))
+    else:
+        return redirect('/admin')
 
 from responses import InvalidSessionResult
 

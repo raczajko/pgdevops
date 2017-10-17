@@ -454,7 +454,7 @@ class BrowserPluginModule(PgAdminModule):
 
 @blueprint.route("/")
 @login_required
-@roles_accepted('Administrator','User','Ops')
+@roles_accepted('Administrator','User','Dev')
 def index():
     """Render and process the main browser window."""
     # Get the Gravatar
