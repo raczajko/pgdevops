@@ -477,6 +477,23 @@ class bamUserInfo(Resource):
 
 api.add_resource(bamUserInfo, '/api/userinfo')
 
+class checkUserRole(Resource):
+    @login_required
+    def get(self):
+        result = {}
+        if current_user.has_role("User") or current_user.has_role("Ops"):
+            result['code'] = 0
+            result['msg'] = "pgAdmin access is restricted."
+        elif current_user.has_role("User") or current_user.has_role("Dev"):
+            result['code'] = 1
+            result['msg'] = "pgDevOps access is restricted."
+        else:
+            result['code'] = 2
+        return result
+
+
+api.add_resource(checkUserRole, '/api/checkUserRole')
+
 
 class getRecentReports(Resource):
     @login_required

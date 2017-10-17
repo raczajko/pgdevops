@@ -1,6 +1,6 @@
 angular.module('bigSQL.menus').component('topMenu', {
     bindings: {},
-    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, pgcRestApiCall, bamAjaxCall, $cookies, htmlMessages) {
+    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, pgcRestApiCall, bamAjaxCall, $cookies, htmlMessages, $window, $http) {
 
         /**Below function is for displaying update badger on every page.
          **/
@@ -19,21 +19,36 @@ angular.module('bigSQL.menus').component('topMenu', {
         };
 
         $scope.checkVersion = function (){
-            $scope.notSupported = htmlMessages.getMessage('windows7-not-supported');
-            if(!$scope.pgcInfo){
-                $scope.supported = false;
-            }
-            else{
-                var os = $scope.pgcInfo['os'];
-                if(os.toLowerCase().contains('windows 7')){
-                    debugger
-                    $scope.alerts.push({
-                        msg : $scope.notSupported,
-                        type : 'warning'
-                    });
+            $scope.supported = false;
+            var checkUserRole = $http.get($window.location.origin + '/api/checkUserRole')
+            checkUserRole.then(function(data) {
+                $scope.supported = true;
+                if(data.data.code != 0){
+                    $scope.notSupported = htmlMessages.getMessage('windows7-not-supported');
+                    if(!$scope.pgcInfo){
+                        $scope.supported = false;
+                    }
+                    else{
+                        var os = $scope.pgcInfo['os'];
+                        if(os.toLowerCase().contains('windows 7')){
+                            $scope.alerts.push({
+                                msg : $scope.notSupported,
+                                type : 'warning'
+                            });
+                            $scope.supported = false;
+                        }
+                    }
+                    if($scope.supported){
+                        $window.location.href = "/admin";
+                    }
+                }else{
                     $scope.supported = false;
+                    $scope.alerts.push({
+                        msg:  data.data.msg,
+                        type: 'danger'
+                    });
                 }
-            }
+            });
         };
 
         $scope.hideUpdates = false;
