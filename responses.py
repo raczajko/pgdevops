@@ -70,3 +70,10 @@ class InvalidSessionResult(Result):
         if not message:
             message = "Invalid Session."
         super(InvalidSessionResult, self).__init__(401, state, message)
+
+
+class NotFoundResult(Result):
+    def __init__(self, state = "NOT_FOUND", message=None):
+        if not message:
+            message = "Not found."
+        super(NotFoundResult, self).__init__(404, state, message)

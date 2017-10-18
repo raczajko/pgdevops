@@ -184,8 +184,11 @@ application.register_blueprint(_pgc_provision, url_prefix='/api/pgc/provision')
 from BackupRestore import _backrest
 application.register_blueprint(_backrest, url_prefix='/api/pgc')
 
-from user_controller import _user
+from login_controller import _user
 application.register_blueprint(_user, url_prefix='/api/login')
+
+from UserHandler import _user_management
+application.register_blueprint(_user_management, url_prefix='/api/user')
 
 db_session = db.session
 
