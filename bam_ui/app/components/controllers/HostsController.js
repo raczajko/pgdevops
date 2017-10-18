@@ -257,7 +257,7 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             });
             modalInstance.lab = settingName;
             modalInstance.disp_name = disp_name;
-            modalInstance.instance = 'rds';
+            modalInstance.instance = 'db';
         }else{
             var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled').replace('{{lab}}', $scope.awsRdslabName));
 
