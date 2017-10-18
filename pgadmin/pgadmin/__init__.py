@@ -36,6 +36,7 @@ from pgadmin.utils.preferences import Preferences
 from pgadmin.model import db, Role, Server, ServerGroup, \
     User, Keys, Version, SCHEMA_VERSION as CURRENT_SCHEMA_VERSION
 
+from werkzeug.contrib.fixers import ProxyFix
 
 # If script is running under python3, it will not have the xrange function
 # defined
@@ -179,6 +180,7 @@ def create_app(app_name=None):
     """Create the Flask application, startup logging and dynamically load
     additional modules (blueprints) that are found in this directory."""
     app = PgAdmin(__name__, static_url_path='/static')
+    app.wsgi_app = ProxyFix(app.wsgi_app)
     # Removes unwanted whitespace from render_template function
     app.jinja_env.trim_blocks = True
     app.config.from_object(config)

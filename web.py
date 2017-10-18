@@ -36,6 +36,8 @@ from pickle import dumps, loads
 import csv
 import sqlite3
 
+from werkzeug.contrib.fixers import ProxyFix
+
 parser = reqparse.RequestParser()
 #parser.add_argument('data')
 
@@ -49,6 +51,8 @@ PGC_LOGS = os.getenv("PGC_LOGS", "")
 config.APP_NAME = "pgDevOps"
 config.LOGIN_NAME = "pgDevOps"
 application = Flask(__name__)
+
+application.wsgi_app = ProxyFix(application.wsgi_app)
 
 babel = Babel(application)
 
