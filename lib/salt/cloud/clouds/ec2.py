@@ -4365,6 +4365,32 @@ def show_keypair(kwargs=None, call=None):
     return data
 
 
+def describe_keypairs(kwargs=None, call=None):
+    '''
+    list SSH keypairs
+    '''
+    if call != 'function':
+        log.error(
+            'The show_keypair function must be called with -f or --function.'
+        )
+        return False
+
+    if not kwargs:
+        kwargs = {}
+
+    params = {'Action': 'DescribeKeyPairs'}
+    if 'keyname' in kwargs:
+        params['KeyName.1'] = kwargs['keyname']
+
+    data = aws.query(params,
+                     return_url=True,
+                     location=get_location(),
+                     provider=get_provider(),
+                     opts=__opts__,
+                     sigver='4')
+    return data
+
+
 def delete_keypair(kwargs=None, call=None):
     '''
     Delete an SSH keypair
