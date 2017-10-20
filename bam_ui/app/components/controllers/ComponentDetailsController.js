@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'pgcRestApiCall', '$sce', '$cookies', '$uibModalInstance', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, pgcRestApiCall, $sce, $cookies, $uibModalInstance) {
+angular.module('bigSQL.components').controller('ComponentDetailsController', ['$scope', '$stateParams', 'PubSubService','$rootScope', '$window', '$interval', 'pgcRestApiCall', '$sce', '$cookies', '$uibModalInstance', 'userInfoService', function ($scope, $stateParams, PubSubService, $rootScope, $window, $interval, pgcRestApiCall, $sce, $cookies, $uibModalInstance, userInfoService) {
 
     var subscriptions = [];
     var session;
@@ -36,6 +36,14 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
             }
         }
     };
+
+    $scope.devRole = false;
+    var checkUserRole = userInfoService.getUserRole();
+    checkUserRole.then(function (data) {
+      if(data.data.code == 1){
+        $scope.devRole = true;
+      }
+    })
 
     $scope.compAction = function (action) {
         var is_yes=false;

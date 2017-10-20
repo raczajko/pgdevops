@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('azureIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$uibModal', '$timeout', 'htmlMessages', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $uibModal, $timeout, htmlMessages) {
+angular.module('bigSQL.components').controller('azureIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$uibModal', '$timeout', 'htmlMessages', 'userInfoService', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $uibModal, $timeout, htmlMessages, userInfoService) {
 
 	$scope.alerts = [];
 	$scope.discover =  function (settingName, disp_name, instance) {
@@ -62,5 +62,13 @@ angular.module('bigSQL.components').controller('azureIntegrationController', ['$
                 backdrop  : 'static',
             });
     }
+
+    $scope.devRole = false;
+    var checkUserRole = userInfoService.getUserRole();
+    checkUserRole.then(function (data) {
+        if(data.data.code == 1){
+          $scope.devRole = true;
+        }
+    })
 
 }])

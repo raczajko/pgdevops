@@ -14,7 +14,7 @@
 
     <div ng-if="!bamLoading">
         <div class="row">
-            <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6" ng-if="pgComp" ng-repeat="comp in pgComp">
+            <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6" ng-if="pgComp && !devRole" ng-repeat="comp in pgComp">
                 <a href="#/details-pg/{{comp.component}}" class="thumbnail">
                     <img class="img-responsive" src="assets/img/pgdevops-postgres.png" alt="">
                     <div class="caption">
@@ -23,14 +23,14 @@
                 </a>
             </div>
             <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
-                <a ng-click="checkVersion()"class="thumbnail">
+                <a ng-href="{{supported ?'/admin':''}}" ng-click="checkVersion()" class="thumbnail">
                     <img class="img-responsive" src="assets/img/pgadmin4-web.png" alt="">
                     <div class="caption">
                         <h4 class="home-page-tile-name">pgAdmin4 Web</h4>
                     </div>
                 </a>
             </div>
-            <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+            <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6" ng-if="!devRole">
                 <a ui-sref="components.hosts" class="thumbnail">
                     <img class="img-responsive" src="assets/img/cloud-mgr-lg.png" alt="">
                     <div class="caption">
@@ -38,7 +38,7 @@
                     </div>
                 </a>
             </div>
-            <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+            <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6" ng-if="!devRole">
                 <a ui-sref="components.view" class="thumbnail">
                     <img class="img-responsive" src="assets/img/pgdevops-pkg-mgr.png" alt="">
                     <div class="caption">
@@ -46,7 +46,7 @@
                     </div>
                 </a>
             </div>
-            <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6" ng-if="hideBackupRestore">
+            <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6" ng-if="hideBackupRestore && !devRole">
                 <a ui-sref="components.backupRestoreView" class="thumbnail">
                     <img class="img-responsive fa fa-floppy-o" src="assets/img/backup_restore.png" alt="">
                     <div class="caption">

@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $cookies) {
+angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', 'userInfoService', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $cookies, userInfoService) {
 
     $scope.alerts = [];
     $scope.successAlerts = [];
@@ -33,6 +33,14 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         }
     });
 
+    $scope.devRole = false;
+    var checkUserRole = userInfoService.getUserRole();
+    checkUserRole.then(function (data) {
+      if(data.data.code == 1){
+        $scope.devRole = true;
+      }
+    })    
+
     function getInstanceInfo(comp) {
     
         var instanceInfo = pgcRestApiCall.getCmdData('status '+ comp);
@@ -45,12 +53,14 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         var compStatus = pgcRestApiCall.getCmdData('status '+ $scope.component);
             compStatus.then(function (data) {
                 if (data.state != "Installed") {
-                    $scope.disableDatabases = true;
-                    $scope.alerts.push({
-                        msg:  $scope.component + ' is not Installed yet. ',
-                        type: 'danger',
-                        pgComp: false
-                    });
+                    if (!$scope.devRole) {
+                        $scope.disableDatabases = true;
+                        $scope.alerts.push({
+                            msg:  $scope.component + ' is not Installed yet. ',
+                            type: 'danger',
+                            pgComp: false
+                        });
+                    }
                 }else{
                     $scope.disableDatabases = false;
                     $scope.enableBtns = true;
@@ -65,7 +75,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         localStorage.setItem('selectedCluster', argument);
         $scope.alerts.splice(0, 1);
         $scope.selectDatabase = '';
-        if(argument){
+        if(argument && !$scope.devRole){
             $scope.component = 'plprofiler3-'+argument;
             checkplProfilerStatus();
             getInstanceInfo(argument);

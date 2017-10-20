@@ -1,4 +1,4 @@
-angular.module('bigSQL.common').factory('userInfoService', function ($window, $rootScope, $q, $interval, bamAjaxCall) {
+angular.module('bigSQL.common').factory('userInfoService', function ($window, $rootScope, $q, $interval, bamAjaxCall, $http) {
 
 	function getUserInfo(argument) {
 
@@ -10,7 +10,18 @@ angular.module('bigSQL.common').factory('userInfoService', function ($window, $r
     	});
 	}
 
+	function getUserRole(argument) {
+		
+		return($q(function (resolve, reject) {
+			var checkUserRole = $http.get($window.location.origin + '/api/checkUserRole');
+		    checkUserRole.then(function (data) {
+		        resolve(data);
+		    })
+		}))
+	}
+
 	return {
-        getUserInfo: getUserInfo
+        getUserInfo: getUserInfo,
+        getUserRole: getUserRole
     }
 });

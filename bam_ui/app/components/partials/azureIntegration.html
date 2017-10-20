@@ -22,7 +22,7 @@
                 </div>
             </a>
         </div>
-        <div class="col-md-2 col-sm-3 cursor_pointer" ng-click="createNewAzureDb()">
+        <div class="col-md-2 col-sm-3 cursor_pointer" ng-class="{'div-disabled':devRole}" ng-click="!devRole && createNewAzureDb()">
             <a class="thumbnail">
                 <img class="img-responsive" src="assets/img/pg-azure-add.png" alt="">
                 <div class="aws-caption">
@@ -38,7 +38,7 @@
                 </div>
             </a>
         </div>
-        <div class="col-md-2 col-sm-3 cursor_pointer" ng-click="createNewVM()">
+        <div class="col-md-2 col-sm-3 cursor_pointer" ng-class="{'div-disabled':devRole}" ng-click="!devRole && createNewVM()">
             <a class="thumbnail">
                 <img class="img-responsive" src="assets/img/azure-vm-add.png" alt="">
                 <div class="aws-caption">

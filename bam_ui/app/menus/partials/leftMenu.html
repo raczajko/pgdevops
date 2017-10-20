@@ -21,18 +21,18 @@
                     <i class="fa fa-angle-left pull-right"></i>
                 </a>
             </li>
-            <li>
+            <li ng-if="!devRole">
                 <a ui-sref="components.hosts">
                     <i class="fa fa-cloud"></i> <span>Server Manager</span>
                     <!-- <i class="fa fa-angle-left pull-right"></i> -->
                 </a>
             </li>
-            <li>
+            <li ng-if="!devRole">
                 <a ui-sref="components.view">
                     <i class="bgs bgs-sm bgs-package-manager-menu"></i> <span>Package Manager</span>
                 </a>
             </li>
-            <li ng-if="hideBackupRestore">
+            <li ng-if="hideBackupRestore && !devRole">
                 <a ui-sref="components.backupRestoreView">
                     <i class="fa fa-floppy-o"></i> <span>Backup & Restore</span>
                 </a>
@@ -78,7 +78,7 @@
                     <span>Job Manager</span>
                 </a>
             </li>
-            <li>
+            <li ng-if="!devRole">
                 <a ui-sref="components.settingsView">
                     <i class="fa fa-cog"></i> <span>Settings</span>
                 </a>

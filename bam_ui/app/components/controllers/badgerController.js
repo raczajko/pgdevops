@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('badgerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $cookies) {
+angular.module('bigSQL.components').controller('badgerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', 'userInfoService', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $cookies, userInfoService) {
 
     $scope.alerts = [];
     $scope.checkedFirst = false;
@@ -27,6 +27,14 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             session = sessParam;
         });
     });
+
+    $scope.devRole = false;
+    var checkUserRole = userInfoService.getUserRole();
+    checkUserRole.then(function (data) {
+      if(data.data.code == 1){
+        $scope.devRole = true;
+      }
+    })
 
     $rootScope.$on('refreshPage',function (argument) {
         $window.location.reload();
@@ -73,7 +81,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                     type: 'danger',
                     pgComp: true
                 });
-            }else{
+            }else if(!$scope.devRole){
                 var compStatus = pgcRestApiCall.getCmdData('status pgbadger');
                 compStatus.then(function (data) {
                     if (data.state == "Installed") {

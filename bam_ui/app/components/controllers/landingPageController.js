@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('bamLoading', ['$scope', '$rootScope', '$window', '$timeout', 'pgcRestApiCall', '$http', '$uibModal','htmlMessages', function ($scope,  $rootScope, $window, $timeout, pgcRestApiCall, $http, $uibModal,htmlMessages) {
+angular.module('bigSQL.components').controller('bamLoading', ['$scope', '$rootScope', '$window', '$timeout', 'pgcRestApiCall', '$http', '$uibModal','htmlMessages', 'userInfoService', function ($scope,  $rootScope, $window, $timeout, pgcRestApiCall, $http, $uibModal,htmlMessages, userInfoService) {
 
   $scope.bamLoading = true;
   $scope.showSplash = false;
@@ -23,33 +23,25 @@ angular.module('bigSQL.components').controller('bamLoading', ['$scope', '$rootSc
   })
 
   $scope.checkVersion = function (){
-    $scope.supported = false;
-    $scope.supported = false;
-    var checkUserRole = $http.get($window.location.origin + '/api/checkUserRole')
-    checkUserRole.then(function(data) {
-      if(data.data.code != 0){
-        $scope.supported = true;
-        $scope.notSupported = htmlMessages.getMessage('windows7-not-supported');
-        var os = $rootScope.pgcInfo['os'];
-        if(os.toLowerCase().contains('windows 7')){
-            $scope.alerts.push({
-                msg : $scope.notSupported,
-                type : 'warning'
-            });
-            $scope.supported = false;
-        }
-        if($scope.supported){
-                        $window.location.href = "/admin";
-                    }
-      }else{
-        $scope.supported = false;
+    $scope.notSupported = htmlMessages.getMessage('windows7-not-supported');
+    var os = $rootScope.pgcInfo['os'];
+    if(os.toLowerCase().contains('windows 7')){
         $scope.alerts.push({
-            msg:  data.data.msg,
-            type: 'danger'
+            msg : $scope.notSupported,
+            type : 'warning'
         });
-      }
-    });
+        $scope.supported = false;
+    }
   };
+
+  $scope.devRole = false;
+  var checkUserRole = userInfoService.getUserRole();
+  checkUserRole.then(function (data) {
+    if(data.data.code == 1){
+      $scope.devRole = true;
+    }
+  })
+
 
   var serverStatus = pgcRestApiCall.getCmdData('status');
   serverStatus.then(function (args) {

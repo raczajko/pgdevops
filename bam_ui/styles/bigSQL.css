@@ -7514,3 +7514,8 @@ a.notification{
 .back-red{
   border-color: red;
 }
+
+.div-disabled{
+  opacity: 0.5;
+  pointer-events: none;
+}

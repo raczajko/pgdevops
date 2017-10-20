@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('awsIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', '$cookies', '$uibModal', '$timeout', 'htmlMessages', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, $cookies, $uibModal, $timeout, htmlMessages) {
+angular.module('bigSQL.components').controller('awsIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', '$cookies', '$uibModal', '$timeout', 'htmlMessages', 'userInfoService', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, $cookies, $uibModal, $timeout, htmlMessages, userInfoService) {
 
 	$scope.alerts = [];
 	$scope.discover =  function (settingName, disp_name, instance, searchEvent) {
@@ -63,5 +63,13 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
                 backdrop  : 'static',
             });
     }
+
+    $scope.devRole = false;
+    var checkUserRole = userInfoService.getUserRole();
+    checkUserRole.then(function (data) {
+        if(data.data.code == 1){
+          $scope.devRole = true;
+        }
+    })
 
 }])

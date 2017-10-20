@@ -106,11 +106,7 @@ VALUES(1, 1);
     """)
     db.engine.execute("""
 INSERT INTO role ( name, description )
-VALUES ('Ops', 'pgDevOps User Role')
-        """)
-    db.engine.execute("""
-INSERT INTO role ( name, description )
-VALUES ('Dev', 'pgAdmin User Role')
+VALUES ('Devloper', 'Devloper User Role')
         """)
 
 

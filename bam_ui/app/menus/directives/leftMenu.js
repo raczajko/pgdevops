@@ -1,6 +1,6 @@
 angular.module('bigSQL.menus').component('leftMenu', {
     bindings: {},
-    controller: function ($scope, PubSubService, $rootScope, pgcRestApiCall) {
+    controller: function ($scope, PubSubService, $rootScope, pgcRestApiCall, userInfoService) {
     	$scope.hideAwsNav = false;
     	$scope.hideAzureNav = false;
     	$scope.hideBackupRestore = false;
@@ -16,6 +16,14 @@ angular.module('bigSQL.menus').component('leftMenu', {
                 }
             }
     	});
+
+        $scope.devRole = false;
+        var checkUserRole = userInfoService.getUserRole();
+        checkUserRole.then(function (data) {
+          if(data.data.code == 1){
+            $scope.devRole = true;
+          }
+        })
 
     	$rootScope.$on('hideAwsNav', function (event, value) {
     		if (value == 'on') {

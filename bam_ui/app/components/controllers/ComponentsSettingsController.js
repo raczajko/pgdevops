@@ -214,13 +214,15 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
                 session.call('com.bigsql.setLabSetting', [settingName, value]);            
             }
         }
-        var refreshLablist = pgcRestApiCall.getCmdData('lablist');
-        refreshLablist.then(function function_name(argument) {
-            $scope.lablist = argument;
-            for (var i = $scope.lablist.length - 1; i >= 0; i--) {
-                $scope.lablist[i]['markdownDesc'] = $sce.trustAsHtml($scope.lablist[i].short_desc);
-            }
-        })
+        setTimeout(function () {
+            var refreshLablist = pgcRestApiCall.getCmdData('lablist');
+            refreshLablist.then(function function_name(argument) {
+                $scope.lablist = argument;
+                for (var i = $scope.lablist.length - 1; i >= 0; i--) {
+                    $scope.lablist[i]['markdownDesc'] = $sce.trustAsHtml($scope.lablist[i].short_desc);
+                }
+            });
+        }, 2000);
     }
 
     $scope.openCredentialManager = function (argument) {

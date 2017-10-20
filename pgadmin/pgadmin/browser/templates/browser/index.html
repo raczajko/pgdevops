@@ -77,7 +77,7 @@ window.onload = function(e){
    }
  }, 1000);
 
- document.getElementById("nav-to-dev").onclick = function fun() {
+ /*document.getElementById("nav-to-dev").onclick = function fun() {
       var getRoleData = new XMLHttpRequest();
       getRoleData.open("GET", window.location.origin + "/api/checkUserRole", false);
       getRoleData.send();
@@ -87,7 +87,7 @@ window.onload = function(e){
       }else{
         document.getElementById("alert_placeholder").innerHTML = '<div style="position: fixed; top: 70px; right: 20px; width: 400px; z-index: 9999" class="alert alert-danger"><a class="close" data-dismiss="alert">×</a><span>'+jsonData.msg+'</span></div>';
       }
-    }
+    }*/
 
 };
 
@@ -128,8 +128,8 @@ window.onload = function(e){
     <div class="row"><div class="col-xs-12 pg-sp-text">{{ _('Loading {0} v{1}...').format(config.APP_NAME, config.APP_VERSION) }}</div></div>
   </div>
 </div>
-<div id="alert_placeholder">
-</div>
+<!-- <div id="alert_placeholder">
+</div> -->
 <nav class="navbar-inverse navbar-fixed-top pg-navbar">
     <div class="container-fluid">
         {% if config.SERVER_MODE %}
@@ -139,7 +139,7 @@ window.onload = function(e){
                         <span class="glyphicon glyphicon-menu-hamburger"></span>
                     </a>
                     <ul class="dropdown-menu navbar-inverse">
-                        <li><a id="nav-to-dev">pgDevOps</a></li>
+                       <li><a href="/">pgDevOps</a></li>
                     </ul>
                 </li>
             </ul>

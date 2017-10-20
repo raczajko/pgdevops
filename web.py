@@ -488,14 +488,11 @@ class checkUserRole(Resource):
     @login_required
     def get(self):
         result = {}
-        if current_user.has_role("User") or current_user.has_role("Ops"):
-            result['code'] = 0
-            result['msg'] = "pgAdmin access is restricted."
-        elif current_user.has_role("User") or current_user.has_role("Dev"):
+        if current_user.has_role("Devloper"):
             result['code'] = 1
-            result['msg'] = "pgDevOps access is restricted."
+            result['role'] = "Devloper"
         else:
-            result['code'] = 2
+            result['code'] = 0
         return result
 
 
@@ -1172,12 +1169,10 @@ def status():
 @login_required
 # @roles_accepted('Administrator','User','Ops')
 def home():
-    if current_user.has_role("Administrator") or current_user.has_role("User") or current_user.has_role("Ops"):
-        return render_template('index.html',
+    return render_template('index.html',
                                user=current_user,
                                is_admin=current_user.has_role("Administrator"))
-    else:
-        return redirect('/admin')
+    
 
 from responses import InvalidSessionResult
 
