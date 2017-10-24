@@ -23,6 +23,13 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 		'region' : ''
 	}
 
+    $scope.validateCloud = function(type,cloud_name){
+        if(type != 'cloud'){
+            return (($scope.data.credential_name && $scope.data.user && $scope.data.ssh_key) || ($scope.data.credential_name && $scope.data.user && $scope.data.password))
+        }
+        return false;
+    }
+
 	$scope.cloudTypeChange = function (type) {
 		$scope.alerts = [];
 		$scope.alerts.push({
