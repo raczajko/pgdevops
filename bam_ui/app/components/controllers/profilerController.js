@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', 'userInfoService', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $cookies, userInfoService) {
+angular.module('bigSQL.components').controller('profilerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', 'userInfoService', 'htmlMessages', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $cookies, userInfoService, htmlMessages) {
 
     $scope.alerts = [];
     $scope.successAlerts = [];
@@ -58,7 +58,14 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                         $scope.alerts.push({
                             msg:  $scope.component + ' is not Installed yet. ',
                             type: 'danger',
-                            pgComp: false
+                            pgComp: false,
+                            devRole: false
+                        });
+                    }else{
+                        $scope.alerts.push({
+                            msg: htmlMessages.getMessage('plprofiler-dev-role') ,
+                            type: 'danger',
+                            devRole: true
                         });
                     }
                 }else{
@@ -132,11 +139,21 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                 $scope.onSelectChange(selectedCluster);
             }else if($scope.components.length <= 0){
                 $scope.disableAbout = true;
-                $scope.alerts.push({
-                    msg:  "No Postgres component Installed/ Initialized.",
-                    type: 'danger',
-                    pgComp: true
-                });
+                if (!$scope.devRole) {
+                    $scope.alerts.push({
+                        msg:  "No Postgres component Installed/ Initialized.",
+                        type: 'danger',
+                        pgComp: true,
+                        devRole: false
+                    });
+                }else{
+                    $scope.alerts.push({
+                        msg:  htmlMessages.getMessage('postgres-notinstalled-dev-role'),
+                        type: 'danger',
+                        pgComp: true,
+                        devRole: true
+                    });
+                }
             }
             $scope.refreshingFields = false;
             $scope.$apply();
@@ -215,7 +232,8 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
                     $scope.successAlerts.push({
                         msg:  'Your report has been generated, please see below.',
                         type: 'success',
-                        pgComp: false
+                        pgComp: false,
+                        devRole : false
                     });
                 }
                 else{

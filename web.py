@@ -488,9 +488,9 @@ class checkUserRole(Resource):
     @login_required
     def get(self):
         result = {}
-        if current_user.has_role("Devloper"):
+        if current_user.has_role("Developer"):
             result['code'] = 1
-            result['role'] = "Devloper"
+            result['role'] = "Developer"
         else:
             result['code'] = 0
         return result
