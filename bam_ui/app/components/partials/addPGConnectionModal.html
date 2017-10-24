@@ -35,7 +35,7 @@
             <div class="form-group">
                 <label class="col-sm-3 control-label">Server Group:<span class="requiredSymbol">*</span></label>
                 <div class="col-sm-9">
-                    <select name="selectServer" class="form-control" ng-model="selectedServer" ng-options="key as key for key in servers" >
+                    <select name="selectServer" class="form-control" ng-model="selectedServer" ng-options="sg.label as sg.label for sg in servergroups" >
                     </select>
                 </div>
             </div>
