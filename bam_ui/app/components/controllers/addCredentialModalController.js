@@ -24,8 +24,15 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 	}
 
     $scope.validateCloud = function(type,cloud_name){
+
         if(type != 'cloud'){
             return (($scope.data.credential_name && $scope.data.user && $scope.data.ssh_key) || ($scope.data.credential_name && $scope.data.user && $scope.data.password))
+        }
+        if(type == 'cloud' && cloud_name == "aws"){
+            return ($scope.data.credential_name && $scope.data.credentials.access_key_id && $scope.data.credentials.secret_access_key);
+        }
+        if(type == 'cloud' && cloud_name == "azure"){
+            return ($scope.data.credential_name && $scope.data.credentials.client_id && $scope.data.credentials.client_secret && $scope.data.credentials.subscription_id && $scope.data.credentials.tenant_id)
         }
         return false;
     }
@@ -163,16 +170,53 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
     	}
 
 	$scope.testCredential = function () {
-		var modalInstance = $uibModal.open({
-                templateUrl: '../app/components/partials/testConnection.html',
-                controller: 'testConnectionController',
-                keyboard  : false,
-                backdrop  : 'static',
+	    if($scope.data.type == "cloud"){
+	        $scope.testConnectionData = {
+                'cloud_type':$scope.data.cloud_name
+            }
+	        if($scope.data.cloud_name == "aws"){
+                $scope.testConnectionData['credentials']={
+                    'aws_access_key_id':$scope.data.credentials.access_key_id,
+                    'aws_secret_access_key':$scope.data.credentials.secret_access_key
+                }
+            }
+            else if($scope.data.cloud_name == "azure"){
+                $scope.testConnectionData['credentials']={
+                    'subscription_id':$scope.data.credentials.subscription_id,
+                    'client_id':$scope.data.credentials.client_id,
+                    "secret":$scope.data.credentials.client_secret,
+                    "tenant":$scope.data.credentials.tenant_id
+                }
+            }
+            var testConnection = bamAjaxCall.postData('/api/testCloudConn', $scope.testConnectionData);
+            testConnection.then(function (data) {
+                if(data.code != 200){
+                    var msg = data.message;
+                    $scope.alerts.push({
+                        msg: msg,
+                        type: 'error'
+                    });
+                }
+                else{
+                    $scope.alerts.push({
+                        msg: data.message,
+                        type: 'success'
+                    });
+                }
             });
-		modalInstance.user = $scope.data.user;
-		modalInstance.password = $scope.data.password;
-		modalInstance.ssh_key = $scope.data.ssh_key;
-		modalInstance.ssh_sudo_pwd = $scope.data.ssh_sudo_pwd;
+	    }
+	    else{
+            var modalInstance = $uibModal.open({
+                    templateUrl: '../app/components/partials/testConnection.html',
+                    controller: 'testConnectionController',
+                    keyboard  : false,
+                    backdrop  : 'static',
+                });
+            modalInstance.user = $scope.data.user;
+            modalInstance.password = $scope.data.password;
+            modalInstance.ssh_key = $scope.data.ssh_key;
+            modalInstance.ssh_sudo_pwd = $scope.data.ssh_sudo_pwd;
+        }
 	}
 
 	$scope.openUsage = function (name) {

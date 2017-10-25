@@ -335,6 +335,46 @@ class TestConn(Resource):
 
 api.add_resource(TestConn, '/api/testConn')
 
+
+from responses import Result, InvalidParameterResult
+
+class TestCloudConnection(Resource):
+    @login_required
+    def post(self):
+        payload = request.get_json()['params']
+        if not set(("cloud_type","credentials")).issubset(payload):
+            return InvalidParameterResult(errors = ["Both cloud_type and credentials are required"]).http_response()
+        if payload["cloud_type"] not in ('aws','azure','vmware'):
+            return InvalidParameterResult(errors=["Possible values for cloud_type are aws/azure/vmware"]).http_response()
+
+        credentials = payload["credentials"]
+        if payload["cloud_type"] == "aws":
+            if not set(("aws_access_key_id","aws_secret_access_key")).issubset(credentials):
+                return InvalidParameterResult(errors=["aws_access_key_id, aws_secret_access_key are required in credentials."]).http_response()
+            import boto3
+            available_rds_regions = boto3.session.Session().get_available_regions("rds")
+            try:
+                boto_client = boto3.client('rds',aws_access_key_id=credentials['aws_access_key_id'], aws_secret_access_key=credentials["aws_secret_access_key"],region_name=available_rds_regions[0])
+                boto_client.describe_db_instances()
+            except Exception as ex:
+                return InvalidParameterResult(message = "Invalid Credentials", errors = [str(ex)]).http_response()
+        if payload["cloud_type"] == "azure":
+            if not set(("subscription_id","client_id","secret","tenant")).issubset(credentials):
+                return InvalidParameterResult(errors=["subscription_id, client_id, secret, tenant are required in credentials."]).http_response()
+            from azure.common.credentials import ServicePrincipalCredentials
+
+            try:
+                ServicePrincipalCredentials(
+                    client_id=credentials['client_id'],
+                    secret=credentials['secret'],
+                    tenant=credentials['tenant']
+                )
+            except Exception as ex:
+                return InvalidParameterResult(message="Invalid Credentials", errors=[str(ex)]).http_response()
+        return Result(200, "SUCCESS", 'Valid Credentials').http_response(pretty=1)
+
+api.add_resource(TestCloudConnection, '/api/testCloudConn')
+
 class checkUser(Resource):
     @login_required
     def get(self):
