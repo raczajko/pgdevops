@@ -160,6 +160,11 @@ def upgrade():
                 VALUES ('User', 'pgAdmin User Role')
         """)
 
+        db.engine.execute("""
+INSERT INTO role ( name, description )
+VALUES ('Developer', 'Develope User Role')
+        """)
+
     if version < 12:
         db.engine.execute("ALTER TABLE server RENAME TO server_old")
         db.engine.execute("""

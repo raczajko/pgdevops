@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('badgerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', 'userInfoService', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $cookies, userInfoService) {
+angular.module('bigSQL.components').controller('badgerController', ['$scope', '$uibModal', 'PubSubService', '$state', 'UpdateComponentsService', '$filter', '$rootScope', '$timeout', '$window', '$http', '$location', 'bamAjaxCall', 'pgcRestApiCall', '$cookies', 'userInfoService', 'htmlMessages', function ($scope, $uibModal, PubSubService, $state, UpdateComponentsService, $filter, $rootScope, $timeout, $window, $http, $location, bamAjaxCall, pgcRestApiCall, $cookies, userInfoService, htmlMessages) {
 
     $scope.alerts = [];
     $scope.checkedFirst = false;
@@ -70,28 +70,45 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         serverStatus.then(function (data) {
             var noPostgresRunning = false;
             for (var i = data.length - 1; i >= 0; i--) {
-                if (data[i].state == "Running" || data[i].state == "Stopped") {
+                if ((data[i].state == "Running" || data[i].state == "Stopped") && data[i].category == "1") {
                     noPostgresRunning = true;
                 }
             }
             if(!noPostgresRunning){
                 $scope.disableGenrate = true;
-                $scope.alerts.push({
-                    msg:  "No Postgres component Installed/ Initialized.",
-                    type: 'danger',
-                    pgComp: true
-                });
-            }else if(!$scope.devRole){
+                if (!$scope.devRole) {
+                    $scope.alerts.push({
+                        msg:  "No Postgres component Installed/ Initialized.",
+                        type: 'danger',
+                        pgComp: true,
+                        devRole: false
+                    });
+                }else{
+                    $scope.alerts.push({
+                        msg:  htmlMessages.getMessage('postgres-notinstalled-dev-role'),
+                        type: 'danger',
+                        pgComp: true,
+                        devRole: true
+                    });
+                }
+            }else{
                 var compStatus = pgcRestApiCall.getCmdData('status pgbadger');
                 compStatus.then(function (data) {
                     if (data.state == "Installed") {
                         $scope.badgerInstalled = true;
-                    }else{
+                    }else if(!$scope.devRole){
                         $scope.disableGenrate = true;
                         $scope.alerts.push({
                             msg:  'pgBadger is not Installed. ',
                             type: 'danger',
-                            pgComp: false
+                            pgComp: false,
+                            devRole: false
+                        });
+                    }else{
+                        $scope.alerts.push({
+                            msg:  htmlMessages.getMessage('pgbadger-dev-role') ,
+                            type: 'danger',
+                            devRole: true
                         });
                     }
                 });

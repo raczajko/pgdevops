@@ -7,8 +7,8 @@
 <section class="content">
     <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert()" class="uib-text">
         {{alert.msg}}  
-        <a ng-click="clearCookies(); openDetailsModal()" ng-if="!alert.pgComp">Click here to install</a> 
-        <a ui-sref="components.view" ng-click="clearCookies()" ng-if="alert.pgComp">Click here to install</a>
+        <a ng-click="clearCookies(); openDetailsModal()" class="cursor_pointer" ng-if="!alert.pgComp && !alert.devRole">Click here to install</a> 
+        <a ui-sref="components.view" class="cursor_pointer" ng-click="clearCookies()" ng-if="alert.pgComp && !alert.devRole">Click here to install</a>
     </uib-alert>
     <uib-alert ng-repeat="alert in successAlerts" type="{{alert.type}}" close="closeAlert()" class="uib-text" dismiss-on-timeout="8000">
         {{alert.msg}}  

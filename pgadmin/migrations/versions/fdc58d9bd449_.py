@@ -104,10 +104,6 @@ VALUES(1, 'Administrators', 'pgAdmin Administrators Role')
 INSERT INTO "roles_users"
 VALUES(1, 1);
     """)
-    db.engine.execute("""
-INSERT INTO role ( name, description )
-VALUES ('Devloper', 'Devloper User Role')
-        """)
 
 
     '''db.engine.execute("""

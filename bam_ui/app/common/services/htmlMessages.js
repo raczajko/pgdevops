@@ -26,7 +26,10 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'create-azure-db' : 'Creating Postgres instance, this may take a couple of minutes.',
         'create-azure-vm' : 'Creating VM, this may take a couple of minutes.',
         'windows-not-supported' : 'Sorry! This feature is currently not supported on Windows.',
-        'windows7-not-supported' : 'Sorry! This feature is currently not supported on Windows7.'
+        'windows7-not-supported' : 'Sorry! This feature is currently not supported on Windows7.',
+        'pgbadger-dev-role' : 'pgBadger is not installed. Please contact Administrator to install the same.',
+        'plprofiler-dev-role' : 'plProfiler is not installed. Please contact Administrator to install the same.',
+        'postgres-notinstalled-dev-role' : 'No Postgres component Installed/ Initialized. Please contact Administrator.'
     };
 
     return {
