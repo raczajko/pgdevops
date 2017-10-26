@@ -200,7 +200,7 @@ class pgcRestApi(Resource):
     @auth_required('token', 'session')
     def get(self, arg):
         if current_user.has_role("Developer"):
-            non_admin_cmds = ['list', 'lablist', 'info', 'status', 'register', 'meta-list']
+            non_admin_cmds = ['list', 'lablist', 'info', 'status', 'register', 'metalist']
             if arg.split(" ")[0] in non_admin_cmds:
                 data = pgc.get_data(arg)
                 return data
