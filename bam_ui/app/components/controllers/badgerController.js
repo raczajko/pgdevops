@@ -76,39 +76,32 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
             }
             if(!noPostgresRunning){
                 $scope.disableGenrate = true;
-                if (!$scope.devRole) {
-                    $scope.alerts.push({
-                        msg:  "No Postgres component Installed/ Initialized.",
-                        type: 'danger',
-                        pgComp: true,
-                        devRole: false
-                    });
-                }else{
-                    $scope.alerts.push({
-                        msg:  htmlMessages.getMessage('postgres-notinstalled-dev-role'),
-                        type: 'danger',
-                        pgComp: true,
-                        devRole: true
-                    });
+                var msg = "No Postgres component Installed/ Initialized.";
+                if($scope.devRole){
+                    msg = htmlMessages.getMessage('postgres-notinstalled-dev-role');
                 }
+                $scope.alerts.push({
+                    msg:  msg,
+                    type: 'danger',
+                    pgComp: true,
+                    devRole: $scope.devRole
+                });
             }else{
-                var compStatus = pgcRestApiCall.getCmdData('status pgbadger');
+                var compStatus = pgcRestApiCall.getCmdData('info pgbadger');
                 compStatus.then(function (data) {
-                    if (data.state == "Installed") {
+                    if (data[0].is_installed != 0) {
                         $scope.badgerInstalled = true;
-                    }else if(!$scope.devRole){
+                    }else{
                         $scope.disableGenrate = true;
+                        var msg = 'pgBadger is not Installed. ';
+                        if($scope.devRole){
+                            msg = htmlMessages.getMessage('pgbadger-dev-role');
+                        }
                         $scope.alerts.push({
-                            msg:  'pgBadger is not Installed. ',
+                            msg:  msg,
                             type: 'danger',
                             pgComp: false,
-                            devRole: false
-                        });
-                    }else{
-                        $scope.alerts.push({
-                            msg:  htmlMessages.getMessage('pgbadger-dev-role') ,
-                            type: 'danger',
-                            devRole: true
+                            devRole: $scope.devRole
                         });
                     }
                 });
@@ -125,6 +118,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     }
 
     $scope.onSelectChange = function (comp) {
+        $scope.pgNotRunning = false;
         if(comp){
             session.call('com.bigsql.get_log_files_list', [comp]);
             session.call('com.bigsql.infoComponent', [comp]);

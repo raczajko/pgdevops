@@ -4,7 +4,7 @@
 
 from flask import Blueprint, request, jsonify, session
 from flask.views import MethodView
-from flask_security import login_required, roles_required, current_user
+from flask_security import login_required, roles_required, current_user, roles_accepted
 from pgadmin.model import db, Role, User, Server, ServerGroup, Process
 from pgadmin.browser.server_groups.servers.types import ServerType
 from flask import g
@@ -19,6 +19,7 @@ pgstats = Blueprint('pgstats', 'pgstats', url_prefix='/pgstats')
 
 
 class ConnectAPI(MethodView):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def post(self):
         json_dict = {}

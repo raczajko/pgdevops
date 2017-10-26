@@ -10,7 +10,7 @@
         <a ng-click="clearCookies(); openDetailsModal()" class="cursor_pointer" ng-if="!alert.pgComp && !alert.devRole">Click here to install</a> 
         <a ui-sref="components.view" class="cursor_pointer" ng-click="clearCookies()" ng-if="alert.pgComp && !alert.devRole">Click here to install</a>
     </uib-alert>
-    <uib-alert ng-repeat="alert in successAlerts" type="{{alert.type}}" close="closeAlert()" class="uib-text" dismiss-on-timeout="8000">
+    <uib-alert ng-repeat="alert in successAlerts" type="{{alert.type}}" close="closeAlert()" class="uib-text white_space_normal" dismiss-on-timeout="8000">
         {{alert.msg}}  
     </uib-alert>
     <uib-alert ng-repeat="alert in extensionAlerts" type="{{startAlert.type}}" close="closeAlert()" class="uib-text">

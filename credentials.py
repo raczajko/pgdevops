@@ -4,7 +4,7 @@
 
 from flask import Blueprint, request, jsonify, session
 from flask.views import MethodView
-from flask_security import login_required, roles_required, current_user
+from flask_security import login_required, roles_required, current_user, roles_accepted
 from flask import g
 from responses import ServerErrorResult, Result, InvalidParameterResult
 
@@ -43,6 +43,7 @@ class CreateCredential(MethodView):
             pgcCmd = pgcCmd + " --credentials \'" + json.dumps(credentials) + "\'"
         return pgcCmd
     
+    @roles_accepted('Administrator','User')
     @login_required
     def post(self):
         json_dict = {}
@@ -56,6 +57,7 @@ class CreateCredential(MethodView):
         return Result(200,data[0]['state'], data[0]['msg']).http_response()
 
 
+    @roles_accepted('Administrator','User')
     @login_required
     def put(self):
         json_dict = {}
@@ -69,6 +71,7 @@ class CreateCredential(MethodView):
         return Result(200,data[0]['state'], data[0]['msg']).http_response()
 
 
+    @roles_accepted('Administrator','User')
     @login_required
     def get(self):
         pg_response = pgc.get_cmd_data('credentials --list')
@@ -78,6 +81,7 @@ credentials.add_url_rule('/', view_func=CreateCredential.as_view('create'))
 
 
 class DeleteCredentials(MethodView):
+    @roles_accepted('Administrator','User')
     @login_required
     def delete(self, uuids):
     	json_dict = {}

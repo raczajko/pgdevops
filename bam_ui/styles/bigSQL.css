@@ -7519,3 +7519,8 @@ a.notification{
   opacity: 0.5;
   pointer-events: none;
 }
+
+.white_space_normal{
+  white-space: normal; 
+  width: 800px;
+}

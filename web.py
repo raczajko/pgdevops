@@ -199,9 +199,14 @@ db_session = db.session
 class pgcRestApi(Resource):
     @auth_required('token', 'session')
     def get(self, arg):
+        if current_user.has_role("Developer"):
+            non_admin_cmds = ['list', 'lablist', 'info', 'status', 'register', 'meta-list']
+            if arg.split(" ")[0] in non_admin_cmds:
+                data = pgc.get_data(arg)
+                return data
+            return unauth_handler()
         data = pgc.get_data(arg)
         return data
-
 
 api.add_resource(pgcRestApi,
                  '/api/pgc/<string:arg>')
@@ -240,6 +245,7 @@ api.add_resource(pgcUtilRelnotes, '/api/utilRelnotes/<string:comp>','/api/utilRe
 
 
 class pgcApiHostCmd(Resource):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def get(self, pgc_cmd, host_name,pwd=None):
         password=pwd
@@ -270,6 +276,7 @@ api.add_resource(pgcApiHostCmd,
 
 
 class pgdgCommand(Resource):
+    @roles_accepted('Administrator','User')
     @login_required
     def get(self, repo_id, pgc_cmd, host=None, pwd=None):
         password = pwd
@@ -298,6 +305,7 @@ api.add_resource(pgdgCommand,
                  '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>/<string:pwd>')
 
 class pgdgHostCommand(Resource):
+    @roles_accepted('Administrator','User')
     @login_required
     def get(self, repo_id, pgc_cmd, comp, host=None):
         data = pgc.get_pgdg_data(repo_id, pgc_cmd, component=comp, pgc_host=host)
@@ -309,6 +317,7 @@ api.add_resource(pgdgHostCommand, '/api/pgdghost/<string:repo_id>/<string:pgc_cm
 
 
 class TestConn(Resource):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def get(self):
         username = request.args.get('user')
@@ -336,6 +345,7 @@ class TestConn(Resource):
 api.add_resource(TestConn, '/api/testConn')
 
 class checkUser(Resource):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def get(self):
 
@@ -386,6 +396,7 @@ api.add_resource(checkUser, '/api/checkUser')
 
 
 class checkHostAccess(Resource):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def get(self):
         host = request.args.get('hostname')
@@ -428,6 +439,7 @@ api.add_resource(checkHostAccess, '/api/checkUserAccess')
 
 
 class initPGComp(Resource):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def get(self, host, comp, pgpasswd, username=None, password=None):
         from PgcRemote import PgcRemote
@@ -525,6 +537,7 @@ class getRecentReports(Resource):
 api.add_resource(getRecentReports, '/api/getrecentreports/<string:report_type>')
 
 class CheckConn(Resource):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def post(self):
         result = {}
@@ -618,6 +631,7 @@ api.add_resource(GetEnvFile, '/api/read/env/<string:comp>')
 
 
 class AddtoMetadata(Resource):
+    @roles_accepted('Administrator','User')
     @login_required
     def post(self):
         def add_to_pginstances(pg_arg):
@@ -779,6 +793,7 @@ api.add_resource(AddtoMetadata, '/api/add_to_metadata')
 
 
 class DeleteFromMetadata(Resource):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def post(self):
         args = request.json
@@ -857,6 +872,7 @@ def get_current_time(format='%Y-%m-%d %H:%M:%S.%f %z'):
 
 
 class pgdgAction(Resource):
+    @roles_accepted('Administrator','User')
     @login_required
     def post(self):
         result = {}
@@ -959,6 +975,7 @@ class GenerateBadgerReports(Resource):
 api.add_resource(GenerateBadgerReports, '/api/generate_badger_reports')
 
 class ComparePGVersions(Resource):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def get(self, host):
         result={}
@@ -978,6 +995,7 @@ class ComparePGVersions(Resource):
 api.add_resource(ComparePGVersions, '/api/compare_pg_versions/<string:host>')
 
 class GetBgProcessList(Resource):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def get(self, process_type=None):
         from sqlalchemy import desc
@@ -1113,6 +1131,7 @@ class GetBgProcessStatus(Resource):
 api.add_resource(GetBgProcessStatus, '/api/bgprocess_status/<string:process_log_id>')
 
 @application.route('/api/dirlist', methods = ['POST'])
+@roles_accepted('Administrator', 'User')
 @login_required
 def dirlist():
     """
@@ -1167,7 +1186,7 @@ def status():
 
 @application.route('/')
 @login_required
-# @roles_accepted('Administrator','User','Ops')
+# @roles_accepted('Administrator','User')
 def home():
     return render_template('index.html',
                                user=current_user,

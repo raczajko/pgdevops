@@ -5,7 +5,7 @@ import time
 from pgadmin.model import db, Process
 from utils import get_current_time, get_process_status
 
-from flask_security import current_user, login_required
+from flask_security import current_user, login_required, roles_accepted
 from flask import Blueprint, request, jsonify
 from flask.views import MethodView
 from pickle import dumps
@@ -25,6 +25,7 @@ def validate_backup_fields(args):
 db_session = db.session
 
 class BackupAPI(MethodView):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def post(self):
         result = {}
@@ -77,6 +78,7 @@ class BackupAPI(MethodView):
 _backrest.add_url_rule('/dbdump', view_func=BackupAPI.as_view('backup'))
 
 class RestoreAPI(MethodView):
+    @roles_accepted('Administrator', 'User')
     @login_required
     def post(self):
         result = {}

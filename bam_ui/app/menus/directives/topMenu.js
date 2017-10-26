@@ -1,6 +1,6 @@
 angular.module('bigSQL.menus').component('topMenu', {
     bindings: {},
-    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, pgcRestApiCall, bamAjaxCall, $cookies, htmlMessages, $window, $http) {
+    controller: function ($rootScope, $scope, $uibModal, UpdateComponentsService, pgcRestApiCall, bamAjaxCall, $cookies, htmlMessages, $window, $http, userInfoService) {
 
         /**Below function is for displaying update badger on every page.
          **/
@@ -34,6 +34,14 @@ angular.module('bigSQL.menus').component('topMenu', {
                 }
             }
         };
+
+        $scope.devRole = false;
+        var checkUserRole = userInfoService.getUserRole();
+        checkUserRole.then(function (data) {
+          if(data.data.code == 1){
+            $scope.devRole = true;
+          }
+        })
 
         $scope.hideUpdates = false;
         $scope.currentHost = $cookies.get('remote_host');

@@ -138,11 +138,9 @@ angular.module('bigSQL.components').controller('ComponentsSettingsController', [
         if (argument=="" || argument == 'localhost'){
             var infoData = pgcRestApiCall.getCmdData('info');
             var checkpgdgSupport = pgcRestApiCall.getCmdData('info');
-            // var getLablist = pgcRestApiCall.getCmdData('lablist');
         } else{
             var infoData = pgcRestApiCall.getCmdData('info --host "' + argument + '"');
             var checkpgdgSupport = pgcRestApiCall.getCmdData('info --host "'+  argument + '"');
-            // var getLablist = pgcRestApiCall.getCmdData('hostcmd/lablist/'+argument);
         }
         var getLablist = pgcRestApiCall.getCmdData('lablist');
 

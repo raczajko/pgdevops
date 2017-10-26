@@ -5,7 +5,7 @@ import json
 
 from flask import Blueprint, request
 from flask.views import MethodView
-from flask_security import auth_required
+from flask_security import auth_required, roles_accepted
 
 from Components import Components as pgc
 from responses import ServerErrorResult, Result
@@ -13,6 +13,7 @@ _cloud_create = Blueprint('cloud_create', 'cloud_create', url_prefix='/api/pgc/c
 
 
 class CloudCreateHandler(MethodView):
+    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
     def post(self):
         try:

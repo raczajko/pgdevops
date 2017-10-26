@@ -33,7 +33,7 @@
                 <li>
 
                 </li>
-                <li ng-click="openDetailsModal()" id="pgDevOpsUpdate" ng-if="pgdevopsUpdate">
+                <li ng-click="openDetailsModal()" id="pgDevOpsUpdate" ng-if="pgdevopsUpdate && !devRole">
                     <!-- <button class="btn btn-default btn-sm btn-warning" style="margin-top: 12px">New version of pgDevOps available</button> -->
                     <a href="">
                         <div id="pgdevops-update">
@@ -42,7 +42,7 @@
                         </div>
                     </a>
                 </li>
-                <li ng-click="open()" id="updatesAvailable" ng-if="updates">
+                <li ng-click="open()" id="updatesAvailable" ng-if="updates && !devRole">
                     <a href="">
                         <div id="updates-available">
                             <small class="label bg-orange"><i class="fa fa-arrow-circle-down"></i> {{ updates }} Updates

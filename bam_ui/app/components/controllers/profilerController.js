@@ -31,15 +31,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
             $scope.report_file = files_list[0].file_link.replace('reports/','');
             $scope.report_url = files_list[0].file_link;
         }
-    });
-
-    $scope.devRole = false;
-    var checkUserRole = userInfoService.getUserRole();
-    checkUserRole.then(function (data) {
-      if(data.data.code == 1){
-        $scope.devRole = true;
-      }
-    })    
+    });   
 
     function getInstanceInfo(comp) {
     
@@ -50,11 +42,11 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     }
 
     function checkplProfilerStatus(argument) {
-        var compStatus = pgcRestApiCall.getCmdData('status '+ $scope.component);
+        var compStatus = pgcRestApiCall.getCmdData('info '+ $scope.component);
             compStatus.then(function (data) {
-                if (data.state != "Installed") {
+                if (data[0].is_installed == 0) {
+                    $scope.disableDatabases = true;
                     if (!$scope.devRole) {
-                        $scope.disableDatabases = true;
                         $scope.alerts.push({
                             msg:  $scope.component + ' is not Installed yet. ',
                             type: 'danger',
@@ -82,7 +74,7 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
         localStorage.setItem('selectedCluster', argument);
         $scope.alerts.splice(0, 1);
         $scope.selectDatabase = '';
-        if(argument && !$scope.devRole){
+        if(argument){
             $scope.component = 'plprofiler3-'+argument;
             checkplProfilerStatus();
             getInstanceInfo(argument);
@@ -120,8 +112,14 @@ angular.module('bigSQL.components').controller('profilerController', ['$scope', 
     var sessionPromise = PubSubService.getSession();
     sessionPromise.then(function (val) {
         session = val;
-
-        session.call('com.bigsql.checkLogdir');
+        $scope.devRole = false;
+        var checkUserRole = userInfoService.getUserRole();
+        checkUserRole.then(function (data) {
+          if(data.data.code == 1){
+            $scope.devRole = true;
+          }
+          session.call('com.bigsql.checkLogdir');
+        });
 
 
         session.subscribe("com.bigsql.onCheckLogdir", function (components) {

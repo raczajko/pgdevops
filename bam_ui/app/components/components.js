@@ -84,6 +84,9 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
         }
     }).state('components.backgroundProcessList', {
         url: '/jobs',
+        resolve: {
+            isDevUser: isDevUser
+        },
         views: {
             "sub": {
                 controller: 'backgroundProcessListController',
@@ -99,65 +102,84 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
 
             }
         }
-    });
-    var initInjector = angular.injector(['ng']);
-    var $http = initInjector.get('$http');
-    var $window = initInjector.get('$window');
-    var checkUserRole = $http.get($window.location.origin + '/api/checkUserRole');
-    checkUserRole.then(function (data) {
-        if(data.data.code != 1){
-            $stateProvider.state('components.backupRestoreView', {
-                url: '/backupRestore',
-                views: {
-                    "sub": {
-                        controller: 'ComponentsBackupRestoreController',
-                        templateUrl: '../app/components/partials/backupRestore.html',
-                    }
-                }
-            }).state('components.view', {
-                url: '/view',
-                views: {
-                    "sub": {
-                        controller: 'ComponentsViewController',
-                        templateUrl: '../app/components/partials/view.html',
-                    }
-                }
+    }).state('components.backupRestoreView', {
+        url: '/backupRestore',
+        resolve: {
+            isDevUser: isDevUser
+        },
+        views: {
+            "sub": {
+                controller: 'ComponentsBackupRestoreController',
+                templateUrl: '../app/components/partials/backupRestore.html',
+            }
+        }
+    }).state('components.view', {
+        url: '/view',
+        resolve: {
+            isDevUser: isDevUser
+        },
+        views: {
+            "sub": {
+                controller: 'ComponentsViewController',
+                templateUrl: '../app/components/partials/view.html',
+            }
+        }
 
-            }).state('components.hosts', {
-                url: '^/hosts',
-                views: {
-                    "sub": {
-                        controller: 'HostsController',
-                        templateUrl: '../app/components/partials/hosts.html',
-                    }
-                }
-            }).state('components.settingsView', {
-                url: '/settings',
-                views: {
-                    "sub": {
-                        controller: 'ComponentsSettingsController',
-                        templateUrl: '../app/components/partials/settings.html',
-                    }
-                }
-            }).state('components.credentials', {
-                url: '/credentials',
-                views: {
-                    "sub": {
-                        controller: 'credentialManagerController',
-                        templateUrl: '../app/components/partials/credentialManager.html',
-                    }
-                }    
-            }).state('components.detailspg95', {
-                url: '^/details-pg/{component}',
-                views: {
-                    "sub": {
-                        controller: 'ComponentDetailsPg95Controller',
-                        templateUrl: '../app/components/partials/detailspg95.html',
-                    }
-                }
-            })
+    }).state('components.hosts', {
+        url: '^/hosts',
+        resolve: {
+            isDevUser: isDevUser
+        },
+        views: {
+            "sub": {
+                controller: 'HostsController',
+                templateUrl: '../app/components/partials/hosts.html',
+            }
+        }
+    }).state('components.settingsView', {
+        url: '/settings',
+        resolve: {
+            isDevUser: isDevUser
+        },
+        views: {
+            "sub": {
+                controller: 'ComponentsSettingsController',
+                templateUrl: '../app/components/partials/settings.html',
+            }
+        }
+    }).state('components.credentials', {
+        url: '/credentials',
+        resolve: {
+            isDevUser: isDevUser
+        },
+        views: {
+            "sub": {
+                controller: 'credentialManagerController',
+                templateUrl: '../app/components/partials/credentialManager.html',
+            }
+        }    
+    }).state('components.detailspg95', {
+        url: '^/details-pg/{component}',
+        resolve: {
+            isDevUser: isDevUser
+        },
+        views: {
+            "sub": {
+                controller: 'ComponentDetailsPg95Controller',
+                templateUrl: '../app/components/partials/detailspg95.html',
+            }
         }
     });
+
+    function isDevUser($http, $window) {
+        var checkUserRole = $http.get($window.location.origin + '/api/checkUserRole');
+        checkUserRole.then(function (data) {
+            if(data.data.code == 1){
+                $window.location.href = '/';
+            }
+        });
+    }
+
 }).controller('ComponentsController', ['$scope', function ($scope) {
 
 }]);
