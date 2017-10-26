@@ -339,7 +339,7 @@ api.add_resource(TestConn, '/api/testConn')
 from responses import Result, InvalidParameterResult
 
 class TestCloudConnection(Resource):
-    @login_required
+    @auth_required('token', 'session')
     def post(self):
         payload = request.get_json()['params']
         if not set(("cloud_type","credentials")).issubset(payload):
@@ -369,6 +369,24 @@ class TestCloudConnection(Resource):
                     secret=credentials['secret'],
                     tenant=credentials['tenant']
                 )
+            except Exception as ex:
+                return InvalidParameterResult(message="Invalid Credentials", errors=[str(ex)]).http_response()
+        if payload["cloud_type"] == "vmware":
+            if not set(("user","password","url")).issubset(credentials):
+                return InvalidParameterResult(errors=["user, password, url are required in credentials."]).http_response()
+            from cloud.compute import ComputeNodes
+            cn = ComputeNodes(cloud="vmware")
+            opts = cn.get_opts()
+            opts['providers']["bigsql-provider"]['vmware'] = {
+                'driver':'vmware',
+                'user':credentials['user'],
+                'password':credentials['password'],
+                'url':credentials['password']
+            }
+            try:
+                from salt.cloud import CloudClient
+                cloud_client = CloudClient(opts=opts)
+                list_nodes = cloud_client.action(fun="list_nodes_full", provider="bigsql-provider")
             except Exception as ex:
                 return InvalidParameterResult(message="Invalid Credentials", errors=[str(ex)]).http_response()
         return Result(200, "SUCCESS", 'Valid Credentials').http_response(pretty=1)

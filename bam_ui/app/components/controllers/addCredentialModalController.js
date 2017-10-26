@@ -24,7 +24,6 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 	}
 
     $scope.validateCloud = function(type,cloud_name){
-
         if(type != 'cloud'){
             return (($scope.data.credential_name && $scope.data.user && $scope.data.ssh_key) || ($scope.data.credential_name && $scope.data.user && $scope.data.password))
         }
@@ -33,6 +32,9 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
         }
         if(type == 'cloud' && cloud_name == "azure"){
             return ($scope.data.credential_name && $scope.data.credentials.client_id && $scope.data.credentials.client_secret && $scope.data.credentials.subscription_id && $scope.data.credentials.tenant_id)
+        }
+        if(type == 'cloud' && cloud_name == "vmware"){
+            return ($scope.data.credential_name && $scope.data.credentials.user && $scope.data.credentials.password && $scope.data.credentials.url)
         }
         return false;
     }
@@ -97,6 +99,12 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 			$scope.data.credentials.client_secret = $scope.updateCred.credentials.client_secret;
 			$scope.data.credentials.subscription_id = $scope.updateCred.credentials.subscription_id;
 			$scope.data.credentials.tenant_id = $scope.updateCred.credentials.tenant_id;
+
+			if($scope.data.cloud_name == "vmware"){
+			    $scope.data.credentials.user = $scope.updateCred.credentials.user;
+			    $scope.data.credentials.password = $scope.updateCred.credentials.password;
+			    $scope.data.credentials.url = $scope.updateCred.credentials.url;
+			}
 		}
 		$scope.data.user = $scope.updateCred.ssh_user;
 		$scope.data.cred_uuid = $scope.updateCred.cred_uuid;
@@ -186,6 +194,13 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
                     'client_id':$scope.data.credentials.client_id,
                     "secret":$scope.data.credentials.client_secret,
                     "tenant":$scope.data.credentials.tenant_id
+                }
+            }
+            else if($scope.data.cloud_name == "vmware"){
+                $scope.testConnectionData['credentials']={
+                    'user':$scope.data.credentials.user,
+                    'password':$scope.data.credentials.password,
+                    "url":$scope.data.credentials.url
                 }
             }
             var testConnection = bamAjaxCall.postData('/api/testCloudConn', $scope.testConnectionData);
