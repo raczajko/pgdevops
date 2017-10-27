@@ -200,6 +200,8 @@ class pgcRestApi(Resource):
     @auth_required('token', 'session')
     def get(self, arg):
         api_restrict_cmds = ["stop", "remove", "restart", "start", "upgrade", "install"]
+        if len(arg.split()) == 1 and arg.split()[0] in api_restrict_cmds:
+            return {"msg": "you can't perform %s."%arg.split()[0]}
         if len(arg.split()) >= 2 and arg.split()[0] in api_restrict_cmds and arg.split()[1] in "pgdevops":
             return {"msg": "you can't perform any actions on pgDevOps."}
         if current_user.has_role("Developer"):
