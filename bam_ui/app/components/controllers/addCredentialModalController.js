@@ -9,6 +9,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 	$scope.updateCred = $uibModalInstance.updateCred;
 	$scope.buttonType = "Add";
 	$scope.adding = false;
+	$scope.testing = false;
 
 	$scope.data = {
 		'type' : '',
@@ -77,12 +78,16 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 		})
 
 	}
-
-	var regions = pgcRestApiCall.getCmdData('metalist aws-regions');
-    regions.then(function(data){
-        $scope.loading = false;
-        $scope.regions = data;
-    });
+    $scope.cloudChange = function(){
+        if($scope.data.cloud_name == "vmware"){
+            return
+        }
+        var regions = pgcRestApiCall.getCmdData('metalist '+$scope.data.cloud_name+'-regions');
+        regions.then(function(data){
+            $scope.loading = false;
+            $scope.regions = data;
+        });
+    }
 
 
     if ($scope.updateCred) {
@@ -179,6 +184,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
 
 	$scope.testCredential = function () {
 	    if($scope.data.type == "cloud"){
+	        $scope.testing = true;
 	        $scope.testConnectionData = {
                 'cloud_type':$scope.data.cloud_name
             }
@@ -218,6 +224,7 @@ angular.module('bigSQL.components').controller('addCredentialModalController', [
                         type: 'success'
                     });
                 }
+                $scope.testing = false;
             });
 	    }
 	    else{

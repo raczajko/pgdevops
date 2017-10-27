@@ -381,7 +381,7 @@ class TestCloudConnection(Resource):
                 'driver':'vmware',
                 'user':credentials['user'],
                 'password':credentials['password'],
-                'url':credentials['password']
+                'url':credentials['url']
             }
             try:
                 from salt.cloud import CloudClient
