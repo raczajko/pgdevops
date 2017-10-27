@@ -199,6 +199,9 @@ db_session = db.session
 class pgcRestApi(Resource):
     @auth_required('token', 'session')
     def get(self, arg):
+        api_restrict_cmds = ["stop", "remove", "restart", "start", "upgrade"]
+        if arg.split()[0] in api_restrict_cmds and arg.split()[1] in "pgdevops":
+            return {"msg": "you can't perform any actions on pgDevOps."}
         if current_user.has_role("Developer"):
             non_admin_cmds = ['list', 'lablist', 'info', 'status', 'register', 'metalist']
             if arg.split(" ")[0] in non_admin_cmds:
