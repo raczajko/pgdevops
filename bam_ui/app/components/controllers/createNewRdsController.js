@@ -87,9 +87,14 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
             $scope.loading = false;
             var response = JSON.parse(data[0]);
             if($scope.secondStep && !$scope.data.engine_version){
-                $scope.dbEngVersions = response;
-                $scope.data.engine_version = $scope.dbEngVersions[0].EngineVersion;
-                $scope.versionChange();
+                if (response[0].state == "error") {
+                    $scope.showErrMsg = true;
+                    $scope.errMsg = response[0].msg;
+                }else{
+                    $scope.dbEngVersions = response;
+                    $scope.data.engine_version = $scope.dbEngVersions[0].EngineVersion;
+                    $scope.versionChange();
+                }
             }else if($scope.secondStep && $scope.data.engine_version){
                 $scope.types = response;
                 if ($scope.types.length>0) {
