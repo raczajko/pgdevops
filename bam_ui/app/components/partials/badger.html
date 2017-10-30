@@ -33,7 +33,7 @@
                             <button class="btn btn-default pull-right" ng-click="openSwitchlog()" ng-disabled="disableLog || selectComp == 'pg93' || selectComp == 'pg92' || pgNotRunning">Switch log file</button>
                         </div>
                         <div class="col-md-5 col-sm-5 col-xs-5" uib-tooltip="Switch Log File and Change Logging Parameters is not supported below Postgres 9.4" tooltip-enable="selectComp == 'pg93' || selectComp == 'pg92'">
-                            <button class="btn btn-default pull-right" ng-click="openLoggingParam()" ng-disabled="disableLog || selectComp == 'pg93' || selectComp == 'pg92' || pgNotRunning">
+                            <button class="btn btn-default pull-right" ng-click="openLoggingParam()" ng-disabled="disableLog || selectComp == 'pg93' || selectComp == 'pg92' || pgNotRunning || devRole">
                             Change logging parameters
                             </button>
                         </div>
