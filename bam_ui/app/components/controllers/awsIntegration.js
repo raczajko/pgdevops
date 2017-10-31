@@ -1,6 +1,7 @@
-angular.module('bigSQL.components').controller('awsIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', '$cookies', '$uibModal', '$timeout', 'htmlMessages', 'userInfoService', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, $cookies, $uibModal, $timeout, htmlMessages, userInfoService) {
+angular.module('bigSQL.components').controller('awsIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', '$cookies', '$uibModal', '$timeout', 'htmlMessages', 'userInfoService', 'pgcRestApiCall', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, $cookies, $uibModal, $timeout, htmlMessages, userInfoService, pgcRestApiCall) {
 
 	$scope.alerts = [];
+    $scope.loading = true;
 	$scope.discover =  function (settingName, disp_name, instance, searchEvent) {
 
 		var modalInstance = $uibModal.open({
@@ -20,6 +21,19 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
 	$scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);
     };
+
+    var lablist = pgcRestApiCall.getCmdData('lablist');
+    lablist.then(function (argument) {
+        var labs = argument;
+        $scope.loading = false;
+        for (var i = labs.length - 1; i >= 0; i--) {
+            if(labs[i].lab == "aws" && labs[i].enabled != "on"){
+                $window.location.href = '/';
+                break;
+            }
+        }
+    });   
+
 
 	$rootScope.$on('RdsCreated', function (argument, data) {
         $scope.discover('aws', 'Discover AWS EC2 Instances', 'vm', 'searchEvent');

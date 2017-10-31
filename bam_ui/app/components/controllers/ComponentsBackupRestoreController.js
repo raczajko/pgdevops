@@ -10,6 +10,7 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
     $scope.restore.advoptions = "-v"
     $scope.loadingBackupAction = false;
     $scope.loadingRestoreAction = false;
+    $scope.loading = true;
 
     $scope.backupRestoreFeature = false;
 
@@ -22,7 +23,11 @@ angular.module('bigSQL.components').controller('ComponentsBackupRestoreControlle
     var getLabList = pgcRestApiCall.getCmdData('lablist');
 
     getLabList.then(function (argument) {
+        $scope.loading = false;
         for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "dumprest" && argument[i].enabled != "on"){
+                $window.location.href = '/';
+            }
             if(argument[i].lab == "dumprest"){
                 $scope.backupRestoreLab = argument[i].disp_name;
             }

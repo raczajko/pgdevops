@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('backgroundProcessListController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', 'htmlMessages','$http', '$timeout', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce, htmlMessages,$http,$timeout) {
+angular.module('bigSQL.components').controller('backgroundProcessListController', ['$rootScope', '$scope', '$uibModal', 'PubSubService', 'MachineInfo', 'UpdateComponentsService', '$window', 'bamAjaxCall', '$cookies', '$sce', 'htmlMessages','$http', '$timeout', 'pgcRestApiCall', function ($rootScope, $scope, $uibModal, PubSubService, MachineInfo, UpdateComponentsService, $window, bamAjaxCall, $cookies, $sce, htmlMessages,$http,$timeout, pgcRestApiCall) {
     $scope.processList = [];
     $scope.loading = true;
     $scope.showBackupBgProcess = false;
@@ -32,13 +32,25 @@ angular.module('bigSQL.components').controller('backgroundProcessListController'
         getbgProcess.then(function (argument) {
             if (argument.process) {
                 $scope.processList = argument.process;
-                $scope.loading = false;
+                // $scope.loading = false;
             }
             ajaxSubscriptions.push($timeout(function() {
                 $scope.getBGprocessList($scope.processType)
             }, 5000));
         })
     };
+
+    var lablist = pgcRestApiCall.getCmdData('lablist');
+    lablist.then(function (argument) {
+        var labs = argument;
+        $scope.loading = false;
+        for (var i = labs.length - 1; i >= 0; i--) {
+            if(labs[i].lab == 'dumprest' && labs[i].enabled != "on"){
+                $window.location.href = '/';
+                break;
+            }
+        }
+    });  
 
     $scope.getBGprocessList('');
 

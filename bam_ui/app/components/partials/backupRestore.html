@@ -7,8 +7,11 @@
         <div ng-bind-html="alert.msg"></div>
     </div>
 <section class="content">
-
-   <uib-tabset>
+    <div ng-if="loading" class="loadingSpinner">
+        <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+        <span><h3>Loading...</h3></span>
+    </div>
+   <uib-tabset ng-if="!loading">
         <uib-tab heading="Backup" active="activeBackup">
             <uib-tab-heading>
               <div style="text-align: center;">Backup Database</div>

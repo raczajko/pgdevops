@@ -1,6 +1,7 @@
-angular.module('bigSQL.components').controller('azureIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$uibModal', '$timeout', 'htmlMessages', 'userInfoService', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $uibModal, $timeout, htmlMessages, userInfoService) {
+angular.module('bigSQL.components').controller('azureIntegrationController', ['$scope', 'PubSubService', '$state','$interval','$location', '$window', '$rootScope', 'bamAjaxCall', '$cookies', '$uibModal', '$timeout', 'htmlMessages', 'userInfoService', 'pgcRestApiCall', function ($scope, PubSubService, $state, $interval, $location, $window, $rootScope, bamAjaxCall, $cookies, $uibModal, $timeout, htmlMessages, userInfoService, pgcRestApiCall) {
 
 	$scope.alerts = [];
+    $scope.loading = true;
 	$scope.discover =  function (settingName, disp_name, instance) {
 
 		var modalInstance = $uibModal.open({
@@ -15,6 +16,18 @@ angular.module('bigSQL.components').controller('azureIntegrationController', ['$
 	    modalInstance.disp_name = disp_name;
 	    modalInstance.instance = instance;
 	}
+
+    var lablist = pgcRestApiCall.getCmdData('lablist');
+    lablist.then(function (argument) {
+        var labs = argument;
+        $scope.loading = false;
+        for (var i = labs.length - 1; i >= 0; i--) {
+            if(labs[i].lab == "azure" && labs[i].enabled != "on"){
+                $window.location.href = '/';
+                break;
+            }
+        }
+    });   
 
 	$scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);

@@ -12,7 +12,11 @@
     <div id="pgcInfoText" class="pull-left"></div>
 </section>
 <section class="content">
-    <div class="row">
+    <div ng-if="loading" class="loadingSpinner">
+        <i class="fa fa-cog fa-spin fa-5x fa-fw margin-bottom"></i>
+        <span><h3>Loading...</h3></span>
+    </div>
+    <div class="row" ng-if="!loading">
         <div class="col-md-2"></div>
         <div class="col-md-2 col-sm-3 cursor_pointer" ng-click="discover('azure', 'Discover Azure PostgreSQL Instances', 'db')">
             <a class="thumbnail">
