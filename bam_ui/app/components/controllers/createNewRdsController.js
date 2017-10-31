@@ -214,6 +214,7 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     }
 
     $scope.previous = function(data){
+        $scope.showErrMsg = false;
         if($scope.secondStep){
             $scope.secondStep = false;
             $scope.firstStep = true;
