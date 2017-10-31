@@ -25,8 +25,8 @@ def validate_backup_fields(args):
 db_session = db.session
 
 class BackupAPI(MethodView):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def post(self):
         result = {}
         args = request.json
@@ -78,8 +78,8 @@ class BackupAPI(MethodView):
 _backrest.add_url_rule('/dbdump', view_func=BackupAPI.as_view('backup'))
 
 class RestoreAPI(MethodView):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def post(self):
         result = {}
         args = request.json

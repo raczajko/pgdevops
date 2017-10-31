@@ -43,8 +43,8 @@ class CreateCredential(MethodView):
             pgcCmd = pgcCmd + " --credentials \'" + json.dumps(credentials) + "\'"
         return pgcCmd
     
-    @roles_accepted('Administrator','User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator','User')
     def post(self):
         json_dict = {}
         args= request.json.get('params')
@@ -57,8 +57,8 @@ class CreateCredential(MethodView):
         return Result(200,data[0]['state'], data[0]['msg']).http_response()
 
 
-    @roles_accepted('Administrator','User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator','User')
     def put(self):
         json_dict = {}
         args= request.json.get('params')
@@ -70,9 +70,8 @@ class CreateCredential(MethodView):
             return ServerErrorResult(state=data[0]['state'],message=data[0].get('msg')).http_response()
         return Result(200,data[0]['state'], data[0]['msg']).http_response()
 
-
-    @roles_accepted('Administrator','User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator','User')
     def get(self):
         pg_response = pgc.get_cmd_data('credentials --list')
         return Result(200,'SUCCESS','SUCCESS',extra_fields={"data":pg_response}).http_response()
@@ -81,8 +80,8 @@ credentials.add_url_rule('/', view_func=CreateCredential.as_view('create'))
 
 
 class DeleteCredentials(MethodView):
-    @roles_accepted('Administrator','User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator','User')
     def delete(self, uuids):
     	json_dict = {}
         result = {}

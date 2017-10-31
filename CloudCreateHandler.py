@@ -13,8 +13,8 @@ _cloud_create = Blueprint('cloud_create', 'cloud_create', url_prefix='/api/pgc/c
 
 
 class CloudCreateHandler(MethodView):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def post(self):
         try:
             json_body = request.json

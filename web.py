@@ -247,8 +247,8 @@ api.add_resource(pgcUtilRelnotes, '/api/utilRelnotes/<string:comp>','/api/utilRe
 
 
 class pgcApiHostCmd(Resource):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def get(self, pgc_cmd, host_name,pwd=None):
         password=pwd
         pwd_session_name = "{0}_pwd".format(host_name)
@@ -278,8 +278,8 @@ api.add_resource(pgcApiHostCmd,
 
 
 class pgdgCommand(Resource):
-    @roles_accepted('Administrator','User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator','User')
     def get(self, repo_id, pgc_cmd, host=None, pwd=None):
         password = pwd
         pwd_session_name = "{0}_pwd".format(host)
@@ -307,8 +307,8 @@ api.add_resource(pgdgCommand,
                  '/api/pgdg/<string:repo_id>/<string:pgc_cmd>/<string:host>/<string:pwd>')
 
 class pgdgHostCommand(Resource):
-    @roles_accepted('Administrator','User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator','User')
     def get(self, repo_id, pgc_cmd, comp, host=None):
         data = pgc.get_pgdg_data(repo_id, pgc_cmd, component=comp, pgc_host=host)
         return data
@@ -319,8 +319,8 @@ api.add_resource(pgdgHostCommand, '/api/pgdghost/<string:repo_id>/<string:pgc_cm
 
 
 class TestConn(Resource):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def get(self):
         username = request.args.get('user')
         password = request.args.get('password')
@@ -405,8 +405,8 @@ class TestCloudConnection(Resource):
 api.add_resource(TestCloudConnection, '/api/testCloudConn')
 
 class checkUser(Resource):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def get(self):
 
         host = request.args.get('hostname')
@@ -456,8 +456,8 @@ api.add_resource(checkUser, '/api/checkUser')
 
 
 class checkHostAccess(Resource):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def get(self):
         host = request.args.get('hostname')
         check_sudo_password = request.args.get('pwd')
@@ -499,8 +499,8 @@ api.add_resource(checkHostAccess, '/api/checkUserAccess')
 
 
 class initPGComp(Resource):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def get(self, host, comp, pgpasswd, username=None, password=None):
         from PgcRemote import PgcRemote
         json_dict = {}
@@ -597,8 +597,8 @@ class getRecentReports(Resource):
 api.add_resource(getRecentReports, '/api/getrecentreports/<string:report_type>')
 
 class CheckConn(Resource):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def post(self):
         result = {}
         args = request.json.get('params')
@@ -691,8 +691,8 @@ api.add_resource(GetEnvFile, '/api/read/env/<string:comp>')
 
 
 class AddtoMetadata(Resource):
-    @roles_accepted('Administrator','User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator','User')
     def post(self):
         def add_to_pginstances(pg_arg):
             server_id = None
@@ -853,8 +853,8 @@ api.add_resource(AddtoMetadata, '/api/add_to_metadata')
 
 
 class DeleteFromMetadata(Resource):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def post(self):
         args = request.json
         gid = args.get('gid')
@@ -932,8 +932,8 @@ def get_current_time(format='%Y-%m-%d %H:%M:%S.%f %z'):
 
 
 class pgdgAction(Resource):
-    @roles_accepted('Administrator','User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator','User')
     def post(self):
         result = {}
         args = request.json
@@ -1035,8 +1035,8 @@ class GenerateBadgerReports(Resource):
 api.add_resource(GenerateBadgerReports, '/api/generate_badger_reports')
 
 class ComparePGVersions(Resource):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def get(self, host):
         result={}
         local_pg_ver = pgc.get_data('info')[0]['version']
@@ -1055,8 +1055,8 @@ class ComparePGVersions(Resource):
 api.add_resource(ComparePGVersions, '/api/compare_pg_versions/<string:host>')
 
 class GetBgProcessList(Resource):
-    @roles_accepted('Administrator', 'User')
     @auth_required('token', 'session')
+    @roles_accepted('Administrator', 'User')
     def get(self, process_type=None):
         from sqlalchemy import desc
         result={}
@@ -1191,8 +1191,8 @@ class GetBgProcessStatus(Resource):
 api.add_resource(GetBgProcessStatus, '/api/bgprocess_status/<string:process_log_id>')
 
 @application.route('/api/dirlist', methods = ['POST'])
-@roles_accepted('Administrator', 'User')
 @auth_required('token', 'session')
+@roles_accepted('Administrator', 'User')
 def dirlist():
     """
         Method to get the list of directories available in remote server or local in specific directory.
