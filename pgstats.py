@@ -4,7 +4,7 @@
 
 from flask import Blueprint, request, jsonify, session
 from flask.views import MethodView
-from flask_security import login_required, roles_required, current_user, roles_accepted
+from flask_security import login_required, roles_required, current_user, roles_accepted, auth_required
 from pgadmin.model import db, Role, User, Server, ServerGroup, Process
 from pgadmin.browser.server_groups.servers.types import ServerType
 from flask import g
@@ -20,7 +20,7 @@ pgstats = Blueprint('pgstats', 'pgstats', url_prefix='/pgstats')
 
 class ConnectAPI(MethodView):
     @roles_accepted('Administrator', 'User')
-    @login_required
+    @auth_required('token', 'session')
     def post(self):
         json_dict = {}
         if not current_user:
@@ -136,7 +136,7 @@ pgstats.add_url_rule('/connect/', view_func=ConnectAPI.as_view('connect'))
 
 class ConnStatusAPI(MethodView):
     @roles_accepted('Administrator', 'User')
-    @login_required
+    @auth_required('token', 'session')
     def get(self):
         json_dict = {}
         if not current_user:
@@ -190,7 +190,7 @@ pgstats.add_url_rule('/conn_status/', view_func=ConnStatusAPI.as_view('conn_stat
 
 class StatsAPI(MethodView):
     @roles_accepted('Administrator', 'User')
-    @login_required
+    @auth_required('token', 'session')
     def get(self):
         json_dict = {}
         if not current_user:
@@ -241,7 +241,7 @@ pgstats.add_url_rule('/stats/', view_func=StatsAPI.as_view('stats'))
 
 class UptimeAPI(MethodView):
     @roles_accepted('Administrator', 'User')
-    @login_required
+    @auth_required('token', 'session')
     def get(self):
         json_dict = {}
         if not current_user:
@@ -277,7 +277,7 @@ pgstats.add_url_rule('/uptime/', view_func=UptimeAPI.as_view('uptime'))
 
 class ActivityAPI(MethodView):
     @roles_accepted('Administrator', 'User')
-    @login_required
+    @auth_required('token', 'session')
     def get(self):
         json_dict = {}
         if not current_user:
@@ -316,7 +316,7 @@ pgstats.add_url_rule('/activity/', view_func=ActivityAPI.as_view('activity'))
 
 class DbListAPI(MethodView):
     @roles_accepted('Administrator', 'User')
-    @login_required
+    @auth_required('token', 'session')
     def get(self):
         json_dict = {}
         if not current_user:
@@ -355,7 +355,7 @@ pgstats.add_url_rule('/db_list/', view_func=DbListAPI.as_view('db_list'))
 
 class ConfigAPI(MethodView):
     @roles_accepted('Administrator', 'User')
-    @login_required
+    @auth_required('token', 'session')
     def get(self):
         json_dict = {}
         if not current_user:
@@ -396,7 +396,7 @@ pgstats.add_url_rule('/config/', view_func=ConfigAPI.as_view('config'))
 
 class DBCloseAPI(MethodView):
     @roles_accepted('Administrator', 'User')
-    @login_required
+    @auth_required('token', 'session')
     def get(self):
         json_dict = {}
         if not current_user:
@@ -419,7 +419,7 @@ pgstats.add_url_rule('/disconnect/', view_func=DBCloseAPI.as_view('disconnect'))
 
 class CloseAllDBSessionsAPI(MethodView):
     @roles_accepted('Administrator', 'User')
-    @login_required
+    @auth_required('token', 'session')
     def get(self):
         json_dict = {}
         if not current_user:
