@@ -22,6 +22,7 @@
         </div>
         <div class="col-sm-4 col-xs-4 col-md-4">
             <button style="margin-left: 20px;" ng-if="instance == 'db' && showUseConn && rdsList && !noRDS" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
+            <button style="margin-left: 20px;" ng-if="showAddSSHHost" class="btn btn-primary" ng-disabled="ec2Selected == -1" ng-click="addSSHHost()">Add Managed SSH Host</button>
         </div>
     </div>
     <div class="row">
@@ -107,7 +108,7 @@
                     <div class="row">
                     <div class="col-md-2 col-sm-2 col-xs-2">
                         <div class="col-md-4 col-sm-4 col-xs-4">
-                            <input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected" name="">
+                            <!--<input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected" name="">-->
                         </div>
                         <div class="col-md-8 col-sm-8 col-xs-8"><strong>Region</strong></div>
                     </div>
@@ -122,11 +123,11 @@
                     </div>
                 </div>
                 <div class="instance-list-body">
-                    <div ng-repeat="ec in ec2List" class= "component_box" ng-class-odd="'oddRow'" style="border-bottom: 1px solid #f4f4f4;">
+                    <div ng-repeat="ec in ec2List track by $index" class= "component_box" ng-class-odd="'oddRow'" style="border-bottom: 1px solid #f4f4f4;">
                         <div class="row">
                         <div class="col-md-2 col-sm-2 col-xs-2">
                             <div class="col-md-4 col-sm-4 col-xs-4">
-                                <input type="checkbox" ng-model="ec.selected" ng-change="optionToggled()" name=""> 
+                                <input type="radio" ng-model="ec2Selected" ng-change='ec2OptionToggled(ec)' name="ec2Select">
                             </div>
                             <div class="col-md-8 col-sm-8 col-xs-8" style="white-space: nowrap;">
                                 {{ec.region}}

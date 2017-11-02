@@ -12,6 +12,21 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     var session;
     $scope.region = '';
     $scope.showUseConn = false;
+    $scope.showAddSSHHost = false;
+    $scope.ec2Selected = -1;
+
+    var getLabList = pgcRestApiCall.getCmdData('lablist');
+    $scope.multiHostlab = false;
+    getLabList.then(function (argument) {
+        for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "multi-host-mgr"){
+                $scope.multiHostlabName = argument[i].disp_name;
+            }
+            if(argument[i].lab == "multi-host-mgr" && argument[i].enabled == "on"){
+                $scope.multiHostlab = true;
+            }
+        }
+    })
     
     var regions = pgcRestApiCall.getCmdData('metalist aws-regions');
     regions.then(function(data){
@@ -80,6 +95,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                 $scope.newAvailList = $($scope.availList).filter(function(i,n){ return n.is_in_pglist != true });
                 if($scope.instance == 'vm'){
                     $scope.ec2List = data[0].data;
+                    $scope.showAddSSHHost = true;
                 }
                 if (data[0].data.length == 0 ) {
                     $scope.noRDS = true;
@@ -154,7 +170,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         modalInstance.db_class = db_class;
     }
 
-    $scope.toggleAll = function() { 
+    $scope.toggleAll = function() {
         if($scope.isAllSelected){
             $scope.isAllSelected = false;
         }else{
@@ -171,6 +187,35 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                 $scope.checked = true;
             }
         });
+    }
+
+    $scope.ec2OptionToggled = function(ec2){
+        $scope.showAddSSHHost = true;
+        $scope.ec2Selected = ec2;
+    }
+
+    $scope.addSSHHost = function () {
+        //$uibModalInstance.dismiss('cancel');
+        if ($scope.multiHostlab) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/addHostModal.html',
+                windowClass: 'modal',
+                controller: 'addHostController',
+                scope: $scope,
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+            var selectedEc2 = $scope.ec2Selected;
+            modalInstance.host_ip = selectedEc2["public_ips"];
+            modalInstance.host_name = selectedEc2["name"];
+        }else{
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled').replace('{{lab}}', $scope.multiHostlabName));
+
+            $scope.alerts.push({
+                msg: getMessage,
+                type: 'warning'
+            });
+        }
     }
 
 

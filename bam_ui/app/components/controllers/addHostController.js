@@ -13,10 +13,20 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 
 	$scope.cred_name = $uibModalInstance.cred_name;
 
+	$scope.host_ip = $uibModalInstance.host_ip;
+	$scope.host_name = $uibModalInstance.host_name;
+
 	$scope.hostName = '';
 	$scope.pgcDir = '';
 	$scope.userName = '';
 	$scope.root_pgc_path="";
+
+    if($scope.host_ip){
+	    $scope.hostName = $scope.host_ip;
+	}
+	if($scope.host_name){
+	    $scope.connectionName = $scope.host_name;
+	}
 
     $scope.create_btn = "Create";
     $scope.sudo_password = {text: ''};
@@ -224,7 +234,7 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
     }
 
     var credentialsList = function(argument) {
-    	$scope.gettingCreds = true;
+        $scope.gettingCreds = true;
 		$scope.isAllSelected = false;
 		var getCredentials = bamAjaxCall.getCmdData('pgc/credentials/')
 		getCredentials.then(function (data) {
