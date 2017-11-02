@@ -305,22 +305,42 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
         }
     };
 
+    $scope.model = {
+        selectedLabelList : []
+    }
+    $scope.options = {
+        master : false
+    }
+
     $scope.toggleAll = function() { 
-        if($scope.isAllSelected){
-            $scope.isAllSelected = false;
-        }else{
-            $scope.isAllSelected = true;
+        $scope.model = {
+            selectedLabelList : []
         }
-        angular.forEach($scope.files_list, function(itm){ itm.selected = $scope.isAllSelected; });
+        if($scope.options.master){
+            $scope.options.master = true;
+            for(var i=0;i<$scope.files_list.length;i++){
+                $scope.model.selectedLabelList.push($scope.files_list[i].file);       
+            }
+        }else{$scope.options.master = false;}
+        angular.forEach($scope.files_list, function (item) {
+                item.selected = $scope.options.master;
+        });
     }
       
     $scope.optionToggled = function(){
         $scope.checked = false;
-        angular.forEach($scope.files_list, function (item) {
-            if(item.selected){
-                $scope.checked = true;
-            }
-        });
+        var _name = this.option.file;
+        if(this.option.selected){
+            $scope.model.selectedLabelList.push(_name);
+            if($scope.model.selectedLabelList.length == $scope.files_list.length ){$scope.options.master = true;}
+        }else{
+            $scope.options.master = false;
+            var index = $scope.model.selectedLabelList.indexOf(_name);
+            $scope.model.selectedLabelList.splice(index, 1);
+        }
+        if ($scope.model.selectedLabelList.length > 0) {
+           $scope.checked = true; 
+        }
     }
 
     $scope.deleteReports = function (files, selectAll) {

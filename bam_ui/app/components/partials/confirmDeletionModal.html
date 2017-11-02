@@ -6,7 +6,7 @@
 <div class="modal-body">
 <form class="form plProfiler-form">
     <div class="form-group">
-        Are you sure want to delete selected {{deleteFilesLength}} <span ng-if="comp=='pgbadger'">file</span><span ng-if="comp=='credentials'">credential</span>(s)?
+        Are you sure want to delete selected {{deleteFilesLength}} <span ng-if="comp!='credentials'">file</span><span ng-if="comp=='credentials'">credential</span>(s)?
     </div>
 </form>
 </div>
