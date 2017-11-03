@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'pgcRestApiCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, pgcRestApiCall, htmlMessages, $uibModal, $cookies) {
+angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'pgcRestApiCall', 'htmlMessages', '$uibModal', '$cookies', '$sce', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, pgcRestApiCall, htmlMessages, $uibModal, $cookies, $sce) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
@@ -14,7 +14,8 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     $scope.showUseConn = false;
     $scope.showAddSSHHost = false;
     $scope.ec2Selected = -1;
-
+    $scope.alerts = [];
+    $scope.labNotEnabled = false;
     var getLabList = pgcRestApiCall.getCmdData('lablist');
     $scope.multiHostlab = false;
     getLabList.then(function (argument) {
@@ -99,11 +100,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                 }
                 if (data[0].data.length == 0 ) {
                     $scope.noRDS = true;
-                    if($scope.instance == 'db'){
-                        $scope.noInstanceMsg = htmlMessages.getMessage('no-rds');
-                    }else{
-                        $scope.noInstanceMsg = htmlMessages.getMessage('no-ec2');
-                    }
+                    $scope.noInstanceMsg = htmlMessages.getMessage('no-instances');
                 }
            }
            $scope.$apply();
@@ -209,7 +206,8 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
             modalInstance.host_ip = selectedEc2["public_ips"];
             modalInstance.host_name = selectedEc2["name"];
         }else{
-            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabled').replace('{{lab}}', $scope.multiHostlabName));
+            $scope.labNotEnabled = true;
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabledOnModel').replace('{{lab}}', $scope.multiHostlabName));
 
             $scope.alerts.push({
                 msg: getMessage,

@@ -7,10 +7,11 @@
     </div>
     <div class="pull-right">
         <button style="margin-left: 20px;" class="btn btn-primary" ng-if="instance == 'db' && showUseConn && rdsList && !noRDS" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
+        <button style="margin-left: 20px;" ng-if="showAddSSHHost" class="btn btn-primary" ng-disabled="vmSelected == -1" ng-click="addSSHHost()">Add Managed SSH Host</button>
     </div>
 </div>
 <uib-alert ng-repeat="alert in alerts" type="{{ alert.type }}" dismiss-on-timeout="8000" close="closeAlert()"
-           class="uib-text">{{ alert.msg }}</uib-alert>
+           class="uib-text"><span ng-bind-html="alert.msg"></span><a ng-if="labNotEnabled" href="#/components/settings" ng-click="cancel()">settings</a></uib-alert>
 
 <div class="modal-body">
     <div class="row" ng-if="!loadingSpinner">
@@ -94,7 +95,7 @@
                     <div class="row">
                     <div class="col-md-2 col-sm-2 col-xs-2">
                         <div class="col-md-4 col-sm-4 col-xs-4">
-                            <input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected" name="">
+                            <!--<input type="checkbox" ng-click="toggleAll()" ng-model="isAllSelected" name="">-->
                         </div>
                         <div class="col-md-8 col-sm-8 col-xs-8"><strong>Region</strong></div>
                     </div>
@@ -112,7 +113,7 @@
                         <div class="row">
                         <div class="col-md-2 col-sm-2 col-xs-2">
                             <div class="col-md-4 col-sm-4 col-xs-4">
-                                <input type="checkbox" ng-model="vm.selected" ng-change="optionToggled()" name="">
+                                <input type="radio" ng-model="vmSelected" ng-change='vmOptionToggled(vm)' name="vmSelect">
                             </div>
                             <div class="col-md-8 col-sm-8 col-xs-8" style="white-space: nowrap;">
                                 {{vm.region}}

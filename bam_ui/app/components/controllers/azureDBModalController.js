@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('azureDBModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'pgcRestApiCall', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, pgcRestApiCall, bamAjaxCall, htmlMessages, $uibModal, $cookies) {
+angular.module('bigSQL.components').controller('azureDBModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'pgcRestApiCall', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', '$sce', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, pgcRestApiCall, bamAjaxCall, htmlMessages, $uibModal, $cookies, $sce) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
@@ -11,6 +11,24 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
     var session;
     $scope.region = '';
     $scope.showUseConn = false;
+
+    $scope.showAddSSHHost = false;
+    $scope.vmSelected = -1;
+    $scope.alerts = [];
+    $scope.labNotEnabled = false;
+
+    var getLabList = pgcRestApiCall.getCmdData('lablist');
+    $scope.multiHostlab = false;
+    getLabList.then(function (argument) {
+        for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "multi-host-mgr"){
+                $scope.multiHostlabName = argument[i].disp_name;
+            }
+            if(argument[i].lab == "multi-host-mgr" && argument[i].enabled == "on"){
+                $scope.multiHostlab = true;
+            }
+        }
+    })
 
     var userInfoData = pgcRestApiCall.getCmdData('userinfo');
     userInfoData.then(function(data) {
@@ -41,15 +59,12 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
                 }
                 else if($scope.instance == 'vm'){
                     $scope.vmList = data.data;
+                    $scope.showAddSSHHost = true;
                 }
 
                 if (data.data.length == 0 ) {
                     $scope.noRDS = true;
-                    if($scope.instance == 'db'){
-                        $scope.noInstanceMsg = htmlMessages.getMessage('no-rds');
-                    }else{
-                        $scope.noInstanceMsg = htmlMessages.getMessage('no-ec2');
-                    }
+                    $scope.noInstanceMsg = htmlMessages.getMessage('no-instances');
                 }
            }
         });
@@ -102,6 +117,47 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
             }
         });
     }
+
+    $scope.vmOptionToggled = function(vm){
+        $scope.showAddSSHHost = true;
+        $scope.vmSelected = vm;
+    }
+
+    $scope.addSSHHost = function () {
+        //$uibModalInstance.dismiss('cancel');
+        if ($scope.multiHostlab) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/addHostModal.html',
+                windowClass: 'modal',
+                controller: 'addHostController',
+                scope: $scope,
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+            var selectedVm = $scope.vmSelected;
+            if(Array.isArray(selectedVm["public_ips"])){
+                if(selectedVm["public_ips"].length > 0){
+                    modalInstance.host_ip = selectedVm["public_ips"];
+                }
+                else{
+                    modalInstance.host_ip = "";
+                }
+            }
+            else{
+                modalInstance.host_ip = selectedVm["public_ips"];
+            }
+            modalInstance.host_name = selectedVm["name"];
+        }else{
+            $scope.labNotEnabled = true;
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabledOnModel').replace('{{lab}}', $scope.multiHostlabName).replace('{{method}}','cancel()'));
+
+            $scope.alerts.push({
+                msg: getMessage,
+                type: 'warning'
+            });
+        }
+    }
+
 
 
     $scope.closeAlert = function (index) {

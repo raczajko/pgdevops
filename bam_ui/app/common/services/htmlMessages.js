@@ -2,6 +2,7 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
 
     var allMessages = {
         'labNotEnabled': 'This is a labs feature, you need to enable {{lab}} lab in <a href="#/components/settings">settings.</a>',
+        'labNotEnabledOnModel': 'This is a labs feature, you need to enable {{lab}} lab in ',
         'pwd-or-ssh-msg' : 'Please provide either password or SSH Key',
         'last-update-none' : 'Last Update : None',
         'add-to-pgadmin' : 'Creating connections in pgAdmin4',
@@ -29,7 +30,8 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'windows7-not-supported' : 'Sorry! This feature is currently not supported on Windows7.',
         'pgbadger-dev-role' : 'pgBadger is not installed. Please contact Administrator.',
         'plprofiler-dev-role' : 'plProfiler is not installed. Please contact Administrator.',
-        'postgres-notinstalled-dev-role' : 'No Postgres component Installed/ Initialized. Please contact Administrator.'
+        'postgres-notinstalled-dev-role' : 'No Postgres component Installed/ Initialized. Please contact Administrator.',
+        'no-instances' : 'No Instances found.'
     };
 
     return {
