@@ -42,6 +42,7 @@
                     <uib-accordion-heading>
                         <span class="host-uib-tab-heading" ng-click="openPostgresConnGroup(showpgList); closeAllServers()">
                             <i class="pull-left glyphicon" ng-class="{'fa fa-plus': !showpgList, 'fa fa-minus':showpgList}"></i> &nbsp; <strong>Direct PostgreSQL Connections</strong>
+                            <button class="btn btn-default pull-right" style="margin-top: -9px; " ng-click="$event.stopPropagation();$event.preventDefault();openNewLocation(); navTopgAdmin();">Launch pgAdmin</button>
                         </span>
                     </uib-accordion-heading>
                     <div class="col-md-12" ng-controller="dbGraphsController">

@@ -964,6 +964,10 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         });
     };
 
+    $scope.navTopgAdmin = function () {
+        $window.location.href = '/admin';
+    }
+
     $scope.openDetailsModal = function (comp) {
         var modalInstance = $uibModal.open({
             templateUrl: '../app/components/partials/details.html',
