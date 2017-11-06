@@ -13,6 +13,8 @@ angular.module('bigSQL.menus').component('leftMenu', {
                     $scope.hideBackupRestore = true;
                 }else if (argument[i].lab == 'azure' && argument[i].enabled == 'on') {
                     $scope.hideAzureNav = true;
+                }else if (argument[i].lab == 'vmware' && argument[i].enabled == 'on') {
+                    $scope.hidevmWareNav = true;
                 }
             }
     	});
@@ -33,6 +35,7 @@ angular.module('bigSQL.menus').component('leftMenu', {
     		}
     	});
 
+
     	$rootScope.$on('hideAzureNav', function (event, value) {
     		if (value == 'on') {
     			$scope.hideAzureNav = true;
@@ -40,6 +43,14 @@ angular.module('bigSQL.menus').component('leftMenu', {
     			$scope.hideAzureNav = false;
     		}
     	});
+
+        $rootScope.$on('hidevmWareNav', function (event, value) {
+            if (value == 'on') {
+                $scope.hidevmWareNav = true;
+            }else{
+                $scope.hidevmWareNav = false;
+            }
+        });
 
     	$rootScope.$on('hideBackupRestoreNav', function (event, value) {
     		if (value == 'on') {

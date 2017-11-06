@@ -6762,6 +6762,14 @@ span.new-comp-wrapper {
     margin-right: 7px;
   }
 
+  .bgs-vmware-menu{
+    background-image: url('../assets/img/vmware.png');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    margin-left: -2px;
+    margin-right: 7px;
+  }
+
   .bgs-pgbadger-menu {
     background-image: url('../assets/img/pgbadger15.png');
     background-repeat: no-repeat;

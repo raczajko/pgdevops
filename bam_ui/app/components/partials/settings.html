@@ -128,7 +128,10 @@
                                     <strong ng-if="lab.enabled=='on' && lab.lab=='azure'">
                                         <a ui-sref="components.azureIntegration">{{lab.disp_name}}</a>
                                     </strong>
-                                    <strong ng-if="(lab.lab!='dumprest' && lab.lab!='multi-host-mgr' &&  lab.lab!='aws' && lab.lab!='azure') || lab.enabled!='on'">{{lab.disp_name}}</strong>
+                                    <strong ng-if="lab.enabled=='on' && lab.lab=='vmware'">
+                                        <a ui-sref="components.vmwareIntegration">{{lab.disp_name}}</a>
+                                    </strong>
+                                    <strong ng-if="(lab.lab!='dumprest' && lab.lab!='multi-host-mgr' &&  lab.lab!='aws' && lab.lab!='azure' && lab.lab!='vmware') || lab.enabled!='on'">{{lab.disp_name}}</strong>
                                 </div>
                                 <div class="labDescription">{{lab.credit_to}}</div>
                             </div>

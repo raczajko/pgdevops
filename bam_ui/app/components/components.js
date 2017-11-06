@@ -102,6 +102,15 @@ angular.module('bigSQL.components').config(function ($stateProvider, $urlRouterP
 
             }
         }
+    }).state('components.vmwareIntegration', {
+        url: '/vmwareIntegration',
+        views: {
+            "sub": {
+                controller: 'vmwareIntegrationController',
+                templateUrl: '../app/components/partials/vmwareIntegration.html',
+
+            }
+        }
     }).state('components.backupRestoreView', {
         url: '/backupRestore',
         resolve: {
