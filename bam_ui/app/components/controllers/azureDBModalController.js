@@ -137,7 +137,7 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
             var selectedVm = $scope.vmSelected;
             if(Array.isArray(selectedVm["public_ips"])){
                 if(selectedVm["public_ips"].length > 0){
-                    modalInstance.host_ip = selectedVm["public_ips"];
+                    modalInstance.host_ip = selectedVm["public_ips"][0];
                 }
                 else{
                     modalInstance.host_ip = "";
