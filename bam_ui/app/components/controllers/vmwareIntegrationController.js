@@ -35,7 +35,7 @@ angular.module('bigSQL.components').controller('vmwareIntegrationController', ['
 
     
     $rootScope.$on('vmwareCreated', function (argument, data) {
-        $scope.discover('vmware', 'Discover vmWare instances', 'vm');
+        $scope.discover('vmware', 'Discover VMware instances', 'vm');
         $scope.alerts.push({
                     msg: data,
                     type: 'success'
