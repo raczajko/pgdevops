@@ -18,9 +18,9 @@ angular.module('bigSQL.components').controller('createvmwareInstanceController',
         'computer_name' : '',
         'clonefrom' : '',
         'admin_username' : '',
-        'password' : '',
-        'num_cpus' : '',
-        'vm_size' : ''
+        'password' : ''
+        //'num_cpus' : '',
+        //'vm_size' : ''
     }
 
     $scope.creatingVM = htmlMessages.getMessage('create-azure-vm');
