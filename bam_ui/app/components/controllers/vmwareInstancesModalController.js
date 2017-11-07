@@ -1,16 +1,31 @@
-angular.module('bigSQL.components').controller('vmwareInstancesModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'pgcRestApiCall', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, pgcRestApiCall, bamAjaxCall, htmlMessages, $uibModal, $cookies) {
+angular.module('bigSQL.components').controller('vmwareInstancesModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'pgcRestApiCall', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', '$sce', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, pgcRestApiCall, bamAjaxCall, htmlMessages, $uibModal, $cookies, $sce) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
     $scope.disp_name = $uibModalInstance.disp_name;
     $scope.instance = $uibModalInstance.instance;
     $scope.availList = [];
+    $scope.vmSelected = -1;
     var addList = [];
     $scope.addToMetadata = false;
     $scope.discoverMsg = htmlMessages.getMessage('loading-azure-pg');
     var session;
     $scope.region = '';
     $scope.showUseConn = false;
+    $scope.showAddSSHHost = false;
+    $scope.alerts = [];
+    var getLabList = pgcRestApiCall.getCmdData('lablist');
+    $scope.multiHostlab = false;
+    getLabList.then(function (argument) {
+        for (var i = argument.length - 1; i >= 0; i--) {
+            if(argument[i].lab == "multi-host-mgr"){
+                $scope.multiHostlabName = argument[i].disp_name;
+            }
+            if(argument[i].lab == "multi-host-mgr" && argument[i].enabled == "on"){
+                $scope.multiHostlab = true;
+            }
+        }
+    })
 
     var userInfoData = pgcRestApiCall.getCmdData('userinfo');
     userInfoData.then(function(data) {
@@ -25,6 +40,7 @@ angular.module('bigSQL.components').controller('vmwareInstancesModalController',
                 $scope.errMsg = data.message;
                 // $rootScope.$emit('disableLab', $scope.lab, 'off')
             }else if(data.state=="completed"){
+                $scope.showAddSSHHost = true;
                 $scope.loadingSpinner = false;
                 $scope.showUseConn = true;
                 $scope.availList = [];
@@ -42,6 +58,31 @@ angular.module('bigSQL.components').controller('vmwareInstancesModalController',
            }
         });
     });
+
+    $scope.addSSHHost = function () {
+        //$uibModalInstance.dismiss('cancel');
+        if ($scope.multiHostlab) {
+            var modalInstance = $uibModal.open({
+                templateUrl: '../app/components/partials/addHostModal.html',
+                windowClass: 'modal',
+                controller: 'addHostController',
+                scope: $scope,
+                keyboard  : false,
+                backdrop  : 'static',
+            });
+            var vmSelected = $scope.vmSelected;
+            modalInstance.host_ip = vmSelected["private_ipv4"];
+            modalInstance.host_name = vmSelected["name"];
+        }else{
+            $scope.labNotEnabled = true;
+            var getMessage = $sce.trustAsHtml(htmlMessages.getMessage('labNotEnabledOnModel').replace('{{lab}}', $scope.multiHostlabName));
+
+            $scope.alerts.push({
+                msg: getMessage,
+                type: 'warning'
+            });
+        }
+    }
 
 
     $scope.toggleAll = function() { 
@@ -61,6 +102,11 @@ angular.module('bigSQL.components').controller('vmwareInstancesModalController',
                 $scope.checked = true;
             }
         });
+    }
+
+    $scope.vmOptionToggled = function(vm){
+        $scope.showAddSSHHost = true;
+        $scope.vmSelected = vm;
     }
 
 
