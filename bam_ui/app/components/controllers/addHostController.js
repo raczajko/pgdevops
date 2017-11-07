@@ -241,6 +241,9 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 			$scope.gettingCreds = false;
 			if (data.data.length>0) {
 				$scope.credentialsList = $(data.data).filter(function(i,n){ return n.cred_type != "cloud" ;})
+				if ($scope.credentialsList.length == 0) {
+					$scope.credentialsList = [];
+				}
 				if ($scope.cred_name) {
 					$scope.selected_cred_name = $scope.cred_name;
 				}
