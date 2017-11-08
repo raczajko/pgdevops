@@ -50,7 +50,7 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         vpc_subnet.then(function(data){
             $scope.subnets = data;
             $scope.gettingVpcs = false;
-            $scope.data.subnet_name = '';
+            $scope.data.subnet_id = '';
         });
     }
 
@@ -63,11 +63,11 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         if ($scope.data.network_name) {
             for (var i = $scope.subnets.length - 1; i >= 0; i--) {
                if($scope.subnets[i].vpc == $scope.data.network_name){
-                $scope.data.subnet_name = $scope.subnets[i].subnet_group;
+                $scope.data.subnet_id = $scope.subnets[i].subnet_group;
                }
             }
         }else{
-            $scope.data.subnet_name = '';
+            $scope.data.subnet_id = '';
         }
     }
 
