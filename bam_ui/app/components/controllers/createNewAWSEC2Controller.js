@@ -9,7 +9,6 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
     $scope.firstStep = true;
     $scope.secondStep = false;
     $scope.disableInsClass = true;
-    $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
     $scope.instance = { 'name': '' };
     $scope.shutDownBehaviours = {'Stop':'stop', 'Terminate':'terminate'}
 
@@ -42,12 +41,16 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         $scope.loading = false;
         $scope.regions = data;
         $scope.data.region = $scope.regions[0].region;
+        $scope.getVpc();
     });
 
     $scope.getVpc = function (argument) {
+        $scope.gettingVpcs = true;
         var vpc_subnet = pgcRestApiCall.getCmdData('metalist vpc-list --region=' + $scope.data.region + ' --type=vm --cloud=aws');
         vpc_subnet.then(function(data){
             $scope.subnets = data;
+            $scope.gettingVpcs = false;
+            $scope.data.subnet_name = '';
         });
     }
 
@@ -56,22 +59,23 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
     	session = val;
     });
 
-    // $scope.changeSubnet = function (argument) {
-    //     if ($scope.data.network_name) {
-    //         for (var i = $scope.subnets.length - 1; i >= 0; i--) {
-    //            if($scope.subnets[i].vpc == $scope.data.network_name){
-    //             $scope.data.subnet_name = $scope.subnets[i].subnet_group;
-    //            }
-    //         }
-    //     }else{
-    //         $scope.data.subnet_name = '';
-    //     }
-    // }
+    $scope.changeSubnet = function (argument) {
+        if ($scope.data.network_name) {
+            for (var i = $scope.subnets.length - 1; i >= 0; i--) {
+               if($scope.subnets[i].vpc == $scope.data.network_name){
+                $scope.data.subnet_name = $scope.subnets[i].subnet_group;
+               }
+            }
+        }else{
+            $scope.data.subnet_name = '';
+        }
+    }
 
 
     $scope.regionChange = function (region) {
         session.call('com.bigsql.rdsMetaList', ['instance-class', '', $scope.data.region, '9.6.3']);  
         session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '']); 
+        $scope.getVpc();
     }
 
     $scope.vpcChange = function(argument){
