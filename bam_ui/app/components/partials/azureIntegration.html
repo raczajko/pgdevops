@@ -26,8 +26,8 @@
                 </div>
             </a>
         </div>
-        <div class="col-md-2 col-sm-3 cursor_pointer" ng-class="{'div-disabled':devRole}" ng-click="!devRole && createNewAzureDb()">
-            <a class="thumbnail">
+        <div class="col-md-2 col-sm-3 cursor_pointer" uib-tooltip="Disabled due to permissions" tooltip-enable="devRole" ng-click="!devRole && createNewAzureDb()">
+            <a class="thumbnail" ng-class="{'div-disabled':devRole}">
                 <img class="img-responsive" src="assets/img/pg-azure-add.png" alt="">
                 <div class="aws-caption">
                     <h4 class="aws-page-tile-name">Create Azure PostgreSQL Instance</h4>
@@ -42,8 +42,8 @@
                 </div>
             </a>
         </div>
-        <div class="col-md-2 col-sm-3 cursor_pointer" ng-class="{'div-disabled':devRole}" ng-click="!devRole && createNewVM()">
-            <a class="thumbnail">
+        <div class="col-md-2 col-sm-3 cursor_pointer" uib-tooltip="Disabled due to permissions" tooltip-enable="devRole" ng-click="!devRole && createNewVM()">
+            <a class="thumbnail" ng-class="{'div-disabled':devRole}">
                 <img class="img-responsive" src="assets/img/azure-vm-add.png" alt="">
                 <div class="aws-caption">
                     <h4 class="aws-page-tile-name">Create Azure VM Instance</h4>
