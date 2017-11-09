@@ -83,33 +83,6 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         //   $scope.$apply();
         // })
 
-        session.subscribe("com.bigsql.onRdsMetaList", function (data) {
-            $scope.loading = false;
-            var response = JSON.parse(data[0]);
-            if($scope.secondStep && !$scope.data.engine_version){
-                if (response[0].state == "error") {
-                    $scope.showErrMsg = true;
-                    $scope.errMsg = response[0].msg;
-                }else{
-                    $scope.dbEngVersions = response;
-                    $scope.data.engine_version = $scope.dbEngVersions[0].EngineVersion;
-                    $scope.versionChange();
-                }
-            }else if($scope.secondStep && $scope.data.engine_version){
-                $scope.types = response;
-                if ($scope.types.length>0) {
-                    $scope.data.db_class = 'db.t2.micro';
-                }
-                $scope.disableInsClass = false;
-            }else if($scope.thirdStep){
-                if(response.length > 0){
-                    $scope.networkSec = response;
-                    $scope.vpc = { select : $scope.networkSec[0].vpc }
-                    $scope.vpcChange();
-                }
-            }
-            $scope.$apply();
-        });
     });
 
     $scope.versionChange = function(argument){
@@ -121,7 +94,14 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         $scope.data.option_group = '';
         $scope.types = '';
         $scope.data.db_class = [];
-        session.call('com.bigsql.rdsMetaList', ['instance-class', '' , $scope.data.region, $scope.data.engine_version, "aws", "db"])
+        var getInstanceClass = pgcRestApiCall.getCmdData("metalist instance-class --region=" + $scope.data.region + " --version=" + $scope.data.engine_version + " --cloud aws --type db");
+        getInstanceClass.then(function(data){
+            $scope.types = data;
+            if ($scope.types.length>0) {
+                $scope.data.db_class = 'db.t2.micro';
+            }
+            $scope.disableInsClass = false;
+        });
         for(var i = 0; i < $scope.dbEngVersions.length; ++i){
             if($scope.dbEngVersions[i].EngineVersion == $scope.data.engine_version){
                 $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
@@ -203,13 +183,32 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
     $scope.next = function(region){
         $scope.loading = true;
         if($scope.firstStep){
-            session.call('com.bigsql.rdsMetaList', ['rds-versions', '', $scope.data.region, '', "aws", "db"])
-            $scope.firstStep = false;
-            $scope.secondStep = true;
+            var getRdsVersions = pgcRestApiCall.getCmdData('metalist rds-versions --region=' + $scope.data.region + ' --cloud aws --type db');
+            getRdsVersions.then(function(data){
+                $scope.loading = false;
+                $scope.firstStep = false;
+                $scope.secondStep = true;
+                if (data[0].state == "error") {
+                    $scope.showErrMsg = true;
+                    $scope.errMsg = data[0].msg;
+                }else{
+                    $scope.dbEngVersions = data;
+                    $scope.data.engine_version = $scope.dbEngVersions[0].EngineVersion;
+                    $scope.versionChange();
+                }
+            });
         }else{
-            session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '', "aws", "db"])
-            $scope.secondStep = false;
-            $scope.thirdStep = true;
+            var getVPCList = pgcRestApiCall.getCmdData("metalist vpc-list --region=" + $scope.data.region + " --cloud aws --type db");
+            getVPCList.then(function(data){
+                $scope.loading = false;
+                $scope.secondStep = false;
+                $scope.thirdStep = true;
+                if(data.length > 0){
+                    $scope.networkSec = data;
+                    $scope.vpc = { select : $scope.networkSec[0].vpc }
+                    $scope.vpcChange();
+                }
+            });
         }
     }
 

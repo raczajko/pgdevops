@@ -162,7 +162,7 @@ def upgrade():
 
         db.engine.execute("""
 INSERT INTO role ( name, description )
-VALUES ('Developer', 'Develope User Role')
+VALUES ('Developer', 'Developer User Role')
         """)
 
     if version < 12:
