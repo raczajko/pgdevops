@@ -91,7 +91,7 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Multi-AZ Deployment :</label>
-                    <div class="col-sm-2">
+                    <div class="col-sm-3">
                         <select class="form-control" ng-model="data.multi_az" ng-options="val.v as val.n for val in [{ n: 'No', v: false }, { n: 'Yes', v: true }]">
                         </select>
                     </div>
@@ -158,7 +158,7 @@
             <form class="form-horizontal create-rds-modal" ng-if="thirdStep">
                 <div class="form-group">
                     <label class="col-sm-4 control-label">VPC :</label>
-                    <div class="col-sm-4">
+                    <div class="col-sm-5">
                         <select class="form-control" ng-model="vpc.select" ng-change="vpcChange()">
                             <option ng-repeat="dat in networkSec" value="{{dat.vpc}}">{{dat.vpc}}</option>
                         </select>
@@ -232,7 +232,7 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Enable Encryption : </label>
-                    <div class="col-sm-2">
+                    <div class="col-sm-3">
                         <select class="form-control" ng-model="data.storage_encrypted" ng-options="val.v as val.n for val in [{ n: 'No', v: false }, { n: 'Yes', v: true }]">
                         </select>
                     </div>
@@ -248,7 +248,7 @@
             <form class="form-horizontal create-rds-modal" ng-if="thirdStep">
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Enable Enhanced Monitoring : </label>
-                    <div class="col-sm-2">
+                    <div class="col-sm-3">
                         <select class="form-control" ng-model="data.enable_mon" ng-options="val.v as val.n for val in [{ n: 'No', v: false }, { n: 'Yes', v: true }]">
                         </select>
                     </div>
@@ -263,7 +263,7 @@
                 </div>
                 <div class="form-group" ng-if="data.enableMon == true">
                     <label class="col-sm-5 control-label"> Granularity : </label>
-                    <div class="col-sm-2">
+                    <div class="col-sm-3">
                         <select class="form-control" ng-model="data.monitoring_interval" ng-options="n for n in [0, 1, 5, 10,15,60]">
                         </select>
                     </div>
@@ -331,7 +331,7 @@
             <form class="form-horizontal create-rds-modal" ng-if="thirdStep">
                 <div class="form-group">
                     <label class="col-sm-5 control-label">Backup Retention Period : </label>
-                    <div class="col-sm-2">
+                    <div class="col-sm-3">
                         <select class="form-control" ng-model="data.backup_retention_period" ng-options="n for n in [] | range:36">
                         </select>
                     </div>
