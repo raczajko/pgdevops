@@ -14,7 +14,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Region :</label>
                     <div class="col-sm-8">
-                        <select class="form-control" id="select-region"  ng-change="regionChange(regionSelect.region)" ng-options="region.region as region.location for region in regions" ng-model="data.region">
+                        <select class="form-control" id="select-region" ng-class="data.region? '' : 'back-red'" ng-change="regionChange(regionSelect.region)" ng-options="region.region as region.location for region in regions" ng-model="data.region">
                             <option value="">--select--</option>
                         </select>
                     </div>
@@ -22,7 +22,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Instance Type :</label>
                     <div class="col-sm-8">
-                        <select class="form-control" id="select-ins-type" ng-change="typeChange(typeSelect.type)" ng-model="data.instance_type">
+                        <select class="form-control" id="select-ins-type" ng-class="data.instance_type? '' : 'back-red'" ng-change="typeChange(typeSelect.type)" ng-model="data.instance_type">
                             <option value="">--select--</option>
                             <option value="t2.micro">t2.micro</option>
                             <!-- <option ng-repeat="type in types" value="{{ type.DBInstanceClass }}" ng-if="!type.v_cpu">
@@ -37,7 +37,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Choose AMI :</label>
                     <div class="col-sm-8">
-                        <select class="form-control" id="image_id" ng-model="data.image_id">
+                        <select class="form-control" id="image_id" ng-class="data.image_id? '' : 'back-red'" ng-model="data.image_id">
                             <option value="ami-ae7bfdb8">CentOS 7</option>
                             <option value="ami-cd0f5cb6">Ubuntu Server 16.04 LTS</option>
                         </select>
@@ -46,7 +46,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Instance Name :</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" id="ins_nmae" ng-model="instance.name">
+                        <input type="text" class="form-control" ng-class="instance.name? '' : 'back-red'" id="ins_nmae" ng-model="instance.name">
                     </div>
                 </div>
 
@@ -135,7 +135,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Network :</label>
                     <div class="col-sm-7" ng-if="!gettingVpcs">
-                        <select class="form-control"  ng-change="changeSubnet()" ng-options="sub.vpc as sub.vpc for sub in subnets" ng-model="data.network_name">
+                        <select class="form-control" ng-class="data.network_name? '' : 'back-red'" ng-change="changeSubnet()" ng-options="sub.vpc as sub.vpc for sub in subnets" ng-model="data.network_name">
                             <option value="">--select--</option>
                         </select>
                     </div>
@@ -147,77 +147,77 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Subnet :</label>
                     <div class="col-sm-7" ng-if="!gettingVpcs">
-                        <input type="text" class="form-control" ng-model="data.subnet_id" name="">
+                        <input type="text" class="form-control" ng-class="data.subnet_id? '' : 'back-red'" ng-model="data.subnet_id" name="">
                     </div>
                     <div class="col-sm-1" ng-if="!gettingVpcs">                             
                         <i tooltip-append-to-body="true" uib-tooltip="A range of IP addresses in your VPC that can be used to isolate different EC2 resources from each other or from the Internet. Each subnet resides in one Availability Zone." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> 
                     </div>
                     <div class="col-sm-2" ng-if="gettingVpcs"><i class="fa fa-spinner fa-pulse fa-2x"></i></div>
                 </div>
-                <!--<div class="form-group">-->
-                    <!--<label class="col-sm-4 control-label">Auto-assign Public IP :</label>-->
-                    <!--<div class="col-sm-7">-->
-                        <!--<select class="form-control" ng-model="assign" ng-options="val.v as val.n for val in [{ n: 'No', v: false }, { n: 'Yes', v: true }]">-->
-                            <!--<option value="">&#45;&#45;select&#45;&#45;</option>-->
-                        <!--</select>-->
-                    <!--</div>-->
-                    <!--<div class="col-sm-1">                             -->
-                        <!--<i tooltip-append-to-body="true" uib-tooltip="Requests a public IP address from Amazon's public IP address pool, to make your instance reachable from the Internet. In most cases, the public IP address is associated with the instance until it’s stopped or terminated, after which it’s no longer available for you to use. If you require a persistent public IP address that you can associate and disassociate at will, use an Elastic IP address (EIP) instead. You can allocate your own EIP, and associate it to your instance after launch." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> -->
-                    <!--</div>-->
-                <!--</div>-->
-                <!--<div class="form-group">-->
-                    <!--<label class="col-sm-4 control-label">IAM role :</label>-->
-                    <!--<div class="col-sm-7">-->
-                        <!--<select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">-->
-                            <!--<option></option>-->
-                        <!--</select>-->
-                    <!--</div>-->
-                    <!--<div class="col-sm-1">                             -->
-                        <!--<i tooltip-append-to-body="true" uib-tooltip="An IAM role automatically deploys AWS credentials to resources that assume it. Select the instance profile that contains the required IAM role. If you created your IAM role using the console, the instance profile has the same name as your IAM role." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> -->
-                    <!--</div>-->
-                <!--</div>-->
-                <!--<div class="form-group">-->
-                    <!--<label class="col-sm-4 control-label">Shutdown behavior :</label>-->
-                    <!--<div class="col-sm-7">-->
-                        <!--<select class="form-control" ng-options="val as key for (key, val) in shutDownBehaviours" ng-model="data.shutdown_behaviour">-->
-                            <!--<option value="">&#45;&#45;select&#45;&#45;</option>-->
-                        <!--</select>-->
-                    <!--</div>-->
-                    <!--<div class="col-sm-1">                             -->
-                        <!--<i tooltip-append-to-body="true" uib-tooltip="Specify the instance behavior when an OS-level shutdown is performed. Instances can be either terminated or stopped." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> -->
-                    <!--</div>-->
-                <!--</div>-->
-                <!--<div class="form-group">-->
-                    <!--<label class="col-sm-5 control-label">Enable termination protection :</label>-->
-                    <!--<div class="col-sm-6" style="margin-top: 5px;">-->
-                        <!--<input type="checkbox" name=""> <span style="font-size: 0.81em;-->
-    <!--white-space: pre;">Protect against accidental termination</span>-->
-                    <!--</div>-->
-                    <!--<div class="col-sm-1">                             -->
-                        <!--<i tooltip-append-to-body="true" uib-tooltip="You can protect instances from being accidentally terminated. Once enabled, you won't be able to terminate this instance via the API or the AWS Management Console until termination protection has been disabled." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> -->
-                    <!--</div>-->
-                <!--</div>-->
-                <!--<div class="form-group">-->
-                    <!--<label class="col-sm-4 control-label">Monitoring :</label>-->
-                    <!--<div class="col-sm-7" style="margin-top: 5px;">-->
-                        <!--<input type="checkbox" name="" ng-model="data.monitoring.Enabled"> <span style="font-size: 0.81em;-->
-    <!--white-space: pre;">Enable CloudWatch detailed monitoring</span>-->
-                    <!--</div>-->
-                    <!--<div class="col-sm-1">                             -->
-                        <!--<i tooltip-append-to-body="true" uib-tooltip="Enables you to monitor, collect, and analyze metrics about your instances through Amazon CloudWatch. Additional charges apply if you enable this option." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> -->
-                    <!--</div>-->
-                <!--</div>-->
-                <!--<div class="form-group">-->
-                    <!--<label class="col-sm-4 control-label">Tenancy :</label>-->
-                    <!--<div class="col-sm-7">-->
-                        <!--<select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">-->
-                            <!--<option></option>-->
-                        <!--</select>-->
-                    <!--</div>-->
-                    <!--<div class="col-sm-1">                             -->
-                        <!--<i tooltip-append-to-body="true" uib-tooltip="You can choose to run your instances on physical servers fully dedicated for your use. The use of host tenancy will request to launch instances onto Dedicated hosts (https://aws.amazon.com/ec2/dedicated-hosts/), while the use of dedicated tenancy will launch instances as Dedicated instances (https://aws.amazon.com/dedicated-instances/). You can launch an instance with a tenancy of host or dedicated into a Dedicated VPC." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> -->
-                    <!--</div>-->
-                <!--</div>-->
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Auto-assign Public IP :</label>
+                    <div class="col-sm-7">
+                        <select class="form-control" ng-model="assign" ng-options="val.v as val.n for val in [{ n: 'No', v: false }, { n: 'Yes', v: true }]">
+                            <option value="">--select--</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-1">
+                        <i tooltip-append-to-body="true" uib-tooltip="Requests a public IP address from Amazon's public IP address pool, to make your instance reachable from the Internet. In most cases, the public IP address is associated with the instance until it’s stopped or terminated, after which it’s no longer available for you to use. If you require a persistent public IP address that you can associate and disassociate at will, use an Elastic IP address (EIP) instead. You can allocate your own EIP, and associate it to your instance after launch." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">IAM role :</label>
+                    <div class="col-sm-7">
+                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="col-sm-1">
+                        <i tooltip-append-to-body="true" uib-tooltip="An IAM role automatically deploys AWS credentials to resources that assume it. Select the instance profile that contains the required IAM role. If you created your IAM role using the console, the instance profile has the same name as your IAM role." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Shutdown behavior :</label>
+                    <div class="col-sm-7">
+                        <select class="form-control" ng-options="val as key for (key, val) in shutDownBehaviours" ng-model="data.shutdown_behaviour">
+                            <option value="">--select--</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-1">
+                        <i tooltip-append-to-body="true" uib-tooltip="Specify the instance behavior when an OS-level shutdown is performed. Instances can be either terminated or stopped." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-5 control-label">Enable termination protection :</label>
+                    <div class="col-sm-6" style="margin-top: 5px;">
+                        <input type="checkbox" name=""> <span style="font-size: 0.81em;
+    white-space: pre;">Protect against accidental termination</span>
+                    </div>
+                    <div class="col-sm-1">
+                        <i tooltip-append-to-body="true" uib-tooltip="You can protect instances from being accidentally terminated. Once enabled, you won't be able to terminate this instance via the API or the AWS Management Console until termination protection has been disabled." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Monitoring :</label>
+                    <div class="col-sm-7" style="margin-top: 5px;">
+                        <input type="checkbox" name="" ng-model="data.monitoring.Enabled"> <span style="font-size: 0.81em;
+    white-space: pre;">Enable CloudWatch detailed monitoring</span>
+                    </div>
+                    <div class="col-sm-1">
+                        <i tooltip-append-to-body="true" uib-tooltip="Enables you to monitor, collect, and analyze metrics about your instances through Amazon CloudWatch. Additional charges apply if you enable this option." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label">Tenancy :</label>
+                    <div class="col-sm-7">
+                        <select class="form-control"  ng-change="versionChange()" ng-model="data.engine_version">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="col-sm-1">
+                        <i tooltip-append-to-body="true" uib-tooltip="You can choose to run your instances on physical servers fully dedicated for your use. The use of host tenancy will request to launch instances onto Dedicated hosts (https://aws.amazon.com/ec2/dedicated-hosts/), while the use of dedicated tenancy will launch instances as Dedicated instances (https://aws.amazon.com/dedicated-instances/). You can launch an instance with a tenancy of host or dedicated into a Dedicated VPC." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i>
+                    </div>
+                </div>
             </form>
         </div>
         <div class="col-md-6">
@@ -236,7 +236,7 @@
 </div>
 <div class="modal-footer" ng-if="!loading">
     <div class="pull-right">
-        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating" ng-click="createEC2()">
+        <button class="btn btn-primary" ng-if="firstStep" ng-disabled="creating || !data.network_name || !instance.name || !data.subnet_id" ng-click="createEC2()">
            <i class="fa fa-spin fa-cog" ng-if="creating"></i> Create
         </button>
     </div>
