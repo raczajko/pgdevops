@@ -195,7 +195,7 @@ class ComponentAction(object):
             ssh_username = cred_info.get("ssh_user")
             password= ""
             if cred_info.get("ssh_passwd"):
-                ssh_password = util.decrypt(cred_info.get("ssh_passwd"),enc_key)
+                password = util.decrypt(cred_info.get("ssh_passwd"),enc_key)
             ssh_key = ""
             if cred_info.get("ssh_key"):
                 ssh_key = util.decrypt(cred_info.get("ssh_key"), enc_key)
@@ -204,7 +204,7 @@ class ComponentAction(object):
                 sudo_pwd = util.decrypt(cred_info.get("ssh_sudo_pwd"), enc_key)
             ssh_host = pgc_host_info.get('host')
             from PgcRemote import PgcRemote
-            remote = PgcRemote(ssh_host, ssh_username, password=ssh_password, ssh_key=ssh_key)
+            remote = PgcRemote(ssh_host, ssh_username, password=password, ssh_key=ssh_key)
             remote.connect()
             is_file_added = remote.add_file('/tmp/.pgpass', password)
             remote.disconnect()
