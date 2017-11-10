@@ -7137,8 +7137,22 @@ fieldset
   margin-bottom: 2px;
 }
 
-.rds-modal .modal-dialog {
-    width: 75%;
+@media (min-width: 1050px) {
+  .rds-modal .modal-dialog {
+      width: 75%;
+  }
+}
+
+@media (max-width: 1049px) {
+    .rds-modal .modal-dialog {
+      width: 100%;
+  }
+}
+
+@media (max-width: 785px) {
+    .rds-modal .modal-dialog {
+      width: 150%;
+  }
 }
 
 .settingsPageLayout .box-header{
