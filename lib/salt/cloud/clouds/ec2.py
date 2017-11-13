@@ -4369,12 +4369,6 @@ def describe_keypairs(kwargs=None, call=None):
     '''
     list SSH keypairs
     '''
-    if call != 'function':
-        log.error(
-            'The show_keypair function must be called with -f or --function.'
-        )
-        return False
-
     if not kwargs:
         kwargs = {}
 
@@ -4390,6 +4384,14 @@ def describe_keypairs(kwargs=None, call=None):
                      sigver='4')
     return data
 
+def describe_securitygroups():
+    '''
+    Returns the SecurityGroupId of a SecurityGroupName to use
+    '''
+    params = {'Action': 'DescribeSecurityGroups'}
+    data = aws.query(params, location=get_location(),
+                        provider=get_provider(), opts=__opts__, sigver='4')
+    return data
 
 def delete_keypair(kwargs=None, call=None):
     '''
