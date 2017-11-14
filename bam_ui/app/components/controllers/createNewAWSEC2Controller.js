@@ -46,7 +46,7 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
 
     $scope.getVpc = function (argument) {
         $scope.gettingVpcs = true;
-        var vpc_subnet = pgcRestApiCall.getCmdData('metalist vpc-list --region=' + $scope.data.region + ' --type=vm --cloud=aws');
+        var vpc_subnet = pgcRestApiCall.getCmdData('metalist vpc-list --region=' + $scope.data.region + ' --cloud=aws');
         vpc_subnet.then(function(data){
             $scope.subnets = data;
             $scope.gettingVpcs = false;

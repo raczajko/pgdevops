@@ -4384,7 +4384,7 @@ def describe_keypairs(kwargs=None, call=None):
                      sigver='4')
     return data
 
-def describe_securitygroups():
+def describe_securitygroups(kwargs=None, call=None):
     '''
     Returns the SecurityGroupId of a SecurityGroupName to use
     '''
