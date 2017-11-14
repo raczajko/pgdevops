@@ -375,11 +375,13 @@ class TestCloudConnection(Resource):
             from azure.common.credentials import ServicePrincipalCredentials
 
             try:
-                ServicePrincipalCredentials(
+                cred = ServicePrincipalCredentials(
                     client_id=credentials['client_id'],
                     secret=credentials['secret'],
                     tenant=credentials['tenant']
                 )
+                from azure.mgmt.resource import ResourceManagementClient
+                ResourceManagementClient(cred, str(credentials['subscription_id'])).providers.register('Microsoft.Authorization')
             except Exception as ex:
                 return InvalidParameterResult(message="Invalid Credentials", errors=[str(ex)]).http_response()
         if payload["cloud_type"] == "vmware":
