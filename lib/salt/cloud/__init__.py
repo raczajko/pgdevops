@@ -1606,7 +1606,7 @@ class Cloud(object):
                 return {
                     alias: {
                         driver: self.clouds[fun](
-                            call='function', **kwargs
+                            call='function', kwargs = kwargs
                         )
                     }
                 }

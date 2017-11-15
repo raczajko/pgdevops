@@ -3410,7 +3410,7 @@ def _get_node(name=None, instance_id=None, location=None):
     return {}
 
 
-def list_nodes_full(location=None, call=None):
+def list_nodes_full(location=None, call=None, kwargs=None):
     '''
     Return a list of the VMs that are on the provider
     '''
@@ -3419,7 +3419,8 @@ def list_nodes_full(location=None, call=None):
             'The list_nodes_full function must be called with -f '
             'or --function.'
         )
-
+    if not location:
+        location = kwargs.get('location',None)
     if not location:
         ret = {}
         locations = set(
