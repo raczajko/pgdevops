@@ -278,8 +278,12 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     var sessionPromise = PubSubService.getSession();
 
     function getPgList(argument) {
-        $rootScope.$emit("stopGraphCalls");
-        session.call('com.bigsql.pgList', [$scope.userInfo.email]);
+        var sessionPromise = PubSubService.getSession();
+        sessionPromise.then(function (val) {
+        session = val;
+            $rootScope.$emit("stopGraphCalls");
+            session.call('com.bigsql.pgList', [$scope.userInfo.email]);
+        });
     }
 
     $rootScope.$on('refreshPgList', function (event) {
@@ -642,13 +646,17 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
         } else {
             hostToDelete = $scope.hostsList[idx].name;
         }
-        session.call('com.bigsql.deleteHost', [hostToDelete]);
-        session.subscribe("com.bigsql.onDeleteHost", function (data) {
-            $scope.loading = true;
-            getGroupsList(false);
-            $scope.showpgList = undefined;
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
+        var sessionPromise = PubSubService.getSession();
+        sessionPromise.then(function (val) {
+            session = val;
+            session.call('com.bigsql.deleteHost', [hostToDelete]);
+            session.subscribe("com.bigsql.onDeleteHost", function (data) {
+                $scope.loading = true;
+                getGroupsList(false);
+                $scope.showpgList = undefined;
+            }).then(function (subscription) {
+                subscriptions.push(subscription);
+            });
         });
     }
 
@@ -681,13 +689,17 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
     $scope.deleteGroup = function (idx){
         $interval.cancel(stopStatusCall);
         var groupToDelete = $scope.groupsList[idx].group;
-        session.call('com.bigsql.deleteGroup', [groupToDelete]);
-        $scope.loading = true;
-        session.subscribe("com.bigsql.onDeleteGroup", function (data) {
-            getGroupsList(false);
-            $scope.showpgList = undefined;
-        }).then(function (subscription) {
-            subscriptions.push(subscription);
+        var sessionPromise = PubSubService.getSession();
+        sessionPromise.then(function (val) {
+            session = val;
+            session.call('com.bigsql.deleteGroup', [groupToDelete]);
+            $scope.loading = true;
+            session.subscribe("com.bigsql.onDeleteGroup", function (data) {
+                getGroupsList(false);
+                $scope.showpgList = undefined;
+            }).then(function (subscription) {
+                subscriptions.push(subscription);
+            });
         });
     }
 
@@ -782,17 +794,19 @@ angular.module('bigSQL.components').controller('HostsController', ['$scope', '$u
             currentComponent.showingSpinner = true;
         }
         if (event.target.tagName == "A") {
-            if(host == 'localhost'){
-                if(event.target.innerText.toLowerCase() != 'initialize'){
-                    session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value')]); 
+            var sessionPromise = PubSubService.getSession();
+                sessionPromise.then(function (val) {
+                session = val;
+                if(host == 'localhost'){
+                    if(event.target.innerText.toLowerCase() != 'initialize'){
+                        session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value')]); 
+                    }
+                }else{
+                    if(event.target.innerText.toLowerCase() != 'initialize'){
+                        session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value'), name]);
+                    }
                 }
-            }else{
-                if(event.target.innerText.toLowerCase() != 'initialize'){
-                    session.call(apis[event.target.innerText], [event.currentTarget.getAttribute('value'), name]);
-                }
-                // var event_url = cmd + '/' + event.currentTarget.getAttribute('value') + '/' + host;
-                // var eventData = bamAjaxCall.getCmdData(event_url);
-            }
+            });
         }
         ;
     };

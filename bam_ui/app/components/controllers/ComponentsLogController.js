@@ -54,69 +54,72 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
     }
 
     $scope.getLogfiles = function(){
-        if ($scope.selectComp != 'pgcli'){
-            session.call('com.bigsql.infoComponent',[$scope.selectComp]);
-        } else {
-            session.call('com.bigsql.selectedLog',[$scope.selectComp]);
+        var sessionPromise = PubSubService.getSession();
+        sessionPromise.then(function (val) {
+            session = val;
+            sessionActive();
+            if ($scope.selectComp != 'pgcli'){
+                session.call('com.bigsql.infoComponent',[$scope.selectComp]);
+            } else {
+                session.call('com.bigsql.selectedLog',[$scope.selectComp]);
+            }
+        });
+    }
+
+    function sessionActive(argument) {
+        if(Object.keys(session._subscriptions).length < 5){    
+        session.subscribe('com.bigsql.onInfoComponent', function (args) {
+            var jsonD = JSON.parse(args[0][0]);
+            if($scope.selectComp == jsonD[0].component){
+                if(jsonD[0].current_logfile){
+                    $scope.logfile = jsonD[0].current_logfile;
+                }
+                session.call('com.bigsql.selectedLog',[$scope.logfile]);
+            }
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
+        session.subscribe("com.bigsql.pgcliDir", function (dir) {
+            $scope.selectedLog = dir[0];
+            $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
+        session.call('com.bigsql.checkLogdir');
+
+        session.subscribe("com.bigsql.onCheckLogdir", function (components) {
+            $scope.components = JSON.parse(components[0]);
+            $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
+        session.subscribe("com.bigsql.log", function (lg) {
+            //$scope.logFile = $sce.trustAsHtml(lg[0]);
+            $scope.logFile = lg[0].split("<br/>");
+            $timeout(function() {
+              var scroller = document.getElementById("logviewer");
+              scroller.scrollTop = scroller.scrollHeight;
+            }, 0, false)
+            $scope.$apply();
+        }).then(function (subscription) {
+            subscriptions.push(subscription);
+        });
+
+        session.subscribe("com.bigsql.logError", function (err) {
+            $("#logviewer").empty();
+            $("#logviewer").append("<h4><br />" + err[0] + "</h4>");
+        }).then(function (sub) {
+            subscriptions.push(sub);
+        });
         }
     }
 
     if($scope.allowedJobTypes.indexOf($scope.logViewType) == -1){
-        var sessionPromise = PubSubService.getSession();
-        sessionPromise.then(function (val) {
-            session = val;
-            $scope.getLogfiles();
-            session.subscribe('com.bigsql.onInfoComponent', function (args) {
-                    var jsonD = JSON.parse(args[0][0]);
-                    if($scope.selectComp == jsonD[0].component){
-                        if(jsonD[0].current_logfile){
-                            $scope.logfile = jsonD[0].current_logfile;
-                        }
-                        session.call('com.bigsql.selectedLog',[$scope.logfile]);
-                    }
-            }).then(function (subscription) {
-                subscriptions.push(subscription);
-            });
-
-            session.subscribe("com.bigsql.pgcliDir", function (dir) {
-                $scope.selectedLog = dir[0];
-                $scope.$apply();
-            }).then(function (subscription) {
-                subscriptions.push(subscription);
-            });
-
-            session.call('com.bigsql.checkLogdir');
-
-            session.subscribe("com.bigsql.onCheckLogdir", function (components) {
-                $scope.components = JSON.parse(components[0]);
-                $scope.$apply();
-            }).then(function (subscription) {
-                subscriptions.push(subscription);
-            });
-
-            session.subscribe("com.bigsql.log", function (lg) {
-                //$scope.logFile = $sce.trustAsHtml(lg[0]);
-                $scope.logFile = lg[0].split("<br/>");
-                $timeout(function() {
-                  var scroller = document.getElementById("logviewer");
-                  scroller.scrollTop = scroller.scrollHeight;
-                }, 0, false)
-                $scope.$apply();
-            }).then(function (subscription) {
-                subscriptions.push(subscription);
-            });
-
-            session.subscribe("com.bigsql.logError", function (err) {
-                $("#logviewer").empty();
-                $("#logviewer").append("<h4><br />" + err[0] + "</h4>");
-            }).then(function (sub) {
-                subscriptions.push(sub);
-            });
-
-            $scope.tab = 1000;
-
-
-        });
+        $scope.getLogfiles();
+        $scope.tab = 1000;
     }
     else{
         $('#componentSelectBox').css("display","none");
@@ -130,7 +133,6 @@ angular.module('bigSQL.components').controller('ComponentsLogController', ['$sco
         }
         var bgReportStatus = bamAjaxCall.getCmdData('bgprocess_status/'+ process_log_id,args);
         bgReportStatus.then(function (ret_data){
-            debugger
             $scope.logDir = ret_data.log_dir;
             $scope.procId = ret_data.pid;
             $scope.error_msg = '';
