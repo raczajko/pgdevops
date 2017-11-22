@@ -55,23 +55,34 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         $scope.ec2List = [];
         $scope.checked = false;
         $scope.discoverMsg = 'Searching';
-        if (region) {
-            session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, region, $scope.lab]);
-        }else{
-            session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, '', $scope.lab]);
-        }
-        $scope.region = region;
+        var sessionPromise = PubSubService.getSession();
+        sessionPromise.then(function (val) {
+            session = val;  
+            sessionActive(session);
+            if (region) {
+                session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, region, $scope.lab]);
+            }else{
+                session.call('com.bigsql.instancesList', [$scope.instance, $scope.userInfo.email, '', $scope.lab]);
+            }
+            $scope.region = region;
+        });
     }
 
-    var sessionPromise = PubSubService.getSession();
-    sessionPromise.then(function (val) {
-        session = val;
-        var userInfoData = bamAjaxCall.getCmdData('userinfo');
-        userInfoData.then(function(data) {
-            $scope.userInfo = data;
-            // session.call('com.bigsql.instancesList', [$scope.userInfo.email]);
+    var userInfoData = bamAjaxCall.getCmdData('userinfo');
+    userInfoData.then(function(data) {
+        $scope.userInfo = data;
+        var sessionPromise = PubSubService.getSession();
+        sessionPromise.then(function (val) {
+            session = val;
+            sessionActive(session);
         });
+    });
 
+
+    function sessionActive(session) {
+        for (var key in session._subscriptions) { 
+            delete session._subscriptions[key];
+        }
         session.subscribe('com.bigsql.onInstancesList', function (data) {
             var data = JSON.parse(data[0]);
             if (data[0].state == 'info') {
@@ -105,8 +116,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
            }
            $scope.$apply();
         });
-
-    });
+    }
 
     // var rdslist = bamAjaxCall.getCmdData('rdslist');
     // rdslist.then(function (data) {

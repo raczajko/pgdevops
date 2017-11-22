@@ -46,18 +46,19 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 		$rootScope.$emit('addedHost');
 	}
 
-    sessPromise.then(function (sessParam) {
-        session = sessParam;
-        $scope.addHost = function () {
+    $scope.addHost = function () {
+    	var sessPromise = PubSubService.getSession();
+    	sessPromise.then(function (sessParam) {
+    		session = sessParam;
         	$scope.connectionError = false;
         	$scope.registerResponse = '';
         	if ($scope.pgcDir.indexOf('~/') > -1) {
         		$scope.pgcDir = $scope.pgcDir.split('~/')[1];
         	}
 	        if(!$scope.editHost){
-	        	session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.connectionName, $scope.selected_cred_name]);
+	        	session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.connectionName, $scope.selected_cred_name]).then(function (err) {console.log(err)});
 	    	}else{
-	    		session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.connectionName, $scope.selected_cred_name, $scope.editHost.host_id]);
+	    		session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.connectionName, $scope.selected_cred_name, $scope.editHost.host_id]).then(function (err) {console.log(err)});
 	    	}
 	    	$scope.tryToConnect = true;
 
@@ -95,8 +96,9 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
 	        }).then(function (subscription) {
 	            subscriptions.push(subscription);
 	        });
-	    }
-    });
+	    });
+	}
+
 
     $scope.next = function (argument) {
     $scope.auth_err="";

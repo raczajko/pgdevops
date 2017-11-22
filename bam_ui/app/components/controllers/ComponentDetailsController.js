@@ -131,56 +131,30 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
     sessionPromise.then(function (val) {
         session = val;
         $scope.component = {};
+        sessionActive();
+    });
 
-        if ($scope.currentComponent == 'pgdevops') {
-            session.call('com.bigsql.checkOS');
-            session.subscribe('com.bigsql.onCheckOS', function (args) {
-                $scope.os = args[0];
-            });  
-        }
-
-        var onRemove = function (response) {
-            var data = JSON.parse(response[0])[0];
-            if (data.status == "error") {
-                var alertObj = {
-                    msg: data.msg,
-                    type: "danger"
-                }
-                $scope.alerts.push(alertObj);
-                $scope.$apply();
+    $scope.action = function (event) {
+        if (event.target.tagName === "A" && event.target.attributes.action != undefined) {
+            if(event.target.attributes.action.value == 'start'){
+                $scope.component.spinner = 'Starting..';
+            }else if(event.target.attributes.action.value == 'stop'){
+                $scope.component.spinner = 'Stopping..';
+            }else if(event.target.attributes.action.value == 'remove'){
+                $scope.component.spinner = 'Removing..';
+            }else if($scope.component.component.indexOf("plprofiler") > -1 && event.target.attributes.action.value == 'install'){
+                $scope.checkplProfiler = false;
+                $scope.startAlert.push({
+                    msg: "After installation of plprofiler, " + $scope.component.component.split('-')[1] + " restart will be done. Continue?",
+                    type: 'warning'
+                });
             }
-            if (data.status == "complete") {
-                // session.call('com.bigsql.infoComponent', [$scope.currentComponent]);
-                var alertObj = {
-                    msg: data.msg,
-                    type: "danger"
-                }
-                $scope.alerts.push(alertObj);
-            }
-            callInfo();
-        };
-
-        session.subscribe('com.bigsql.onRemove', onRemove).then(
-            function (sub) {
-                subscriptions.push(sub);
-            });
-
-        $scope.action = function (event) {
-            if (event.target.tagName === "A" && event.target.attributes.action != undefined) {
-                if(event.target.attributes.action.value == 'start'){
-                    $scope.component.spinner = 'Starting..';
-                }else if(event.target.attributes.action.value == 'stop'){
-                    $scope.component.spinner = 'Stopping..';
-                }else if(event.target.attributes.action.value == 'remove'){
-                    $scope.component.spinner = 'Removing..';
-                }else if($scope.component.component.indexOf("plprofiler") > -1 && event.target.attributes.action.value == 'install'){
-                    $scope.checkplProfiler = false;
-                    $scope.startAlert.push({
-                        msg: "After installation of plprofiler, " + $scope.component.component.split('-')[1] + " restart will be done. Continue?",
-                        type: 'warning'
-                    });
-                }
-                var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+            var sessionKey = "com.bigsql." + event.target.attributes.action.value;
+            if(session == undefined)console.log("session undefined");
+            var sessionPromise = PubSubService.getSession();
+            sessionPromise.then(function (val) {
+                session = val;
+                sessionActive(session);
                 if ($scope.checkplProfiler) {
                     if($scope.currentHost == 'localhost' || $scope.currentHost == ''){
                         session.call(sessionKey, [$scope.component.component]);
@@ -191,72 +165,112 @@ angular.module('bigSQL.components').controller('ComponentDetailsController', ['$
                         }else{
                             session.call(sessionKey, [$scope.component.component, $scope.currentHost]);
                         }
-                    } 
+                    }
                 }
-            }
-        };
+            });
+        }
+    };
 
-        session.subscribe('com.bigsql.onInstall', function (response) {
-            var data = JSON.parse(response[0])[0];
-            $scope.component.installation = true;
-            // if ($scope.currentComponent == data.component || $scope.currentComponent == data.component[0]) {
-            if (data.state == "deplist") {
-                if (data.deps.length > 1) {
-                    dependentCount = data.deps.length;
-                    $scope.component.installationDependents = true;
-                }
-            } else if (data.status == "start") {
-                $scope.component.installationStart = data;
-                $scope.component.installation = true;
-                if ($scope.currentComponent == data.component) {
-                    delete $scope.component.installationDependents;
-                } else {
-                    $scope.component.installationDependents = true;   
-                }
-            } else if (data.status == "wip") {
-                $scope.component.installationRunning = data;
-                $scope.component.progress = data.pct;
-            } else if (data.status == "complete" || data.status == "cancelled") {
-                if (data.status == "cancelled") {
-                        $scope.alerts.push({
-                            msg:  data.msg,
-                            type: 'danger'
-                        });
-                    delete $scope.component.installationStart;
-                    delete $scope.component.installationRunning;
-                    delete $scope.component.installation;
-                }else if (data.state == 'unpack' || data.state == 'update' || data.state == 'install'){
-                    $scope.alerts.push({
-                            msg:  data.msg,
-                            type: 'success'
-                        });
-                    callInfo();
-                }
-
+    function sessionActive(argument) {
+        for (var key in session._subscriptions) { 
+            delete session._subscriptions[key];
+        }
+        if(Object.keys(session._subscriptions).length < 4){
+            if ($scope.currentComponent == 'pgdevops') {
+                session.call('com.bigsql.checkOS');
+                session.subscribe('com.bigsql.onCheckOS', function (args) {
+                    $scope.os = args[0];
+                });  
             }
 
-            if (data.state == "error") {
-                $scope.alerts.push({
-                    msg: data.msg,
-                    type: 'danger'
+            var onRemove = function (response) {
+                var data = JSON.parse(response[0])[0];
+                if (data.status == "error") {
+                    var alertObj = {
+                        msg: data.msg,
+                        type: "danger"
+                    }
+                    $scope.alerts.push(alertObj);
+                    $scope.$apply();
+                }
+                if (data.status == "complete") {
+                    // session.call('com.bigsql.infoComponent', [$scope.currentComponent]);
+                    var alertObj = {
+                        msg: data.msg,
+                        type: "danger"
+                    }
+                    $scope.alerts.push(alertObj);
+                }
+                callInfo();
+            };
+
+            session.subscribe('com.bigsql.onRemove', onRemove).then(
+                function (sub) {
+                    subscriptions.push(sub);
                 });
-                delete $scope.component.installation;
+
+            session.subscribe('com.bigsql.onInstall', function (response) {
+                var data = JSON.parse(response[0])[0];
+                $scope.component.installation = true;
+                // if ($scope.currentComponent == data.component || $scope.currentComponent == data.component[0]) {
+                if (data.state == "deplist") {
+                    if (data.deps.length > 1) {
+                        dependentCount = data.deps.length;
+                        $scope.component.installationDependents = true;
+                    }
+                } else if (data.status == "start") {
+                    $scope.component.installationStart = data;
+                    $scope.component.installation = true;
+                    if ($scope.currentComponent == data.component) {
+                        delete $scope.component.installationDependents;
+                    } else {
+                        $scope.component.installationDependents = true;   
+                    }
+                } else if (data.status == "wip") {
+                    $scope.component.installationRunning = data;
+                    $scope.component.progress = data.pct;
+                } else if (data.status == "complete" || data.status == "cancelled") {
+                    if (data.status == "cancelled") {
+                            $scope.alerts.push({
+                                msg:  data.msg,
+                                type: 'danger'
+                            });
+                        delete $scope.component.installationStart;
+                        delete $scope.component.installationRunning;
+                        delete $scope.component.installation;
+                    }else if (data.state == 'unpack' || data.state == 'update' || data.state == 'install'){
+                        $scope.alerts.push({
+                                msg:  data.msg,
+                                type: 'success'
+                            });
+                        callInfo();
+                    }
+                }
+
+                if (data.state == "error") {
+                    $scope.alerts.push({
+                        msg: data.msg,
+                        type: 'danger'
+                    });
+                    delete $scope.component.installation;
+                }
+                $scope.$apply();
+            // }
+            }).then(function (sub) {
+                subscriptions.push(sub);
+            });
+
+            $scope.cancelInstallation = function (action) {
+                session.call("com.bigsql.cancelInstall", [$scope.currentHost]);
             }
-            $scope.$apply();
-        // }
-        }).then(function (sub) {
-            subscriptions.push(sub);
-        });
-    });
+        }
+    }
 
     $rootScope.$on('refreshData', function (argument, host) {
         $scope.loading = true;
         callInfo(host);
     });
 
-    $scope.cancelInstallation = function (action) {
-        session.call("com.bigsql.cancelInstall", [$scope.currentHost]);
-    }
 
     $scope.closeAlert = function (index) {
         $scope.alerts.splice(index, 1);
