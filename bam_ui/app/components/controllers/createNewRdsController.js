@@ -96,9 +96,15 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         $scope.data.db_class = [];
         var getInstanceClass = pgcRestApiCall.getCmdData("metalist instance-class --region=" + $scope.data.region + " --version=" + $scope.data.engine_version + " --cloud aws --type db");
         getInstanceClass.then(function(data){
-            $scope.types = data;
+            if(data.state != 'completed'){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data[0].msg;
+            }
+            else{
+            $scope.types = data.data;
             if ($scope.types.length>0) {
                 $scope.data.db_class = 'db.t2.micro';
+            }
             }
             $scope.disableInsClass = false;
         });
@@ -185,29 +191,34 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
         if($scope.firstStep){
             var getRdsVersions = pgcRestApiCall.getCmdData('metalist rds-versions --region=' + $scope.data.region + ' --cloud aws --type db');
             getRdsVersions.then(function(data){
-                $scope.loading = false;
-                $scope.firstStep = false;
-                $scope.secondStep = true;
-                if (data[0].state == "error") {
+                if(data.state != 'completed'){
                     $scope.showErrMsg = true;
                     $scope.errMsg = data[0].msg;
-                }else{
-                    $scope.dbEngVersions = data;
+                }
+                else{
+                    $scope.firstStep = false;
+                    $scope.secondStep = true;
+                    $scope.dbEngVersions = data.data;
                     $scope.data.engine_version = $scope.dbEngVersions[0].EngineVersion;
                     $scope.versionChange();
                 }
+                $scope.loading = false;
             });
         }else{
             var getVPCList = pgcRestApiCall.getCmdData("metalist vpc-list --region=" + $scope.data.region + " --cloud aws --type db");
             getVPCList.then(function(data){
-                $scope.loading = false;
-                $scope.secondStep = false;
-                $scope.thirdStep = true;
-                if(data.length > 0){
-                    $scope.networkSec = data;
+                if(data.state != 'completed'){
+                    $scope.showErrMsg = true;
+                    $scope.errMsg = data[0].msg;
+                }
+                else{
+                    $scope.secondStep = false;
+                    $scope.thirdStep = true;
+                    $scope.networkSec = data.data;
                     $scope.vpc = { select : $scope.networkSec[0].vpc }
                     $scope.vpcChange();
                 }
+                $scope.loading = false;
             });
         }
     }

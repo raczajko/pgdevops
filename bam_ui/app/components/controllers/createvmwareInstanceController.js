@@ -28,9 +28,13 @@ angular.module('bigSQL.components').controller('createvmwareInstanceController',
     var getData = pgcRestApiCall.getCmdData('instances vm  --cloud vmware');
     getData.then(function(data){
         $scope.gettingImages = false;
-        if(data.state=="completed"){
+        if(data.state != 'completed'){
+            $scope.showErrMsg = true;
+            $scope.errMsg = data.message;
+        }
+        else{
             $scope.images = data.data;
-       }
+        }
     });
 
     $scope.createVM = function(){

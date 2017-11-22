@@ -13,6 +13,7 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
     $scope.days = {'Monday': 'mon', 'Tuesday': 'tue', 'Wednesday' : 'wed', 'Thursday': 'thu', 'Friday' : 'fri', 'Saturday': 'sat', 'Sunday': 'sun'};
 
     $scope.creatingAzureVM = htmlMessages.getMessage('create-azure-vm');
+    $scope.valiedCred = true;
 
     $scope.data = {
         'region' : 'southcentralus',
@@ -39,7 +40,6 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
 
     $scope.regionChange = function(){
         $scope.loadingResGroups = true;
-        $scope.loadingInsType = true;
         $scope.loadingStorageAccounts =true;
         if($scope.data.region){
             var resource_groups = pgcRestApiCall.getCmdData('metalist res-group --cloud azure --region '+ $scope.data.region )
@@ -47,17 +47,22 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
             var resource_groups = pgcRestApiCall.getCmdData('metalist res-group --cloud azure')
         }
         resource_groups.then(function (data) {
-            $scope.res_groups = data;
-            $scope.loadingResGroups = false;
-            $scope.loadingInsType = false;
-            $scope.loadingStorageAccounts = false;
-            if ($scope.res_groups.length > 0) {
-                $scope.data.group_name = $scope.res_groups[0].name; 
-                $scope.storageChange();               
-            }else{
-                $scope.data.group_name = '';
-                $scope.data.storage_account = '';
+            if(data.state != 'completed'){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data[0].msg;
+                $scope.stopAllLoading();
             }
+            else{
+                $scope.res_groups = data.data;
+                if ($scope.res_groups.length > 0) {
+                    $scope.data.group_name = $scope.res_groups[0].name;
+                    $scope.storageChange();
+                }else{
+                    $scope.data.group_name = '';
+                    $scope.data.storage_account = '';
+                }
+            }
+            $scope.loadingResGroups = false;
         });
     }
 
@@ -66,17 +71,33 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         $scope.data.subnet_name = ''
         var getStorageAcs = pgcRestApiCall.getCmdData('metalist storage-accounts --cloud azure --region '+ $scope.data.region  + ' --group ' + $scope.data.group_name + ' --type vm');
         getStorageAcs.then(function (data) {
-            if (data.length > 0) {
-                $scope.storageAccounts = data;
-            }else{
-                $scope.storage_account = '';
+            if(data.state != 'completed'){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data[0].msg;
+                $scope.stopAllLoading();
             }
+            else{
+                if (data.data.length > 0) {
+                    $scope.storageAccounts = data.data;
+                }else{
+                    $scope.storage_account = '';
+                }
+             }
             $scope.loadingStorageAccounts = false;
         });
+
         var getSubnet = pgcRestApiCall.getCmdData('metalist vpc-list --cloud azure --type vm --group ' + $scope.data.group_name );
         getSubnet.then(function (data) {
-            $scope.subnets = data;
+            if(data.state != 'completed'){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data[0].msg;
+                $scope.stopAllLoading();
+            }
+            else{
+                $scope.subnets = data.data;
+            }
         });
+
     }
 
     $scope.changeSubnet = function (argument) {
@@ -91,12 +112,18 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
         }
     }
 
-    $scope.loadingInsType = true;
     $scope.getInstanceType = function (region) {
         $scope.loadingInsType = true;
         var ins_types = pgcRestApiCall.getCmdData('metalist instance-type --region ' + $scope.data.region +' --cloud azure --type vm' );
         ins_types.then(function (data) {
-            $scope.ins_types = data;
+            if(data.state != 'completed'){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data[0].msg;
+                $scope.stopAllLoading();
+            }
+            else{
+                $scope.ins_types = data.data;
+            }
             $scope.loadingInsType = false;
         });
     }
@@ -194,6 +221,12 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
             $scope.secondStep = true;
             $scope.showErrMsg = false;
         }
+    }
+
+    $scope.stopAllLoading = function(){
+        $scope.loadingResGroups = false;
+        $scope.loadingInsType = false;
+        $scope.loadingStorageAccounts = false;
     }
 
     $scope.regionChange();

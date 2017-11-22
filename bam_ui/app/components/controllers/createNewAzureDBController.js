@@ -52,7 +52,13 @@ angular.module('bigSQL.components').controller('createNewAzureDBController', ['$
             var resource_groups = pgcRestApiCall.getCmdData('metalist res-group --cloud azure')
         }
         resource_groups.then(function (data) {
-            $scope.res_groups = data;
+            if(data.state != 'completed'){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data[0].msg;
+            }
+            else{
+                $scope.res_groups = data.data;
+            }
             $scope.loadingResGroups = false;
         });
     }

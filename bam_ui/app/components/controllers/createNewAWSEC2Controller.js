@@ -13,6 +13,7 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
     $scope.shutDownBehaviours = {'Stop':'stop', 'Terminate':'terminate'}
 
     $scope.data = {
+        'computer_name':'',
         'region' : '',
         'image_id' : 'ami-ae7bfdb8',
         'instance_type' : 't2.micro',
@@ -41,16 +42,54 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         $scope.loading = false;
         $scope.regions = data;
         $scope.data.region = $scope.regions[0].region;
+        $scope.getSecGroup();
+        $scope.getKeyPair();
         $scope.getVpc();
     });
+
+    $scope.getSecGroup = function (argument) {
+        $scope.gettingSecGrps = true;
+        var vpc_subnet = pgcRestApiCall.getCmdData('metalist sec-group --type vm --region=' + $scope.data.region + ' --cloud=aws');
+        vpc_subnet.then(function(data){
+            if(data.state != 'completed'){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data[0].msg;
+            }
+            else{
+                $scope.secgroups = data.data;
+            }
+            $scope.gettingSecGrps = false;
+        });
+    }
+
+    $scope.getKeyPair = function (argument) {
+        $scope.gettingKeyPairs = true;
+        var vpc_subnet = pgcRestApiCall.getCmdData('metalist keypairs --type vm --region=' + $scope.data.region + ' --cloud=aws');
+        vpc_subnet.then(function(data){
+            if(data.state != 'completed'){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data[0].msg;
+            }
+            else{
+                $scope.keypairs = data.data;
+            }
+            $scope.gettingKeyPairs = false;
+        });
+    }
 
     $scope.getVpc = function (argument) {
         $scope.gettingVpcs = true;
         var vpc_subnet = pgcRestApiCall.getCmdData('metalist vpc-list --region=' + $scope.data.region + ' --cloud=aws');
         vpc_subnet.then(function(data){
-            $scope.subnets = data;
+            if(data.state != 'completed'){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data[0].msg;
+            }
+            else{
+                $scope.subnets = data.data;
+                $scope.data.subnet_id = '';
+            }
             $scope.gettingVpcs = false;
-            $scope.data.subnet_id = '';
         });
     }
 
@@ -69,12 +108,15 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         }else{
             $scope.data.subnet_id = '';
         }
+        $scope.data.security_group = '';
     }
 
 
     $scope.regionChange = function (region) {
         session.call('com.bigsql.rdsMetaList', ['instance-class', '', $scope.data.region, '9.6.3']);  
-        session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '']); 
+        //session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '']);
+        $scope.getSecGroup();
+        $scope.getKeyPair();
         $scope.getVpc();
     }
 
@@ -99,6 +141,7 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
 
     $scope.createEC2 = function(){
         $scope.data.tags['Name'] = $scope.instance.name;
+        $scope.data.computer_name = $scope.instance.name;
         $scope.creating = true;
         $scope.showErrMsg = false;
         var data = [];
@@ -122,6 +165,17 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         })
     }
 
+    $scope.validateFields = function(){
+        if($scope.creating){
+            return ($scope.creating);
+        }
+        if(!$scope.instance.name || !$scope.data.keyname){
+            return (true);
+        }
+        if(!$scope.data.subnet_id && !$scope.data.security_group){
+            return (true);
+        }
+    }
     $scope.next = function(region){
         $scope.firstStep = false;
         $scope.secondStep = true;

@@ -1030,10 +1030,18 @@ def ssh_interface(vm_):
     Return the ssh_interface type to connect to. Either 'public_ips' (default)
     or 'private_ips'.
     '''
-    return config.get_cloud_config_value(
+    ret = config.get_cloud_config_value(
         'ssh_interface', vm_, __opts__, default='public_ips',
         search_global=False
     )
+    if ret not in ('public_ips', 'private_ips'):
+        log.warning((
+            'Invalid ssh_interface: {0}. '
+            'Allowed options are ("public_ips", "private_ips"). '
+            'Defaulting to "public_ips".'
+        ).format(ret))
+        ret = 'public_ips'
+    return ret
 
 
 def get_ssh_gateway_config(vm_):
@@ -3410,7 +3418,7 @@ def _get_node(name=None, instance_id=None, location=None):
     return {}
 
 
-def list_nodes_full(location=None, call=None, kwargs=None):
+def list_nodes_full(location=None, call=None):
     '''
     Return a list of the VMs that are on the provider
     '''
@@ -3419,36 +3427,8 @@ def list_nodes_full(location=None, call=None, kwargs=None):
             'The list_nodes_full function must be called with -f '
             'or --function.'
         )
-    if not location:
-        location = kwargs.get('location',None)
-    if not location:
-        ret = {}
-        locations = set(
-            get_location(vm_) for vm_ in six.itervalues(__opts__['profiles'])
-            if _vm_provider_driver(vm_)
-        )
 
-        # If there aren't any profiles defined for EC2, check
-        # the provider config file, or use the default location.
-        if not locations:
-            locations = [get_location()]
-
-        for loc in locations:
-            ret.update(_list_nodes_full(loc))
-        return ret
-
-    return _list_nodes_full(location)
-
-
-def _vm_provider_driver(vm_):
-    alias, driver = vm_['driver'].split(':')
-    if alias not in __opts__['providers']:
-        return None
-
-    if driver not in __opts__['providers'][alias]:
-        return None
-
-    return driver == 'ec2'
+    return _list_nodes_full(location or get_location())
 
 
 def _extract_name_tag(item):
@@ -4366,34 +4346,6 @@ def show_keypair(kwargs=None, call=None):
     return data
 
 
-def describe_keypairs(kwargs=None, call=None):
-    '''
-    list SSH keypairs
-    '''
-    if not kwargs:
-        kwargs = {}
-
-    params = {'Action': 'DescribeKeyPairs'}
-    if 'keyname' in kwargs:
-        params['KeyName.1'] = kwargs['keyname']
-
-    data = aws.query(params,
-                     return_url=True,
-                     location=get_location(),
-                     provider=get_provider(),
-                     opts=__opts__,
-                     sigver='4')
-    return data
-
-def describe_securitygroups(kwargs=None, call=None):
-    '''
-    Returns the SecurityGroupId of a SecurityGroupName to use
-    '''
-    params = {'Action': 'DescribeSecurityGroups'}
-    data = aws.query(params, location=get_location(),
-                        provider=get_provider(), opts=__opts__, sigver='4')
-    return data
-
 def delete_keypair(kwargs=None, call=None):
     '''
     Delete an SSH keypair
@@ -4420,6 +4372,39 @@ def delete_keypair(kwargs=None, call=None):
                      provider=get_provider(),
                      opts=__opts__,
                      sigver='4')
+    return data
+
+def describe_keypairs(kwargs=None, call=None):
+    '''
+    list SSH keypairs
+    '''
+    if call != 'function':
+        log.error(
+            'The _keypair function must be called with -f or --function.'
+        )
+        return False
+    if not kwargs:
+        kwargs = {}
+
+    params = {'Action': 'DescribeKeyPairs'}
+    if 'keyname' in kwargs:
+        params['KeyName.1'] = kwargs['keyname']
+
+    data = aws.query(params,
+                     return_url=True,
+                     location=get_location(),
+                     provider=get_provider(),
+                     opts=__opts__,
+                     sigver='4')
+    return data
+
+def describe_securitygroups(kwargs=None, call=None):
+    '''
+    Returns the SecurityGroupId of a SecurityGroupName to use
+    '''
+    params = {'Action': 'DescribeSecurityGroups'}
+    data = aws.query(params, location=get_location(),
+                        provider=get_provider(), opts=__opts__, sigver='4')
     return data
 
 
