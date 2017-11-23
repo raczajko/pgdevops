@@ -5,6 +5,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
     $scope.disp_name = $uibModalInstance.disp_name;
     $scope.instance = $uibModalInstance.instance;
     $scope.searchEvent = $uibModalInstance.searchEvent;
+    $scope.devRole = $uibModalInstance.devRole;
     $scope.availList = [];
     var addList = [];
     $scope.addToMetadata = false;

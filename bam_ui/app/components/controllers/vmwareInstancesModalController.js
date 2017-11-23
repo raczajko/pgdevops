@@ -4,6 +4,7 @@ angular.module('bigSQL.components').controller('vmwareInstancesModalController',
     $scope.lab = $uibModalInstance.lab;
     $scope.disp_name = $uibModalInstance.disp_name;
     $scope.instance = $uibModalInstance.instance;
+    $scope.devRole = $uibModalInstance.devRole;
     $scope.availList = [];
     $scope.vmSelected = -1;
     var addList = [];
@@ -54,6 +55,10 @@ angular.module('bigSQL.components').controller('vmwareInstancesModalController',
                             }
                         }
                     }
+                }
+                if (data.data.length == 0 ) {
+                    $scope.noRDS = true;
+                    $scope.noInstanceMsg = htmlMessages.getMessage('no-instances');
                 }
            }
         });

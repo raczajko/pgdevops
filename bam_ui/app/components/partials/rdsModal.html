@@ -22,7 +22,7 @@
         </div>
         <div class="col-sm-4 col-xs-4 col-md-4">
             <button style="margin-left: 20px;" ng-if="instance == 'db' && showUseConn && rdsList && !noRDS" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
-            <button style="margin-left: 20px;" ng-if="showAddSSHHost" class="btn btn-primary" ng-disabled="ec2Selected == -1" ng-click="addSSHHost()">Add Managed SSH Host</button>
+            <button style="margin-left: 20px;" ng-if="showAddSSHHost" class="btn btn-primary" ng-disabled="ec2Selected == -1 || devRole" ng-click="addSSHHost()">Add Managed SSH Host</button>
         </div>
     </div>
     <div class="row">
