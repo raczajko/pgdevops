@@ -15,6 +15,7 @@ angular.module('bigSQL.components').controller('azureIntegrationController', ['$
 	    modalInstance.lab = settingName;
 	    modalInstance.disp_name = disp_name;
 	    modalInstance.instance = instance;
+        modalInstance.devRole = $scope.devRole;
 	}
 
     var lablist = pgcRestApiCall.getCmdData('lablist');

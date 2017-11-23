@@ -56,9 +56,9 @@ angular.module('bigSQL.components').controller('addHostController', ['$scope', '
         		$scope.pgcDir = $scope.pgcDir.split('~/')[1];
         	}
 	        if(!$scope.editHost){
-	        	session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.connectionName, $scope.selected_cred_name]).then(function (err) {console.log(err)});
+	        	session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.connectionName, $scope.selected_cred_name]);
 	    	}else{
-	    		session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.connectionName, $scope.selected_cred_name, $scope.editHost.host_id]).then(function (err) {console.log(err)});
+	    		session.call('com.bigsql.registerHost',[$scope.hostName, $scope.pgcDir, $scope.connectionName, $scope.selected_cred_name, $scope.editHost.host_id]);
 	    	}
 	    	$scope.tryToConnect = true;
 

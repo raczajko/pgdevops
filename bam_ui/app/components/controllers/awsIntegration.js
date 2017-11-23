@@ -16,6 +16,7 @@ angular.module('bigSQL.components').controller('awsIntegrationController', ['$sc
 	    modalInstance.disp_name = disp_name;
 	    modalInstance.instance = instance;
         modalInstance.searchEvent = searchEvent;
+        modalInstance.devRole = $scope.devRole;
 	}
 
 	$scope.closeAlert = function (index) {

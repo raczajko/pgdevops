@@ -4,6 +4,7 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
     $scope.lab = $uibModalInstance.lab;
     $scope.disp_name = $uibModalInstance.disp_name;
     $scope.instance = $uibModalInstance.instance;
+    $scope.devRole = $uibModalInstance.devRole;
     $scope.availList = [];
     var addList = [];
     $scope.addToMetadata = false;
