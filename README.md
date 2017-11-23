@@ -1,4 +1,4 @@
-# pgDevOps by BigSQL #
+# pgDevOps #
 
 pgDevOps is a multi-user & multi-server PostgreSQL dev-ops web console that features integration with pgAdmin4.  
 
