@@ -6,7 +6,7 @@ It's a WSGI Python27 Flask application that runs cross-platform (Windows, OSX & 
 
 
 ### Setup python env
-Make sure you are running at least PIP 9.0.x
+Make sure you are running at least PIP 9.0.1
 
 ```
 #!bash
