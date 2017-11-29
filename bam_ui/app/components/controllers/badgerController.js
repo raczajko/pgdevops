@@ -19,7 +19,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
     $scope.retry = false;
     $scope.disableShowInstalled = false;
     $scope.badgerInstalled = false;
-    $scope.disableGenrate = false;
+    $scope.disableGenrate = true;
 
     $rootScope.$on('sessionCreated', function () {
         var sessPromise = PubSubService.getSession();
@@ -91,6 +91,7 @@ angular.module('bigSQL.components').controller('badgerController', ['$scope', '$
                 compStatus.then(function (data) {
                     if (data[0].is_installed != 0) {
                         $scope.badgerInstalled = true;
+                        $scope.disableGenrate = false;
                     }else{
                         $scope.disableGenrate = true;
                         var msg = 'pgBadger is not Installed. ';
