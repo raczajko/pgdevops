@@ -128,7 +128,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Network :</label>
                     <div class="col-sm-7" ng-if="!gettingVpcs">
-                        <select class="form-control" ng-class="(data.subnet_id || data.security_group)? '' : 'back-red'" ng-change="changeSubnet()" ng-options="sub.vpc as sub.vpc for sub in subnets" ng-model="data.network_name">
+                        <select class="form-control" ng-class="(data.subnet_id || data.security_group)? '' : 'back-red'" ng-change="changeSubnet()" ng-options="sub.vpc as sub.vpc for sub in subnets | unique: 'vpc'" ng-model="data.network_name">
                             <option value="">--select--</option>
                         </select>
                     </div>
