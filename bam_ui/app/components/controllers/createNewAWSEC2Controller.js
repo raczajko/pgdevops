@@ -116,11 +116,13 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
 
     $scope.changeSubnet = function (argument) {
         if ($scope.data.network_name) {
+            var vpc_subnets = [];
             for (var i = $scope.subnets.length - 1; i >= 0; i--) {
                if($scope.subnets[i].vpc == $scope.data.network_name){
-                $scope.data.subnet_id = $scope.subnets[i].subnet_group;
+                vpc_subnets.push($scope.subnets[i].subnet_group);
                }
             }
+            $scope.subnetGroups = vpc_subnets;
         }else{
             $scope.data.subnet_id = '';
         }
