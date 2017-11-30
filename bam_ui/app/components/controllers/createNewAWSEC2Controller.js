@@ -42,10 +42,26 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         $scope.loading = false;
         $scope.regions = data;
         $scope.data.region = $scope.regions[0].region;
+        $scope.getImages();
         $scope.getSecGroup();
         $scope.getKeyPair();
         $scope.getVpc();
     });
+
+    $scope.getImages = function (argument) {
+        $scope.gettingImages = true;
+        var image_response = pgcRestApiCall.getCmdData('metalist images --type vm --region=' + $scope.data.region + ' --cloud=aws');
+        image_response.then(function(data){
+            if(data.state != 'completed'){
+                $scope.showErrMsg = true;
+                $scope.errMsg = data[0].msg;
+            }
+            else{
+                $scope.images_resp = data.data;
+            }
+            $scope.gettingImages = false;
+        });
+    }
 
     $scope.getSecGroup = function (argument) {
         $scope.gettingSecGrps = true;
@@ -115,6 +131,7 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
     $scope.regionChange = function (region) {
         session.call('com.bigsql.rdsMetaList', ['instance-class', '', $scope.data.region, '9.6.3']);  
         //session.call('com.bigsql.rdsMetaList', ['vpc-list', '', $scope.data.region, '']);
+        $scope.getImages();
         $scope.getSecGroup();
         $scope.getKeyPair();
         $scope.getVpc();
