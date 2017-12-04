@@ -69,7 +69,7 @@ angular.module('bigSQL.components').controller('createNewAzureVMController', ['$
     $scope.storageChange = function (argument) {
         $scope.loadingStorageAccounts = true;
         $scope.data.subnet_name = ''
-        var getStorageAcs = pgcRestApiCall.getCmdData('metalist storage-accounts --cloud azure --region '+ $scope.data.region  + ' --group ' + $scope.data.group_name + ' --type vm');
+        var getStorageAcs = pgcRestApiCall.getCmdData('metalist storage-accounts --cloud azure --region '+ $scope.data.region  + ' --group ' + $scope.data.group_name + ' --type db');
         getStorageAcs.then(function (data) {
             if(data.state != 'completed'){
                 $scope.showErrMsg = true;
