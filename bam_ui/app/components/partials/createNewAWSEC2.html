@@ -36,17 +36,12 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Choose AMI :</label>
-                    <div class="col-sm-8" ng-if="!gettingImages">
-                        <select class="form-control" id="images" ng-class="data.imageId ? '' : 'back-red'" ng-options="img.ImageId as img.Name for img in images_resp" ng-model="data.image_id">
-                            <option value="">--select--</option>
-                        </select>
-
-                        <!--<select class="form-control" id="image_id" ng-class="data.image_id? '' : 'back-red'" ng-model="data.image_id">
+                    <div class="col-sm-8">
+                        <select class="form-control" id="image_id" ng-class="data.image_id? '' : 'back-red'" ng-model="data.image_id">
                             <option value="ami-ae7bfdb8">CentOS 7</option>
                             <option value="ami-cd0f5cb6">Ubuntu Server 16.04 LTS</option>
-                        </select>-->
+                        </select>
                     </div>
-                    <div class="col-sm-2" ng-if="gettingImages"><i class="fa fa-spinner fa-pulse fa-2x"></i></div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Instance Name :</label>

@@ -14,7 +14,7 @@ import json
 from Components import Components as pgc
 
 from flask_security import login_required, roles_required, current_user, roles_accepted
-from flask_caching import Cache
+# from flask_login import current_user
 from flask_mail import Mail
 from flask_babel import Babel, gettext
 from pgadmin.utils.session import create_session_interface
@@ -51,8 +51,6 @@ PGC_LOGS = os.getenv("PGC_LOGS", "")
 config.APP_NAME = "pgDevOps"
 config.LOGIN_NAME = "pgDevOps"
 application = Flask(__name__)
-
-cache = Cache(application, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': PGC_HOME+"/data/.cache/"})
 
 application.wsgi_app = ProxyFix(application.wsgi_app)
 
@@ -188,9 +186,6 @@ application.register_blueprint(_cloud_create, url_prefix='/api/pgc/create')
 
 from ProvisionHandler import _pgc_provision
 application.register_blueprint(_pgc_provision, url_prefix='/api/pgc/provision')
-
-from MetalistHandler import _metalist
-application.register_blueprint(_metalist, url_prefix='/api/pgc/metalist')
 
 from BackupRestore import _backrest
 application.register_blueprint(_backrest, url_prefix='/api/pgc')
