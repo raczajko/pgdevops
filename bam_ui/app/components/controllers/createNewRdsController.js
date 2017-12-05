@@ -112,8 +112,12 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
             if($scope.dbEngVersions[i].EngineVersion == $scope.data.engine_version){
                 $scope.dbGroups = $scope.dbEngVersions[i].DBParameterGroups;
                 $scope.optionGroups = $scope.dbEngVersions[i].OptionGroups;
-                $scope.data.db_parameter_group = $scope.dbGroups[0].DBParameterGroupName;
-                $scope.data.option_group = $scope.optionGroups[0].OptionGroupName;
+                if($scope.dbGroups.length > 0){
+                    $scope.data.db_parameter_group = $scope.dbGroups[0].DBParameterGroupName;
+                }
+                if($scope.optionGroups.length > 0){
+                    $scope.data.option_group = $scope.optionGroups[0].OptionGroupName;
+                }
             }
         }
     }
