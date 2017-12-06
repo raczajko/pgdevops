@@ -24,13 +24,9 @@
                     <div class="col-sm-8">
                         <select class="form-control" id="select-ins-type" ng-class="data.instance_type? '' : 'back-red'" ng-change="typeChange(typeSelect.type)" ng-model="data.instance_type">
                             <option value="">--select--</option>
-                            <option value="t2.micro">t2.micro</option>
-                            <!-- <option ng-repeat="type in types" value="{{ type.DBInstanceClass }}" ng-if="!type.v_cpu">
-                                {{type.DBInstanceClass}}  
+                            <option ng-repeat="type in types" value="{{ type.instance }}">
+                                {{type.instance}}
                             </option>
-                            <option ng-repeat="type in types" value="{{ type.DBInstanceClass }}" ng-if="type.v_cpu">
-                                {{type.DBInstanceClass}} -- {{type.v_cpu}}(vCPU), {{type.memory}} GiB RAM  
-                            </option> -->
                         </select>
                     </div>
                 </div>

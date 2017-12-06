@@ -47,6 +47,10 @@ angular.module('bigSQL.components').controller('createNewAWSEC2Controller', ['$s
         $scope.getVpc();
     });
 
+    var instanceTypes = pgcRestApiCall.getCmdData('metalist aws-ec2');
+    instanceTypes.then(function(data){
+        $scope.types = data;
+    });
     $scope.getSecGroup = function (argument) {
         $scope.gettingSecGrps = true;
         var vpc_subnet = pgcRestApiCall.getCmdData('metalist sec-group --type vm --region=' + $scope.data.region + ' --cloud=aws');
