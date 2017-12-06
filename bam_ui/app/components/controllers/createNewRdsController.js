@@ -219,8 +219,10 @@ angular.module('bigSQL.components').controller('createNewRdsController', ['$scop
                     $scope.secondStep = false;
                     $scope.thirdStep = true;
                     $scope.networkSec = data.data;
-                    $scope.vpc = { select : $scope.networkSec[0].vpc }
-                    $scope.vpcChange();
+                    if($scope.networkSec.lenght > 0){
+                        $scope.vpc = { select : $scope.networkSec[0].vpc }
+                        $scope.vpcChange();
+                    }
                 }
                 $scope.loading = false;
             });
