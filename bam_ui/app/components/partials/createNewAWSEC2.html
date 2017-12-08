@@ -136,7 +136,9 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Subnet :</label>
                     <div class="col-sm-7" ng-if="!gettingVpcs">
-                        <input type="text" class="form-control" ng-class="(data.subnet_id || data.security_group)? '' : 'back-red'" ng-model="data.subnet_id" name="">
+                        <select class="form-control" ng-options="sub for sub in subnetGroups" ng-class="(data.subnet_id || data.security_group || !data.network_name)? '' : 'back-red'" ng-disabled="!data.network_name" ng-model="data.subnet_id">
+                            <option value="">--select--</option>
+                        </select>
                     </div>
                     <div class="col-sm-1" ng-if="!gettingVpcs">                             
                         <i tooltip-append-to-body="true" uib-tooltip="A range of IP addresses in your VPC that can be used to isolate different EC2 resources from each other or from the Internet. Each subnet resides in one Availability Zone." class="fa fa-info-circle" aria-hidden="true" style="margin-left: -25px;"></i> 
