@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('azureDBModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'pgcRestApiCall', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', '$sce', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, pgcRestApiCall, bamAjaxCall, htmlMessages, $uibModal, $cookies, $sce) {
+angular.module('bigSQL.components').controller('azureDBModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'pgcRestApiCall', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', '$sce', '$timeout', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, pgcRestApiCall, bamAjaxCall, htmlMessages, $uibModal, $cookies, $sce, $timeout) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
@@ -31,46 +31,89 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
         }
     })
 
-    var userInfoData = pgcRestApiCall.getCmdData('userinfo');
-    userInfoData.then(function(data) {
-        $scope.userInfo = data;
-        var cmd = 'instances '+ $scope.instance +' --email '+$scope.userInfo.email + ' --cloud '+$scope.lab
-        var getData = pgcRestApiCall.getCmdData(cmd);
-        getData.then(function(data){
-            if (data.state == 'info') {
-                $scope.discoverMsg = data.message;
-            }else if (data.state=="error") {
-                $scope.loadingSpinner = false;
-                $scope.errMsg = data.message;
-                // $rootScope.$emit('disableLab', $scope.lab, 'off')
-            }else if(data.state=="completed"){
-                $scope.loadingSpinner = false;
-                $scope.showUseConn = true;
-                $scope.availList = [];
-                if($scope.instance == 'db'){
-                    $scope.rdsList = data.data;
-                    for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
-                        if ($scope.rdsList[i].is_in_pglist == true) {
-                            $scope.rdsList[i].selected = true;
-                            $scope.checked = true;
+    $scope.counter = 20;
+    $scope.autorefreshMsg = htmlMessages.getMessage('autorefreshMsg');
+    $scope.showCounter = false;
+    var stopped;
+    var autoRefreshCookie = $cookies.get('autoRefreshCookie');
+    $scope.isAutoRefresh = {value : true};
+    if (autoRefreshCookie != undefined) {
+        $scope.isAutoRefresh.value = (autoRefreshCookie == 'true');
+    }
+    $scope.countdown = function() {
+        $timeout.cancel(stopped);
+        stopped = $timeout(function() {
+            $scope.counter--; 
+            if ($scope.counter < 1) {
+                $scope.loadingSpinner = true;
+                getInstances(); 
+                $scope.counter = 20; 
+            }else{
+                $scope.countdown();
+            }   
+        }, 1000);
+    };
+
+    $scope.autoRefresh = function (argument) {
+        if ($scope.isAutoRefresh.value) {
+            $scope.showCounter = true;
+            $scope.countdown();
+        }else{
+            $scope.counter = 20;
+            $timeout.cancel(stopped);
+        }
+        $cookies.put('autoRefreshCookie', $scope.isAutoRefresh.value);
+    }
+
+
+    function getInstances(argument) {
+        var userInfoData = pgcRestApiCall.getCmdData('userinfo');
+        userInfoData.then(function(data) {
+            $scope.userInfo = data;
+            var cmd = 'instances '+ $scope.instance +' --email '+$scope.userInfo.email + ' --cloud '+$scope.lab
+            var getData = pgcRestApiCall.getCmdData(cmd);
+            getData.then(function(data){
+                if (data.state == 'info') {
+                    $scope.discoverMsg = data.message;
+                }else if (data.state=="error") {
+                    $scope.loadingSpinner = false;
+                    $scope.errMsg = data.message;
+                    // $rootScope.$emit('disableLab', $scope.lab, 'off')
+                }else if(data.state=="completed"){
+                    $scope.loadingSpinner = false;
+                    $scope.showUseConn = true;
+                    $scope.availList = [];
+                    if($scope.instance == 'db'){
+                        $scope.rdsList = data.data;
+                        for (var i = $scope.rdsList.length - 1; i >= 0; i--) {
+                            if ($scope.rdsList[i].is_in_pglist == true) {
+                                $scope.rdsList[i].selected = true;
+                                $scope.checked = true;
+                            }
+                            $scope.availList.push($scope.rdsList[i]);
                         }
-                        $scope.availList.push($scope.rdsList[i]);
+                        $scope.newAvailList = $($scope.availList).filter(function(i,n){ return n.is_in_pglist != true });
                     }
-                    $scope.newAvailList = $($scope.availList).filter(function(i,n){ return n.is_in_pglist != true });
-                }
-                else if($scope.instance == 'vm'){
-                    $scope.vmList = data.data;
-                    $scope.showAddSSHHost = true;
-                }
+                    else if($scope.instance == 'vm'){
+                        $scope.vmList = data.data;
+                        $scope.showAddSSHHost = true;
+                    }
 
-                if (data.data.length == 0 ) {
-                    $scope.noRDS = true;
-                    $scope.noInstanceMsg = htmlMessages.getMessage('no-instances');
-                }
-           }
-        });
-    });
+                    if (data.data.length == 0 ) {
+                        $scope.noRDS = true;
+                        $scope.noInstanceMsg = htmlMessages.getMessage('no-instances');
+                    }
+                    if ($scope.isAutoRefresh.value) {
+                        $timeout.cancel(stopped);
+                        $scope.showCounter = true;
+                        $scope.countdown();
+                    }
+               }
+            });
+        });   
+    }
 
+    getInstances();
 
     $scope.createConnPgadmin = function(index){
         $scope.addToMetadata = true;
@@ -94,6 +137,7 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
         var addToMetaData = bamAjaxCall.postData('/api/add_to_metadata', multiArgs );
         addToMetaData.then(function (argument) {
             $window.location = '#/hosts'
+            $timeout.cancel(stopped);
             $rootScope.$emit('refreshPgList');
             $rootScope.$emit('refreshUpdateDate');
             $uibModalInstance.dismiss('cancel');
@@ -167,6 +211,7 @@ angular.module('bigSQL.components').controller('azureDBModalController', ['$scop
 
     $scope.cancel = function () {
         $rootScope.$emit('refreshUpdateDate');
+        $timeout.cancel(stopped);
         $uibModalInstance.dismiss('cancel');
     };
 

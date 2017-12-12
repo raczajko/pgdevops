@@ -6,12 +6,14 @@
         <h4 class="modal-title pull-left"> {{disp_name}} </h4>
     </div>
     <div class="pull-right">
-        <button style="margin-left: 20px;" class="btn btn-primary" ng-if="instance == 'db' && showUseConn && rdsList && !noRDS" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
-        <button style="margin-left: 20px;" ng-if="showAddSSHHost" class="btn btn-primary" ng-disabled="vmSelected == -1 || devRole" ng-click="addSSHHost()">Add Managed SSH Host</button>
+        <label ng-if="showUseConn && !loadingSpinner"><input type="checkbox" name="" ng-model="isAutoRefresh.value" class="form-check-input" id="autoRefreshAction" ng-change="autoRefresh()"> Auto Refresh</label>
+        <button style="margin-left: 20px;" class="btn btn-primary" ng-if="instance == 'db' && showUseConn && rdsList && !noRDS && !loadingSpinner" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
+        <button style="margin-left: 20px;" ng-if="showAddSSHHost && !loadingSpinner" class="btn btn-primary" ng-disabled="vmSelected == -1 || devRole" ng-click="addSSHHost()">Add Managed SSH Host</button>
     </div>
 </div>
 <uib-alert ng-repeat="alert in alerts" type="{{ alert.type }}" dismiss-on-timeout="8000" close="closeAlert()"
            class="uib-text"><span ng-bind-html="alert.msg"></span><a ng-if="labNotEnabled" href="#/components/settings" ng-click="cancel()">settings</a></uib-alert>
+<h5 class="modal-title pull-right" id="refreshCounter" ng-if="showCounter && isAutoRefresh.value && !loadingSpinner">{{autorefreshMsg}} {{counter}} seconds</h5>
 
 <div class="modal-body">
     <div class="row" ng-if="!loadingSpinner">
@@ -32,11 +34,11 @@
             </div>
         </div>
         <div class="col-md-12 col-xs-12">
-            <div class="well" ng-if="noRDS">
+            <div class="well" ng-if="noRDS && !loadingSpinner">
                 <div> {{noInstanceMsg}} </div>
             </div>
         </div>
-        <div ng-if="availList.length > 0 && !addToMetadata">
+        <div ng-if="availList.length > 0 && !addToMetadata && !loadingSpinner">
             <div class="box-body">
                 <div id="serversTable">
                 <div class="component_head_box">

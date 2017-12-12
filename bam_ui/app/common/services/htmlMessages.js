@@ -31,7 +31,8 @@ angular.module('bigSQL.common').factory('htmlMessages', function ( $q, $filter) 
         'pgbadger-dev-role' : 'pgBadger is not installed. Please contact Administrator.',
         'plprofiler-dev-role' : 'plProfiler is not installed. Please contact Administrator.',
         'postgres-notinstalled-dev-role' : 'No Postgres component Installed/ Initialized. Please contact Administrator.',
-        'no-instances' : 'No Instances found.'
+        'no-instances' : 'No Instances found.',
+        'autorefreshMsg' : 'List will automatically refresh in '
     };
 
     return {

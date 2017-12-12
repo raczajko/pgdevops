@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('vmwareInstancesModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'pgcRestApiCall', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', '$sce', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, pgcRestApiCall, bamAjaxCall, htmlMessages, $uibModal, $cookies, $sce) {
+angular.module('bigSQL.components').controller('vmwareInstancesModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'pgcRestApiCall', 'bamAjaxCall', 'htmlMessages', '$uibModal', '$cookies', '$sce', '$timeout', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, pgcRestApiCall, bamAjaxCall, htmlMessages, $uibModal, $cookies, $sce, $timeout) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
@@ -28,41 +28,84 @@ angular.module('bigSQL.components').controller('vmwareInstancesModalController',
         }
     })
 
-    var userInfoData = pgcRestApiCall.getCmdData('userinfo');
-    userInfoData.then(function(data) {
-        $scope.userInfo = data;
-        var cmd = 'instances '+ $scope.instance +' --email '+$scope.userInfo.email + ' --cloud '+$scope.lab
-        var getData = pgcRestApiCall.getCmdData(cmd);
-        getData.then(function(data){
-            if (data.state == 'info') {
-                $scope.discoverMsg = data.message;
-            }else if (data.state=="error") {
-                $scope.loadingSpinner = false;
-                $scope.errMsg = data.message;
-                // $rootScope.$emit('disableLab', $scope.lab, 'off')
-            }else if(data.state=="completed"){
-                $scope.showAddSSHHost = true;
-                $scope.loadingSpinner = false;
-                $scope.showUseConn = true;
-                $scope.availList = [];
-                if($scope.instance == 'vm'){
-                    $scope.vmList = data.data;
-                    for (var i = $scope.vmList.length - 1; i >= 0; i--) {
-                        if($scope.vmList[i].private_ips.length > 0){
-                            var  RegE = /^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$/ ;
-                            if($scope.vmList[i].private_ips[0].match(RegE)) {
-                                   $scope.vmList[i].private_ipv4 = $scope.vmList[i].private_ips[0];
+    $scope.counter = 20;
+    $scope.autorefreshMsg = htmlMessages.getMessage('autorefreshMsg');
+    $scope.showCounter = false;
+    var stopped;
+    var autoRefreshCookie = $cookies.get('autoRefreshCookie');
+    $scope.isAutoRefresh = {value : true};
+    if (autoRefreshCookie != undefined) {
+        $scope.isAutoRefresh.value = (autoRefreshCookie == 'true');
+    }
+    $scope.countdown = function() {
+        $timeout.cancel(stopped);
+        stopped = $timeout(function() {
+            $scope.counter--; 
+            if ($scope.counter < 1) {
+                $scope.loadingSpinner = true;
+                getInstances(); 
+                $scope.counter = 20; 
+            }else{
+                $scope.countdown();
+            }   
+        }, 1000);
+    };
+
+    $scope.autoRefresh = function (argument) {
+        if ($scope.isAutoRefresh.value) {
+            $scope.showCounter = true;
+            $scope.countdown();
+        }else{
+            $scope.counter = 20;
+            $timeout.cancel(stopped);
+        }
+        $cookies.put('autoRefreshCookie', $scope.isAutoRefresh.value);
+    }
+
+    function getInstances(argument) {
+        var userInfoData = pgcRestApiCall.getCmdData('userinfo');
+        userInfoData.then(function(data) {
+            $scope.userInfo = data;
+            var cmd = 'instances '+ $scope.instance +' --email '+$scope.userInfo.email + ' --cloud '+$scope.lab
+            var getData = pgcRestApiCall.getCmdData(cmd);
+            getData.then(function(data){
+                if (data.state == 'info') {
+                    $scope.discoverMsg = data.message;
+                }else if (data.state=="error") {
+                    $scope.loadingSpinner = false;
+                    $scope.errMsg = data.message;
+                    // $rootScope.$emit('disableLab', $scope.lab, 'off')
+                }else if(data.state=="completed"){
+                    $scope.showAddSSHHost = true;
+                    $scope.loadingSpinner = false;
+                    $scope.showUseConn = true;
+                    $scope.availList = [];
+                    if($scope.instance == 'vm'){
+                        $scope.vmList = data.data;
+                        for (var i = $scope.vmList.length - 1; i >= 0; i--) {
+                            if($scope.vmList[i].private_ips.length > 0){
+                                var  RegE = /^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$/ ;
+                                if($scope.vmList[i].private_ips[0].match(RegE)) {
+                                       $scope.vmList[i].private_ipv4 = $scope.vmList[i].private_ips[0];
+                                }
                             }
                         }
                     }
-                }
-                if (data.data.length == 0 ) {
-                    $scope.noRDS = true;
-                    $scope.noInstanceMsg = htmlMessages.getMessage('no-instances');
-                }
-           }
-        });
-    });
+                    if (data.data.length == 0 ) {
+                        $scope.noRDS = true;
+                        $scope.noInstanceMsg = htmlMessages.getMessage('no-instances');
+                    }
+                    if ($scope.isAutoRefresh.value) {
+                        $timeout.cancel(stopped);
+                        $scope.showCounter = true;
+                        $scope.countdown();
+                    }
+               }
+            });
+        });   
+    }
+
+    getInstances();
 
     $scope.addSSHHost = function () {
         //$uibModalInstance.dismiss('cancel');
@@ -121,6 +164,7 @@ angular.module('bigSQL.components').controller('vmwareInstancesModalController',
 
     $scope.cancel = function () {
         $rootScope.$emit('refreshUpdateDate');
+        $timeout.cancel(stopped);
         $uibModalInstance.dismiss('cancel');
     };
 

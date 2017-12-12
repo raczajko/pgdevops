@@ -1,4 +1,4 @@
-angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'pgcRestApiCall', 'htmlMessages', '$uibModal', '$cookies', '$sce', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, pgcRestApiCall, htmlMessages, $uibModal, $cookies, $sce) {
+angular.module('bigSQL.components').controller('rdsModalController', ['$scope', '$uibModalInstance', 'PubSubService', 'UpdateComponentsService', 'MachineInfo', '$http', '$window', '$interval', '$rootScope', 'bamAjaxCall', 'pgcRestApiCall', 'htmlMessages', '$uibModal', '$cookies', '$sce', '$timeout', function ($scope, $uibModalInstance, PubSubService, UpdateComponentsService, MachineInfo, $http, $window, $interval, $rootScope, bamAjaxCall, pgcRestApiCall, htmlMessages, $uibModal, $cookies, $sce, $timeout) {
 
     $scope.loadingSpinner = true;
     $scope.lab = $uibModalInstance.lab;
@@ -43,8 +43,41 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
         }
     });
 
-    $scope.regionChange = function (region) {
+    $scope.counter = 20;
+    $scope.autorefreshMsg = htmlMessages.getMessage('autorefreshMsg');
+    $scope.showCounter = false;
+    var stopped;
+    var autoRefreshCookie = $cookies.get('autoRefreshCookie');
+    $scope.isAutoRefresh = {value : true};
+    if (autoRefreshCookie != undefined) {
+        $scope.isAutoRefresh.value = (autoRefreshCookie == 'true');
+    }
+    $scope.countdown = function() {
+        stopped = $timeout(function() {
+            $scope.counter--; 
+            if ($scope.counter < 1) {
+                $scope.regionChange($scope.region); 
+                $scope.counter = 20; 
+            }else{
+                $scope.countdown();
+            }   
+        }, 1000);
+    };
 
+    $scope.autoRefresh = function (argument) {
+        if ($scope.isAutoRefresh.value) {
+            $scope.showCounter = true;
+            $scope.countdown();
+        }else{
+            $scope.counter = 20;
+            $timeout.cancel(stopped);
+        }
+        $cookies.put('autoRefreshCookie', $scope.isAutoRefresh.value);
+    }
+
+    $scope.regionChange = function (region) {
+        $scope.counter = 20;
+        $timeout.cancel(stopped);
         $scope.showUseConn = true;
         if (region==null) {
             region = '';
@@ -114,7 +147,11 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
                     $scope.noRDS = true;
                     $scope.noInstanceMsg = htmlMessages.getMessage('no-instances');
                 }
-           }
+                if ($scope.isAutoRefresh.value) {
+                    $scope.showCounter = true;
+                    $scope.countdown();
+                }
+            }
            $scope.$apply();
         });
     }
@@ -163,6 +200,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
             $window.location = '#/hosts'
             $rootScope.$emit('refreshPgList');
             $rootScope.$emit('refreshUpdateDate');
+            $timeout.cancel(stopped);
             $uibModalInstance.dismiss('cancel');
         } );
     };
@@ -234,6 +272,7 @@ angular.module('bigSQL.components').controller('rdsModalController', ['$scope', 
 
     $scope.cancel = function () {
         $rootScope.$emit('refreshUpdateDate');
+        $timeout.cancel(stopped);
         $uibModalInstance.dismiss('cancel');
     };
 
