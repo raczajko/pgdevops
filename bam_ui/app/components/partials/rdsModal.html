@@ -24,7 +24,7 @@
         <div class="col-sm-4 col-xs-4 col-md-5">
             <button style="margin-left: 20px;" ng-if="instance == 'db' && showUseConn && rdsList && !noRDS" class="btn btn-primary" ng-disabled="!isAllSelected && !checked" ng-click="createConnPgadmin()">Use Connections</button>
             <button style="margin-left: 20px;" ng-if="showAddSSHHost" class="btn btn-primary" ng-disabled="ec2Selected == -1 || devRole" ng-click="addSSHHost()">Add Managed SSH Host</button>
-            <label class="pull-right" ng-if="showUseConn"><input type="checkbox" name="" ng-model="isAutoRefresh.value" class="form-check-input" id="autoRefreshAction" ng-change="autoRefresh()"> Auto Refresh</label>
+            <label class="pull-right" ng-if="showUseConn && !errMsg"><input type="checkbox" name="" ng-model="isAutoRefresh.value" class="form-check-input" id="autoRefreshAction" ng-change="autoRefresh()"> Auto Refresh</label>
         </div>
     </div>
     <div class="row">
