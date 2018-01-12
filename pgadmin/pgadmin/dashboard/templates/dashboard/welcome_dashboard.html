@@ -9,7 +9,8 @@
                 <map name="pgdevops">
                   <area shape="rect" coords="122,58,400,350" target="_blank" href="http://www.pgdevops.org">
                 </map>
-                <img usemap="#pgdevops" src="{{ url_for('dashboard.static', filename='img/welcome_logo.png') }}" alt="pgAdmin 4">
+                <img usemap="#pgdevops" src="{{ url_for('dashboard.static', filename='img/welcome_logo.png') }}"
+                alt="{{ config.APP_NAME }} {{ _('logo') }}">
                 </div>
                 <div style="display:block;float:left;padding: 0px 0px 0px 50px;">
                 <h3>{{ _('BigSQL Info') }}</h3>
@@ -21,7 +22,7 @@
                 <div style="display: inline-block;">
                 <h4>{{ _('Feature rich') }} | {{ _('Maximises PostgreSQL') }} | {{ _('Open Source') }} </h4>
                 <p>
-                    {{ _('pgAdmin is an open source administration and management tool for the PostgreSQL database. The tools include a graphical administration interface, an SQL query tool, a procedural code debugger and much more. The tool is designed to answer the needs of developers, DBAs and system administrators alike.') }}
+                    {{ _('pgAdmin is an Open Source administration and management tool for the PostgreSQL database. It includes a graphical administration interface, an SQL query tool, a procedural code debugger and much more. The tool is designed to answer the needs of developers, DBAs and system administrators alike.') }}
                 </p>
                 </div>
 
@@ -61,25 +62,25 @@
             <div class="well well-lg">
                 <div class="row">
                     <div class="col-xs-3 dashboard-link">
-                        <a href="http://www.postgresql.org/docs" target="_new">
+                        <a href="http://www.postgresql.org/docs" target="_blank">
                             <span class="fa fa-4x dashboard-icon dashboard-pg-doc" aria-hidden="true"></span><br/>
                             {{ _('PostgreSQL Documentation') }}
                         </a>
                     </div>
                     <div class="col-xs-3 dashboard-link">
-                        <a href="https://www.pgadmin.org" target="_new">
+                        <a href="https://www.pgadmin.org" target="_blank">
                             <span class="fa fa-4x dashboard-icon fa-globe" aria-hidden="true"></span><br/>
                             {{ _('pgAdmin Website') }}
                         </a>
                     </div>
                     <div class="col-xs-3 dashboard-link">
-                        <a href="http://planet.postgresql.org" target="_new">
+                        <a href="http://planet.postgresql.org" target="_blank">
                             <span class="fa fa-4x dashboard-icon fa-book" aria-hidden="true"></span><br/>
                             {{ _('Planet PostgreSQL') }}
                         </a>
                     </div>
                     <div class="col-xs-3 dashboard-link">
-                        <a href="http://www.postgresql.org/community" target="_new">
+                        <a href="http://www.postgresql.org/community" target="_blank">
                             <span class="fa fa-4x dashboard-icon fa-users" aria-hidden="true"></span><br/>
                             {{ _('Community Support') }}
                         </a>

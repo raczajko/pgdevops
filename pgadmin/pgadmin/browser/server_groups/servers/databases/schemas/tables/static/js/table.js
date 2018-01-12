@@ -90,10 +90,23 @@ define('pgadmin.node.table', [
           applies: ['object', 'context'], callback: 'reset_table_stats',
           category: 'Reset', priority: 4, label: gettext('Reset Statistics'),
           icon: 'fa fa-bar-chart', enable : 'canCreate'
+        },{
+          name: 'count_table_rows', node: 'table', module: this,
+          applies: ['object', 'context'], callback: 'count_table_rows',
+          category: 'Count', priority: 2, label: gettext('Count Rows'),
+          enable: true
         }
         ]);
         pgBrowser.Events.on(
           'pgadmin:browser:node:table:updated', this.onTableUpdated, this
+        );
+        pgBrowser.Events.on(
+          'pgadmin:browser:node:type:cache_cleared',
+          this.handle_cache, this
+        );
+        pgBrowser.Events.on(
+          'pgadmin:browser:node:domain:cache_cleared',
+          this.handle_cache, this
         );
       },
       canDrop: pgBrowser.Nodes['schema'].canChildDrop,
@@ -206,8 +219,8 @@ define('pgadmin.node.table', [
             }
           }, function() {}
         );
-       },
-       reset_table_stats: function(args) {
+        },
+        reset_table_stats: function(args) {
           var input = args || {},
             obj = this,
             t = pgBrowser.tree,
@@ -219,7 +232,7 @@ define('pgadmin.node.table', [
 
           alertify.confirm(
             gettext('Reset statistics'),
-            S(gettext('Are you sure you want to reset the statistics for table %s?')).sprintf(d._label).value(),
+            S(gettext('Are you sure you want to reset the statistics for table "%s"?')).sprintf(d._label).value(),
             function (e) {
               if (e) {
                 var data = d;
@@ -255,7 +268,41 @@ define('pgadmin.node.table', [
             },
             function() {}
           );
-       }
+        },
+        count_table_rows: function(args) {
+          var input = args || {},
+          obj = this,
+          t = pgBrowser.tree,
+          i = input.item || t.selected(),
+          d = i && i.length == 1 ? t.itemData(i) : undefined;
+          if (!d)
+            return false;
+
+          // Fetch the total rows of a table
+          $.ajax({
+            url: obj.generate_url(i, 'count_rows' , d, true),
+            type:'GET',
+            success: function(res) {
+                alertify.success(res.info);
+                d.rows_cnt = res.data.total_rows;
+                t.unload(i);
+                t.setInode(i);
+                t.deselect(i);
+                setTimeout(function() {
+                  t.select(i);
+                }, 10);
+            },
+            error: function(xhr, status, error) {
+              try {
+                var err = $.parseJSON(xhr.responseText);
+                if (err.success == 0) {
+                  alertify.error(err.errormsg);
+                }
+              } catch (e) {}
+              t.unload(i);
+            }
+          });
+        }
       },
       model: pgBrowser.Node.Model.extend({
         defaults: {
@@ -546,15 +593,12 @@ define('pgadmin.node.table', [
                         m.destroy();
                       })
                       if (primary_key_column_coll.length == 0) {
-                        setTimeout(function () {
-                          // There will be only on primary key so remove the first one.
-                          primary_key_coll.remove(primary_key_coll.first());
                           /* Ideally above line of code should be "primary_key_coll.reset()".
                            * But our custom DataCollection (extended from Backbone collection in datamodel.js)
                            * does not respond to reset event, it only supports add, remove, change events.
                            * And hence no custom event listeners/validators get called for reset event.
                            */
-                        }, 10);
+                          primary_key_coll.remove(primary_key_coll.first());
                       }
                     }
                     primary_key_column_coll.trigger('pgadmin:multicolumn:updated', primary_key_column_coll);
@@ -635,8 +679,8 @@ define('pgadmin.node.table', [
               }
             },{
               id: 'check_constraint', label: gettext('Check constraint'),
-              model: pgBrowser.Nodes['check_constraints'].model,
-              subnode: pgBrowser.Nodes['check_constraints'].model,
+              model: pgBrowser.Nodes['check_constraint'].model,
+              subnode: pgBrowser.Nodes['check_constraint'].model,
               editable: false, type: 'collection',
               group: gettext('Check'), mode: ['edit', 'create'],
               canEdit: true, canDelete: true, deps:['is_partitioned'],
@@ -781,7 +825,24 @@ define('pgadmin.node.table', [
         },{
           id: 'rows_cnt', label: gettext('Rows (counted)'), cell: 'string',
           type: 'text', mode: ['properties'], group: gettext('Advanced'),
-          disabled: 'inSchema'
+          disabled: 'inSchema', control: Backform.InputControl.extend({
+            formatter: {
+               fromRaw: function (rawData, model) {
+                  var t = pgAdmin.Browser.tree,
+                  i = t.selected(),
+                  d = i && i.length == 1 ? t.itemData(i) : undefined;
+
+                  // Return the actual rows count if the selected node has already counted.
+                  if(d && d.rows_cnt && parseInt(d.rows_cnt, 10) > 0)
+                    return d.rows_cnt;
+                  else
+                    return rawData;
+               },
+               toRaw: function (formattedData, model) {
+                  return formattedData;
+               }
+            }
+          })
         },{
           id: 'relhassubclass', label: gettext('Inherits tables?'), cell: 'switch',
           type: 'switch', mode: ['properties'], group: gettext('Advanced'),
@@ -824,9 +885,9 @@ define('pgadmin.node.table', [
           editable: false, type: 'select2', select2: {allowClear: false},
           group: 'partition', deps: ['is_partitioned'],
           options:[{
-            label: 'Range', value: 'range'
+            label: gettext('Range'), value: 'range'
           },{
-            label: 'List', value: 'list'
+            label: gettext('List'), value: 'list'
           }],
           mode:['create'],
           visible: function(m) {
@@ -979,13 +1040,13 @@ define('pgadmin.node.table', [
                     }
                     else {
                       alertify.alert(
-                        'Error fetching tables to be attached', res.data.result
+                        gettext('Error fetching tables to be attached'), res.data.result
                       );
                     }
                   },
                   error: function(e) {
                     var errmsg = $.parseJSON(e.responseText);
-                    alertify.alert('Error fetching tables to be attached.', errmsg.errormsg);
+                    alertify.alert(gettext('Error fetching tables to be attached'), errmsg.errormsg);
                   }
                 });
               }
@@ -1249,7 +1310,7 @@ define('pgadmin.node.table', [
               cache_level = this.field.get('cache_level') || node.type,
               cache_node = this.field.get('cache_node');
 
-          cache_node = (cache_node && pgBrowser.Nodes['cache_node']) || node;
+          cache_node = (cache_node && pgBrowser.Nodes[cache_node]) || node;
 
           m.trigger('pgadmin:view:fetching', m, self.field);
           // Fetching Columns data for the selected table.
@@ -1428,6 +1489,11 @@ define('pgadmin.node.table', [
           }
           insertChildrenNodes();
         }
+      },
+      handle_cache: function() {
+        // Clear Table's cache as column's type is dependent on two node
+        // 1) Type node 2) Domain node
+        this.clear_cache.apply(this, null);
       }
     });
   }

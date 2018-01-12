@@ -1,7 +1,6 @@
 define('pgadmin.datagrid', [
-  'sources/gettext', 'sources/url_for', 'jquery', 'underscore', 'alertify', 'sources/pgadmin',
-  'bundled_codemirror',
-  'sources/sqleditor_utils', 'wcdocker'
+  'sources/gettext', 'sources/url_for', 'jquery', 'underscore', 'pgadmin.alertifyjs',
+  'sources/pgadmin', 'bundled_codemirror', 'sources/sqleditor_utils', 'wcdocker'
 ], function(gettext, url_for, $, _, alertify, pgAdmin, codemirror, sqlEditorUtils) {
     // Some scripts do export their object in the window only.
     // Generally the one, which do no have AMD support.
@@ -99,7 +98,7 @@ define('pgadmin.datagrid', [
          });
         }
 
-        pgAdmin.Browser.add_menu_category('view_data', gettext('View/Edit Data'), 100, 'fa fa-th');
+        pgAdmin.Browser.add_menu_category('view_data', gettext('View/Edit Data'), 100, '');
         pgAdmin.Browser.add_menus(menus);
 
         // Creating a new pgAdmin.Browser frame to show the data.
@@ -121,8 +120,8 @@ define('pgadmin.datagrid', [
             d = pgAdmin.Browser.tree.itemData(i);
         if (d === undefined) {
           alertify.alert(
-            'Data Grid Error',
-            'No object selected.'
+            gettext('Data Grid Error'),
+            gettext('No object selected.')
           );
           return;
         }
@@ -174,8 +173,8 @@ define('pgadmin.datagrid', [
             d = pgAdmin.Browser.tree.itemData(i);
         if (d === undefined) {
           alertify.alert(
-            'Data Grid Error',
-            'No object selected.'
+            gettext('Data Grid Error'),
+            gettext('No object selected.')
           );
           return;
         }
@@ -244,28 +243,40 @@ define('pgadmin.datagrid', [
                     { text: "OK", className: "btn btn-primary" },
                     { text: "Cancel", className: "btn btn-danger" }
                   ],
-                  options: { modal: 0, resizable: false, maximizable: false, pinnable: false}
+                  options: { modal: 0, resizable: true, maximizable: false, pinnable: false}
                 };
               },
-
-              build:function() {},
+              build: function() {
+                alertify.pgDialogBuild.apply(this)
+              },
               prepare:function() {
-		        var $content = $(this.message),
-                    $sql_filter = $content.find('#sql_filter');
+                var self = this,
+                  $content = $(this.message),
+                  $sql_filter = $content.find('#sql_filter');
+
+                $(this.elements.body.childNodes[0]).addClass(
+                  'dataview_filter_dialog'
+                );
 
                 this.setContent($content.get(0));
 
                 // Apply CodeMirror to filter text area.
                 this.filter_obj = CodeMirror.fromTextArea($sql_filter.get(0), {
                   lineNumbers: true,
-                  indentUnit: 4,
                   mode: "text/x-pgsql",
                   extraKeys: pgBrowser.editor_shortcut_keys,
+                  indentWithTabs: pgAdmin.Browser.editor_options.indent_with_tabs,
+                  indentUnit: pgAdmin.Browser.editor_options.tabSize,
                   tabSize: pgBrowser.editor_options.tabSize,
                   lineWrapping: pgAdmin.Browser.editor_options.wrapCode,
                   autoCloseBrackets: pgAdmin.Browser.editor_options.insert_pair_brackets,
                   matchBrackets: pgAdmin.Browser.editor_options.brace_matching
                 });
+
+                setTimeout(function() {
+                  // Set focus on editor
+                  self.filter_obj.focus();
+                }, 500);
               },
 
               callback: function(closeEvent) {
@@ -288,14 +299,14 @@ define('pgadmin.datagrid', [
                       }
                       else {
                         alertify.alert(
-                          'Validation Error',
+                          gettext('Validation Error'),
                             res.data.result
                         );
                       }
                     },
                     error: function(e) {
                       alertify.alert(
-                        'Validation Error',
+                        gettext('Validation Error'),
                         e
                       );
                     }
@@ -309,7 +320,8 @@ define('pgadmin.datagrid', [
         var content = '';
         $.get(url_for('datagrid.filter'),
           function(data) {
-            alertify.filterDialog('Data Filter', data, baseUrl, validateUrl).resizeTo(600, 400);
+            alertify.filterDialog('Data Filter', data, baseUrl, validateUrl)
+                    .resizeTo(300, 200);
           }
         );
       },
@@ -411,7 +423,8 @@ define('pgadmin.datagrid', [
           },
           error: function(e) {
             alertify.alert(
-              'SQL Tool Initialize Error'
+              gettext('Error'),
+              gettext('Query Tool Initialization Error')
             );
           }
         });
@@ -425,8 +438,8 @@ define('pgadmin.datagrid', [
           d = pgAdmin.Browser.tree.itemData(i);
         if (d === undefined) {
           alertify.alert(
-            'Query tool Error',
-            'No object selected.'
+            gettext('Query Tool Error'),
+            gettext('No object selected.')
           );
           return;
         }

@@ -297,6 +297,7 @@ define('pgadmin.node.column', [
           control: 'node-ajax-options', url: 'get_types', node: 'table',
           cellHeaderClasses:'width_percent_30', first_empty: true,
           select2: { allowClear: false }, group: gettext('Definition'),
+          cache_node: 'table',
           transform: function(data, cell) {
             /* 'transform' function will be called by control, and cell both.
              * The way, we use the transform in cell, and control is different.
@@ -416,7 +417,7 @@ define('pgadmin.node.column', [
               _.each(m.datatypes, function(o) {
                 if ( of_type == o.value ) {
                   if(o.precision) {
-                    m.set('min_val', o.min_val, {silent: true});
+                    m.set('min_val', 0, {silent: true});
                     m.set('max_val', o.max_val, {silent: true});
                     flag = false;
                   }
@@ -446,7 +447,7 @@ define('pgadmin.node.column', [
               _.each(m.datatypes, function(o) {
                 if ( of_type == o.value ) {
                   if(o.precision) {
-                    m.set('min_val', o.min_val, {silent: true});
+                    m.set('min_val', 0, {silent: true});
                     m.set('max_val', o.max_val, {silent: true});
                     flag = true;
                   }
@@ -499,7 +500,7 @@ define('pgadmin.node.column', [
           id: 'attnotnull', label: gettext('Not NULL?'), cell: 'switch',
           type: 'switch', disabled: 'inSchemaWithColumnCheck', cellHeaderClasses:'width_percent_20',
           group: gettext('Definition'), editable: 'editable_check_for_table',
-          options: { onText: 'Yes', offText: 'No', onColor: 'success', offColor: 'primary' }
+          options: { onText: gettext('Yes'), offText: gettext('No'), onColor: 'success', offColor: 'primary' }
         },{
           id: 'attstattarget', label: gettext('Statistics'), cell: 'string',
           type: 'text', disabled: 'inSchemaWithColumnCheck', mode: ['properties', 'edit'],
@@ -549,13 +550,13 @@ define('pgadmin.node.column', [
           type: 'multiline', mode: ['properties', 'create', 'edit'],
           disabled: 'notInSchema'
         },{
-          id: 'attoptions', label: 'Variables', type: 'collection',
+          id: 'attoptions', label: gettext('Variables'), type: 'collection',
           group: gettext('Variables'), control: 'unique-col-collection',
           model: VariablesModel, uniqueCol : ['name'],
           mode: ['edit', 'create'], canAdd: true, canEdit: false,
           canDelete: true
         }, pgBrowser.SecurityGroupSchema, {
-          id: 'attacl', label: 'Privileges', type: 'collection',
+          id: 'attacl', label: gettext('Privileges'), type: 'collection',
           group: 'security', control: 'unique-col-collection',
           model: pgBrowser.Node.PrivilegeRoleModel.extend({
           privileges: ['a','r','w','x']}),

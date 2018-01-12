@@ -148,8 +148,8 @@ define('pgadmin.node.trigger_function', [
           disabled: 'isDisabled', first_empty: true,
           select2: { width: "100%", allowClear: false },
           mode: ['create'], visible: 'isVisible', options: [
-            {label: 'trigger', value: 'trigger'},
-            {label: 'event_trigger', value: 'event_trigger'}
+            {label: gettext('trigger'), value: 'trigger'},
+            {label: gettext('event_trigger'), value: 'event_trigger'}
           ]
         },{
           id: 'prorettypename', label: gettext('Return type'), cell: 'string',
@@ -203,7 +203,7 @@ define('pgadmin.node.trigger_function', [
           id: 'proisstrict', label: gettext('Strict?'), type: 'switch',
           disabled: 'isDisabled', group: gettext('Options'),
           options: {
-            'onText': 'Yes', 'offText': 'No',
+            'onText': gettext('Yes'), 'offText': gettext('No'),
             'onColor': 'success', 'offColor': 'primary',
             'size': 'small'
            }

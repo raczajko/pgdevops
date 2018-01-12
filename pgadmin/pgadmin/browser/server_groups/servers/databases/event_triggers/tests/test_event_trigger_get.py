@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -38,8 +38,8 @@ class EventTriggerGetTestCase(BaseTestGenerator):
         self.extension_name = "postgres_fdw"
         self.db_name = parent_node_dict["database"][-1]["db_name"]
         self.db_user = self.server["username"]
-        self.func_name = "trigger_func_%s" % str(uuid.uuid4())[1:6]
-        self.trigger_name = "event_trigger_get_%s" % (str(uuid.uuid4())[1:6])
+        self.func_name = "trigger_func_%s" % str(uuid.uuid4())[1:8]
+        self.trigger_name = "event_trigger_get_%s" % (str(uuid.uuid4())[1:8])
         server_con = server_utils.connect_server(self, self.server_id)
         if not server_con["info"] == "Server connected.":
             raise Exception("Could not connect to server to add resource "

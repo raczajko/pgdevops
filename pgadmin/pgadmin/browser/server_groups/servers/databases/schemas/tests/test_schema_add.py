@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -42,7 +42,7 @@ class SchemaAddTestCase(BaseTestGenerator):
             "defseqacl": [],
             "deftblacl": [],
             "deftypeacl": [],
-            "name": "test_schema_{0}".format(str(uuid.uuid4())[1:6]),
+            "name": "test_schema_{0}".format(str(uuid.uuid4())[1:8]),
             "namespaceowner": db_user,
             "nspacl": [
                 {

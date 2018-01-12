@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -145,7 +145,7 @@ class PackageView(PGChildNodeView):
                 if not self.conn.connected():
                     return precondition_required(
                         _(
-                            "Connection to the server has been lost!"
+                            "Connection to the server has been lost."
                         )
                     )
                 self.template_path = 'package/ppas/#{0}#'.format(self.manager.version)
@@ -263,7 +263,7 @@ class PackageView(PGChildNodeView):
 
         """
         SQL = render_template(
-            "/".join([self.template_path, 'properties.sql']), 
+            "/".join([self.template_path, 'properties.sql']),
             scid=scid, pkgid=pkgid
         )
         status, rset = self.conn.execute_dict(SQL)
@@ -453,7 +453,7 @@ class PackageView(PGChildNodeView):
 
             return make_json_response(
                 success=1,
-                info=_("Packge dropped"),
+                info=_("Package dropped"),
                 data={
                     'id': pkgid,
                     'scid': scid,

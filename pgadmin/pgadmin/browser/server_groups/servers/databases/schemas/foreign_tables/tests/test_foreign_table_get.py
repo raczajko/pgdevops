@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -42,9 +42,9 @@ class ForeignTableGetTestCase(BaseTestGenerator):
         self.db_name = parent_node_dict["database"][-1]["db_name"]
         self.schema_name = self.schema_data['schema_name']
         self.schema_id = self.schema_data['schema_id']
-        self.fdw_name = "fdw_%s" % (str(uuid.uuid4())[1:4])
-        self.fsrv_name = "fsrv_%s" % (str(uuid.uuid4())[1:4])
-        self.ft_name = "ft_%s" % (str(uuid.uuid4())[1:4])
+        self.fdw_name = "fdw_%s" % (str(uuid.uuid4())[1:8])
+        self.fsrv_name = "fsrv_%s" % (str(uuid.uuid4())[1:8])
+        self.ft_name = "ft_%s" % (str(uuid.uuid4())[1:8])
 
         self.fdw_id = fdw_utils.create_fdw(self.server, self.db_name,
                                            self.fdw_name)
@@ -81,6 +81,10 @@ class ForeignTableGetTestCase(BaseTestGenerator):
         self.assertEquals(response.status_code, 200)
 
     def tearDown(self):
-        """ This function disconnect the test database. """
+        """ This function disconnect the test database and delete test
+        foreign table object. """
+        ft_utils.delete_foregin_table(self.server, self.db_name,
+                                      self.schema_name, self.ft_name
+                                      )
 
         database_utils.disconnect_database(self, self.server_id, self.db_id)

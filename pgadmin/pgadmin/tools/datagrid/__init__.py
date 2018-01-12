@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -26,7 +26,7 @@ from pgadmin.utils.ajax import make_json_response, bad_request, \
 
 from config import PG_DEFAULT_DRIVER
 from pgadmin.utils.preferences import Preferences
-
+from pgadmin.model import Server
 
 class DataGridModule(PgAdminModule):
     """
@@ -119,7 +119,8 @@ def initialize_datagrid(cmd_type, obj_type, sid, did, obj_id):
     try:
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(sid)
         conn = manager.connection(did=did, conn_id=conn_id,
-                                  use_binary_placeholder=True)
+                                  use_binary_placeholder=True,
+                                  array_to_string=True)
     except Exception as e:
         return internal_server_error(errormsg=str(e))
 
@@ -216,6 +217,28 @@ def panel(trans_id, is_query_tool, editor_title):
     else:
         new_browser_tab = 'false'
 
+    if is_query_tool == 'true':
+        prompt_save_changes = pref.preference('prompt_save_query_changes').get()
+    else:
+        prompt_save_changes = pref.preference('prompt_save_data_changes').get()
+
+    # Fetch the server details
+    #
+    bgcolor = None
+    fgcolor = None
+    if str(trans_id) in session['gridData']:
+        # Fetch the object for the specified transaction id.
+        # Use pickle.loads function to get the command object
+        session_obj = session['gridData'][str(trans_id)]
+        trans_obj = pickle.loads(session_obj['command_obj'])
+        s = Server.query.filter_by(id=trans_obj.sid).first()
+        if s and s.bgcolor:
+            # If background is set to white means we do not have to change the
+            # title background else change it as per user specified background
+            if s.bgcolor != '#ffffff':
+                bgcolor = s.bgcolor
+            fgcolor = s.fgcolor or 'black'
+
     return render_template(
         "datagrid/index.html", _=gettext, uniqueId=trans_id,
         is_query_tool=is_query_tool,
@@ -224,7 +247,12 @@ def panel(trans_id, is_query_tool, editor_title):
         is_linux=is_linux_platform,
         is_new_browser_tab=new_browser_tab,
         server_type=server_type,
-        client_platform=user_agent.platform
+        client_platform=user_agent.platform,
+        bgcolor=bgcolor,
+        fgcolor=fgcolor,
+        # convert python boolean value to equivalent js boolean literal before
+        # passing it to html template.
+        prompt_save_changes='true' if prompt_save_changes else 'false'
     )
 
 

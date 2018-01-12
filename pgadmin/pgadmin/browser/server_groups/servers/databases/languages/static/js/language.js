@@ -126,7 +126,7 @@ define('pgadmin.node.language', [
         },{
           id: 'trusted', label: gettext('Trusted?'), type: 'switch',
           options: {
-            'onText': 'Yes', 'offText': 'No',
+            'onText': gettext('Yes'), 'offText': gettext('No'),
             'onColor': 'success', 'offColor': 'primary',
             'size': 'small'
           },
@@ -252,7 +252,7 @@ define('pgadmin.node.language', [
             var handler_func = this.get('lanproc');
             if (_.isUndefined(handler_func) || _.isNull(handler_func) ||
               String(handler_func).replace(/^\s+|\s+$/g, '') == '') {
-              var msg = gettext('Handler Function cannot be empty');
+              var msg = gettext('Handler Function cannot be empty.');
               this.errorModel.set('lanproc', msg);
               return msg;
             } else {

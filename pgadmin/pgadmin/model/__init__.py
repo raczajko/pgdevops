@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -138,6 +138,8 @@ class Server(db.Model):
                               db.CheckConstraint(
                                   'sslcompression >= 0 AND sslcompression <= 1'
                               ), nullable=False)
+    bgcolor = db.Column(db.Text(10), nullable=True)
+    fgcolor = db.Column(db.Text(10), nullable=True)
 
 
 class ModulePreference(db.Model):

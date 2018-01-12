@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -30,7 +30,7 @@ class LanguagesPutTestCase(BaseTestGenerator):
         self.server_id = self.server_data["server_id"]
         self.db_id = self.server_data['db_id']
         self.db_name = self.server_data["db_name"]
-        self.lang_name = "language_%s" % str(uuid.uuid4())[1:4]
+        self.lang_name = "language_%s" % str(uuid.uuid4())[1:8]
         db_con = database_utils.connect_database(self,
                                                  utils.SERVER_GROUP,
                                                  self.server_id,

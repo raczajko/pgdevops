@@ -1,5 +1,5 @@
 define([
-  'sources/gettext', 'sources/url_for', 'jquery', 'underscore', 'underscore.string', 'alertify',
+  'sources/gettext', 'sources/url_for', 'jquery', 'underscore', 'underscore.string', 'pgadmin.alertifyjs',
   'sources/pgadmin', 'pgadmin.browser', 'backbone', 'backgrid', 'codemirror',
   'backform', 'wcdocker', 'pgadmin.backform', 'pgadmin.backgrid',
   'pgadmin.browser.panel'
@@ -211,7 +211,8 @@ define([
               },
               error: function(e) {
                 Alertify.alert(
-                  'Debugger Set arguments error'
+                  gettext('Debugger Error'),
+                  gettext('Unable to fetch the arguments from server')
                 );
               }
             });
@@ -225,13 +226,13 @@ define([
 
             var def_val_list = [],
             gridCols = [
-              {name: 'name', label:'Name', type:'text', editable: false, cell:'string' },
-              {name: 'type', label:'Type', type: 'text', editable: false, cell:'string' },
-              {name: 'is_null', label:'Null?', type: 'boolean', cell: 'boolean' },
-              {name: 'expr', label:'Expression?', type: 'boolean', cellFunction: cellExprControlFunction, editable: disableExpressionControl },
-              {name: 'value', label:'Value', type: 'text', editable: true, cellFunction: cellFunction, headerCell: value_header },
-              {name: 'use_default', label:'Use Default?', type: 'boolean', cell:"boolean", editable: disableDefaultCell },
-              {name: 'default_value', label:'Default value', type: 'text', editable: false, cell:'string' }
+              {name: 'name', label: gettext('Name'), type:'text', editable: false, cell:'string' },
+              {name: 'type', label: gettext('Type'), type: 'text', editable: false, cell:'string' },
+              {name: 'is_null', label: gettext('Null?'), type: 'boolean', cell: 'boolean' },
+              {name: 'expr', label: gettext('Expression?'), type: 'boolean', cellFunction: cellExprControlFunction, editable: disableExpressionControl },
+              {name: 'value', label: gettext('Value'), type: 'text', editable: true, cellFunction: cellFunction, headerCell: value_header },
+              {name: 'use_default', label: gettext('Use Default?'), type: 'boolean', cell:"boolean", editable: disableDefaultCell },
+              {name: 'default_value', label: gettext('Default value'), type: 'text', editable: false, cell:'string' }
             ];
 
             var my_obj = [];
@@ -444,12 +445,35 @@ define([
 
             grid.render();
             $(this.elements.content).html(grid.el);
+
+            // For keyboard navigation in the grid
+            // we'll set focus on checkbox from the first row if any
+            var grid_checkbox = $(grid.el).find('input:checkbox').first();
+            if (grid_checkbox.length){
+              setTimeout(function() {
+                grid_checkbox.click();
+              }, 250);
+            }
+
           },
           setup:function() {
             return {
-              buttons:[{ text: "Debug", key: 13, className: "btn btn-primary" },
-                       { text: "Cancel", key: 27, className: "btn btn-primary" }],
-              options: { modal: 0, resizable: true }
+              buttons:[
+                { text: "Debug", key: 13, className: "btn btn-primary" },
+                { text: "Cancel", key: 27, className: "btn btn-primary" }
+              ],
+              // Set options for dialog
+              options: {
+                //disable both padding and overflow control.
+                padding : !1,
+                overflow: !1,
+                model: 0,
+                resizable: true,
+                maximizable: true,
+                pinnable: false,
+                closableByDimmer: false,
+                modal: false
+              }
             };
           },
           // Callback functions when click on the buttons of the Alertify dialogs
@@ -662,14 +686,15 @@ define([
                       },
                       error: function(e) {
                         Alertify.alert(
-                          'Debugger Set arguments error'
+                          gettext('Debugger Error'),
+                          gettext('Unable to set the arguments on the server')
                         );
                       }
                     });
                   },
                   error: function(e) {
                     Alertify.alert(
-                      'Debugger target Initialize Error',
+                      gettext('Debugger Target Initialization Error'),
                       e.responseJSON.errormsg
                     );
                   }
@@ -687,7 +712,7 @@ define([
                   },
                   error: function(e) {
                     Alertify.alert(
-                      'Debugger listener starting error',
+                      gettext('Debugger Listener Startup Error'),
                       e.responseJSON.errormsg
                     );
                   }
@@ -708,7 +733,8 @@ define([
                   },
                   error: function(e) {
                     Alertify.alert(
-                      'Debugger Set arguments error'
+                      gettext('Debugger Error'),
+                      gettext('Unable to set the arguments on the server')
                     );
                   }
                 });
@@ -724,8 +750,14 @@ define([
             }
           },
           build:function() {
+            Alertify.pgDialogBuild.apply(this);
           },
           prepare:function() {
+            // Add our class to alertify
+            $(this.elements.body.childNodes[0]).addClass(
+              'alertify_tools_dialog_properties obj_properties'
+            );
+
             /*
              If we already have data available in sqlite database then we should enable the debug button otherwise
              disable the debug button.

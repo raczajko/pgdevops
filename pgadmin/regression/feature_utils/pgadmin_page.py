@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -72,6 +72,7 @@ class PgadminPage:
 
         self.find_by_partial_link_text("Query Tool").click()
         self.click_tab('Query -')
+
 
     def enable_menu_item(self, menu_item, wait_time):
         start_time = time.time()
@@ -224,6 +225,19 @@ class PgadminPage:
                 return False
 
         return self._wait_for("element to exist", element_if_it_exists)
+
+    def wait_for_element_to_disappear(self, find_method_with_args):
+        def element_if_it_disappears(driver):
+            try:
+                element = find_method_with_args(driver)
+                if element.is_displayed() and element.is_enabled():
+                    return False
+
+                return True
+            except NoSuchElementException:
+                return True
+
+        return self._wait_for("element to disappear", element_if_it_disappears)
 
     def wait_for_reloading_indicator_to_disappear(self):
         def reloading_indicator_has_disappeared(driver):

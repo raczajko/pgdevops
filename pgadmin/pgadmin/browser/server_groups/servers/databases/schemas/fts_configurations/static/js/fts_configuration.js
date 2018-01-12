@@ -13,11 +13,11 @@ define('pgadmin.node.fts_configuration', [
         keys: ['token'],
         // Define the schema for the token/dictionary list
         schema: [{
-          id: 'token', label:'Token', type:'text', group: null,
+          id: 'token', label: gettext('Token'), type:'text', group: null,
           cellHeaderClasses:'width_percent_50',
           editable: false, cell: 'string', url: 'tokens'
         },{
-          id: 'dictname', label: 'Dictionaries', type: 'text', group:null,
+          id: 'dictname', label: gettext('Dictionaries'), type: 'text', group:null,
           cellHeaderClasses:'width_percent_50', editable: true,
           cell:Backgrid.Extension.MultiSelectAjaxCell, url: 'dictionaries'
         }],
@@ -32,7 +32,7 @@ define('pgadmin.node.fts_configuration', [
           if (_.isNull(token) ||
               _.isUndefined(token) ||
               String(token).replace(/^\s+|\s+$/g, '') == '') {
-            msg = gettext('Token cannot be empty!');
+            msg = gettext('Token cannot be empty.');
             this.errorModel.set('token',msg);
             return msg;
           }
@@ -40,7 +40,7 @@ define('pgadmin.node.fts_configuration', [
           if (_.isNull(dictionary) ||
               _.isUndefined(dictionary) ||
               String(dictionary).replace(/^\s+|\s+$/g, '') == '') {
-            msg = gettext('Dictionary name cannot be empty!');
+            msg = gettext('Dictionary name cannot be empty.');
             this.errorModel.set('dictname',msg);
             return msg;
           }
@@ -94,7 +94,7 @@ define('pgadmin.node.fts_configuration', [
                     cache_node = this.field.get('cache_node');
 
                   cache_node = (cache_node &&
-                                    pgAdmin.Browser.Nodes['cache_node'])
+                                    pgAdmin.Browser.Nodes[cache_node])
                                || node;
 
                   /*
@@ -553,7 +553,7 @@ define('pgadmin.node.fts_configuration', [
           if (_.isUndefined(name) ||
               _.isNull(name) ||
               String(name).replace(/^\s+|\s+$/g, '') == '') {
-            msg = gettext('Name must be specified!');
+            msg = gettext('Name must be specified.');
             this.errorModel.set('name', msg);
             return msg;
           }
@@ -562,7 +562,7 @@ define('pgadmin.node.fts_configuration', [
           else if (_.isUndefined(copy_config_or_parser) ||
                    _.isNull(copy_config_or_parser) ||
                    String(copy_config_or_parser).replace(/^\s+|\s+$/g, '') == '') {
-            msg = gettext('Select parser or configuration to copy!');
+            msg = gettext('Select parser or configuration to copy.');
             this.errorModel.set('parser', msg);
             return msg;
           }
@@ -571,7 +571,7 @@ define('pgadmin.node.fts_configuration', [
           else if (_.isUndefined(schema) ||
                    _.isNull(schema) ||
                    String(schema).replace(/^\s+|\s+$/g, '') == '') {
-            msg = gettext('Schema must be selected!');
+            msg = gettext('Schema must be selected.');
             this.errorModel.set('schema', msg);
             return msg;
           }

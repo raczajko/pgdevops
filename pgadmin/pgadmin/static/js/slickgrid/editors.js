@@ -12,10 +12,10 @@
         "pgText": pgTextEditor,
         "JsonText": JsonTextEditor,
         "CustomNumber": CustomNumberEditor,
+        "Checkbox": pgCheckboxEditor,
         // Below editor will read only editors, Just to display data
         "ReadOnlyText": ReadOnlyTextEditor,
         "ReadOnlyCheckbox": ReadOnlyCheckboxEditor,
-        "Checkbox": CheckboxEditor, // Override editor to implement checkbox with three states
         "ReadOnlypgText": ReadOnlypgTextEditor,
         "ReadOnlyJsonText": ReadOnlyJsonTextEditor
       }
@@ -210,28 +210,13 @@
           $input.select();
         }
       } else {
-        var data = [];
-        for (var k in item[args.column.field]) {
-          if (_.isUndefined(item[args.column.field][k]) || _.isNull(item[args.column.field][k])) {
-            data.push('');
-          } else if (item[args.column.field][k] === "") {
-            data.push("''");
-          } else if (item[args.column.field][k] === "''") {
-            data.push("\\'\\'");
-          } else if (item[args.column.field][k] === '""') {
-            data.push('\\"\\"');
-          } else {
-            data.push(item[args.column.field][k]);
-            $input.select();
-          }
-        }
-        defaultValue = data;
-        $input.val('{' + data.join() +'}');
-
+        $input.val(defaultValue = item[args.column.field]);
+        $input.select();
       }
     };
 
     this.serializeValue = function () {
+
       var value = $input.val();
       // If empty return null
       if (value === "") {
@@ -249,31 +234,7 @@
           return value;
         }
       } else {
-
-        // Remove leading { and trailing }.
-        // Also remove leading and trailing whitespaces.
-        var value = $.trim(value.slice(1, -1));
-
-        if(value == '') {
-          return [];
-        }
-
-        var data = [];
-        value = value.split(',');
-        for (var k in value) {
-          if (value[k] == "") {
-            data.push(null);  //empty string from editor is null value.
-          } else if (value[k] === "''" || value[k] === '""') {
-            data.push('');    // double quote from editor is blank string;
-          } else if (value[k] === "\\'\\'") {
-            data.push("''");
-          } else if (value[k] === '\\"\\"') {
-            data.push('""');
-          } else {
-            data.push(value[k]);
-          }
-        }
-        return data;
+        return $.trim(value);
       }
     };
 
@@ -387,12 +348,12 @@
     this.loadValue = function (item) {
       var data = defaultValue = item[args.column.field];
       if (data && typeof data === "object" && !Array.isArray(data)) {
-        data = JSON.stringify(data);
+        data = JSON.stringify(data, null, 4);
       } else if (Array.isArray(data)) {
         var temp = [];
         $.each(data, function(i, val) {
           if (typeof val === "object") {
-            temp.push(JSON.stringify(val));
+            temp.push(JSON.stringify(val, null, 4));
           } else {
             temp.push(val)
           }
@@ -545,7 +506,7 @@
    */
   function CheckboxEditor(args) {
     var $select, el;
-    var defaultValue;
+    var defaultValue, previousState;
     var scope = this;
 
     this.init = function () {
@@ -564,22 +525,31 @@
           checkbox_status = 1;
         }
         switch(checkbox_status) {
-          // unchecked, going indeterminate
+          // State 0 will come when we had indeterminate state
           case 0:
-            el.prop('indeterminate', true);
-            el.data('checked', 2); // determines next checkbox status
+            // We will check now
+            el.prop('checked', true);
+            el.data('checked', 1);
             break;
 
-          // indeterminate, going checked
+          // State 1 will come when we had checked state
           case 1:
-            el.prop('checked', true);
+            // We will uncheck now
+            el.prop('checked', false);
+            el.data('checked', 2);
+            break;
+
+          // State 2 will come when we had unchecked state
+          case 2:
+            // We will set to indeterminate state
+            el.prop('indeterminate', true);
             el.data('checked', 0);
             break;
 
-          // checked, going unchecked
+          // Default, Set to indeterminate state
           default:
-            el.prop('checked', false);
-            el.data('checked', 1);
+            el.prop('indeterminate', true);
+            el.data('checked', 0);
         }
       });
     };
@@ -594,18 +564,21 @@
 
     this.loadValue = function (item) {
       defaultValue = item[args.column.field];
+      previousState = 0;
       if (_.isNull(defaultValue)||_.isUndefined(defaultValue)) {
         $select.prop('indeterminate', true);
-        $select.data('checked', 2);
+        $select.data('checked', 0);
       }
       else {
         defaultValue = !!item[args.column.field];
         if (defaultValue) {
           $select.prop('checked', true);
-          $select.data('checked', 0);
+          $select.data('checked', 1);
+          previousState = 1;
         } else {
           $select.prop('checked', false);
-          $select.data('checked', 1);
+          $select.data('checked', 2);
+          previousState = 2;
         }
       }
     };
@@ -622,10 +595,8 @@
     };
 
     this.isValueChanged = function () {
-      // var select_value = this.serializeValue();
-      var select_value = $select.data('checked');
-      return (!(select_value === 2 && (defaultValue == null || defaultValue == undefined))) &&
-            (select_value !== defaultValue);
+      var currentState = $select.data('checked');
+      return currentState !== previousState;
     };
 
     this.validate = function () {
@@ -712,12 +683,12 @@
     this.loadValue = function (item) {
       var data = defaultValue = item[args.column.field];
       if (typeof data === "object" && !Array.isArray(data)) {
-        data = JSON.stringify(data);
+        data = JSON.stringify(data, null, 4);
       } else if (Array.isArray(data)) {
         var temp = [];
         $.each(data, function(i, val) {
           if (typeof val === "object") {
-            temp.push(JSON.stringify(val));
+            temp.push(JSON.stringify(val, null, 4));
           } else {
             temp.push(val)
           }
@@ -933,14 +904,16 @@
     };
 
     this.serializeValue = function () {
-      if ($input.val() === "") {
+      var value = $input.val();
+
+      if (value === "") {
         return null;
       }
 
       if(args.column.is_array) {
         // Remove leading { and trailing }.
         // Also remove leading and trailing whitespaces.
-        var val = $.trim($input.val().slice(1, -1));
+        var val = $.trim(value.slice(1, -1));
 
         if(val == '') {
           return [];
@@ -954,7 +927,7 @@
         return val;
       }
 
-      return $input.val();
+      return value;
     };
 
     this.applyValue = function (item, state) {
@@ -1014,6 +987,89 @@
         }
       }
 
+      return {
+        valid: true,
+        msg: null
+      };
+    };
+
+    this.init();
+  }
+
+  // Custom checkbox editor, We need it for runtime as it does not render
+  // indeterminate checkbox state
+  function pgCheckboxEditor(args) {
+    var $select, el;
+    var defaultValue, previousState;
+    var scope = this;
+
+    this.init = function () {
+      $select = $("<div class='multi-checkbox'><span class='check' hideFocus></span></div>");
+      $select.appendTo(args.container);
+      $select.focus();
+
+      // The following code is taken from https://css-tricks.com/indeterminate-checkboxes/
+      $select.bind("click", function (e) {
+        el = $(this);
+        var states = ["unchecked", "partial", "checked"];
+        var curState = el.find(".check").data("state");
+        curState++;
+        el.find(".check")
+          .removeClass("unchecked partial checked")
+          .addClass(states[curState % states.length])
+          .data("state", curState % states.length);
+      });
+    };
+
+    this.destroy = function () {
+      $select.remove();
+    };
+
+    this.focus = function () {
+      $select.focus();
+    };
+
+    this.loadValue = function (item) {
+      defaultValue = item[args.column.field];
+      previousState = 1;
+      if (_.isNull(defaultValue)||_.isUndefined(defaultValue)) {
+        $select.find(".check").data("state", 1).addClass("partial");
+      }
+      else {
+        defaultValue = !!item[args.column.field];
+        if (defaultValue) {
+          $select.find(".check").data("state", 2).addClass("checked");
+          previousState = 2;
+        } else {
+          $select.find(".check").data("state", 0).addClass("unchecked");
+          previousState = 0;
+        }
+      }
+    };
+
+    this.serializeValue = function () {
+      if ($select.find(".check").data("state") == 1) {
+        return null;
+      }
+      return $select.find(".check").data("state") == 2 ? true : false;
+    };
+
+    this.applyValue = function (item, state) {
+      item[args.column.field] = state;
+    };
+
+    this.isValueChanged = function () {
+      var currentState = $select.find(".check").data("state");
+      return currentState !== previousState;
+    };
+
+    this.validate = function () {
+      if (args.column.validator) {
+        var validationResults = args.column.validator(this.serializeValue());
+        if (!validationResults.valid) {
+          return validationResults;
+        }
+      }
       return {
         valid: true,
         msg: null

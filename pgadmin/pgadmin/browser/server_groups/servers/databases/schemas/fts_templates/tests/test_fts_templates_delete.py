@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -36,7 +36,7 @@ class FtsTemplateDeleteTestCase(BaseTestGenerator):
         self.server_id = self.schema_data['server_id']
         self.db_id = self.schema_data['db_id']
         self.db_name = parent_node_dict["database"][-1]["db_name"]
-        self.fts_temp_name = "fts_temp_%s" % str(uuid.uuid4())[1:4]
+        self.fts_temp_name = "fts_temp_%s" % str(uuid.uuid4())[1:8]
         self.fts_temp_id = fts_temp_utils.create_fts_template(
             self.server,
             self.db_name,

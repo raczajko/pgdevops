@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -171,7 +171,7 @@ def save(pid):
     """
     data = request.form if request.form else json.loads(request.data.decode())
 
-    res, msg = Preferences.save(data['mid'], data['cid'], data['id'], data['value'])
+    res, msg = Preferences.save(data['mid'], data['category_id'], data['id'], data['value'])
 
     if not res:
         return internal_server_error(errormsg=msg)

@@ -1,6 +1,6 @@
 define(
-    ['underscore', 'backbone', 'sources/pgadmin', 'pgadmin.browser'],
-function(_, Backbone, pgAdmin, pgBrowser) {
+    ['underscore', 'backbone', 'sources/pgadmin', 'pgadmin.browser', 'sources/gettext'],
+function(_, Backbone, pgAdmin, pgBrowser, gettext) {
 
   pgBrowser = pgBrowser || pgAdmin.Browser || {};
 
@@ -61,9 +61,11 @@ function(_, Backbone, pgAdmin, pgBrowser) {
        + "          </div>"
        + "          <% if (this.options.show_header_cancel_btn) { %>"
        + "            <div class='col-sm-2'>"
-       + "              <button class='ajs-close wizard-cancel-event pull-right'></button>"
+       + "              <button class='ajs-close wizard-cancel-event pull-right'"
+       + "                title='" + gettext("Close") + "'></button>"
        + "              <% if (this.options.show_header_maximize_btn) { %>"
-       + "                <button class='ajs-maximize wizard-maximize-event pull-right'></button>"
+       + "                <button class='ajs-maximize wizard-maximize-event pull-right'"
+       + "                  title='" + gettext("Maximize") + "'></button>"
        + "              <% } %>"
        + "            </div>"
        + "          <% } %>"
@@ -72,7 +74,8 @@ function(_, Backbone, pgAdmin, pgBrowser) {
        + "      <div class='wizard-content col-sm-12'>"
        + "        <% if (this.options.show_left_panel) { %>"
        + "          <div class='col-sm-3 wizard-left-panel'>"
-       + "              <img src='<%= this.options.image %>'></div>"
+       + "              <img src='<%= this.options.image %>'"
+       + "                  alt='" + gettext("Left panel logo") + "'></div>"
        + "        <% } %>"
        + "        <div class='col-sm-<% if (this.options.show_left_panel) { %>9<% }"
        + "          else { %>12<% } %> wizard-right-panel'>"
@@ -96,25 +99,30 @@ function(_, Backbone, pgAdmin, pgBrowser) {
        + "            </div>"
        + "            <div class='alert-text'>"
        + "            </div>"
+       + "            <div class='close-error-bar'>"
+       + "              <a class='close-error'>x</a>"
+       + "            </div>"
        + "          </div>"
        + "        </div>"
        + "      </div>"
        + "      <div class='footer col-sm-12'>"
        + "        <div class='row'>"
        + "          <div class='col-sm-4 wizard-buttons pull-left'>"
-       + "            <button title = 'Help for this dialog.' class='btn btn-default pull-left wizard-help' <%=this.options.wizard_help ? '' : 'disabled' %>>"
+       + "            <button title = '" + gettext("Help for this dialog.") + "'"
+       + "              class='btn btn-default pull-left wizard-help' <%=this.options.wizard_help ? '' : 'disabled' %>>"
        + "              <span class='fa fa-lg fa-question'></span></button>"
        + "          </div>"
        + "          <div class='col-sm-8'>"
        + "            <div class='wizard-buttons'>"
        + "              <button class='btn btn-primary wizard-back' <%=this.options.disable_prev ? 'disabled' : ''%>>"
-       + "                <i class='fa fa-backward'></i>Back</button>"
-       + "              <button class='btn btn-primary wizard-next' <%=this.options.disable_next ? 'disabled' : ''%>>Next"
+       + "                <i class='fa fa-backward'></i>" + gettext("Back") + "</button>"
+       + "              <button class='btn btn-primary wizard-next' <%=this.options.disable_next ? 'disabled' : ''%>>"
+       +                  gettext("Next")
        + "                <i class='fa fa-forward'></i></button>"
        + "              <button class='btn btn-danger wizard-cancel' <%=this.options.disable_cancel ? 'disabled' : ''%>>"
-       + "                <i class='fa fa-lg fa-close'></i>Cancel</button>"
+       + "                <i class='fa fa-lg fa-close'></i>" + gettext("Cancel") + "</button>"
        + "              <button class='btn btn-primary wizard-finish' <%=this.options.disable_finish ? 'disabled' : ''%>>"
-       + "                Finish</button>"
+       +                  gettext("Finish") + "</button>"
        + "            </div>"
        + "          </div>"
        + "        </div>"
@@ -128,6 +136,7 @@ function(_, Backbone, pgAdmin, pgBrowser) {
       "click button.wizard-maximize-event" : "onMaximize",
       "click button.wizard-finish" : "finishWizard",
       "click button.wizard-help" : "onDialogHelp",
+      "click a.close-error" : "closeErrorMsg",
     },
     initialize: function(options) {
       this.options = _.extend({}, this.options, options.options);
@@ -223,6 +232,10 @@ function(_, Backbone, pgAdmin, pgBrowser) {
         else {
           this.options.disable_prev = false;
         }
+    },
+    closeErrorMsg: function() {
+      $(this.el).find('.pg-prop-status-bar .alert-text').empty();
+      $(this.el).find('.pg-prop-status-bar').css("visibility", "hidden");
     },
     beforeNext: function(){
       return this.evalASFunc(this.currPage.beforeNext);

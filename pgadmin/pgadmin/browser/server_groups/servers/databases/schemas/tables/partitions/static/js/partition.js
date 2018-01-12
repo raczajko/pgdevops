@@ -255,7 +255,7 @@ function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Backform, alertify) {
 
           alertify.confirm(
             gettext('Reset statistics'),
-            S(gettext('Are you sure you want to reset the statistics for table %s?')).sprintf(d._label).value(),
+            S(gettext('Are you sure you want to reset the statistics for table "%s"?')).sprintf(d._label).value(),
             function (e) {
               if (e) {
                 var data = d;
@@ -647,8 +647,8 @@ function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Backform, alertify) {
               }
             },{
               id: 'check_constraint', label: gettext('Check constraint'),
-              model: pgBrowser.Nodes['check_constraints'].model,
-              subnode: pgBrowser.Nodes['check_constraints'].model,
+              model: pgBrowser.Nodes['check_constraint'].model,
+              subnode: pgBrowser.Nodes['check_constraint'].model,
               editable: false, type: 'collection',
               group: gettext('Check'), mode: ['edit', 'create'],
               canEdit: true, canDelete: true, deps:['is_partitioned'],
@@ -733,7 +733,7 @@ function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Backform, alertify) {
 
                 if (!_.isUndefined(tbl_name) &&
                     tbl_name !== '' && column_collection.length !== 0) {
-                  var msg = gettext('Changing of type table will clear columns collection');
+                  var msg = gettext('Changing of table type will clear columns collection.');
                   alertify.confirm(msg, function (e) {
                     if (e) {
                       // User clicks Ok, lets clear columns collection
@@ -822,9 +822,9 @@ function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Backform, alertify) {
           editable: false, type: 'select2', select2: {allowClear: false},
           group: 'partition', deps: ['is_partitioned'],
           options:[{
-            label: 'Range', value: 'range'
+            label: gettext('Range'), value: 'range'
           },{
-            label: 'List', value: 'list'
+            label: gettext('List'), value: 'list'
           }],
           mode:['create'],
           visible: function(m) {
@@ -936,13 +936,13 @@ function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Backform, alertify) {
                     }
                     else {
                       alertify.alert(
-                        'Error fetching tables to be attached', res.data.result
+                        gettext('Error fetching tables to be attached'), res.data.result
                       );
                     }
                   },
                   error: function(e) {
                     var errmsg = $.parseJSON(e.responseText);
-                    alertify.alert('Error fetching tables to be attached.', errmsg.errormsg);
+                    alertify.alert(gettext('Error fetching tables to be attached'), errmsg.errormsg);
                   }
                 });
               }
@@ -975,9 +975,9 @@ function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Backform, alertify) {
         },{
           id: 'partition_note', label: gettext('Partition'),
           type: 'note', group: 'partition',
-          text: gettext('Above control will be used to Create/Attach/Detach partitions.<br>' +
+          text: gettext('The control above is used to Create/Attach/Detach partitions.<br>' +
             '<ul><li>Create Mode: User will be able to create N number of partitions. Mode switch control is disabled in this scenario.</li>' +
-            '<li>Edit Mode: User will be able to create/attach/detach N number of partitions.' +
+            '<li>Edit Mode: User will be able to create/attach/detach N number of partitions. ' +
             'In attach mode there will be list of suitable tables to be attached.</li></ul>'),
           visible: function(m) {
             if(!_.isUndefined(m.node_info) && !_.isUndefined(m.node_info.server)

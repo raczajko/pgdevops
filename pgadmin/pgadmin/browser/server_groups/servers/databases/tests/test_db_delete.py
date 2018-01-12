@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -23,7 +23,7 @@ class DatabaseDeleteTestCase(BaseTestGenerator):
     ]
 
     def setUp(self):
-        self.db_name = "db_delete_%s" % str(uuid.uuid4())[1:4],
+        self.db_name = "db_delete_%s" % str(uuid.uuid4())[1:8],
         self.db_id = utils.create_database(self.server, self.db_name)
         self.server_id = parent_node_dict["server"][-1]["server_id"]
         db_dict = {"server_id": self.server_id, "db_id": self.db_id,

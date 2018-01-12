@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -220,7 +220,7 @@ class DataTypeReader:
                 _len = (typmod - 4) >> 16;
                 _prec = (typmod - 4) & 0xffff;
                 length += str(_len)
-                if (_prec):
+                if _prec is not None:
                     length += ',' + str(_prec)
             elif name == 'time' or \
                             name == 'timetz' or \

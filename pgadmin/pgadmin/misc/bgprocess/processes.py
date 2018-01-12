@@ -3,7 +3,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL License
 #
 ##########################################################################
@@ -362,8 +362,10 @@ class BatchProcess(object):
         out_completed = err_completed = False
         process_output = (out != -1 and err != -1)
         enc = sys.getdefaultencoding()
+        if enc is None or enc == 'ascii':
+            enc = 'utf-8'
 
-        def read_log(logfile, log, pos, ctime):
+        def read_log(logfile, log, pos, ctime, ecode=None):
             completed = True
             idx = 0
             c = re.compile(r"(\d+),(.*$)")
@@ -374,6 +376,9 @@ class BatchProcess(object):
             with open(logfile, 'rb') as f:
                 eofs = os.fstat(f.fileno()).st_size
                 f.seek(pos, 0)
+                if pos == eofs and ecode is None:
+                    completed = False
+
                 while pos < eofs:
                     idx += 1
                     line = f.readline()
@@ -392,14 +397,11 @@ class BatchProcess(object):
                         completed = False
                         break
                     if pos == eofs:
-                        completed = True
+                        if ecode is None:
+                            completed = False
                         break
 
             return pos, completed
-
-        if process_output:
-            out, out_completed = read_log(self.stdout, stdout, out, ctime)
-            err, err_completed = read_log(self.stderr, stderr, err, ctime)
 
         j = Process.query.filter_by(
             pid=self.id, user_id=current_user.id
@@ -421,11 +423,11 @@ class BatchProcess(object):
 
                 execution_time = (etime - stime).total_seconds()
 
-            if process_output and self.ecode is not None and (
-                len(stdout) + len(stderr) < 1024
-            ):
-                out, out_completed = read_log(self.stdout, stdout, out, ctime)
-                err, err_completed = read_log(self.stderr, stderr, err, ctime)
+            if process_output:
+                out, out_completed = read_log(self.stdout, stdout, out, ctime,
+                                              self.ecode)
+                err, err_completed = read_log(self.stderr, stderr, err, ctime,
+                                              self.ecode)
         else:
             out_completed = err_completed = False
 

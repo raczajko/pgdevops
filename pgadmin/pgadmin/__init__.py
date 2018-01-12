@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -177,6 +177,23 @@ def create_app(app_name=None):
     if not app_name:
         app_name = config.APP_NAME
 
+    # Only enable password related functionality in server mode.
+    if config.SERVER_MODE is True:
+        # Some times we need to access these config params where application
+        # context is not available (we can't use current_app.config in those
+        # cases even with current_app.app_context())
+        # So update these params in config itself.
+        # And also these updated config values will picked up by application
+        # since we are updating config before the application instance is
+        # created.
+
+        config.SECURITY_RECOVERABLE = True
+        config.SECURITY_CHANGEABLE = True
+        # Now we'll open change password page in alertify dialog
+        # we don't want it to redirect to main page after password
+        # change operation so we will open the same password change page again.
+        config.SECURITY_POST_CHANGE_VIEW = 'browser.change_password'
+
     """Create the Flask application, startup logging and dynamically load
     additional modules (blueprints) that are found in this directory."""
     app = PgAdmin(__name__, static_url_path='/static')
@@ -246,13 +263,17 @@ def create_app(app_name=None):
         language = 'en'
         if config.SERVER_MODE is False:
             # Get the user language preference from the miscellaneous module
-            misc_preference = Preferences.module('miscellaneous', False)
-            if misc_preference:
-                user_languages = misc_preference.preference(
-                    'user_language'
-                )
-                if user_languages:
-                    language = user_languages.get() or language
+            if current_user.is_authenticated:
+                user_id = current_user.id
+            else:
+                user = user_datastore.get_user(config.DESKTOP_USER)
+                if user is not None:
+                    user_id = user.id
+            user_language = Preferences.raw_value(
+                'miscellaneous', 'user_language', None, user_id
+            )
+            if user_language is not None:
+                language = user_language
         else:
             # If language is available in get request then return the same
             # otherwise check the session or cookie
@@ -275,12 +296,6 @@ def create_app(app_name=None):
         config.SQLITE_PATH.replace(u'\\', u'/'),
         getattr(config, 'SQLITE_TIMEOUT', 500)
     )
-
-    # Only enable password related functionality in server mode.
-    if config.SERVER_MODE is True:
-        # TODO: Figure out how to disable /logout and /login
-        app.config['SECURITY_RECOVERABLE'] = True
-        app.config['SECURITY_CHANGEABLE'] = True
 
     # Create database connection object and mailer
     db.init_app(app)
@@ -531,9 +546,8 @@ def create_app(app_name=None):
             ):
                 abort(401)
 
-        if not config.SERVER_MODE:
+        if not config.SERVER_MODE and not current_user.is_authenticated:
             user = user_datastore.get_user(config.DESKTOP_USER)
-
             # Throw an error if we failed to find the desktop user, to give
             # the sysadmin a hint. We'll continue to try to login anyway as
             # that'll through a nice 500 error for us.
@@ -543,7 +557,6 @@ def create_app(app_name=None):
                     % config.DESKTOP_USER
                 )
                 abort(401)
-
             login_user(user)
 
         if config.SERVER_MODE is True:
@@ -573,6 +586,7 @@ def create_app(app_name=None):
     ##########################################################################
     # HTMLMIN doesn't work with Python 2.6.
     if not config.DEBUG and sys.version_info >= (2,7):
+        from flask_htmlmin import HTMLMIN
         HTMLMIN(app)
 
     @app.context_processor

@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -580,8 +580,7 @@ It may have been removed by another user.
                 return make_json_response(
                     status=410,
                     success=0,
-                    errormsg=res + '\n' +
-                             'Operation failed while running create statement'
+                    errormsg=res
                 )
 
             # we need oid to to add object in tree at browser,

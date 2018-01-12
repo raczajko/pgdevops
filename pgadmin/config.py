@@ -4,7 +4,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 # config.py - Core application configuration settings
@@ -51,7 +51,7 @@ APP_ICON = 'icon-postgres-alt'
 
 # Application version number components
 APP_RELEASE = 2
-APP_REVISION = 0
+APP_REVISION = 1
 
 # Application version suffix, e.g. 'beta1', 'dev'. Usually an empty string
 # for GA releases.
@@ -60,7 +60,7 @@ APP_SUFFIX = ''
 # Numeric application version for upgrade checks. Should be in the format:
 # [X]XYYZZ, where X is the release version, Y is the revision, with a leading
 # zero if needed, and Z represents the suffix, with a leading zero if needed
-APP_VERSION_INT = 20003
+APP_VERSION_INT = 20005
 
 # DO NOT CHANGE!
 # The application version string, constructed from the components
@@ -71,7 +71,7 @@ else:
 
 # Copyright string for display in the app
 # Any changes made here must also be made in runtime/pgAdmin4.pro
-APP_COPYRIGHT = 'Copyright 2013 - 2017, The pgAdmin Development Team'
+APP_COPYRIGHT = 'Copyright 2013 - 2018, The pgAdmin Development Team'
 
 ##########################################################################
 # Misc stuff
@@ -85,7 +85,9 @@ LANGUAGES = {
     'en': 'English',
     'zh': 'Chinese (Simplified)',
     'de': 'German',
-    'pl': 'Polish'
+    'ja': 'Japanese',
+    'pl': 'Polish',
+    'ru': 'Russian'
 }
 
 # DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING!
@@ -270,6 +272,10 @@ MAIL_USE_TLS = False
 MAIL_USERNAME = ''
 MAIL_PASSWORD = ''
 MAIL_DEBUG = False
+
+# Flask-Security overrides Flask-Mail's MAIL_DEFAULT_SENDER setting, so
+# that should be set as such:
+SECURITY_EMAIL_SENDER = 'no-reply@localhost'
 
 ##########################################################################
 # Mail content settings

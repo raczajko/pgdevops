@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -54,7 +54,7 @@ class FtsDictionaryAddTestCase(BaseTestGenerator):
                                                       self.schema_name)
         if not schema_response:
             raise Exception("Could not find the schema.")
-        self.fts_dict_name = "fts_dict_%s" % str(uuid.uuid4())[1:4]
+        self.fts_dict_name = "fts_dict_%s" % str(uuid.uuid4())[1:8]
         data = \
             {
                 "name": self.fts_dict_name,

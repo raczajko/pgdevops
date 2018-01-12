@@ -37,6 +37,91 @@ define([
 
         return this;
       },
+
+      // Callback to draw change password Dialog.
+      change_password: function(url) {
+        var title = gettext('Change Password');
+
+        if(!alertify.ChangePassword) {
+          alertify.dialog('ChangePassword' ,function factory() {
+            return {
+              main: function(title, url) {
+                this.set({
+                  'title': title,
+                  'url': url
+                });
+              },
+              build: function() {
+                alertify.pgDialogBuild.apply(this)
+              },
+              settings:{
+                  url: undefined
+              },
+              setup:function() {
+                return {
+                  buttons: [{
+                    text: '', key: 112,
+                    className: 'btn btn-default pull-left fa fa-lg fa-question',
+                    attrs:{
+                      name:'dialog_help', type:'button', label: gettext('Change Password'),
+                      url: url_for(
+                        'help.static', {
+                          'filename': 'change_user_password.html'
+                        })
+                    }
+                  },{
+                    text: gettext('Close'), key: 27,
+                    className: 'btn btn-danger fa fa-lg fa-times pg-alertify-button',
+                    attrs:{name:'close', type:'button'}
+                  }],
+                  // Set options for dialog
+                  options: {
+                    //disable both padding and overflow control.
+                    padding : !1,
+                    overflow: !1,
+                    modal: false,
+                    resizable: true,
+                    maximizable: true,
+                    pinnable: false,
+                    closableByDimmer: false,
+                    closable: false
+                  }
+                };
+              },
+              hooks: {
+                // Triggered when the dialog is closed
+                onclose: function() {
+                  // Clear the view
+                  return setTimeout((function() {
+                    return alertify.ChangePassword().destroy();
+                  }), 500);
+                }
+              },
+              prepare: function() {
+                // create the iframe element
+                var iframe = document.createElement('iframe');
+                iframe.frameBorder = "no";
+                iframe.width = "100%";
+                iframe.height = "100%";
+                iframe.src = this.setting('url');
+                // add it to the dialog
+                this.elements.content.appendChild(iframe);
+              },
+              callback: function(e) {
+                if (e.button.element.name == "dialog_help") {
+                  e.cancel = true;
+                  pgBrowser.showHelp(e.button.element.name, e.button.element.getAttribute('url'),
+                    null, null, e.button.element.getAttribute('label'));
+                  return;
+                }
+              }
+            };
+          });
+        }
+
+        alertify.ChangePassword(title, url).resizeTo('75%','70%');
+      },
+
       // Callback to draw User Management Dialog.
       show_users: function(action, item, params) {
         if (!userInfo['is_admin']) return;
@@ -105,7 +190,7 @@ define([
             },{
               id: 'active', label: gettext('Active'),
               type: 'switch', cell: 'switch', cellHeaderClasses:'width_percent_10',
-              options: { 'onText': 'Yes', 'offText': 'No'},
+              options: { 'onText': gettext('Yes'), 'offText': gettext('No')},
               editable: function(m) {
                 if(m instanceof Backbone.Collection) {
                   return true;
@@ -304,8 +389,8 @@ define([
                   self.model.destroy();
                 } else {
                   alertify.confirm(
-                    'Delete user?',
-                    'Are you sure you wish to delete this user?',
+                    gettext('Delete user?'),
+                    gettext('Are you sure you wish to delete this user?'),
                     function(evt) {
                       self.model.destroy({
                         wait: true,
@@ -323,7 +408,9 @@ define([
                   );
                 }
               } else {
-                alertify.alert("This user cannot be deleted.",
+                alertify.alert(
+                  gettext("Error"),
+                  gettext("This user cannot be deleted."),
                   function(){
                     return true;
                   }
@@ -392,8 +479,8 @@ define([
               prepare: function() {
                 var self = this,
                   footerTpl = _.template([
-                    '<div class="pg-prop-footer">',
-                      '<div class="pg-prop-status-bar" style="visibility:hidden">',
+                    '<div class="pg-prop-footer" style="visibility:hidden;">',
+                      '<div class="pg-prop-status-bar">',
                         '<div class="media error-in-footer bg-red-1 border-red-2 font-red-3 text-14">',
                           '<div class="media-body media-middle">',
                             '<div class="alert-icon error-icon">',
@@ -401,12 +488,12 @@ define([
                             '</div>',
                             '<div class="alert-text">',
                             '</div>',
+                            '<div class="close-error-bar"><a class="close-error">x</a></div>',
                           '</div>',
                         '</div>',
                       '</div>',
                     '</div>'].join("\n")),
-                  $footer = $(footerTpl()),
-                  $statusBar = $footer.find('.pg-prop-status-bar'),
+                  $statusBar = $(footerTpl()),
                   UserRow = Backgrid.Row.extend({
                     userInvalidColor: "lightYellow",
 
@@ -542,7 +629,10 @@ define([
                   },
                   error: function(e) {
                     setTimeout(function() {
-                      alertify.alert(gettext('Cannot load user roles.'));
+                      alertify.alert(
+                        gettext('Error'),
+                        gettext('Cannot load user roles.')
+                      );
                     },100);
                   }
                 });
@@ -558,7 +648,7 @@ define([
 
                 this.$content = $("<div class='user_management object subnode'></div>").append(
                     headerTpl(data)).append($gridBody
-                    ).append($footer);
+                    ).append($statusBar);
 
                 $(this.elements.body.childNodes[0]).addClass(
                   'alertify_tools_dialog_backgrid_properties');
@@ -570,6 +660,11 @@ define([
                   userFilter(userCollection).render().el);
 
                 userCollection.fetch();
+
+                this.$content.find('a.close-error').click(function(e) {
+                  $statusBar.find('.alert-text').empty();
+                  $statusBar.css("visibility", "hidden");
+                });
 
                 this.$content.find('button.add').first().click(function(e) {
                   e.preventDefault();

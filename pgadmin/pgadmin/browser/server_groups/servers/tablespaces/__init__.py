@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -121,11 +121,11 @@ class TablespaceView(PGChildNodeView):
             # If DB not connected then return error to browser
             if not self.conn.connected():
                 current_app.logger.warning(
-                    "Connection to the server has been lost!"
+                    "Connection to the server has been lost."
                 )
                 return precondition_required(
                     gettext(
-                        "Connection to the server has been lost!"
+                        "Connection to the server has been lost."
                     )
                 )
 

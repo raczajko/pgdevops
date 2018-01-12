@@ -28,10 +28,7 @@ module.exports = {
       'error',
       2
     ],
-    'linebreak-style': [
-      'error',
-      'unix'
-    ],
+    'linebreak-style': 0,
     'quotes': [
       'error',
       'single'
@@ -44,5 +41,6 @@ module.exports = {
       'error',
       'always-multiline'
     ],
-  }
+    'no-console': ["error", { allow: ["warn", "error"] }],
+  },
 };

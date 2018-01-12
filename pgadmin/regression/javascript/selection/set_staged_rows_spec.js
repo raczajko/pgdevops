@@ -2,7 +2,7 @@
 //
 // pgAdmin 4 - PostgreSQL Tools
 //
-// Copyright (C) 2013 - 2017, The pgAdmin Development Team
+// Copyright (C) 2013 - 2018, The pgAdmin Development Team
 // This software is released under the PostgreSQL Licence
 //
 //////////////////////////////////////////////////////////////
@@ -200,9 +200,9 @@ describe('set_staged_rows', function () {
       describe('selected rows missing primary key', function () {
         beforeEach(function () {
           var data = [{'a pk column': 'one', 'some column': 'two', '__temp_PK': '123'},
-                {'some column': 'four', '__temp_PK': '456'},
-                {'some column': 'six', '__temp_PK': '789'},
-                {'a pk column': 'seven', 'some column': 'eight', '__temp_PK': '432'}],
+              {'some column': 'four', '__temp_PK': '456'},
+              {'some column': 'six', '__temp_PK': '789'},
+              {'a pk column': 'seven', 'some column': 'eight', '__temp_PK': '432'}],
             dataView = new Slick.Data.DataView();
 
           dataView.setItems(data, '__temp_PK');

@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -31,7 +31,7 @@ class _Preference(object):
 
     def __init__(
             self, cid, name, label, _type, default, help_str=None, min_val=None,
-            max_val=None, options=None
+            max_val=None, options=None, select2=None
     ):
         """
         __init__
@@ -53,6 +53,7 @@ class _Preference(object):
         :param min_val: minimum value
         :param max_val: maximum value
         :param options: options (Array of list objects)
+        :param select2: select2 options (object)
 
         :returns: nothing
         """
@@ -65,6 +66,7 @@ class _Preference(object):
         self.min_val = min_val
         self.max_val = max_val
         self.options = options
+        self.select2 = select2
 
         # Look into the configuration table to find out the id of the specific
         # preference.
@@ -129,6 +131,8 @@ class _Preference(object):
             for opt in self.options:
                 if 'value' in opt and opt['value'] == res.value:
                     return res.value
+            if self.select2 and self.select2['tags']:
+                return res.value
             return self.default
         if self._type == 'text':
             if res.value == '':
@@ -190,7 +194,7 @@ class _Preference(object):
                 if 'value' in opt and opt['value'] == value:
                     has_value = True
 
-            if not has_value:
+            if not has_value and self.select2 and not self.select2['tags']:
                 return False, gettext("Invalid value for an options option.")
 
         pref = UserPrefTable.query.filter_by(
@@ -226,6 +230,7 @@ class _Preference(object):
             'min_val': self.min_val,
             'max_val': self.max_val,
             'options': self.options,
+            'select2': self.select2,
             'value': self.get()
         }
         return res
@@ -365,7 +370,8 @@ class Preferences(object):
 
     def register(
             self, category, name, label, _type, default, min_val=None,
-            max_val=None, options=None, help_str=None, category_label=None
+            max_val=None, options=None, help_str=None, category_label=None,
+            select2=None
     ):
         """
         register
@@ -386,6 +392,7 @@ class Preferences(object):
         :param options:
         :param help_str:
         :param category_label:
+        :param select2: select2 control extra options
         """
         cat = self.__category(category, category_label)
         if name in cat['preferences']:
@@ -400,7 +407,7 @@ class Preferences(object):
 
         (cat['preferences'])[name] = res = _Preference(
             cat['id'], name, label, _type, default, help_str, min_val,
-            max_val, options
+            max_val, options, select2
         )
 
         return res
@@ -473,6 +480,41 @@ class Preferences(object):
             options, help_str, category_label
         )
 
+    @staticmethod
+    def raw_value(_module, _preference, _category=None, _user_id=None):
+        # Find the entry for this module in the configuration database.
+        module = ModulePrefTable.query.filter_by(name=_module).first()
+
+        if module is None:
+            return None
+
+        if _category is None:
+            _category = _module
+
+        if _user_id is None:
+            _user_id = getattr(current_user, 'id', None)
+            if _user_id is None:
+                return None
+
+        cat = PrefCategoryTbl.query.filter_by(mid=module.id).filter_by(name=_category).first()
+
+        if cat is None:
+            return None
+
+        pref = PrefTable.query.filter_by(name=_preference).filter_by(cid=cat.id).first()
+
+        if pref is None:
+            return None
+
+        user_pref  = UserPrefTable.query.filter_by(
+            pid=pref.id
+        ).filter_by(uid=_user_id).first()
+
+        if user_pref is not None:
+            return user_pref.value
+
+        return None
+
     @classmethod
     def module(cls, name, create=True):
         """
@@ -512,7 +554,7 @@ class Preferences(object):
         # Can't find the reference for it in the configuration database,
         # create on for it.
         if module is None:
-            return False, gettext("Could not fine the specified module.")
+            return False, gettext("Could not find the specified module.")
 
         m = cls.modules[module.name]
 

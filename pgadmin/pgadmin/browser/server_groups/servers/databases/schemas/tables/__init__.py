@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -21,6 +21,7 @@ from pgadmin.browser.server_groups.servers.utils import parse_priv_to_db
 from pgadmin.utils.ajax import make_json_response, internal_server_error, \
     make_response as ajax_response, gone
 from .utils import BaseTableView
+from pgadmin.utils.preferences import Preferences
 
 
 class TableModule(SchemaChildModule):
@@ -241,7 +242,8 @@ class TableView(BaseTableView, DataTypeReader, VacuumSettings):
         'select_sql': [{'get': 'select_sql'}],
         'insert_sql': [{'get': 'insert_sql'}],
         'update_sql': [{'get': 'update_sql'}],
-        'delete_sql': [{'get': 'delete_sql'}]
+        'delete_sql': [{'get': 'delete_sql'}],
+        'count_rows': [{'get': 'count_rows'}]
     })
 
     @BaseTableView.check_precondition
@@ -345,7 +347,8 @@ class TableView(BaseTableView, DataTypeReader, VacuumSettings):
                     icon="icon-partition" if 'is_partitioned' in row and row['is_partitioned'] else "icon-table",
                     tigger_count=row['triggercount'],
                     has_enable_triggers=row['has_enable_triggers'],
-                    is_partitioned=row['is_partitioned'] if 'is_partitioned' in row else False
+                    is_partitioned=row['is_partitioned'] if 'is_partitioned' in row else False,
+                    rows_cnt=0
                 ))
 
         return make_json_response(
@@ -564,8 +567,42 @@ class TableView(BaseTableView, DataTypeReader, VacuumSettings):
         if len(res['rows']) == 0:
                 return gone(gettext("The specified table could not be found."))
 
+        # We will check the threshold set by user before executing
+        # the query because that can cause performance issues
+        # with large result set
+        pref = Preferences.module('browser')
+        table_row_count_pref = pref.preference('table_row_count_threshold')
+        table_row_count_threshold = table_row_count_pref.get()
+        estimated_row_count = int(res['rows'][0].get('reltuples', 0))
+
+        # If estimated rows are greater than threshold then
+        if estimated_row_count and \
+                estimated_row_count > table_row_count_threshold:
+            res['rows'][0]['rows_cnt'] = str(table_row_count_threshold) + '+'
+
+        # If estimated rows is lower than threshold then calculate the count
+        elif estimated_row_count and \
+                table_row_count_threshold >= estimated_row_count:
+            SQL = render_template(
+                "/".join(
+                    [self.table_template_path, 'get_table_row_count.sql']
+                ), data=res['rows'][0]
+            )
+
+            status, count = self.conn.execute_scalar(SQL)
+
+            if not status:
+                return internal_server_error(errormsg=count)
+
+            res['rows'][0]['rows_cnt'] = count
+
+        # If estimated_row_count is zero then set the row count with same
+        elif not estimated_row_count:
+            res['rows'][0]['rows_cnt'] = estimated_row_count
+
         return super(TableView, self).properties(
-            gid, sid, did, scid, tid, res)
+            gid, sid, did, scid, tid, res
+        )
 
     @BaseTableView.check_precondition
     def types(self, gid, sid, did, scid, tid=None, clid=None):
@@ -1425,5 +1462,40 @@ class TableView(BaseTableView, DataTypeReader, VacuumSettings):
         schema.
         """
         return BaseTableView.get_table_statistics(self, scid, tid)
+
+    @BaseTableView.check_precondition
+    def count_rows(self, gid, sid, did, scid, tid):
+        """
+        Count the rows of a table.
+        Args:
+            gid: Server Group Id
+            sid: Server Id
+            did: Database Id
+            scid: Schema Id
+            tid: Table Id
+
+        Returns the total rows of a table.
+        """
+        data = {}
+        data['schema'], data['name'] = \
+            super(TableView, self).get_schema_and_table_name(tid)
+
+        SQL = render_template(
+            "/".join(
+                [self.table_template_path, 'get_table_row_count.sql']
+            ), data=data
+        )
+
+        status, count = self.conn.execute_scalar(SQL)
+
+        if not status:
+            return internal_server_error(errormsg=count)
+
+        return make_json_response(
+            status=200,
+            info=gettext("Table rows counted"),
+            data={'total_rows': count}
+        )
+
 
 TableView.register_node_view(blueprint)

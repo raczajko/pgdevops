@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -13,7 +13,7 @@ import pgadmin.browser.server_groups as sg
 from flask import render_template, request, make_response, jsonify, \
     current_app, url_for
 from flask_babel import gettext
-from flask_security import current_user
+from flask_security import current_user, login_required
 from pgadmin.browser.server_groups.servers.types import ServerType
 from pgadmin.browser.utils import PGChildNodeView
 from pgadmin.utils.ajax import make_json_response, bad_request, forbidden, \
@@ -25,7 +25,6 @@ import config
 from config import PG_DEFAULT_DRIVER
 from pgadmin.model import db, Server, ServerGroup, User
 from pgadmin.utils.driver import get_driver
-from pgadmin.utils import get_storage_directory
 
 def has_any(data, keys):
     """
@@ -43,7 +42,6 @@ def has_any(data, keys):
 
     return False
 
-
 def recovery_state(connection, postgres_version):
     recovery_check_sql = render_template("connect/sql/#{0}#/check_recovery.sql".format(postgres_version))
 
@@ -55,6 +53,38 @@ def recovery_state(connection, postgres_version):
         in_recovery = None
         wal_paused = None
     return in_recovery, wal_paused
+
+def server_icon_and_background(is_connected, manager, server):
+    """
+
+    Args:
+        is_connected: Flag to check if server is connected
+        manager: Connection manager
+        server: Sever object
+
+    Returns:
+        Server Icon CSS class
+    """
+    server_background_color = ''
+    if server and server.bgcolor:
+        server_background_color = ' {0}'.format(
+            server.bgcolor
+        )
+        # If user has set font color also
+        if server.fgcolor:
+            server_background_color = '{0} {1}'.format(
+                server_background_color,
+                server.fgcolor
+            )
+
+    if is_connected:
+        return 'icon-{0}{1}'.format(
+            manager.server_type, server_background_color
+        )
+    else:
+        return 'icon-server-not-connected{0}'.format(
+            server_background_color
+        )
 
 
 class ServerModule(sg.ServerGroupPluginModule):
@@ -73,6 +103,7 @@ class ServerModule(sg.ServerGroupPluginModule):
         """
         return sg.ServerGroupModule.NODE_TYPE
 
+    @login_required
     def get_nodes(self, gid):
         """Return a JSON document listing the server groups for the user"""
         servers = Server.query.filter_by(user_id=current_user.id,
@@ -86,14 +117,14 @@ class ServerModule(sg.ServerGroupPluginModule):
             connected = conn.connected()
             in_recovery = None
             wal_paused = None
+
             if connected:
                 in_recovery, wal_paused = recovery_state(conn, manager.version)
             yield self.generate_browser_node(
                 "%d" % (server.id),
                 gid,
                 server.name,
-                "icon-server-not-connected" if not connected else
-                "icon-{0}".format(manager.server_type),
+                server_icon_and_background(connected, manager, server),
                 True,
                 self.NODE_TYPE,
                 connected=connected,
@@ -209,7 +240,8 @@ class ServerNode(PGChildNodeView):
         'change_password': [{'post': 'change_password'}],
         'wal_replay': [{
             'delete': 'pause_wal_replay', 'put': 'resume_wal_replay'
-        }]
+        }],
+        'check_pgpass': [{'get': 'check_pgpass'}]
     })
     EXP_IP4 = "^\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."\
             "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."\
@@ -263,10 +295,9 @@ class ServerNode(PGChildNodeView):
                                     field in required_ssl_fields_server_mode:
                         # Set file manager directory from preference
                         import os
-                        storage_dir = get_storage_directory()
                         file_extn = '.key' if field.endswith('key') else '.crt'
                         dummy_ssl_file = os.path.join(
-                                storage_dir, '.postgresql',
+                                '<STORAGE_DIR>', '.postgresql',
                                 'postgresql' + file_extn
                         )
                         data[field] = dummy_ssl_file
@@ -276,6 +307,7 @@ class ServerNode(PGChildNodeView):
 
         return flag, data
 
+    @login_required
     def nodes(self, gid):
         res = []
         """
@@ -303,8 +335,7 @@ class ServerNode(PGChildNodeView):
                     "%d" % (server.id),
                     gid,
                     server.name,
-                    "icon-server-not-connected" if not connected else
-                    "icon-{0}".format(manager.server_type),
+                    server_icon_and_background(connected, manager, server),
                     True,
                     self.node_type,
                     connected=connected,
@@ -324,7 +355,7 @@ class ServerNode(PGChildNodeView):
 
         return make_json_response(result=res)
 
-
+    @login_required
     def node(self, gid, sid):
         """Return a JSON document listing the server groups for the user"""
         server = Server.query.filter_by(user_id=current_user.id,
@@ -357,8 +388,7 @@ class ServerNode(PGChildNodeView):
                 "%d" % (server.id),
                 gid,
                 server.name,
-                "icon-server-not-connected" if not connected else
-                "icon-{0}".format(manager.server_type),
+                server_icon_and_background(connected, manager, server),
                 True,
                 self.node_type,
                 connected=connected,
@@ -371,6 +401,7 @@ class ServerNode(PGChildNodeView):
             )
         )
 
+    @login_required
     def delete(self, gid, sid):
         """Delete a server node in the settings database."""
         servers = Server.query.filter_by(user_id=current_user.id, id=sid)
@@ -401,6 +432,7 @@ class ServerNode(PGChildNodeView):
         return make_json_response(success=1,
                                   info=gettext("Server deleted"))
 
+    @login_required
     def update(self, gid, sid):
         """Update the server settings"""
         server = Server.query.filter_by(
@@ -431,7 +463,9 @@ class ServerNode(PGChildNodeView):
             'sslkey': 'sslkey',
             'sslrootcert': 'sslrootcert',
             'sslcrl': 'sslcrl',
-            'sslcompression': 'sslcompression'
+            'sslcompression': 'sslcompression',
+            'bgcolor': 'bgcolor',
+            'fgcolor': 'fgcolor'
         }
 
         disp_lbl = {
@@ -489,7 +523,7 @@ class ServerNode(PGChildNodeView):
         if idx == 0:
             return make_json_response(
                 success=0,
-                errormsg=gettext('No parameters were changed!')
+                errormsg=gettext('No parameters were changed.')
             )
 
         try:
@@ -511,8 +545,7 @@ class ServerNode(PGChildNodeView):
             node=self.blueprint.generate_browser_node(
                 "%d" % (server.id), server.servergroup_id,
                 server.name,
-                "icon-server-not-connected" if not connected else
-                "icon-{0}".format(manager.server_type),
+                server_icon_and_background(connected, manager, server),
                 True,
                 self.node_type,
                 connected=False,
@@ -520,6 +553,7 @@ class ServerNode(PGChildNodeView):
             )
         )
 
+    @login_required
     def list(self, gid):
         """
         Return list of attributes of all servers.
@@ -561,6 +595,7 @@ class ServerNode(PGChildNodeView):
             response=res
         )
 
+    @login_required
     def properties(self, gid, sid):
         """Return list of attributes of a server"""
         server = Server.query.filter_by(
@@ -604,6 +639,8 @@ class ServerNode(PGChildNodeView):
                 'version': manager.ver,
                 'sslmode': server.ssl_mode,
                 'server_type': manager.server_type if connected else 'pg',
+                'bgcolor': server.bgcolor,
+                'fgcolor': server.fgcolor,
                 'db_res': server.db_res.split(',') if server.db_res else None,
                 'passfile': server.passfile if server.passfile else None,
                 'sslcert': server.sslcert if is_ssl else None,
@@ -615,6 +652,7 @@ class ServerNode(PGChildNodeView):
             }
         )
 
+    @login_required
     def create(self, gid):
         """Add a server node to the settings database"""
         required_args = [
@@ -673,7 +711,12 @@ class ServerNode(PGChildNodeView):
                 sslkey=data['sslkey'] if is_ssl else None,
                 sslrootcert=data['sslrootcert'] if is_ssl else None,
                 sslcrl=data['sslcrl'] if is_ssl else None,
-                sslcompression=1 if is_ssl and data['sslcompression'] else 0
+                sslcompression=1 if is_ssl and data['sslcompression'] else 0,
+                bgcolor=data['bgcolor'] if u'bgcolor' in data
+                else None,
+                fgcolor = data['fgcolor'] if u'fgcolor' in data
+                else None
+
             )
             db.session.add(server)
             db.session.commit()
@@ -687,21 +730,18 @@ class ServerNode(PGChildNodeView):
                 manager.update(server)
                 conn = manager.connection()
 
-                have_password =  False
+                have_password = False
+                password = None
+                passfile = None
                 if 'password' in data and data["password"] != '':
                     # login with password
                     have_password = True
-                    passfile = None
                     password = data['password']
                     password = encrypt(password, current_user.password)
                 elif 'passfile' in data and data["passfile"] != '':
                     passfile = data['passfile']
                     setattr(server, 'passfile', passfile)
                     db.session.commit()
-                else:
-                    # Attempt password less login
-                    password = None
-                    passfile = None
 
                 status, errmsg = conn.connect(
                     password=password,
@@ -731,7 +771,7 @@ class ServerNode(PGChildNodeView):
                 node=self.blueprint.generate_browser_node(
                     "%d" % server.id, server.servergroup_id,
                     server.name,
-                    'icon-{0}'.format(manager.server_type) if manager and manager.server_type else "icon-pg",
+                    server_icon_and_background(connected, manager, server),
                     True,
                     self.node_type,
                     user=user,
@@ -752,12 +792,15 @@ class ServerNode(PGChildNodeView):
                 errormsg=str(e)
             )
 
+    @login_required
     def sql(self, gid, sid):
         return make_json_response(data='')
 
+    @login_required
     def modified_sql(self, gid, sid):
         return make_json_response(data='')
 
+    @login_required
     def statistics(self, gid, sid):
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(sid)
         conn = manager.connection()
@@ -781,9 +824,11 @@ class ServerNode(PGChildNodeView):
             )
         )
 
+    @login_required
     def dependencies(self, gid, sid):
         return make_json_response(data='')
 
+    @login_required
     def dependents(self, gid, sid):
         return make_json_response(data='')
 
@@ -959,9 +1004,7 @@ class ServerNode(PGChildNodeView):
                 success=1,
                 info=gettext("Server connected."),
                 data={
-                    'icon': 'icon-{0}'.format(
-                        manager.server_type
-                    ),
+                    'icon': server_icon_and_background(True, manager, server),
                     'connected': True,
                     'server_type': manager.server_type,
                     'type': manager.server_type,
@@ -992,7 +1035,7 @@ class ServerNode(PGChildNodeView):
                 success=1,
                 info=gettext("Server disconnected."),
                 data={
-                    'icon': 'icon-server-not-connected',
+                    'icon': server_icon_and_background(False, manager, server),
                     'connected': False
                 }
             )
@@ -1076,12 +1119,43 @@ class ServerNode(PGChildNodeView):
         """
         try:
             data = json.loads(request.form['data'], encoding='utf-8')
-            if data and ('password' not in data or
-                                 data['password'] == '' or
-                                 'newPassword' not in data or
-                                 data['newPassword'] == '' or
-                                 'confirmPassword' not in data or
-                                 data['confirmPassword'] == ''):
+
+            # Fetch Server Details
+            server = Server.query.filter_by(id=sid).first()
+            if server is None:
+                return bad_request(gettext("Server not found."))
+
+            # Fetch User Details.
+            user = User.query.filter_by(id=current_user.id).first()
+            if user is None:
+                return unauthorized(gettext("Unauthorized request."))
+
+            manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(sid)
+            conn = manager.connection()
+            is_passfile = False
+
+            # If there is no password found for the server
+            # then check for pgpass file
+            if not server.password and not manager.password:
+                if server.passfile and manager.passfile and \
+                    server.passfile == manager.passfile:
+                    is_passfile = True
+
+            # Check for password only if there is no pgpass file used
+            if not is_passfile:
+                if data and ('password' not in data or data['password'] == ''):
+                    return make_json_response(
+                        status=400,
+                        success=0,
+                        errormsg=gettext(
+                            "Could not find the required parameter(s)."
+                        )
+                    )
+
+            if data and ('newPassword' not in data or
+                         data['newPassword'] == '' or
+                         'confirmPassword' not in data or
+                         data['confirmPassword'] == ''):
                 return make_json_response(
                     status=400,
                     success=0,
@@ -1099,29 +1173,18 @@ class ServerNode(PGChildNodeView):
                     )
                 )
 
-            # Fetch Server Details
-            server = Server.query.filter_by(id=sid).first()
-            if server is None:
-                return bad_request(gettext("Server not found."))
+            # Check against old password only if no pgpass file
+            if not is_passfile:
+                decrypted_password = decrypt(manager.password, user.password)
 
-            # Fetch User Details.
-            user = User.query.filter_by(id=current_user.id).first()
-            if user is None:
-                return unauthorized(gettext("Unauthorized request."))
+                if isinstance(decrypted_password, bytes):
+                    decrypted_password = decrypted_password.decode()
 
-            manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(sid)
-            conn = manager.connection()
+                password = data['password']
 
-            decrypted_password = decrypt(manager.password, user.password)
-
-            if isinstance(decrypted_password, bytes):
-                decrypted_password = decrypted_password.decode()
-
-            password = data['password']
-
-            # Validate old password before setting new.
-            if password != decrypted_password:
-                return unauthorized(gettext("Incorrect password."))
+                # Validate old password before setting new.
+                if password != decrypted_password:
+                    return unauthorized(gettext("Incorrect password."))
 
             # Hash new password before saving it.
             password = pqencryptpassword(data['newPassword'], manager.user)
@@ -1136,15 +1199,17 @@ class ServerNode(PGChildNodeView):
             if not status:
                 return internal_server_error(errormsg=res)
 
-            password = encrypt(data['newPassword'], user.password)
-            # Check if old password was stored in pgadmin4 sqlite database.
-            # If yes then update that password.
-            if server.password is not None and config.ALLOW_SAVE_PASSWORD:
-                setattr(server, 'password', password)
-                db.session.commit()
-            # Also update password in connection manager.
-            manager.password = password
-            manager.update_session()
+            # Store password in sqlite only if no pgpass file
+            if not is_passfile:
+                password = encrypt(data['newPassword'], user.password)
+                # Check if old password was stored in pgadmin4 sqlite database.
+                # If yes then update that password.
+                if server.password is not None and config.ALLOW_SAVE_PASSWORD:
+                    setattr(server, 'password', password)
+                    db.session.commit()
+                # Also update password in connection manager.
+                manager.password = password
+                manager.update_session()
 
             return make_json_response(
                 status=200,
@@ -1202,7 +1267,7 @@ class ServerNode(PGChildNodeView):
                     info=gettext('WAL replay paused'),
                     data={'in_recovery': True, 'wal_pause': pause}
                 )
-            return gone(errormsg=_('Please connect the server!'))
+            return gone(errormsg=_('Please connect the server.'))
         except Exception as e:
             current_app.logger.error(
                 'WAL replay pause/resume failed'
@@ -1235,5 +1300,46 @@ class ServerNode(PGChildNodeView):
         """
         return self.wal_replay(sid, True)
 
+    def check_pgpass(self, gid, sid):
+        """
+        This function is used to check whether server is connected
+        using pgpass file or not
+
+        Args:
+            gid: Group id
+            sid: Server id
+        """
+        is_pgpass = False
+        server = Server.query.filter_by(
+            user_id=current_user.id, id=sid
+        ).first()
+
+        if server is None:
+            return make_json_response(
+                success=0,
+                errormsg=gettext("Could not find the required server.")
+            )
+
+        try:
+            manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(sid)
+            conn = manager.connection()
+            if not conn.connected():
+                return gone(
+                    errormsg=_('Please connect the server.')
+                )
+
+            if not server.password or not manager.password:
+                if server.passfile and manager.passfile and \
+                    server.passfile == manager.passfile:
+                        is_pgpass = True
+            return make_json_response(
+                success=1,
+                data=dict({'is_pgpass': is_pgpass}),
+            )
+        except Exception as e:
+            current_app.logger.error(
+                'Cannot able to fetch pgpass status'
+            )
+            return internal_server_error(errormsg=str(e))
 
 ServerNode.register_node_view(blueprint)

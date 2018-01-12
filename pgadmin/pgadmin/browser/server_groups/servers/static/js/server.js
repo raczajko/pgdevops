@@ -365,7 +365,9 @@ define('pgadmin.node.server', [
             i = input.item || t.selected(),
             d = i && i.length == 1 ? t.itemData(i) : undefined,
             node = d && pgBrowser.Nodes[d._type],
-            url = obj.generate_url(i, 'change_password', d, true);
+            url = obj.generate_url(i, 'change_password', d, true),
+            is_pgpass_file_used = false,
+            check_pgpass_url = obj.generate_url(i, 'check_pgpass', d, true);
 
           if (!d)
             return false;
@@ -387,8 +389,8 @@ define('pgadmin.node.server', [
                   type: 'text', disabled: true, control: 'input'
                 },{
                   name: 'password', label: gettext('Current Password'),
-                  type: 'password', disabled: false, control: 'input',
-                  required: true
+                  type: 'password', disabled: function() { return is_pgpass_file_used },
+                  control: 'input', required: true
                 },{
                   name: 'newPassword', label: gettext('New Password'),
                   type: 'password', disabled: false, control: 'input',
@@ -410,9 +412,11 @@ define('pgadmin.node.server', [
                  setup:function() {
                   return {
                     buttons: [{
-                      text: gettext('Ok'), key: 13, className: 'btn btn-primary', attrs:{name:'submit'}
-                      },{
-                      text: gettext('Cancel'), key: 27, className: 'btn btn-danger', attrs:{name:'cancel'}
+                      text: gettext('Ok'), key: 13, className: 'btn btn-primary',
+                      attrs:{name:'submit'}
+                    },{
+                      text: gettext('Cancel'), key: 27, className: 'btn btn-danger',
+                      attrs:{name:'cancel'}
                     }],
                     // Set options for dialog
                     options: {
@@ -436,15 +440,18 @@ define('pgadmin.node.server', [
                 },
                 prepare: function() {
                   var self = this;
-                  // Disable Backup button until user provides Filename
+                  // Disable Ok button until user provides input
                   this.__internal.buttons[0].element.disabled = true;
-                  var $container = $("<div class='change_password'></div>"),
-                    newpasswordmodel = new newPasswordModel({'user_name': self.user_name});
 
-                  var view = this.view = new Backform.Form({
-                    el: $container,
-                    model: newpasswordmodel,
-                    fields: passwordChangeFields});
+                  var $container = $("<div class='change_password'></div>"),
+                    newpasswordmodel = new newPasswordModel(
+                      {'user_name': self.user_name}
+                    ),
+                    view = this.view = new Backform.Form({
+                      el: $container,
+                      model: newpasswordmodel,
+                      fields: passwordChangeFields
+                    });
 
                   view.render();
 
@@ -457,7 +464,9 @@ define('pgadmin.node.server', [
                         newPassword = this.get('newPassword'),
                         confirmPassword = this.get('confirmPassword');
 
-                    if (_.isUndefined(password) || _.isNull(password) || password == '' ||
+                    // Only check password field if pgpass file is not available
+                    if ((!is_pgpass_file_used &&
+                         (_.isUndefined(password) || _.isNull(password) || password == '')) ||
                         _.isUndefined(newPassword) || _.isNull(newPassword) || newPassword == '' ||
                         _.isUndefined(confirmPassword) || _.isNull(confirmPassword) || confirmPassword == '') {
                       self.__internal.buttons[0].element.disabled = true;
@@ -488,6 +497,16 @@ define('pgadmin.node.server', [
                       data:{'data': JSON.stringify(args) },
                       success: function(res) {
                         if (res.success) {
+                          // Notify user to update pgpass file
+                          if(is_pgpass_file_used) {
+                            alertify.alert(
+                              gettext("Change Password"),
+                              gettext("Please make sure to disconnect the server"
+                              + " and update the new password in the pgpass file"
+                              + " before performing any other operation")
+                            );
+                          }
+
                           alertify.success(res.info);
                           self.close();
                         } else {
@@ -509,7 +528,26 @@ define('pgadmin.node.server', [
             });
           }
 
-          alertify.changeServerPassword(d).resizeTo('40%','52%');
+          // Call to check if server is using pgpass file or not
+          $.ajax({
+            url: check_pgpass_url,
+            method:'GET',
+            success: function(res) {
+              if (res.success && res.data.is_pgpass) {
+                is_pgpass_file_used = true;
+              }
+              alertify.changeServerPassword(d).resizeTo('40%','52%');
+            },
+            error: function(xhr, status, error) {
+              try {
+                var err = $.parseJSON(xhr.responseText);
+                if (err.success == 0) {
+                  alertify.error(err.errormsg);
+                }
+              } catch (e) {}
+            }
+          });
+
           return false;
         },
 
@@ -645,12 +683,19 @@ define('pgadmin.node.server', [
         },{
           id: 'connected', label: gettext('Connected?'), type: 'switch',
           mode: ['properties'], group: gettext('Connection'), 'options': {
-            'onText':   'True', 'offText':  'False', 'onColor':  'success',
+            'onText':  gettext('True'), 'offText':  gettext('False'), 'onColor':  'success',
             'offColor': 'danger', 'size': 'small'
           }
         },{
           id: 'version', label: gettext('Version'), type: 'text', group: null,
           mode: ['properties'], visible: 'isConnected'
+        },{
+          id: 'bgcolor', label: gettext('Background'), type: 'color',
+          group: null, mode: ['edit', 'create'], disabled: 'isfgColorSet',
+          deps: ['fgcolor']
+        },{
+          id: 'fgcolor', label: gettext('Foreground'), type: 'color',
+          group: null, mode: ['edit', 'create'], disabled: 'isConnected',
         },{
           id: 'connect_now', controlLabel: gettext('Connect now?'), type: 'checkbox',
           group: null, mode: ['create']
@@ -691,12 +736,12 @@ define('pgadmin.node.server', [
           id: 'sslmode', label: gettext('SSL mode'), type: 'options', group: gettext('SSL'),
           mode: ['properties', 'edit', 'create'], disabled: 'isConnected',
           'options': [
-            {label: 'Allow', value: 'allow'},
-            {label: 'Prefer', value: 'prefer'},
-            {label: 'Require', value: 'require'},
-            {label: 'Disable', value: 'disable'},
-            {label: 'Verify-CA', value: 'verify-ca'},
-            {label: 'Verify-Full', value: 'verify-full'}
+            {label: gettext('Allow'), value: 'allow'},
+            {label: gettext('Prefer'), value: 'prefer'},
+            {label: gettext('Require'), value: 'require'},
+            {label: gettext('Disable'), value: 'disable'},
+            {label: gettext('Verify-CA'), value: 'verify-ca'},
+            {label: gettext('Verify-Full'), value: 'verify-full'}
           ]
         },{
           id: 'sslcert', label: gettext('Client certificate'), type: 'text',
@@ -725,7 +770,7 @@ define('pgadmin.node.server', [
         },{
           id: 'sslcompression', label: gettext('SSL compression?'), type: 'switch',
           mode: ['edit', 'create'], group: gettext('SSL'),
-          'options': { 'onText':   'True', 'offText':  'False',
+          'options': { 'onText':   gettext('True'), 'offText':  gettext('False'),
           'onColor':  'success', 'offColor': 'danger', 'size': 'small'},
           deps: ['sslmode'], disabled: 'isSSL'
         },{
@@ -763,7 +808,7 @@ define('pgadmin.node.server', [
         },{
           id: 'sslcompression', label: gettext('SSL compression?'), type: 'switch',
           mode: ['properties'], group: gettext('SSL'),
-          'options': { 'onText':   'True', 'offText':  'False',
+          'options': { 'onText':  gettext('True'), 'offText':  gettext('False'),
           'onColor':  'success', 'offColor': 'danger', 'size': 'small'},
           deps: ['sslmode'], visible: function(m) {
             var sslmode = m.get('sslmode');
@@ -777,12 +822,12 @@ define('pgadmin.node.server', [
           mode: ['properties', 'edit', 'create'], disabled: 'isConnected', select2: {multiple: true, allowClear: false,
           tags: true, tokenSeparators: [','], first_empty: false, selectOnClose: true, emptyOptions: true}
         },{
-          id: 'passfile', label: gettext('Password File'), type: 'text',
+          id: 'passfile', label: gettext('Password file'), type: 'text',
           group: gettext('Advanced'), mode: ['edit', 'create'],
-          disabled: 'isConnected', control: Backform.FileControl,
+          disabled: 'isConnectedWithValidLib', control: Backform.FileControl,
           dialog_type: 'select_file', supp_types: ['*']
         },{
-          id: 'passfile', label: gettext('Password File'), type: 'text',
+          id: 'passfile', label: gettext('Password file'), type: 'text',
           group: gettext('Advanced'), mode: ['properties'],
           visible: function(m) {
             var passfile = m.get('passfile');
@@ -881,6 +926,23 @@ define('pgadmin.node.server', [
         isConnected: function(model) {
           return model.get('connected');
         },
+        isfgColorSet: function(model) {
+          var bgcolor = model.get('bgcolor'),
+              fgcolor = model.get('fgcolor');
+
+          if(model.get('connected')) {
+            return true;
+          }
+          // If fgcolor is set and bgcolor is not set then force bgcolor
+          // to set as white
+          if(_.isUndefined(bgcolor) || _.isNull(bgcolor) || !bgcolor) {
+            if(fgcolor) {
+              model.set('bgcolor', '#ffffff');
+            }
+          }
+
+          return false;
+        },
         isSSL: function(model) {
           var ssl_mode = model.get('sslmode');
           // If server is not connected and have required SSL option
@@ -888,6 +950,14 @@ define('pgadmin.node.server', [
             return true;
           }
           return _.indexOf(SSL_MODES, ssl_mode) == -1;
+        },
+        isConnectedWithValidLib: function(model) {
+          if(model.get('connected')) {
+            return true;
+          }
+          // older version of libpq do not support 'passfile' parameter in
+          // connect method, valid libpq must have version >= 100000
+          return pgBrowser.utils.pg_libpq_version < 100000;
         }
       }),
       connection_lost: function(i, resp) {

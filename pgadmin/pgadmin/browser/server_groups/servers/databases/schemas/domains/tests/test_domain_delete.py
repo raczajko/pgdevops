@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -32,7 +32,7 @@ class DomainDeleteTestCase(BaseTestGenerator):
         self.schema_info = parent_node_dict["schema"][-1]
         self.schema_name = self.schema_info["schema_name"]
         self.schema_id = self.schema_info["schema_id"]
-        self.domain_name = "domain_delete_%s" % (str(uuid.uuid4())[1:6])
+        self.domain_name = "domain_delete_%s" % (str(uuid.uuid4())[1:8])
         self.domain_info = domain_utils.create_domain(self.server,
                                                       self.db_name,
                                                       self.schema_name,

@@ -167,7 +167,7 @@ define('pgadmin.node.domain', [
           id: 'sysdomain', label: gettext('System domain?'), cell: 'boolean',
           type: 'switch', mode: ['properties'],
           options: {
-            'onText': 'Yes', 'offText': 'No',
+            'onText': gettext('Yes'), 'offText': gettext('No'),
             'onColor': 'success', 'offColor': 'primary',
             'size': 'small'
           }
@@ -178,9 +178,11 @@ define('pgadmin.node.domain', [
           id: 'basetype', label: gettext('Base type'), cell: 'string',
           control: 'node-ajax-options', type: 'text', url: 'get_types',
           mode:['properties', 'create', 'edit'], group: gettext('Definition'),
-          cache_level: 'database', cache_node: 'schema', disabled: function(m) {
+          first_empty: true, cache_node: 'type',
+          disabled: function(m) {
             return !m.isNew();
-          }, first_empty: true, transform: function(d) {
+          },
+          transform: function(d) {
             this.model.type_options =  d;
             return d;
           }
@@ -246,7 +248,7 @@ define('pgadmin.node.domain', [
           id: 'typnotnull', label: gettext('Not Null?'), cell: 'boolean',
           type: 'switch', group: gettext('Definition'),
           options: {
-            'onText': 'Yes', 'offText': 'No',
+            'onText': gettext('Yes'), 'offText': gettext('No'),
             'onColor': 'success', 'offColor': 'primary',
             'size': 'small'
           }

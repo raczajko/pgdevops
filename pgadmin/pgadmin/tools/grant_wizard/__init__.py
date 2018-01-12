@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -129,7 +129,7 @@ def check_precondition(f):
         # If DB not connected then return error to browser
         if not server_info['conn'].connected():
             return precondition_required(
-                gettext("Connection to the server has been lost!")
+                gettext("Connection to the server has been lost.")
             )
 
         # Set template path for sql scripts

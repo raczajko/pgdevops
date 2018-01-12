@@ -76,19 +76,6 @@ window.onload = function(e){
      list.getElementsByTagName("a")[0].innerHTML = gravatarImg;
    }
  }, 1000);
-
- /*document.getElementById("nav-to-dev").onclick = function fun() {
-      var getRoleData = new XMLHttpRequest();
-      getRoleData.open("GET", window.location.origin + "/api/checkUserRole", false);
-      getRoleData.send();
-      var jsonData = JSON.parse(getRoleData.response);
-      if(jsonData.code != 1){
-        window.location.href = "/"
-      }else{
-        document.getElementById("alert_placeholder").innerHTML = '<div style="position: fixed; top: 70px; right: 20px; width: 400px; z-index: 9999" class="alert alert-danger"><a class="close" data-dismiss="alert">×</a><span>'+jsonData.msg+'</span></div>';
-      }
-    }*/
-
 };
 
 {% endblock %}
@@ -128,8 +115,6 @@ window.onload = function(e){
     <div class="row"><div class="col-xs-12 pg-sp-text">{{ _('Loading {0} v{1}...').format(config.APP_NAME, config.APP_VERSION) }}</div></div>
   </div>
 </div>
-<!-- <div id="alert_placeholder">
-</div> -->
 <nav class="navbar-inverse navbar-fixed-top pg-navbar">
     <div class="container-fluid">
         {% if config.SERVER_MODE %}
@@ -139,7 +124,7 @@ window.onload = function(e){
                         <span class="glyphicon glyphicon-menu-hamburger"></span>
                     </a>
                     <ul class="dropdown-menu navbar-inverse">
-                       <li><a href="/">pgDevOps</a></li>
+                        <li><a href="/">pgDevOps</a></li>
                     </ul>
                 </li>
             </ul>
@@ -151,7 +136,8 @@ window.onload = function(e){
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand pgadmin_header_logo" onClick="return false;" href="{{ '#' }}">
+            <a class="navbar-brand pgadmin_header_logo" onClick="return false;" href="{{ '#' }}"
+               title="{{ config.APP_NAME }} {{ _('logo') }}">
                 <i class="app-icon {{ config.APP_ICON }}"></i>
                 <span>&nbsp;{{ config.APP_NAME }}</span>
             </a>
@@ -197,8 +183,18 @@ window.onload = function(e){
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"></a>
                     <ul class="dropdown-menu navbar-inverse">
-                        <li><a href="{{ url_for('security.change_password') }}">{{ _('Change Password') }}</a></li>
+                        <li>
+                            <a href="#" onclick="pgAdmin.Browser.UserManagement.change_password(
+                              '{{ url_for('browser.change_password') }}'
+                            )">
+                                {{ _('Change Password') }}
+                            </a>
+                        </li>
                         <li class="divider"></li>
+                        {% if is_admin %}
+                        <li><a href="#" onclick="pgAdmin.Browser.UserManagement.show_users()">{{ _('Users') }}</a></li>
+                        <li class="divider"></li>
+                        {% endif %}
                         <li><a href="{{ url_for('security.logout') }}?next={{url_for('browser.index')}}">{{ _('Logout') }}</a></li>
                     </ul>
                 </li>

@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -325,7 +325,7 @@ class ForeignDataWrapperView(PGChildNodeView):
 
         if len(res['rows']) == 0:
             return gone(
-                gettext("Couldnot find the foreign data wrapper information.")
+                gettext("Could not find the foreign data wrapper information.")
             )
 
         if res['rows'][0]['fdwoptions'] is not None:
@@ -568,7 +568,7 @@ class ForeignDataWrapperView(PGChildNodeView):
 
             if len(res['rows']) == 0:
                 return gone(
-                    gettext("Couldnot find the foreign data wrapper information.")
+                    gettext("Could not find the foreign data wrapper information.")
                 )
 
             if res['rows'][0]['fdwoptions'] is not None:

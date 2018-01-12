@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -798,6 +798,14 @@ class FtsDictionaryView(PGChildNodeView):
         sql = render_template("/".join([self.template_path, 'create.sql']),
                               data=res['rows'][0],
                               conn=self.conn, is_displaying=True)
+
+        sql_header = u"""-- Text Search Dictionary: {0}
+
+-- DROP TEXT SEARCH DICTIONARY {0};
+
+""".format(self.qtIdent(self.conn, res['rows'][0]['schema'], res['rows'][0]['name']))
+
+        sql = sql_header + sql
 
         return ajax_response(response=sql.strip('\n'))
 

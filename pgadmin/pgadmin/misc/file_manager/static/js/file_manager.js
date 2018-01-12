@@ -125,6 +125,9 @@ define('misc.file_manager', [
                   break;
               }
             },
+            prepare: function() {
+              this.__internal.buttons[0].element.disabled = true;
+            },
             setup:function() {
               return {
                 buttons:[
@@ -159,6 +162,7 @@ define('misc.file_manager', [
                 $(innerbody).find('*').off();
                 innerbody.remove();
                 removeTransId(trans_id);
+                pgAdmin.Browser.Events.trigger('pgadmin-storage:cancel_btn:storage_dialog');
               }
             },
             build: function() {
@@ -248,6 +252,9 @@ define('misc.file_manager', [
                   break;
               }
             },
+            prepare: function() {
+              this.__internal.buttons[0].element.disabled = true;
+            },
             setup:function() {
               return {
                 buttons:[
@@ -285,6 +292,7 @@ define('misc.file_manager', [
                 $(innerbody).find('*').off();
                 innerbody.remove();
                 removeTransId(trans_id);
+                pgAdmin.Browser.Events.trigger('pgadmin-storage:cancel_btn:select_file');
               }
             },
             build: function() {
@@ -374,6 +382,9 @@ define('misc.file_manager', [
                   break;
               }
             },
+            prepare: function() {
+              this.__internal.buttons[0].element.disabled = true;
+            },
             setup:function() {
               return {
                 buttons:[
@@ -409,6 +420,7 @@ define('misc.file_manager', [
                 $(innerbody).find('*').off();
                 innerbody.remove();
                 removeTransId(trans_id);
+                pgAdmin.Browser.Events.trigger('pgadmin-storage:cancel_btn:select_folder');
               }
             },
             build: function() {
@@ -497,6 +509,9 @@ define('misc.file_manager', [
               default:
                   break;
               }
+            },
+            prepare: function() {
+              this.__internal.buttons[0].element.disabled = true;
             },
             setup:function() {
               return {
@@ -632,6 +647,7 @@ define('misc.file_manager', [
                 $(innerbody).find('*').off();
                 innerbody.remove();
                 removeTransId(trans_id);
+                pgAdmin.Browser.Events.trigger('pgadmin-storage:cancel_btn:create_file');
               }
             },
             build: function() {

@@ -103,7 +103,7 @@ define([
 
     },{
       name: "object_type",
-      label: "Object Type",
+      label: gettext("Object Type"),
       editable: false,
       cell: Backgrid.Cell.extend({
         render: function() {
@@ -117,12 +117,12 @@ define([
       })
     },{
       name: "nspname",
-      label: "Schema",
+      label: gettext("Schema"),
       cell: "string",
       editable: false
     },{
       name: "name_with_args",
-      label: "Name",
+      label: gettext("Name"),
       cell: "string",
       editable: false
     }];
@@ -1000,7 +1000,7 @@ define([
                   page_title: _('Final (Review Selection) (step 3 of 3)'),
                   show_description: _('The SQL below will be executed on the ' +
                                 'database server to grant the selected privileges. ' +
-                                'Please click on <b>Finish</b> to complete the process. '),
+                                'Please click on <b>Finish</b> to complete the process.'),
                   model: newModel,
                   view: new(function() {
 
@@ -1089,10 +1089,8 @@ define([
                         error: function(m, jqxhr) {
                           alertify.pgNotifier(
                             "error", jqxhr,
-                            S(
-                              gettext("Error saving properties: %s")
-                              ).sprintf(jqxhr.statusText).value()
-                            );
+                            gettext("Error saving properties")
+                          );
 
                             // Release wizard objects
                             self.releaseObjects();

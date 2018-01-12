@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -430,7 +430,7 @@ class CollationView(PGChildNodeView):
                 status=410,
                 success=0,
                 errormsg=gettext(
-                    "Definition incomplete. Please provide Locale OR Copy Collation OR LC_TYPE/LC_COLLATE"
+                    "Definition incomplete. Please provide Locale OR Copy Collation OR LC_TYPE/LC_COLLATE."
                 )
             )
 

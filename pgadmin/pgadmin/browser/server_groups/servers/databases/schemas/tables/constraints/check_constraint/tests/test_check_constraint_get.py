@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -25,7 +25,7 @@ class CheckConstraintGetTestCase(BaseTestGenerator):
     """This class will fetch check constraint to existing table"""
     scenarios = [
         ('Fetch check constraint to table',
-         dict(url='/browser/check_constraints/obj/'))
+         dict(url='/browser/check_constraint/obj/'))
     ]
 
     def setUp(self):
@@ -47,13 +47,13 @@ class CheckConstraintGetTestCase(BaseTestGenerator):
             raise Exception("Could not find the schema to fetch a check "
                             "constraint.")
         self.table_name = "table_checkconstraint_get_%s" % \
-                          (str(uuid.uuid4())[1:6])
+                          (str(uuid.uuid4())[1:8])
         self.table_id = tables_utils.create_table(self.server,
                                                   self.db_name,
                                                   self.schema_name,
                                                   self.table_name)
         self.check_constraint_name = "test_checkconstraint_get_%s" % \
-                                     (str(uuid.uuid4())[1:6])
+                                     (str(uuid.uuid4())[1:8])
         self.check_constraint_id = \
             chk_constraint_utils.create_check_constraint(
                 self.server, self.db_name, self.schema_name, self.table_name,

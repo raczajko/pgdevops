@@ -345,7 +345,7 @@
             );
         }
       } else {
-          Alertify.alert("This object is not editable by user",
+          Alertify.alert(gettext("This object is not user editable."),
             function(){
               return true;
           });
@@ -418,7 +418,7 @@
             }
           );
         } else {
-          Alertify.alert("This object cannot be deleted",
+          Alertify.alert(gettext("This object cannot be deleted."),
             function(){
               return true;
             }
@@ -454,8 +454,8 @@
   var SwitchCell = Backgrid.Extension.SwitchCell = Backgrid.BooleanCell.extend({
     defaults: {
       options: _.defaults({
-        onText: 'True',
-        offText: 'False',
+        onText: gettext('True'),
+        offText: gettext('False'),
         onColor: 'success',
         offColor: 'default',
         size: 'mini'
@@ -487,6 +487,7 @@
           column = this.column,
           val = this.formatter.toRaw(this.$input.prop('checked'), model);
 
+      this.enterEditMode();
       // on bootstrap change we also need to change model's value
       model.set(column.get("name"), val);
     },
@@ -809,7 +810,7 @@
             arrayValuesCol = this.model.get(this.column.get("name")),
             tbl = $("<table></table>").appendTo(this.$el),
             gridCols = [
-                    {name: 'value', label:'Array Values', type: 'text', cell:'string', headerCell: Backgrid.Extension.CustomHeaderIconCell, cellHeaderClasses: 'width_percent_100'},
+                    {name: 'value', label: gettext('Array Values'), type: 'text', cell:'string', headerCell: Backgrid.Extension.CustomHeaderIconCell, cellHeaderClasses: 'width_percent_100'},
                     ],
             gridBody = $("<div class='pgadmin-control-group backgrid form-group col-xs-12 object subnode'></div>");
 

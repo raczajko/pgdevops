@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -59,7 +59,7 @@ class DomainAddTestCase(BaseTestGenerator):
             "is_tlength": True,
             "max_val": 2147483647,
             "min_val": 1,
-            "name": "domain_add_%s" % (str(uuid.uuid4())[1:6]),
+            "name": "domain_add_%s" % (str(uuid.uuid4())[1:8]),
             "owner": self.server["username"],
             "seclabels": [],
             "typdefault": "1",

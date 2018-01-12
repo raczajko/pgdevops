@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -43,7 +43,7 @@ class HelpModule(PgAdminModule):
                      priority=300,
                      target='_blank',
                      icon='fa fa-external-link',
-                     url='http://www.postgresql.org/')]}
+                     url='https://www.postgresql.org/')]}
 
     def get_panels(self):
         return [
@@ -55,22 +55,8 @@ class HelpModule(PgAdminModule):
                 icon='fa fa-question').__dict__,
 
             Panel(
-                name='pnl_pgadmin_website',
-                priority=200,
-                title=gettext('pgAdmin Website'),
-                icon='fa fa-external-link',
-                content='https://www.pgadmin.org/').__dict__,
-
-            Panel(
-                name='pnl_postgresql_website',
-                priority=300,
-                title=gettext('PostgreSQL Website'),
-                icon='fa fa-external-link',
-                content='http://www.postgresql.org/').__dict__,
-
-            Panel(
                 name='pnl_sql_help',
-                priority=400,
+                priority=200,
                 isPrivate=True,
                 icon='fa fa-info',
                 title=gettext('SQL Help')).__dict__]
@@ -86,7 +72,7 @@ class HelpModule(PgAdminModule):
         self.pg_help_path = self.help_preference.register(
             'help', 'pg_help_path',
             gettext("PostgreSQL Help Path"), 'text',
-            'http://www.postgresql.org/docs/$VERSION$/static/',
+            'https://www.postgresql.org/docs/$VERSION$/static/',
             category_label=gettext('Help'),
             help_str=gettext(
                 'Path to the PostgreSQL documentation. $VERSION$ will be replaced with the major.minor version number.')
@@ -95,7 +81,7 @@ class HelpModule(PgAdminModule):
         self.edbas_help_path = self.help_preference.register(
             'help', 'edbas_help_path',
             gettext("EDB Advanced Server Help Path"), 'text',
-            'http://www.enterprisedb.com/docs/en/$VERSION$/pg/',
+            'https://www.enterprisedb.com/docs/en/$VERSION$/pg/',
             category_label=gettext('Help'),
             help_str=gettext(
                 'Path to the EDB Advanced Server documentation. $VERSION$ will be replaced with the major.minor version number.')

@@ -51,8 +51,8 @@ define([
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while setting debugging breakpoint.'
+              gettext('Debugger Error'),
+              gettext('Error while setting debugging breakpoint.')
             );
           }
         });
@@ -113,15 +113,15 @@ define([
             }
             else if (res.data.status === 'NotConnected') {
               Alertify.alert(
-                'Debugger Error',
-                'Error while fetching breakpoint information.'
+                gettext('Debugger Error'),
+                gettext('Error while fetching breakpoint information.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while fetching breakpoint information.'
+              gettext('Debugger Error'),
+              gettext('Error while fetching breakpoint information.')
             );
           }
         });
@@ -148,15 +148,15 @@ define([
             }
             else if (res.data.status === 'NotConnected') {
               Alertify.alert(
-                'Debugger Error',
-                'Error while starting debugging session.'
+                gettext('Debugger Error'),
+                gettext('Error while starting debugging session.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while starting debugging session.'
+              gettext('Debugger Error'),
+              gettext('Error while starting debugging session.')
             );
           }
         });
@@ -191,15 +191,15 @@ define([
             }
             else if (res.data.status === 'NotConnected') {
               Alertify.alert(
-                'Debugger Error',
-                'Error while executing requested debugging information.'
+                gettext('Debugger Error'),
+                gettext('Error while executing requested debugging information.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while executing requested debugging information.'
+              gettext('Debugger Error'),
+              gettext('Error while executing requested debugging information.')
             );
           }
         });
@@ -233,15 +233,15 @@ define([
             }
             else if (res.data.status === 'NotConnected') {
               Alertify.alert(
-                'Debugger Error',
-                'Error while fetching variable information.'
+                gettext('Debugger Error'),
+                gettext('Error while fetching variable information.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while fetching variable information.'
+              gettext('Debugger Error'),
+              gettext('Error while fetching variable information.')
             );
           }
         });
@@ -268,15 +268,15 @@ define([
             }
             else if (res.data.status === 'NotConnected') {
               Alertify.alert(
-                'Debugger Error',
-                'Error while fetching stack information.'
+                gettext('Debugger Error'),
+                gettext('Error while fetching stack information.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while fetching stack information.'
+              gettext('Debugger Error'),
+              gettext('Error while fetching stack information.')
             );
           }
         });
@@ -400,15 +400,15 @@ define([
             }
             else if (res.data.status === 'NotConnected') {
               Alertify.alert(
-                'Debugger Error',
-                'Error while polling result.'
+                gettext('Debugger Error'),
+                gettext('Error while polling result.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while polling result.'
+              gettext('Debugger Error'),
+              gettext('Error while polling result.')
             );
           }
         });
@@ -543,7 +543,7 @@ define([
             }
             else if (res.data.status === 'NotConnected') {
               Alertify.alert(
-                'Debugger poll end execution error',
+                gettext('Debugger poll end execution error'),
                 res.data.result
               );
             }
@@ -588,8 +588,8 @@ define([
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while polling result.'
+              gettext('Debugger Error'),
+              gettext('Error while polling result.')
             );
           }
         });
@@ -649,8 +649,8 @@ define([
               },
               error: function(e) {
                 Alertify.alert(
-                  'Debugger Error',
-                  'Error while polling result.'
+                  gettext('Debugger Error'),
+                  gettext('Error while polling result.')
                 );
               }
             });
@@ -660,7 +660,7 @@ define([
           try {
             var err = $.parseJSON(xhr.responseText);
             if (err.success == 0) {
-              Alertify.alert(err.errormsg);
+              Alertify.alert(gettext('Debugger Error'), err.errormsg);
             }
           } catch (e) {}
         }
@@ -697,15 +697,15 @@ define([
             }
             else {
               Alertify.alert(
-                'Debugger Error',
-                'Error while executing continue in debugging session.'
+                gettext('Debugger Error'),
+                gettext('Error while executing continue in debugging session.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while executing continue in debugging session.'
+              gettext('Debugger Error'),
+              gettext('Error while executing continue in debugging session.')
             );
           }
         });
@@ -735,15 +735,15 @@ define([
             }
             else {
               Alertify.alert(
-                'Debugger Error',
-                'Error while executing step over in debugging session.'
+                gettext('Debugger Error'),
+                gettext('Error while executing step over in debugging session.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while executing step over in debugging session.'
+              gettext('Debugger Error'),
+              gettext('Error while executing step over in debugging session.')
             );
           }
         });
@@ -772,15 +772,15 @@ define([
             }
             else {
               Alertify.alert(
-                'Debugger Error',
-                'Error while executing step into in debugging session.'
+                gettext('Debugger Error'),
+                gettext('Error while executing step into in debugging session.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while executing step into in debugging session.'
+              gettext('Debugger Error'),
+              gettext('Error while executing step into in debugging session.')
             );
           }
         });
@@ -824,15 +824,15 @@ define([
             }
             else if (res.data.status === 'NotConnected') {
               Alertify.alert(
-                'Debugger Error',
-                'Error while executing stop in debugging session.'
+                gettext('Debugger Error'),
+                gettext('Error while executing stop in debugging session.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while executing stop in debugging session.'
+              gettext('Debugger Error'),
+              gettext('Error while executing stop in debugging session.')
             );
           }
         });
@@ -896,15 +896,15 @@ define([
             }
             else if (res.data.status === 'NotConnected') {
               Alertify.alert(
-                'Debugger Error',
-                'Error while toggling breakpoint.'
+                gettext('Debugger Error'),
+                gettext('Error while toggling breakpoint.')
               );
             }
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while toggling breakpoint.'
+              gettext('Debugger Error'),
+              gettext('Error while toggling breakpoint.')
             );
           }
         });
@@ -961,8 +961,8 @@ define([
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while clearing all breakpoint.'
+              gettext('Debugger Error'),
+              gettext('Error while clearing all breakpoint.')
             );
           }
         });
@@ -979,6 +979,7 @@ define([
 
         var DebuggerStackModel = Backbone.Model.extend({
           defaults: {
+            frame_id: 0,
             name: undefined,
             value: undefined,
             line_no: undefined
@@ -991,17 +992,22 @@ define([
         });
 
         var stackGridCols = [
-          {name: 'name', label:'Name', type:'text', editable: false, cell:'string'},
-          {name: 'value', label:'Value', type:'text', editable: false, cell:'string'},
-          {name: 'line_no', label:'Line No.', type:'text', editable: false, cell:'string'}
+          {name: 'name', label: gettext('Name'), type:'text',
+            editable: false, cell:'string'},
+          {name: 'value', label: gettext('Value'), type:'text',
+            editable: false, cell:'string'},
+          {name: 'line_no', label: gettext('Line No.'), type:'text',
+            editable: false, cell:'string'}
         ];
 
         var my_obj = [];
-        if (result.length != 0)
-        {
-          for (var i = 0; i < result.length; i++) {
-            my_obj.push({ "name": result[i].targetname, "value": result[i].args, "line_no": result[i].linenumber });
-          }
+        for (var i = 0; i < result.length; i++) {
+          my_obj.push({
+            "frame_id": i,
+            "name": result[i].targetname,
+            "value": result[i].args,
+            "line_no": result[i].linenumber
+          });
         }
 
         var stackColl = this.stackColl = new StackCollection(my_obj);
@@ -1018,14 +1024,11 @@ define([
             },
             rowClick: function(e) {
               //Find which row is selected and depending on that send the frame id
-              for (var i = 0; i < this.model.collection.length; i++) {
-                if (this.model.collection.models[i].get('name') == this.model.get('name')) {
-                  self.frame_id_ = i;
-                  break;
-                }
-              }
+              self.frame_id = this.model.get('frame_id');
               this.model.trigger('backgrid:row:selected', this);
-              self.stack_grid.$el.find("td").css("background-color", this.disabledColor);
+              self.stack_grid.$el.find("td").css(
+                "background-color", this.disabledColor
+              );
               this.$el.find("td").css("background-color", this.highlightColor);
             }
           }),
@@ -1036,7 +1039,10 @@ define([
         stack_grid.render();
 
         // Render the stack grid into stack panel
-        pgTools.DirectDebug.stack_pane_panel.$container.find('.stack_pane').append(stack_grid.el);
+        pgTools.DirectDebug.stack_pane_panel
+                           .$container
+                           .find('.stack_pane')
+                           .append(stack_grid.el);
 
       },
 
@@ -1110,9 +1116,9 @@ define([
         });
 
         var gridCols = [
-          {name: 'name', label:'Name', type:'text', editable: false, cell:'string'},
-          {name: 'type', label:'Type', type: 'text', editable: false, cell:'string'},
-          {name: 'value', label:'Value', type: 'text', cell: 'string'}
+          {name: 'name', label: gettext('Name'), type:'text', editable: false, cell:'string'},
+          {name: 'type', label: gettext('Type'), type: 'text', editable: false, cell:'string'},
+          {name: 'value', label: gettext('Value'), type: 'text', cell: 'string'}
         ];
 
         var my_obj = [];
@@ -1164,9 +1170,9 @@ define([
         self.ParametersCollection.prototype.on('change', self.deposit_parameter_value, self);
 
         var paramGridCols = [
-          {name: 'name', label:'Name', type:'text', editable: false, cell:'string'},
-          {name: 'type', label:'Type', type: 'text', editable: false, cell:'string'},
-          {name: 'value', label:'Value', type: 'text', cell: 'string'}
+          {name: 'name', label: gettext('Name'), type:'text', editable: false, cell:'string'},
+          {name: 'type', label: gettext('Type'), type: 'text', editable: false, cell:'string'},
+          {name: 'value', label: gettext('Value'), type: 'text', cell: 'string'}
         ];
 
         var param_obj = [];
@@ -1222,8 +1228,8 @@ define([
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while depositing variable value.'
+              gettext('Debugger Error'),
+              gettext('Error while depositing variable value.')
             );
           }
         });
@@ -1235,7 +1241,7 @@ define([
         // Make ajax call to listen the database message
         var baseUrl = url_for('debugger.select_frame', {
                         'trans_id': pgTools.DirectDebug.trans_id,
-                        'frame_id': self.frame_id_
+                        'frame_id': self.frame_id
                       });
         $.ajax({
           url: baseUrl,
@@ -1253,8 +1259,8 @@ define([
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while selecting frame.'
+              gettext('Debugger Error'),
+              gettext('Error while selecting frame.')
             );
           }
         });
@@ -1425,8 +1431,8 @@ define([
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while starting debugging listener.'
+              gettext('Debugger Error'),
+              gettext('Error while starting debugging listener.')
             );
           }
         });
@@ -1446,8 +1452,8 @@ define([
           },
           error: function(e) {
             Alertify.alert(
-              'Debugger Error',
-              'Error while starting debugging listener.'
+              gettext('Debugger Error'),
+              gettext('Error while starting debugging listener.')
             );
           }
         });
@@ -1478,15 +1484,15 @@ define([
           }
           else if (res.data.status === 'NotConnected') {
             Alertify.alert(
-              'Not connected to server or connection with the server has been closed.',
+              gettext('Not connected to server or connection with the server has been closed.'),
               res.data.result
             );
           }
         },
         error: function(e) {
           Alertify.alert(
-            'Debugger Error',
-            'Error while fetching messages information.'
+            gettext('Debugger Error'),
+            gettext('Error while fetching messages information.')
           );
         }
       });
@@ -1636,6 +1642,8 @@ define([
           mode: "text/x-pgsql",
           readOnly: true,
           extraKeys: pgAdmin.Browser.editor_shortcut_keys,
+          indentWithTabs: pgAdmin.Browser.editor_options.indent_with_tabs,
+          indentUnit: pgAdmin.Browser.editor_options.tabSize,
           tabSize: pgAdmin.Browser.editor_options.tabSize,
           lineWrapping: pgAdmin.Browser.editor_options.wrapCode,
           autoCloseBrackets: pgAdmin.Browser.editor_options.insert_pair_brackets,

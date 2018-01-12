@@ -148,7 +148,7 @@ define(
         width: 500,
         isCloseable: false,
         isPrivate: true,
-        content: '<textarea id="sql-textarea" name="sql-textarea"></textarea>'
+        content: '<div class="sql_textarea"><textarea id="sql-textarea" name="sql-textarea"></textarea></div>'
       }),
       // Dependencies of the object
       'dependencies': new pgAdmin.Browser.Panel({
@@ -1509,7 +1509,15 @@ define(
           }
       }
 
-      if (_old._pid != _new._pid || _old._label != _new._label) {
+      // If server icon/background changes then also we need to re-create it
+      if(_old._type == 'server' && _new._type == 'server' &&
+          ( _old._pid != _new._pid ||
+            _old._label != _new._label ||
+            _old.icon != _new.icon )
+      ) {
+        ctx.op = 'RECREATE';
+        traversePath();
+      } else if (_old._pid != _new._pid || _old._label != _new._label) {
         ctx.op = 'RECREATE';
         traversePath();
       } else {
@@ -1970,7 +1978,8 @@ define(
       tabSize: pgBrowser.utils.tabSize,
       wrapCode: pgBrowser.utils.wrapCode,
       insert_pair_brackets: pgBrowser.utils.insertPairBrackets,
-      brace_matching: pgBrowser.utils.braceMatching
+      brace_matching: pgBrowser.utils.braceMatching,
+      indent_with_tabs: pgBrowser.utils.is_indent_with_tabs
     }
 
   });

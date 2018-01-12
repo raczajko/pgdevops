@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -29,7 +29,7 @@ class ResetPasswordTestCase(BaseTestGenerator):
 
         # This test case validates the invalid/incorrect email field
         ('TestCase for Validating Invalid_Email', dict(
-            email=str(uuid.uuid4())[1:6] + '@xyz.com',
+            email=str(uuid.uuid4())[1:8] + '@xyz.com',
             respdata='Specified user does not exist')),
 
         # This test case validates the valid email id
@@ -45,11 +45,11 @@ class ResetPasswordTestCase(BaseTestGenerator):
     def runTest(self):
         """This function checks reset password functionality."""
 
-        response = self.tester.get('/reset')
+        response = self.tester.get('/browser/reset_password')
         self.assertTrue('Recover pgAdmin 4 Password' in response.data.decode(
             'utf-8'))
         response = self.tester.post(
-            '/reset', data=dict(email=self.email),
+            '/browser/reset_password', data=dict(email=self.email),
             follow_redirects=True)
         self.assertTrue(self.respdata in response.data.decode('utf-8'))
 

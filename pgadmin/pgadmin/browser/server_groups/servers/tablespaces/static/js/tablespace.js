@@ -114,10 +114,10 @@ define('pgadmin.node.tablespace', [
                   type: 'text', disabled: false, control: 'select2',
                   select2: { allowClear: false, width: "100%" },
                   options: [
-                    {label: "All", value: 'all'},
-                    {label: "Tables", value: 'tables'},
-                    {label: "Indexes", value: 'indexes'},
-                    {label: "Materialized views", value: 'materialized_views'},
+                    {label: gettext("All"), value: 'all'},
+                    {label: gettext("Tables"), value: 'tables'},
+                    {label: gettext("Indexes"), value: 'indexes'},
+                    {label: gettext("Materialized views"), value: 'materialized_views'},
                   ]
               },{
                   id: 'user', label: gettext('Object owner'),
@@ -168,7 +168,7 @@ define('pgadmin.node.tablespace', [
             alertify.dialog('move_objects_dlg' ,function factory() {
               return {
                 main: function() {
-                 var title = gettext('Move objects to another tablespace ');
+                 var title = gettext('Move objects to another tablespace');
                  this.set('title', title);
                 },
                 build: function() {

@@ -12,7 +12,9 @@
           "node_modules/css-loader/index.js!pgadmin/static/css/pgadmin.css": 6,
           "node_modules/file-loader/index.js?hash=sha512&digest=hex&name=img/[name].[ext]!node_modules/image-webpack-loader/index.js??ref--7-1!pgadmin/static/img/bigsql-pgadmin-30x30.png": 7,
           "node_modules/css-loader/index.js!pgadmin/static/css/pgadmin.style.css": 8,
-          "node_modules/css-loader/index.js!pgadmin/static/css/codemirror.overrides.css": 9
+          "node_modules/css-loader/index.js!pgadmin/static/css/codemirror.overrides.css": 9,
+          "node_modules/file-loader/index.js?name=fonts/[name].[ext]!pgadmin/static/fonts/OpenSans-Regular.ttf": 10,
+          "node_modules/file-loader/index.js?name=fonts/[name].[ext]!pgadmin/static/fonts/SourceCodePro-Regular.ttf": 11
         },
         "usedIds": {
           "0": 0,
@@ -24,14 +26,16 @@
           "6": 6,
           "7": 7,
           "8": 8,
-          "9": 9
+          "9": 9,
+          "10": 10,
+          "11": 11
         }
       },
       "chunks": {
         "byName": {},
         "byBlocks": {},
         "usedIds": {
-          "1": 1
+          "0": 0
         }
       }
     },
@@ -228,7 +232,7 @@
         "byName": {},
         "byBlocks": {},
         "usedIds": {
-          "1": 1
+          "0": 0
         }
       }
     }
@@ -832,7 +836,10 @@
       "node_modules/css-loader/index.js!pgadmin/tools/maintenance/static/css/maintenance.css": 594,
       "node_modules/css-loader/index.js!pgadmin/tools/sqleditor/static/css/sqleditor.css": 595,
       "node_modules/css-loader/index.js!pgadmin/misc/static/explain/css/explain.css": 596,
-      "node_modules/css-loader/index.js!pgadmin/misc/bgprocess/static/css/bgprocess.css": 597
+      "node_modules/css-loader/index.js!pgadmin/misc/bgprocess/static/css/bgprocess.css": 597,
+      "node_modules/prop-types/factoryWithThrowingShims.js": 598,
+      "node_modules/file-loader/index.js?name=fonts/[name].[ext]!pgadmin/static/fonts/OpenSans-Regular.ttf": 599,
+      "node_modules/file-loader/index.js?name=fonts/[name].[ext]!pgadmin/static/fonts/SourceCodePro-Regular.ttf": 600
     },
     "usedIds": {
       "0": 0,
@@ -1432,7 +1439,10 @@
       "594": 594,
       "595": 595,
       "596": 596,
-      "597": 597
+      "597": 597,
+      "598": 598,
+      "599": 599,
+      "600": 600
     }
   },
   "chunks": {

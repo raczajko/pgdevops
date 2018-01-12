@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -48,14 +48,14 @@ class LoginTestCase(BaseTestGenerator):
 
         # This test case validates the invalid/incorrect email id
         ('Invalid_Email', dict(
-            email=str(uuid.uuid4())[1:6] + '@xyz.com',
+            email=str(uuid.uuid4())[1:8] + '@xyz.com',
             password=(config_data['pgAdmin4_login_credentials']
                       ['login_password']),
             respdata='Specified user does not exist')),
 
         # This test case validates invalid email and password
         ('Invalid_Credentials', dict(
-            email=str(uuid.uuid4())[1:6] + '@xyz.com',
+            email=str(uuid.uuid4())[1:8] + '@xyz.com',
             password=str(uuid.uuid4())[4:8],
             respdata='Specified user does not exist')),
 

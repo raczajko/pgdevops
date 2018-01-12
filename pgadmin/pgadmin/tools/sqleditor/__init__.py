@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -117,9 +117,13 @@ class SqlEditorModule(PgAdminModule):
             category_label=gettext('Display'),
             min_val=-1,
             max_val=999999,
-            help_str=gettext('The length of time to display the query info notifier after execution has completed. '
-                             'A value of -1 disables the notifier and a value of 0 displays it until clicked. '
-                             'Values greater than 1 display the notifier for the number of seconds specified.')
+            help_str=gettext(
+                'The length of time to display the query info notifier after '
+                'execution has completed. A value of -1 disables the notifier '
+                'and a value of 0 displays it until clicked. Values greater '
+                'than 0 display the notifier for the number of seconds '
+                'specified.'
+            )
         )
 
         self.open_in_new_tab = self.preference.register(
@@ -172,10 +176,13 @@ class SqlEditorModule(PgAdminModule):
             min_val=0.1,
             max_val=10,
             category_label=gettext('Display'),
-            help_str=gettext('The font size to use for the SQL text boxes and editors. '
-                             'The value specified is in "em" units, in which 1 is the default relative font size. '
-                             'For example, to increase the font size by 20 percent use a value of 1.2, or to reduce '
-                             'by 20 percent, use a value of 0.8. Minimum 0.1, maximum 10.')
+            help_str=gettext(
+                'The font size to use for the SQL text boxes and editors. '
+                'The value specified is in "em" units, in which 1 is the '
+                'default relative font size. For example, to increase the '
+                'font size by 20 percent use a value of 1.2, or to reduce '
+                'by 20 percent, use a value of 0.8. Minimum 0.1, maximum 10.'
+            )
         )
 
         self.tab_size = self.preference.register(
@@ -184,37 +191,147 @@ class SqlEditorModule(PgAdminModule):
             min_val=2,
             max_val=8,
             category_label=gettext('Options'),
-            help_str=gettext('The number of spaces per tab. Minimum 2, maximum 8.')
+            help_str=gettext(
+                'The number of spaces per tab. Minimum 2, maximum 8.'
+            )
         )
 
         self.use_spaces = self.preference.register(
             'Options', 'use_spaces',
             gettext("Use spaces?"), 'boolean', False,
             category_label=gettext('Options'),
-            help_str=gettext('Specifies whether or not to insert spaces instead of tabs when the tab key is used.')
+            help_str=gettext(
+                'Specifies whether or not to insert spaces instead of tabs '
+                'when the tab key or auto-indent are used.'
+            )
         )
 
         self.wrap_code = self.preference.register(
             'Options', 'wrap_code',
             gettext("Line wrapping?"), 'boolean', False,
             category_label=gettext('Options'),
-            help_str=gettext('Specifies whether or not to wrap SQL code in the editor.')
+            help_str=gettext(
+                'Specifies whether or not to wrap SQL code in the editor.'
+            )
         )
 
         self.insert_pair_brackets = self.preference.register(
             'Options', 'insert_pair_brackets',
             gettext("Insert bracket pairs?"), 'boolean', True,
             category_label=gettext('Options'),
-            help_str=gettext('Specifies whether or not to insert paired brackets in the editor.')
+            help_str=gettext(
+                'Specifies whether or not to insert paired brackets in the '
+                'editor.'
+            )
         )
 
         self.brace_matching = self.preference.register(
             'Options', 'brace_matching',
             gettext("Brace matching?"), 'boolean', True,
             category_label=gettext('Options'),
-            help_str=gettext('Specifies whether or not to highlight matched braces in the editor.')
+            help_str=gettext(
+                'Specifies whether or not to highlight matched braces '
+                'in the editor.'
+            )
         )
 
+        self.show_prompt_save_query_changes = self.preference.register(
+            'Options', 'prompt_save_query_changes',
+            gettext("Prompt to save unsaved query changes?"), 'boolean', True,
+            category_label=gettext('Options'),
+            help_str=gettext(
+                'Specifies whether or not to prompt user to save unsaved '
+                'query on query tool exit.'
+            )
+        )
+
+        self.show_prompt_save_data_changes = self.preference.register(
+            'Options', 'prompt_save_data_changes',
+            gettext("Prompt to save unsaved data changes?"), 'boolean', True,
+            category_label=gettext('Options'),
+            help_str=gettext(
+                'Specifies whether or not to prompt user to save unsaved '
+                'data on data grid exit.'
+            )
+        )
+
+        self.csv_quoting = self.preference.register(
+            'CSV_output', 'csv_quoting',
+            gettext("CSV quoting"), 'options', 'strings',
+            category_label=gettext('CSV Output'),
+            options=[{'label': 'None', 'value': 'none'},
+                     {'label': 'All', 'value': 'all'},
+                     {'label': 'Strings', 'value': 'strings'}],
+            select2={
+                'allowClear': False,
+                'tags': False
+            }
+        )
+
+        self.csv_quote_char = self.preference.register(
+            'CSV_output', 'csv_quote_char',
+            gettext("CSV quote character"), 'options', '"',
+            category_label=gettext('CSV Output'),
+            options=[{'label': '"', 'value': '"'},
+                     {'label': '\'', 'value': '\''}],
+            select2={
+                'allowClear': False,
+                'tags': True
+            }
+        )
+
+        self.csv_field_separator = self.preference.register(
+            'CSV_output', 'csv_field_separator',
+            gettext("CSV field separator"), 'options', ',',
+            category_label=gettext('CSV output'),
+            options=[{'label': ';', 'value': ';'},
+                     {'label': ',', 'value': ','},
+                     {'label': '|', 'value': '|'},
+                     {'label': 'Tab', 'value': '\t'}],
+            select2={
+                'allowClear': False,
+                'tags': True
+            }
+        )
+
+        self.results_grid_quoting = self.preference.register(
+            'Results_grid', 'results_grid_quoting',
+            gettext("Result copy quoting"), 'options', 'strings',
+            category_label=gettext('Results grid'),
+            options=[{'label': 'None', 'value': 'none'},
+                     {'label': 'All', 'value': 'all'},
+                     {'label': 'Strings', 'value': 'strings'}],
+            select2={
+                'allowClear': False,
+                'tags': False
+            }
+        )
+
+        self.results_grid_quote_char = self.preference.register(
+            'Results_grid', 'results_grid_quote_char',
+            gettext("Result copy quote character"), 'options', '"',
+            category_label=gettext('Results grid'),
+            options=[{'label': '"', 'value': '"'},
+                     {'label': '\'', 'value': '\''}],
+            select2={
+                'allowClear': False,
+                'tags': True
+            }
+        )
+
+        self.results_grid_field_separator = self.preference.register(
+            'Results_grid', 'results_grid_field_separator',
+            gettext("Result copy field separator"), 'options', '\t',
+            category_label=gettext('Results grid'),
+            options=[{'label': ';', 'value': ';'},
+                     {'label': ',', 'value': ','},
+                     {'label': '|', 'value': '|'},
+                     {'label': 'Tab', 'value': '\t'}],
+            select2={
+                'allowClear': False,
+                'tags': True
+            }
+        )
 
 blueprint = SqlEditorModule(MODULE_NAME, __name__, static_url_path='/static')
 
@@ -222,7 +339,9 @@ blueprint = SqlEditorModule(MODULE_NAME, __name__, static_url_path='/static')
 @blueprint.route('/')
 @login_required
 def index():
-    return bad_request(errormsg=gettext('This URL cannot be requested directly.'))
+    return bad_request(
+        errormsg=gettext('This URL cannot be requested directly.')
+    )
 
 
 def update_session_grid_transaction(trans_id, data):
@@ -248,7 +367,9 @@ def check_transaction_status(trans_id):
 
     # Return from the function if transaction id not found
     if str(trans_id) not in grid_data:
-        return False, gettext('Transaction ID not found in the session.'), None, None, None
+        return False, gettext(
+            'Transaction ID not found in the session.'
+        ), None, None, None
 
     # Fetch the object for the specified transaction id.
     # Use pickle.loads function to get the command object
@@ -258,7 +379,8 @@ def check_transaction_status(trans_id):
     try:
         manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(trans_obj.sid)
         conn = manager.connection(did=trans_obj.did, conn_id=trans_obj.conn_id,
-                                  use_binary_placeholder=True)
+                                  use_binary_placeholder=True,
+                                  array_to_string=True)
     except Exception as e:
         return False, internal_server_error(errormsg=str(e)), None, None, None
 
@@ -312,6 +434,11 @@ def start_view_data(trans_id):
             sql = trans_obj.get_sql()
             pk_names, primary_keys = trans_obj.get_primary_keys(default_conn)
 
+            has_oids = False
+            if trans_obj.object_type == 'table':
+                # Fetch OIDs status
+                has_oids = trans_obj.has_oids(default_conn)
+
             # Fetch the applied filter.
             filter_applied = trans_obj.is_filter_applied()
 
@@ -323,6 +450,10 @@ def start_view_data(trans_id):
 
             # Store the primary keys to the session object
             session_obj['primary_keys'] = primary_keys
+
+            # Store the OIDs status into session object
+            session_obj['has_oids'] = has_oids
+
             update_session_grid_transaction(trans_id, session_obj)
 
             # Execute sql asynchronously
@@ -398,7 +529,8 @@ def start_query_tool(trans_id):
         try:
             manager = get_driver(PG_DEFAULT_DRIVER).connection_manager(trans_obj.sid)
             conn = manager.connection(did=trans_obj.did, conn_id=conn_id,
-                                      use_binary_placeholder=True)
+                                      use_binary_placeholder=True,
+                                      array_to_string=True)
         except Exception as e:
             return internal_server_error(errormsg=str(e))
 
@@ -513,7 +645,6 @@ def preferences(trans_id):
         return success_return()
 
 
-
 @blueprint.route('/poll/<int:trans_id>', methods=["GET"], endpoint='poll')
 @login_required
 def poll(trans_id):
@@ -534,6 +665,8 @@ def poll(trans_id):
     types = {}
     client_primary_key = None
     rset = None
+    has_oids = False
+    oids = None
 
     # Check the transaction and connection status
     status, error_msg, conn, trans_obj, session_obj = check_transaction_status(trans_id)
@@ -559,6 +692,11 @@ def poll(trans_id):
                 if 'primary_keys' in session_obj:
                     primary_keys = session_obj['primary_keys']
 
+                if 'has_oids' in session_obj:
+                    has_oids = session_obj['has_oids']
+                    if has_oids:
+                        oids = {'oid': 'oid'}
+
                 # Fetch column information
                 columns_info = conn.get_column_info()
                 client_primary_key = generate_client_primary_key_name(
@@ -577,7 +715,8 @@ def poll(trans_id):
 
                         SQL = render_template("/".join([template_path,
                                                         'nodes.sql']),
-                                              tid=command_obj.obj_id)
+                                              tid=command_obj.obj_id,
+                                              has_oids=True)
                         # rows with attribute not_null
                         colst, rset = conn.execute_2darray(SQL)
                         if not colst:
@@ -587,6 +726,7 @@ def poll(trans_id):
                         col_type = dict()
                         col_type['type_code'] = col['type_code']
                         col_type['type_name'] = None
+                        col_type['internal_size'] = col['internal_size']
                         columns[col['name']] = col_type
 
                         if rset:
@@ -606,7 +746,29 @@ def poll(trans_id):
                     for col_info in columns.values():
                         for col_type in types:
                             if col_type['oid'] == col_info['type_code']:
-                                col_info['type_name'] = col_type['typname']
+                                typname = col_type['typname']
+
+                                # If column is of type character, character[],
+                                # character varying and character varying[]
+                                # then add internal size to it's name for the
+                                # correct sql query.
+                                if col_info['internal_size'] >= 0:
+                                    if (
+                                        typname == 'character' or
+                                        typname == 'character varying'
+                                    ):
+                                        typname = typname + '(' + \
+                                            str(col_info['internal_size']) + \
+                                            ')'
+                                    elif (
+                                        typname == 'character[]' or
+                                        typname == 'character varying[]'
+                                    ):
+                                        typname = typname[:-2] + '(' + \
+                                            str(col_info['internal_size']) + \
+                                            ')[]'
+
+                                col_info['type_name'] = typname
 
                     session_obj['columns_info'] = columns
                 # status of async_fetchmany_2darray is True and result is none
@@ -667,7 +829,9 @@ def poll(trans_id):
             'colinfo': columns_info,
             'primary_keys': primary_keys,
             'types': types,
-            'client_primary_key': client_primary_key
+            'client_primary_key': client_primary_key,
+            'has_oids': has_oids,
+            'oids': oids
         }
     )
 
@@ -801,7 +965,7 @@ def save(trans_id):
             and trans_obj is not None and session_obj is not None:
 
         # If there is no primary key found then return from the function.
-        if len(session_obj['primary_keys']) <= 0 or len(changed_data) <= 0:
+        if (len(session_obj['primary_keys']) <= 0 or len(changed_data) <= 0) and 'has_oids' not in session_obj:
             return make_json_response(
                 data={
                     'status': False,
@@ -1610,7 +1774,9 @@ def start_query_download_tool(trans_id):
                     r.call_on_close(cleanup)
                     return r
 
-                r = Response(gen(), mimetype='text/csv')
+                r = Response(gen(quote=blueprint.csv_quoting.get(),
+                    quote_char=blueprint.csv_quote_char.get(),
+                    field_separator=blueprint.csv_field_separator.get()), mimetype='text/csv')
 
                 if 'filename' in data and data['filename'] != "":
                     filename = data['filename']

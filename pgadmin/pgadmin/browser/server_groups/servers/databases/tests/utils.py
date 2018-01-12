@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -91,7 +91,7 @@ def get_db_data(db_owner):
       }
     ],
         "encoding": "UTF8",
-        "name": "db_add_%s" % str(uuid.uuid4())[1:6],
+        "name": "db_add_%s" % str(uuid.uuid4())[1:8],
         "privileges": [],
         "securities": [],
         "variables": []

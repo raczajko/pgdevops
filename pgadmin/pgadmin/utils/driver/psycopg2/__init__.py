@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -21,7 +21,6 @@ import sys
 
 import simplejson as json
 import psycopg2
-import psycopg2.extras
 from flask import g, current_app, session
 from flask_babel import gettext
 from flask_security import current_user
@@ -31,17 +30,20 @@ from psycopg2.extensions import adapt, encodings
 import config
 from pgadmin.model import Server, User
 from pgadmin.utils.exception import ConnectionLost
+from pgadmin.utils import get_complete_file_path
 from .keywords import ScanKeyword
 from ..abstract import BaseDriver, BaseConnection
 from .cursor import DictCursor
+from .typecast import register_global_typecasters, register_string_typecasters,\
+    register_binary_typecasters, register_array_to_string_typecasters,\
+    ALL_JSON_TYPES
+
 
 if sys.version_info < (3,):
     # Python2 in-built csv module do not handle unicode
     # backports.csv module ported from PY3 csv module for unicode handling
     from backports import csv
     from StringIO import StringIO
-    psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
-    psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
     IS_PY2 = True
 else:
     from io import StringIO
@@ -50,134 +52,9 @@ else:
 
 _ = gettext
 
-unicode_type_for_record = psycopg2.extensions.new_type(
-    (2249,),
-    "RECORD",
-    psycopg2.extensions.UNICODE
-)
 
-unicode_array_type_for_record_array = psycopg2.extensions.new_array_type(
-    (2287,),
-    "ARRAY_RECORD",
-    unicode_type_for_record
-)
-
-# This registers a unicode type caster for datatype 'RECORD'.
-psycopg2.extensions.register_type(unicode_type_for_record)
-
-# This registers a array unicode type caster for datatype 'ARRAY_RECORD'.
-psycopg2.extensions.register_type(unicode_array_type_for_record_array)
-
-
-# define type caster to convert various pg types into string type
-pg_types_to_string_type = psycopg2.extensions.new_type(
-    (
-        # To cast bytea, interval type
-        17, 1186,
-
-        # to cast int4range, int8range, numrange tsrange, tstzrange, daterange
-        3904, 3926, 3906, 3908, 3910, 3912, 3913,
-
-        # date, timestamp, timestamptz, bigint, double precision
-        1700, 1082, 1114, 1184, 20, 701,
-
-        # real
-        700
-    ),
-    'TYPECAST_TO_STRING', psycopg2.STRING
-)
-
-# define type caster to convert pg array types of above types into
-# array of string type
-pg_array_types_to_array_of_string_type = psycopg2.extensions.new_array_type(
-    (
-        # To cast bytea[] type
-        1001,
-
-        # bigint[]
-        1016,
-
-        # double precision[], real[]
-        1022, 1021
-    ),
-    'TYPECAST_TO_ARRAY_OF_STRING', pg_types_to_string_type
-)
-
-# This registers a type caster to convert various pg types into string type
-psycopg2.extensions.register_type(pg_types_to_string_type)
-
-# This registers a type caster to convert various pg array types into
-# array of string type
-psycopg2.extensions.register_type(pg_array_types_to_array_of_string_type)
-
-
-def register_string_typecasters(connection):
-    if connection.encoding != 'UTF8':
-        # In python3 when database encoding is other than utf-8 and client
-        # encoding is set to UNICODE then we need to map data from database
-        # encoding to utf-8.
-        # This is required because when client encoding is set to UNICODE then
-        # psycopg assumes database encoding utf-8 and not the actual encoding.
-        # Not sure whether it's bug or feature in psycopg for python3.
-        if sys.version_info >= (3,):
-            def return_as_unicode(value, cursor):
-                if value is None:
-                    return None
-                # Treat value as byte sequence of database encoding and then
-                # decode it as utf-8 to get correct unicode value.
-                return bytes(
-                    value, encodings[cursor.connection.encoding]
-                ).decode('utf-8')
-
-            unicode_type = psycopg2.extensions.new_type(
-                # "char", name, text, character, character varying
-                (19, 18, 25, 1042, 1043, 0),
-                'UNICODE', return_as_unicode)
-        else:
-            def return_as_unicode(value, cursor):
-                if value is None:
-                    return None
-                # Decode it as utf-8 to get correct unicode value.
-                return value.decode('utf-8')
-
-            unicode_type = psycopg2.extensions.new_type(
-                # "char", name, text, character, character varying
-                (19, 18, 25, 1042, 1043, 0),
-                'UNICODE', return_as_unicode)
-
-        unicode_array_type = psycopg2.extensions.new_array_type(
-            # "char"[], name[], text[], character[], character varying[]
-            (1002, 1003, 1009, 1014, 1015, 0
-             ), 'UNICODEARRAY', unicode_type)
-
-        psycopg2.extensions.register_type(unicode_type)
-        psycopg2.extensions.register_type(unicode_array_type)
-
-
-def register_binary_typecasters(connection):
-    psycopg2.extensions.register_type(
-        psycopg2.extensions.new_type(
-            (
-                # To cast bytea type
-                17,
-             ),
-            'BYTEA_PLACEHOLDER',
-            # Only show placeholder if data actually exists.
-            lambda value, cursor: 'binary data' if value is not None else None),
-        connection
-    )
-
-    psycopg2.extensions.register_type(
-        psycopg2.extensions.new_type(
-            (
-                # To cast bytea[] type
-                1001,
-             ),
-            'BYTEA_ARRAY_PLACEHOLDER',
-            # Only show placeholder if data actually exists.
-            lambda value, cursor: 'binary data[]' if value is not None else None),
-        connection
-    )
+# Register global type caster which will be applicable to all connections.
+register_global_typecasters()
 
 
 class Connection(BaseConnection):
@@ -262,7 +139,7 @@ class Connection(BaseConnection):
     """
 
     def __init__(self, manager, conn_id, db, auto_reconnect=True, async=0,
-                 use_binary_placeholder=False):
+                 use_binary_placeholder=False, array_to_string=False):
         assert (manager is not None)
         assert (conn_id is not None)
 
@@ -284,6 +161,7 @@ class Connection(BaseConnection):
         # This flag indicates the connection reconnecting status.
         self.reconnecting = False
         self.use_binary_placeholder = use_binary_placeholder
+        self.array_to_string = array_to_string
 
         super(Connection, self).__init__()
 
@@ -302,6 +180,7 @@ class Connection(BaseConnection):
         res['async'] = self.async
         res['wasConnected'] = self.wasConnected
         res['use_binary_placeholder'] = self.use_binary_placeholder
+        res['array_to_string'] = self.array_to_string
 
         return res
 
@@ -362,9 +241,16 @@ class Connection(BaseConnection):
             except Exception as e:
                 current_app.logger.exception(e)
                 return False, \
-                       _("Failed to decrypt the saved password!\nError: {0}").format(
+                       _("Failed to decrypt the saved password.\nError: {0}").format(
                            str(e)
                        )
+
+        # If no password credential is found then connect request might
+        # come from Query tool, ViewData grid, debugger etc tools.
+        # we will check for pgpass file availability from connection manager
+        # if it's present then we will use it
+        if not password and not encpass and not passfile:
+            passfile = mgr.passfile if mgr.passfile else None
 
         try:
             if hasattr(str, 'decode'):
@@ -379,28 +265,23 @@ class Connection(BaseConnection):
             import os
             os.environ['PGAPPNAME'] = '{0} - {1}'.format(config.APP_NAME, conn_id)
 
-            pg_conn_dict = {}
-
-            pg_conn_dict['host'] = mgr.host
-            if mgr.hostaddr:
-                pg_conn_dict['hostaddr'] = mgr.hostaddr
-            pg_conn_dict['port'] = mgr.port
-            pg_conn_dict['database'] = database
-            pg_conn_dict['user'] = user
-            pg_conn_dict['password'] = password
-            pg_conn_dict['async'] = self.async
-            pg_conn_dict['connect_timeout'] = 20
-            if passfile:
-                pg_conn_dict['passfile'] = passfile
-
-            pg_conn_dict['sslmode'] = mgr.ssl_mode
-            pg_conn_dict['sslcert'] = mgr.sslcert
-            pg_conn_dict['sslkey'] = mgr.sslkey
-            pg_conn_dict['sslrootcert'] = mgr.sslrootcert
-            pg_conn_dict['sslcrl'] = mgr.sslcrl
-            pg_conn_dict['sslcompression'] = True if mgr.sslcompression else False
-
-            pg_conn = psycopg2.connect(**pg_conn_dict)
+            pg_conn = psycopg2.connect(
+                host=mgr.host,
+                hostaddr=mgr.hostaddr,
+                port=mgr.port,
+                database=database,
+                user=user,
+                password=password,
+                async=self.async,
+                connect_timeout=20,
+                passfile=get_complete_file_path(passfile),
+                sslmode=mgr.ssl_mode,
+                sslcert=get_complete_file_path(mgr.sslcert),
+                sslkey=get_complete_file_path(mgr.sslkey),
+                sslrootcert=get_complete_file_path(mgr.sslrootcert),
+                sslcrl=get_complete_file_path(mgr.sslcrl),
+                sslcompression=True if mgr.sslcompression else False
+            )
 
             # If connection is asynchronous then we will have to wait
             # until the connection is ready to use.
@@ -475,6 +356,11 @@ Failed to connect to the database server(#{server_id}) for connection ({conn_id}
 
         register_string_typecasters(self.conn)
 
+        if self.array_to_string:
+            register_array_to_string_typecasters(self.conn)
+
+        # Register type casters for binary data only after registering array to
+        # string type casters.
         if self.use_binary_placeholder:
             register_binary_typecasters(self.conn)
 
@@ -703,7 +589,6 @@ WHERE
             params: Additional parameters
             formatted_exception_msg: For exception
             records: Number of initial records
-
         Returns:
             Generator response
         """
@@ -793,7 +678,7 @@ WHERE
                 )
             return new_results
 
-        def gen():
+        def gen(quote='strings', quote_char="'", field_separator=','):
 
             results = cur.fetchmany(records)
             if not results:
@@ -806,15 +691,13 @@ WHERE
             json_columns = []
             conn_encoding = cur.connection.encoding
 
-            # json, jsonb, json[], jsonb[]
-            json_types = (114, 199, 3802, 3807)
             for c in cur.ordered_description():
                 # This is to handle the case in which column name is non-ascii
                 column_name = c.to_dict()['name']
                 if IS_PY2:
                     column_name = column_name.decode(conn_encoding)
                 header.append(column_name)
-                if c.to_dict()['type_code'] in json_types:
+                if c.to_dict()['type_code'] in ALL_JSON_TYPES:
                     json_columns.append(column_name)
 
             if IS_PY2:
@@ -822,9 +705,29 @@ WHERE
 
             res_io = StringIO()
 
+            if quote == 'strings':
+                quote = csv.QUOTE_NONNUMERIC
+            elif quote == 'all':
+                quote = csv.QUOTE_ALL
+            else:
+                quote = csv.QUOTE_NONE
+
+            if hasattr(str, 'decode'):
+                # Decode the field_separator
+                try:
+                    field_separator = field_separator.decode('utf-8')
+                except:
+                    pass
+                # Decode the quote_char
+                try:
+                    quote_char = quote_char.decode('utf-8')
+                except:
+                    pass
+
             csv_writer = csv.DictWriter(
-                res_io, fieldnames=header, delimiter=u',',
-                quoting=csv.QUOTE_NONNUMERIC
+                res_io, fieldnames=header, delimiter=field_separator,
+                quoting=quote,
+                quotechar=quote_char
             )
 
             csv_writer.writeheader()
@@ -843,8 +746,9 @@ WHERE
                 res_io = StringIO()
 
                 csv_writer = csv.DictWriter(
-                    res_io, fieldnames=header, delimiter=u',',
-                    quoting=csv.QUOTE_NONNUMERIC
+                    res_io, fieldnames=header, delimiter=field_separator,
+                    quoting=quote,
+                    quotechar=quote_char
                 )
 
                 if IS_PY2:
@@ -1235,26 +1139,21 @@ Failed to execute query (execute_void) for the server #{server_id} - {conn_id}
             password = decrypt(password, user.password).decode()
 
         try:
-            pg_conn_dict = {}
-
-            pg_conn_dict['host'] = mgr.host
-            if mgr.hostaddr:
-                pg_conn_dict['hostaddr'] = mgr.hostaddr
-            pg_conn_dict['port'] = mgr.port
-            pg_conn_dict['database'] = self.db
-            pg_conn_dict['user'] = mgr.user
-            pg_conn_dict['password'] = password
-            if mgr.passfile:
-                pg_conn_dict['passfile'] = mgr.passfile
-
-            pg_conn_dict['sslmode'] = mgr.ssl_mode
-            pg_conn_dict['sslcert'] = mgr.sslcert
-            pg_conn_dict['sslkey'] = mgr.sslkey
-            pg_conn_dict['sslrootcert'] = mgr.sslrootcert
-            pg_conn_dict['sslcrl'] = mgr.sslcrl
-            pg_conn_dict['sslcompression'] = True if mgr.sslcompression else False
-
-            pg_conn = psycopg2.connect(**pg_conn_dict)
+            pg_conn = psycopg2.connect(
+                host=mgr.host,
+                hostaddr=mgr.hostaddr,
+                port=mgr.port,
+                database=self.db,
+                user=mgr.user,
+                password=password,
+                passfile=get_complete_file_path(mgr.passfile),
+                sslmode=mgr.ssl_mode,
+                sslcert=get_complete_file_path(mgr.sslcert),
+                sslkey=get_complete_file_path(mgr.sslkey),
+                sslrootcert=get_complete_file_path(mgr.sslrootcert),
+                sslcrl=get_complete_file_path(mgr.sslcrl),
+                sslcompression=True if mgr.sslcompression else False
+            )
 
         except psycopg2.Error as e:
             msg = e.pgerror if e.pgerror else e.message \
@@ -1516,25 +1415,24 @@ Failed to reset the connection to the server due to following error:
                 password = decrypt(password, user.password).decode()
 
             try:
-                pg_conn_dict = {}
-
-                pg_conn_dict['host'] = self.manager.host
-                if self.manager.hostaddr:
-                    pg_conn_dict['hostaddr'] = self.manager.hostaddr
-                pg_conn_dict['port'] = self.manager.port
-                pg_conn_dict['database'] = self.db
-                pg_conn_dict['user'] = self.manager.user
-                pg_conn_dict['password'] = password
-                if self.manager.passfile:
-                    pg_conn_dict['passfile'] = self.manager.passfile
-                pg_conn_dict['sslmode'] = self.manager.ssl_mode
-                pg_conn_dict['sslcert'] = self.manager.sslcert
-                pg_conn_dict['sslkey'] = self.manager.sslkey
-                pg_conn_dict['sslrootcert'] = self.manager.sslrootcert
-                pg_conn_dict['sslcrl'] = self.manager.sslcrl
-                pg_conn_dict['sslcompression'] = True if self.manager.sslcompression else False
-
-                pg_conn = psycopg2.connect(**pg_conn_dict)
+                pg_conn = psycopg2.connect(
+                    host=self.manager.host,
+                    hostaddr=self.manager.hostaddr,
+                    port=self.manager.port,
+                    database=self.db,
+                    user=self.manager.user,
+                    password=password,
+                    passfile=get_complete_file_path(self.manager.passfile),
+                    sslmode=self.manager.ssl_mode,
+                    sslcert=get_complete_file_path(self.manager.sslcert),
+                    sslkey=get_complete_file_path(self.manager.sslkey),
+                    sslrootcert=get_complete_file_path(
+                        self.manager.sslrootcert
+                    ),
+                    sslcrl=get_complete_file_path(self.manager.sslcrl),
+                    sslcompression=True if self.manager.sslcompression
+                    else False
+                )
 
                 # Get the cursor and run the query
                 cur = pg_conn.cursor()
@@ -1583,11 +1481,29 @@ Failed to reset the connection to the server due to following error:
         Returns:
             Decoded string
         """
+        is_error = False
         if hasattr(str, 'decode'):
             try:
                 value = value.decode('utf-8')
+            except UnicodeDecodeError:
+                # Let's try with python's preferred encoding
+                # On Windows lc_messages mostly has environment dependent
+                # encoding like 'French_France.1252'
+                try:
+                    import locale
+                    pref_encoding = locale.getpreferredencoding()
+                    value = value.decode(pref_encoding)\
+                        .encode('utf-8')\
+                        .decode('utf-8')
+                except:
+                    is_error = True
             except:
-                pass
+                is_error = True
+
+        # If still not able to decode then
+        if is_error:
+            value = value.decode('ascii', 'ignore')
+
         return value
 
     def _formatted_exception_msg(self, exception_obj, formatted_msg):
@@ -1738,10 +1654,14 @@ class ServerManager(object):
 
         res = dict()
         res['sid'] = self.sid
-        if hasattr(self.password, 'decode'):
-            res['password'] = self.password.decode('utf-8')
+        if hasattr(self, 'password') and self.password:
+            # If running under PY2
+            if hasattr(self.password, 'decode'):
+                res['password'] = self.password.decode('utf-8')
+            else:
+                res['password'] = str(self.password)
         else:
-            res['password'] = str(self.password)
+            res['password'] = self.password
 
         connections = res['connections'] = dict()
 
@@ -1777,7 +1697,7 @@ class ServerManager(object):
 
     def connection(
             self, database=None, conn_id=None, auto_reconnect=True, did=None,
-            async=None, use_binary_placeholder=False
+            async=None, use_binary_placeholder=False, array_to_string=False
     ):
         if database is not None:
             if hasattr(str, 'decode') and \
@@ -1832,7 +1752,8 @@ WHERE db.oid = {0}""".format(did))
                 async = 1 if async is True else 0
             self.connections[my_id] = Connection(
                 self, my_id, database, auto_reconnect, async,
-                use_binary_placeholder=use_binary_placeholder
+                use_binary_placeholder=use_binary_placeholder,
+                array_to_string=array_to_string
             )
 
             return self.connections[my_id]
@@ -1852,7 +1773,8 @@ WHERE db.oid = {0}""".format(did))
         from pgadmin.browser.server_groups.servers.types import ServerType
         self.pinged = datetime.datetime.now()
         try:
-            data['password'] = data['password'].encode('utf-8')
+            if 'password' in data and data['password']:
+                data['password'] = data['password'].encode('utf-8')
         except:
             pass
 
@@ -1862,7 +1784,8 @@ WHERE db.oid = {0}""".format(did))
             conn = self.connections[conn_info['conn_id']] = Connection(
                 self, conn_info['conn_id'], conn_info['database'],
                 True, conn_info['async'],
-                use_binary_placeholder=conn_info['use_binary_placeholder']
+                use_binary_placeholder=conn_info['use_binary_placeholder'],
+                array_to_string=conn_info['array_to_string']
             )
             # only try to reconnect if connection was connected previously.
             if conn_info['wasConnected']:
@@ -2011,8 +1934,8 @@ class Driver(BaseDriver):
         assert (sid is not None and isinstance(sid, int))
         managers = None
 
-        if session['_id'] not in self.managers:
-            self.managers[session['_id']] = managers = dict()
+        if session.sid not in self.managers:
+            self.managers[session.sid] = managers = dict()
             if '__pgsql_server_managers' in session:
                 session_managers = session['__pgsql_server_managers'].copy()
                 session['__pgsql_server_managers'] = dict()
@@ -2027,7 +1950,7 @@ class Driver(BaseDriver):
                     manager._restore(session_managers[server_id])
                     manager.update_session()
         else:
-            managers = self.managers[session['_id']]
+            managers = self.managers[session.sid]
 
         managers['pinged'] = datetime.datetime.now()
         if str(sid) not in managers:
@@ -2055,6 +1978,18 @@ class Driver(BaseDriver):
 
         raise Exception(
             "Driver Version information for psycopg2 is not available!"
+        )
+
+    def libpq_version(cls):
+        """
+        Returns the loaded libpq version
+        """
+        version = getattr(psycopg2, '__libpq_version__', None)
+        if version:
+            return version
+
+        raise Exception(
+            "libpq version information is not available!"
         )
 
     def get_connection(
@@ -2103,9 +2038,9 @@ class Driver(BaseDriver):
         manager = self.connection_manager(sid)
         if manager is not None:
             manager.release()
-        if session['_id'] in self.managers and \
-                str(sid) in self.managers[session['_id']]:
-            del self.managers[session['_id']][str(sid)]
+        if session.sid in self.managers and \
+                str(sid) in self.managers[session.sid]:
+            del self.managers[session.sid][str(sid)]
 
     def gc(self):
         """
@@ -2113,7 +2048,7 @@ class Driver(BaseDriver):
         server for more than config.MAX_SESSION_IDLE_TIME.
         """
 
-        # Mininum session idle is 20 minutes
+        # Minimum session idle is 20 minutes
         max_idle_time = max(config.MAX_SESSION_IDLE_TIME or 60, 20)
         session_idle_timeout = datetime.timedelta(minutes=max_idle_time)
 
@@ -2122,11 +2057,11 @@ class Driver(BaseDriver):
         for sess in self.managers:
             sess_mgr = self.managers[sess]
 
-            if sess == session.get('_id'):
+            if sess == session.sid:
                 sess_mgr['pinged'] = curr_time
                 continue
 
-            if (curr_time - sess_mgr['pinged'] >= session_idle_timeout):
+            if curr_time - sess_mgr['pinged'] >= session_idle_timeout:
                 for mgr in [m for m in sess_mgr if isinstance(m,
                                                               ServerManager)]:
                     mgr.release()

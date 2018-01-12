@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -392,7 +392,7 @@ class FunctionView(PGChildNodeView, DataTypeReader):
         if fnid is not None:
             if len(rset['rows']) == 0:
                 return gone(
-                     _("Could not find the specified %s").format(self.node_type)
+                     _("Could not find the specified %s.").format(self.node_type)
                 )
 
             row = rset['rows'][0]
@@ -1132,7 +1132,7 @@ class FunctionView(PGChildNodeView, DataTypeReader):
             fun_change_args = ['lanname', 'prosrc', 'probin', 'prosrc_c',
                                'provolatile', 'proisstrict', 'prosecdef',
                                'proparallel', 'procost', 'proleakproof',
-                               'arguments']
+                               'arguments', 'prorows']
 
             data['change_func'] = False
             for arg in fun_change_args:

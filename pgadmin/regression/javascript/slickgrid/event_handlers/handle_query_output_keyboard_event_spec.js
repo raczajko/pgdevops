@@ -2,7 +2,7 @@
 //
 // pgAdmin 4 - PostgreSQL Tools
 //
-// Copyright (C) 2013 - 2017, The pgAdmin Development Team
+// Copyright (C) 2013 - 2018, The pgAdmin Development Team
 // This software is released under the PostgreSQL Licence
 //
 //////////////////////////////////////////////////////////////
@@ -36,10 +36,12 @@ describe('#handleQueryOutputKeyboardEvent', function () {
       columnDefinitions = [{name: 'checkboxColumn'},
         {pos: 1, name: 'firstColumn', field: 'firstColumn'},
         { pos: 2, name: 'secondColumn', field: 'secondColumn'}],
-      dataView = new Slick.Data.DataView();
+      dataView = new Slick.Data.DataView(),
+      CSVOptions = {'quoting': 'all', 'quote_char': '\'', 'field_separator': ','};
 
     grid = new Slick.Grid($('<div></div>'), dataView, columnDefinitions);
     grid.setSelectionModel(new XCellSelectionModel());
+    grid.CSVOptions = CSVOptions;
     dataView.setItems(data, '__temp_PK');
     slickEvent = {
       grid: grid,

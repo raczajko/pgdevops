@@ -86,8 +86,8 @@ define('pgadmin.node.type', [
     },{
       id: 'type', label: gettext('Type'), control: 'node-ajax-options',
       type: 'text', url: 'get_types', disabled: false, node: 'type',
+      cache_node: 'domain', editable: true,
       cell: 'node-ajax-options', select2: {allowClear: false},
-      editable: true,
       transform: function(d, control){
         control.model.type_options =  d;
         return d;
@@ -217,9 +217,9 @@ define('pgadmin.node.type', [
       else if (this.get('is_precision')
         && !_.isUndefined(this.get('precision'))) {
         if (this.get('precision') < this.get('min_val'))
-          errmsg = gettext('Scale should not be less than  %(value)s', {value: this.get('min_val')});
+          errmsg = gettext('Scale should not be less than %(value)s', {value: this.get('min_val')});
         if (this.get('precision') > this.get('max_val'))
-          errmsg = gettext('Scale should not be greater than  %(value)s', {value: this.get('max_val')});
+          errmsg = gettext('Scale should not be greater than %(value)s', {value: this.get('max_val')});
         // If we have any error set then throw it to user
         if(errmsg) {
           this.errorModel.set('precision', errmsg)

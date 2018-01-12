@@ -54,10 +54,12 @@ define('pgadmin.preferences', [
                 model: PreferenceModel,
                 url: url_for('preferences.index'),
                 updateAll: function() {
+                  var cnt = 0;
                   // We will send only the modified data to the server.
                   for (var key in changed) {
                     this.get(key).save();
                   }
+
                   return true;
                 }
               }))(null);
@@ -89,16 +91,18 @@ define('pgadmin.preferences', [
              * Clear the existing html in the preferences content
              */
             var content = $container.find('.preferences_content');
-            content.empty();
-
             /*
              * We should clean up the existing controls.
              */
             if (controls) {
               _.each(controls, function(c) {
+                if ('$sel' in c) {
+                  if (c.$sel.data('select2').isOpen()) c.$sel.data('select2').close();
+                }
                 c.remove();
               });
             }
+            content.empty();
             controls = [];
 
             /*
@@ -215,15 +219,23 @@ define('pgadmin.preferences', [
                 case 'datetime':
                   return 'datetimepicker';
                 case 'options':
-                  var opts = [];
+                  var opts = [],
+                      has_value = false;
                   // Convert the array to SelectControl understandable options.
                   _.each(p.options, function(o) {
                     if('label' in o && 'value' in o){
                       opts.push({'label': o.label, 'value': o.value});
+                      if (o.value == p.value)
+                        has_value = true;
                     } else {
                       opts.push({'label': o, 'value': o});
+                      if (o == p.value)
+                         has_value = true;
                     }
                   });
+                  if (p.select2 && p.select2.tags == true && p.value && has_value == false){
+                    opts.push({'label': p.value, 'value': p.value});
+                  }
                   p.options = opts;
                   return 'select2';
                 case 'multiline':
@@ -292,7 +304,8 @@ define('pgadmin.preferences', [
                   if (d.preferences && _.isArray(d.preferences)) {
                     _.each(d.preferences, function(p) {
                       preferences.add({
-                        'id': p.id, 'value': p.value, 'cid': d.id, 'mid': d.mid
+                        'id': p.id, 'value': p.value, 'category_id': d.id,
+                        'mid': d.mid, 'name': p.name,
                       });
                       /*
                        * We don't know until now, how to render the control for
@@ -388,9 +401,9 @@ define('pgadmin.preferences', [
                }
 
               if (e.button.text == gettext('OK')){
-                preferences.updateAll();
-                // Refresh preferences cache
-                pgBrowser.cache_preferences();
+                  preferences.updateAll();
+                  // Refresh preferences cache
+                  setTimeout(pgBrowser.cache_preferences(), 2000);
               }
             },
             build: function() {

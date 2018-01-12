@@ -173,7 +173,7 @@ define('pgadmin.node.sequence', [
           id: 'cycled', label: gettext('Cycled'), type: 'switch',
           mode: ['properties', 'create', 'edit'], group: gettext('Definition'),
           options: {
-            'onText': 'Yes', 'offText': 'No',
+            'onText': gettext('Yes'), 'offText': gettext('No'),
             'onColor': 'success', 'offColor': 'primary',
             'size': 'small'
           }
@@ -188,7 +188,7 @@ define('pgadmin.node.sequence', [
           editable: false, type: 'collection', canAdd: true, canDelete: true,
           control: 'unique-col-collection',
         },{
-          id: 'securities', label: gettext('Securitiy Labels'), canAdd: true,
+          id: 'securities', label: gettext('Security Labels'), canAdd: true,
           model: pgBrowser.SecLabelModel, editable: false,
           type: 'collection', canEdit: false, group: 'security',
           mode: ['edit', 'create'], canDelete: true,

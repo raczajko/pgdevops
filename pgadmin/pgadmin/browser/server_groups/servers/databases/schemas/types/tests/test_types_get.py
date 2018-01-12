@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -41,7 +41,7 @@ class TypesGetTestCase(BaseTestGenerator):
                                                       self.schema_name)
         if not schema_response:
             raise Exception("Could not find the schema to get a type.")
-        self.type_name = "test_type_get_%s" % (str(uuid.uuid4())[1:6])
+        self.type_name = "test_type_get_%s" % (str(uuid.uuid4())[1:8])
         self.type_id = types_utils.create_type(self.server, self.db_name,
                                                self.schema_name, self.type_name
                                                )

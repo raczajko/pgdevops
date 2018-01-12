@@ -2,7 +2,7 @@
 #
 # pgAdmin 4 - PostgreSQL Tools
 #
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
+# Copyright (C) 2013 - 2018, The pgAdmin Development Team
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
@@ -86,7 +86,7 @@ class TableUpdateTestCase(BaseTestGenerator):
                                                       self.schema_name)
         if not schema_response:
             raise Exception("Could not find the schema to add a table.")
-        self.table_name = "test_table_put_%s" % (str(uuid.uuid4())[1:6])
+        self.table_name = "test_table_put_%s" % (str(uuid.uuid4())[1:8])
 
         self.is_partition = False
         if hasattr(self, 'server_min_version'):

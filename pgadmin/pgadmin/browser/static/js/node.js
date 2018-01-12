@@ -265,10 +265,16 @@ define(
                     <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>\
                   </div>\
                     <div class="alert-text">' + msg + '</div>\
+                    <div class="close-error-bar">\
+                      <a class="close-error">x</a>\
+                    </div>\
                 </div>\
               </div>';
             if(!_.isUndefined(that.statusBar)) {
               that.statusBar.html(alertMessage).css("visibility", "visible");
+              that.statusBar.find("a.close-error").bind("click", function(e) {
+                 this.empty().css("visibility", "hidden");
+              }.bind(that.statusBar));
             }
             callback(true);
 
@@ -409,7 +415,7 @@ define(
           isCloseable: true,
           isPrivate: true,
           elContainer: true,
-          content: '<div class="obj_properties"><div class="alert alert-info pg-panel-message">' + gettext('Please wait while we fetch information about the node from the server!') + '</div></div>',
+          content: '<div class="obj_properties"><div class="alert alert-info pg-panel-message">' + gettext('Please wait while we fetch information about the node from the server...') + '</div></div>',
           onCreate: function(myPanel, $container) {
             $container.addClass('pg-no-overflow');
           },
@@ -453,7 +459,7 @@ define(
        *
        * args must be a object containing:
        *   action - create/edit/properties
-       *   item   - The properties of the item (tree ndoe item)
+       *   item   - The properties of the item (tree node item)
        *
        * NOTE:
        * if item is not provided, the action will be done on the
@@ -627,7 +633,7 @@ define(
           if (!(_.isFunction(obj.canDropCascade) ?
                 obj.canDropCascade.apply(obj, [d, i]) : obj.canDropCascade)) {
                 Alertify.error(
-                S('The %s "%s" cannot be dropped!')
+                S( gettext('The %s "%s" cannot be dropped.'))
                 .sprintf(obj.label, d.label).value(),
                 10
                 );
@@ -641,7 +647,7 @@ define(
           if (!(_.isFunction(obj.canDrop) ?
               obj.canDrop.apply(obj, [d, i]) : obj.canDrop)) {
             Alertify.error(
-              S('The %s "%s" cannot be dropped!')
+              S( gettext('The %s "%s" cannot be dropped.'))
               .sprintf(obj.label, d.label).value(),
               10
             );
@@ -732,6 +738,48 @@ define(
         // Here call data grid method to render query tool
         pgAdmin.DataGrid.show_query_tool('', i);
       },
+
+      // Logic to change the server background colour
+      // There is no way of applying CSS to parent element so we have to
+      // do it via JS code only
+      change_server_background: function(item, data) {
+        if (!item || !data)
+          return;
+
+        // Go further only if node type is a Server
+        if (data && data._type && data._type == 'server') {
+          var element = $(item).find('span.aciTreeItem').first() || null,
+            // First element will be icon and second will be colour code
+            bgcolor = data.icon.split(" ")[1] || null,
+            fgcolor = data.icon.split(" ")[2] || '';
+
+          if(bgcolor) {
+            // li tag for the current branch
+            var first_level_element = element.parents()[3] || null,
+              dynamic_class = 'pga_server_' + data._id + '_bgcolor',
+              style_tag;
+
+            // Prepare dynamic style tag
+            style_tag = "<style id=" + dynamic_class + " type='text/css'> \n";
+            style_tag += "." + dynamic_class + ' .aciTreeItem {';
+            style_tag += " border-radius: 3px; margin-bottom: 2px;";
+            style_tag += " background: " + bgcolor + "} \n";
+            if(fgcolor) {
+              style_tag += "." + dynamic_class + ' .aciTreeText {';
+              style_tag += " color: " + fgcolor + ";} \n"
+            }
+            style_tag += "</style>";
+
+            // Prepare dynamic style tag using template
+            $('#' + dynamic_class).remove();
+            $(style_tag).appendTo("head");
+
+            if(first_level_element)
+              $(first_level_element).addClass(dynamic_class);
+          }
+        }
+      },
+
       added: function(item, data, browser) {
         var b = browser || pgBrowser,
             t = b.tree,
@@ -757,6 +805,8 @@ define(
             }
           );
         }
+
+        pgBrowser.Node.callbacks.change_server_background(item, data);
       },
       // Callback called - when a node is selected in browser tree.
       selected: function(item, data, browser) {
@@ -887,7 +937,10 @@ define(
               // Return if event is fired from child element
               if (event.target !== context) return;
               if (view && view.model && view.model.sessChanged()) {
-                onSave.call(this, view);
+                var btn = $(event.target).closest('.obj_properties')
+                                         .find('.pg-prop-btn-group')
+                                         .find('button.btn-primary');
+                onSave.call(this, view, btn);
               }
               break;
             case keyCode.F1:
@@ -1111,20 +1164,25 @@ define(
           iframe.openURL(that.dialogHelp);
         }.bind(panel),
 
-        onSave = function(view) {
+        onSave = function(view, saveBtn) {
           var m = view.model,
             d = m.toJSON(true),
-
             // Generate a timer for the request
             timer = setTimeout(function(){
               $('.obj_properties').addClass('show_progress');
-            }, 1000);
+            }, 1000),
+            saveBtn = saveBtn;
+
+          // Prevent subsequent save operation by disabling Save button
+          if(saveBtn)
+            $(saveBtn).prop('disabled', true);
 
           if (d && !_.isEmpty(d)) {
             m.save({}, {
               attrs: d,
               validate: false,
               cache: false,
+              wait: true,
               success: function() {
                 onSaveFunc.call();
                 // Hide progress cursor
@@ -1153,14 +1211,14 @@ define(
               error: function(m, jqxhr) {
                 Alertify.pgNotifier(
                   "error", jqxhr,
-                  S(
-                    gettext("Error saving properties: %s")
-                    ).sprintf(jqxhr.statusText).value()
-                  );
+                  gettext("Error saving properties")
+                );
 
                 // Hide progress cursor
                 $('.obj_properties').removeClass('show_progress');
                 clearTimeout(timer);
+                if(saveBtn)
+                  $(saveBtn).prop('disabled', false);
               }
             });
           }
@@ -1259,7 +1317,7 @@ define(
               register: function(btn) {
                 // Save the changes
                 btn.click(function() {
-                  onSave.call(this, view);
+                  onSave.call(this, view, btn);
                 });
               }
             },{
@@ -1530,6 +1588,13 @@ define(
        * fetches the new data.
        */
       this.cached = {};
+
+      // Trigger Notify event about node's cache
+      var self = this;
+      pgBrowser.Events.trigger(
+        'pgadmin:browser:node:' + self.type + ':cache_cleared',
+        item, self
+      );
     },
     cache_level: function(node_info, with_id) {
       if (node_info) {

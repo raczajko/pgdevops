@@ -245,6 +245,7 @@ var enable_disable_btn = function() {
     $('.file_manager').find('button.rename').prop('disabled', true);
     if ($grid_file.length > 0) {
       $('.file_manager_ok').addClass('disabled');
+      $('.file_manager_ok').attr('disabled', true);
     }
   } else {
     var $list_file = $('.fileinfo').find('table#contents tbody tr.selected');
@@ -254,6 +255,7 @@ var enable_disable_btn = function() {
     $('.file_manager').find('button.rename').prop('disabled', true);
     if ($list_file.length > 0) {
       $('.file_manager_ok').addClass('disabled');
+      $('.file_manager_ok').attr('disabled', true);
     }
   }
 
@@ -418,6 +420,7 @@ var getFileInfo = function(file) {
       var data = resp.data.result;
       if (data.Code === 1) {
         $('.file_manager_ok').removeClass('disabled');
+        $('.file_manager_ok').attr('disabled', false);
         var properties = '';
         if (
           data.Properties.Size || parseInt(data.Properties.Size)==0
@@ -432,7 +435,7 @@ var getFileInfo = function(file) {
           // Enable/Disable level up button
           enab_dis_level_up();
           $('.file_manager_ok').addClass('disabled');
-
+          $('.file_manager_ok').attr('disabled', true);
           $('.file_manager button.delete, .file_manager button.rename').attr('disabled', 'disabled');
           $('.file_manager button.download').attr('disabled', 'disabled');
 
@@ -445,6 +448,7 @@ var getFileInfo = function(file) {
         }
       } else {
         $('.file_manager_ok').addClass('disabled');
+        $('.file_manager_ok').attr('disabled', true);
         alertify.error(data.Error);
       }
     }
@@ -472,11 +476,13 @@ var checkPermission = function(path) {
         permission = true;
       } else {
         $('.file_manager_ok').addClass('disabled');
+        $('.file_manager_ok').attr('disabled', true);
         alertify.error(data.Error);
       }
     },
     error: function() {
       $('.file_manager_ok').addClass('disabled');
+      $('.file_manager_ok').attr('disabled', true);
       alertify.error( gettext('Error occurred while checking access permission.'));
     }
   });
@@ -528,7 +534,7 @@ var getFolderInfo = function(path, file_type) {
 
   // Display an activity indicator.
   $('.fileinfo').find('span.activity').html(
-    '<img src="' + loading_icon_url + '"/>'
+    '<img src="' + loading_icon_url + '" alt="' + gettext("Loading...") + '"/>'
   );
 
   var post_data = {
@@ -910,14 +916,17 @@ var getFolderInfo = function(path, file_type) {
 
           if (path.lastIndexOf("/") == path.length - 1 || path.lastIndexOf("\\") == path.length - 1) {
             $('.file_manager_ok').addClass('disabled');
-
+            $('.file_manager_ok').attr('disabled', true);
             $('.file_manager button.delete, .file_manager button.rename').attr('disabled', 'disabled');
             $('.file_manager button.download').attr('disabled', 'disabled');
 
             getFolderInfo(path);
 
           } else {
-            getFileInfo(path);
+            var is_valid_file = getFileInfo(path);
+            if (is_valid_file && check_file_capability(e, data_cap, 'grid')) {
+              $('.file_manager_ok').click();
+            }
           }
         });
 
@@ -938,6 +947,7 @@ var getFolderInfo = function(path, file_type) {
               $(this).addClass('selected');
 
               $('.file_manager_ok').removeClass('disabled');
+              $('.file_manager_ok').attr('disabled', false);
               $('.file_manager button.delete, .file_manager button.rename').removeAttr(
                 'disabled', 'disabled'
               );
@@ -959,6 +969,7 @@ var getFolderInfo = function(path, file_type) {
               $(this).parent().find('li.selected').removeClass('selected');
               $(this).addClass('selected');
               $('.file_manager_ok').removeClass('disabled');
+              $('.file_manager_ok').attr('disabled', false);
               $('.file_manager button.delete, .file_manager button.download, .file_manager button.rename').removeAttr(
                 'disabled'
               );
@@ -985,6 +996,7 @@ var getFolderInfo = function(path, file_type) {
               $(this).parent().find('tr.selected').removeClass('selected');
               $('td:first-child', this).parent().addClass('selected');
               $('.file_manager_ok').removeClass('disabled');
+              $('.file_manager_ok').attr('disabled', false);
               $('.file_manager button.download').attr('disabled', 'disabled');
               $('.file_manager button.delete, .file_manager button.rename').removeAttr('disabled');
 
@@ -1017,12 +1029,16 @@ var getFolderInfo = function(path, file_type) {
           var path = $('td:first-child', this).attr('title');
 
           if (path.lastIndexOf('/') == path.length - 1 || path.lastIndexOf('\\') == path.length - 1) {
-            $('.file_manager_ok').removeClass('disabled');
+            $('.file_manager_ok').addClass('disabled');
+            $('.file_manager_ok').attr('disabled', true);
             $('.file_manager button.download').attr('disabled', 'disabled');
             $('.file_manager button.delete, .file_manager button.rename').attr('disabled', 'disabled');
             getFolderInfo(path);
           } else {
-            getFileInfo(path);
+            var is_valid_file = getFileInfo(path), is_protected;
+            if (is_valid_file && check_file_capability(e, data_cap, 'table')) {
+              $('.file_manager_ok').click();
+            }
           }
         });
 
@@ -1054,6 +1070,30 @@ var enab_dis_level_up = function() {
     }
   }, 100);
 };
+
+// Check if user can Select file
+var check_file_capability = function(event, data_cap, view_type) {
+  var current_element = event.currentTarget,
+      path, file_name, is_protected;
+
+  if (view_type == 'grid') {
+    path = decodeURI($(current_element).find('.clip span').attr('data-alt')),
+    file_name = $(current_element).find('p span').attr('title'),
+    is_protected = $(current_element).find(
+      '.clip span.fm_lock_icon'
+    ).attr('data-protected');
+  } else {
+    path = decodeURI($(current_element).find('td:first-child').attr('title')),
+    file_name = decodeURI($(current_element).find('td:first-child p span').attr(
+      'title'
+    )),
+    is_protected = $(current_element).find('td:first-child').find(
+      'i.tbl_lock_icon'
+    ).attr('data-protected');
+  }
+
+  return has_capability(data_cap, 'select_file') && is_protected == undefined;
+}
 
 /*---------------------------------------------------------
   Initialization - Entry point
@@ -1123,9 +1163,9 @@ pgAdmin.FileUtils = {
 
         var select_box = "<div class='change_file_types'>" +
           gettext("Show hidden files and folders") +
-          "? <input type='checkbox' id='show_hidden' onclick='pgAdmin.FileUtils.handleClick(this)'>" +
+          "? <input type='checkbox' id='show_hidden' onclick='pgAdmin.FileUtils.handleClick(this)' tabindex='11'>" +
           "<span></span>" +
-          "<select name='type'>";
+          "<select name='type' tabindex='12'>";
 
         while(i < types_len) {
           t = allowed_types[i];
@@ -1305,12 +1345,12 @@ pgAdmin.FileUtils = {
             check_obj = function(path, check) {
 
               var path = decodeURI(path);
-
               if (path.lastIndexOf('/') == path.length - 1 || path.lastIndexOf('\\') == path.length - 1) {
                 if (
                   has_capability(self.data_cap, 'select_folder')
                 ) {
                   $('.file_manager_ok').removeClass('disabled');
+                  $('.file_manager_ok').attr('disabled', false);
                   $('.file_manager button.delete, .file_manager button.rename').removeAttr(
                     'disabled', 'disabled'
                   );
@@ -1325,6 +1365,7 @@ pgAdmin.FileUtils = {
                   );
                 } else {
                   $('.file_manager_ok').addClass('disabled');
+                  $('.file_manager_ok').attr('disabled', true);
                   if(check) {
                     // Enable/Disable level up button
                     enab_dis_level_up();
@@ -1339,6 +1380,7 @@ pgAdmin.FileUtils = {
                   has_capability(self.data_cap, 'select_file')
                 ) {
                   $('.file_manager_ok').removeClass('disabled');
+                  $('.file_manager_ok').attr('disabled', false);
                   $('.file_manager button.delete, .file_manager button.download, .file_manager button.rename').removeAttr(
                     'disabled'
                   );
@@ -1404,12 +1446,12 @@ pgAdmin.FileUtils = {
   // we remove simple file upload element
   $('.file-input-container').remove();
   $('.upload').remove();
-  $( ".create" ).before( '<button value="Upload" type="button" title="Upload File" name="upload" id="upload" class="btn fa fa-upload upload"><span></span></button> ' );
+  $( ".create" ).before( '<button value="Upload" type="button" title="Upload File" name="upload" id="upload" class="btn fa fa-upload upload" tabindex="6"><span></span></button> ' );
 
   $('#uploader .upload').unbind().click(function() {
     // we create prompt
     var msg  = '<div id="dropzone-container">' +
-          '<button class="fa fa-times dz_cross_btn"></button>' +
+          '<button class="fa fa-times dz_cross_btn" tabindex="7"></button>' +
           '<div id="multiple-uploads" class="dropzone"></div>' +
           '<div class="prompt-info">' + lg.file_size_limit +
           config.upload.fileSizeLimit + ' ' + lg.mb + '.</div>',

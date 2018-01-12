@@ -4,8 +4,8 @@
   if (typeof define === 'function' && define.amd) {
     define([
       'sources/gettext', 'underscore', 'underscore.string', 'jquery',
-      'backbone', 'backform', 'backgrid', 'codemirror', 'pgadmin.backgrid',
-      'select2'
+      'backbone', 'backform', 'backgrid', 'codemirror', 'spectrum',
+      'pgadmin.backgrid', 'select2'
       ],
      function(gettext, _, S, $, Backbone, Backform, Backgrid, CodeMirror) {
       // Export global even in AMD case in case this script is loaded with
@@ -68,7 +68,8 @@
     'uniqueColCollection': ['unique-col-collection', 'unique-col-collection', 'string'],
     'switch' : 'switch',
     'select2': 'select2',
-    'note': 'note'
+    'note': 'note',
+    'color': 'color'
   };
 
   var getMappedControl = Backform.getMappedControl = function(type, mode) {
@@ -273,7 +274,8 @@
   _.extend(
     Backform.TextareaControl.prototype, {
       defaults: _.extend(
-        Backform.TextareaControl.prototype.defaults, {rows: 5, helpMessage: null}
+        Backform.TextareaControl.prototype.defaults,
+        {rows: 5, helpMessage: null, maxlength: null}
       ),
       events : {
         "change textarea": "onChange",
@@ -287,7 +289,10 @@
         '<div class="<%=Backform.controlsClassName%>">',
         '  <textarea ',
         '    class="<%=Backform.controlClassName%> <%=extraClasses.join(\' \')%>" name="<%=name%>"',
-        '    maxlength="<%=maxlength%>" placeholder="<%-placeholder%>" <%=disabled ? "disabled" : ""%>',
+        '  <% if (maxlength) { %>',
+        '    maxlength="<%=maxlength%>"',
+        '  <% } %>',
+        '    placeholder="<%-placeholder%>" <%=disabled ? "disabled" : ""%>',
         '    rows=<%=rows ? rows : ""%>',
         '    <%=required ? "required" : ""%>><%-value%></textarea>',
         '  <% if (helpMessage && helpMessage.length) { %>',
@@ -422,8 +427,8 @@
     defaults: {
       label: "",
       options: {
-        onText: 'Yes',
-        offText: 'No',
+        onText: gettext('Yes'),
+        offText: gettext('No'),
         onColor: 'success',
         offColor: 'primary',
         size: 'small'
@@ -1464,11 +1469,11 @@
             });
           } else {
             this.sqlCtrl.clearHistory();
-            this.sqlCtrl.setValue('-- ' + gettext('Definition incomplete'));
+            this.sqlCtrl.setValue('-- ' + gettext('Definition incomplete.'));
           }
         } else {
           this.sqlCtrl.clearHistory();
-          this.sqlCtrl.setValue('-- ' + gettext('Nothing changed'));
+          this.sqlCtrl.setValue('-- ' + gettext('Nothing changed.'));
         }
         this.sqlCtrl.refresh.apply(this.sqlCtrl);
       }
@@ -1723,7 +1728,7 @@
       '   <% var option = options[i]; %>',
       '   <option ',
       '    <% if (option.image) { %> data-image=<%=option.image%> <%}%>',
-      '    value=<%= formatter.fromRaw(option.value) %>',
+      '    value=<%- formatter.fromRaw(option.value) %>',
       '    <% if (option.selected) {%>selected="selected"<%} else {%>',
       '    <% if (!select2.multiple && option.value === rawValue) {%>selected="selected"<%}%>',
       '    <% if (select2.multiple && rawValue && rawValue.indexOf(option.value) != -1){%>selected="selected" data-index="rawValue.indexOf(option.value)"<%}%>',
@@ -2049,6 +2054,8 @@
             lineNumbers: true,
             mode: "text/x-pgsql",
             extraKeys: pgAdmin.Browser.editor_shortcut_keys,
+            indentWithTabs: pgAdmin.Browser.editor_options.indent_with_tabs,
+            indentUnit: pgAdmin.Browser.editor_options.tabSize,
             tabSize: pgAdmin.Browser.editor_options.tabSize,
             lineWrapping: pgAdmin.Browser.editor_options.wrapCode,
             autoCloseBrackets: pgAdmin.Browser.editor_options.insert_pair_brackets,
@@ -2157,9 +2164,6 @@
     },
     initialize: function(){
       Backform.InputControl.prototype.initialize.apply(this, arguments);
-
-      // Listen click events of Storage Manager dialog buttons
-      pgAdmin.Browser.Events.on('pgadmin-storage:finish_btn:'+this.field.get('dialog_type'), this.storage_dlg_hander, this);
     },
     template: _.template([
       '<label class="<%=Backform.controlLabelClassName%>"><%=label%></label>',
@@ -2193,14 +2197,29 @@
 
       pgAdmin.FileManager.init();
       pgAdmin.FileManager.show_dialog(params);
+      // Listen click events of Storage Manager dialog buttons
+      this.listen_file_dlg_events();
     },
     storage_dlg_hander: function(value) {
       var field = _.defaults(this.field.toJSON(), this.defaults),
           attrArr = this.field.get("name").split('.'),
           name = attrArr.shift();
 
+      this.remove_file_dlg_event_listeners();
+
       // Set selected value into the model
       this.model.set(name, decodeURI(value));
+    },
+    storage_close_dlg_hander: function() {
+      this.remove_file_dlg_event_listeners();
+    },
+    listen_file_dlg_events: function() {
+      pgAdmin.Browser.Events.on('pgadmin-storage:finish_btn:'+this.field.get('dialog_type'), this.storage_dlg_hander, this);
+      pgAdmin.Browser.Events.on('pgadmin-storage:cancel_btn:'+this.field.get('dialog_type'), this.storage_close_dlg_hander, this);
+    },
+    remove_file_dlg_event_listeners: function() {
+      pgAdmin.Browser.Events.off('pgadmin-storage:finish_btn:'+this.field.get('dialog_type'), this.storage_dlg_hander, this);
+      pgAdmin.Browser.Events.off('pgadmin-storage:cancel_btn:'+this.field.get('dialog_type'), this.storage_close_dlg_hander, this);
     },
     clearInvalid: function() {
       Backform.InputControl.prototype.clearInvalid.apply(this, arguments);
@@ -2342,10 +2361,110 @@
 
       return this;
     },
+    clearInvalid: function() {
+      Backform.InputControl.prototype.clearInvalid.apply(this, arguments);
+      this.$el.removeClass("pgadmin-datepicker-has-error");
+      return this;
+    },
+    updateInvalid: function() {
+      Backform.InputControl.prototype.updateInvalid.apply(this, arguments);
+      // Introduce a new class to fix the error icon placement on the control
+      this.$el.addClass("pgadmin-datepicker-has-error");
+    },
     cleanup: function() {
       if (this.has_datepicker)
         this.$el.find("input").datetimepicker('destroy');
       this.$el.empty();
+    }
+  });
+
+
+  // Color Picker control
+  var ColorControl = Backform.ColorControl = Backform.InputControl.extend({
+    defaults: {
+      label: "",
+      extraClasses: [],
+      helpMessage: null,
+      showButtons: false,
+      showPalette: true,
+      allowEmpty: true,
+      colorFormat: "hex",
+      defaultColor: ""
+    },
+    template: _.template([
+      '<label class="<%=Backform.controlLabelClassName%>"><%=label%></label>',
+      '<div class="<%=Backform.controlsClassName%>">',
+      '  <input class="<%=Backform.controlClassName%> <%=extraClasses.join(\' \')%>" name="<%=name%>" value="<%-value%>" <%=disabled ? "disabled" : ""%> <%=required ? "required" : ""%> />',
+      '  <% if (helpMessage && helpMessage.length) { %>',
+      '    <span class="<%=Backform.helpMessageClassName%>"><%=helpMessage%></span>',
+      '  <% } %>',
+      '</div>'
+    ].join("\n")),
+    render: function() {
+      // Clear first
+      if(this.$picker && this.$picker.hasOwnProperty('destroy')) {
+        this.$picker('destroy');
+      }
+
+      var field = _.defaults(this.field.toJSON(), this.defaults),
+          attributes = this.model.toJSON(),
+          attrArr = field.name.split('.'),
+          name = attrArr.shift(),
+          path = attrArr.join('.'),
+          rawValue = this.keyPathAccessor(attributes[name], path),
+          data = _.extend(field, {
+            rawValue: rawValue,
+            value: this.formatter.fromRaw(rawValue, this.model),
+            attributes: attributes,
+            formatter: this.formatter
+          }),
+          evalF = function(f, d, m) {
+            return (_.isFunction(f) ? !!f.apply(d, [m]) : !!f);
+          };
+
+      // Evaluate the disabled, visible, and required option
+      _.extend(data, {
+        disabled: evalF(data.disabled, data, this.model),
+        visible:  evalF(data.visible, data, this.model),
+        required: evalF(data.required, data, this.model)
+      });
+
+      // Clean up first
+      this.$el.empty();
+
+      if (!data.visible)
+        this.$el.addClass(Backform.hiddenClassname);
+
+      this.$el.html(this.template(data)).addClass(field.name);
+
+      // Creating default Color picker
+      this.$picker = this.$el.find("input").spectrum({
+        allowEmpty: data.allowEmpty,
+        preferredFormat: data.colorFormat,
+        disabled: data.disabled,
+        hideAfterPaletteSelect:true,
+        clickoutFiresChange: true,
+        showButtons: data.showButtons,
+        showPaletteOnly: data.showPalette,
+        togglePaletteOnly: data.showPalette,
+        togglePaletteMoreText: gettext('More'),
+        togglePaletteLessText: gettext('Less'),
+        color: data.value || data.defaultColor,
+        // Predefined palette colors
+        palette: [
+            ["#000","#444","#666","#999","#ccc","#eee","#f3f3f3","#fff"],
+            ["#f00","#f90","#ff0","#0f0","#0ff","#00f","#90f","#f0f"],
+            ["#f4cccc","#fce5cd","#fff2cc","#d9ead3","#d0e0e3","#cfe2f3","#d9d2e9","#ead1dc"],
+            ["#ea9999","#f9cb9c","#ffe599","#b6d7a8","#a2c4c9","#9fc5e8","#b4a7d6","#d5a6bd"],
+            ["#e06666","#f6b26b","#ffd966","#93c47d","#76a5af","#6fa8dc","#8e7cc3","#c27ba0"],
+            ["#c00","#e69138","#f1c232","#6aa84f","#45818e","#3d85c6","#674ea7","#a64d79"],
+            ["#900","#b45f06","#bf9000","#38761d","#134f5c","#0b5394","#351c75","#741b47"],
+            ["#600","#783f04","#7f6000","#274e13","#0c343d","#073763","#20124d","#4c1130"]
+        ]
+
+      });
+      this.updateInvalid();
+      return this;
     }
   });
 
