@@ -2,7 +2,7 @@
 
 pgDevOps is a multi-user & multi-server PostgreSQL dev-ops web console that features integration with pgAdmin4.  
 
-It's a WSGI Python27 Flask application that runs cross-platform (Windows, OSX & Linux) in Crossbar. 
+It's a WSGI Python27 Flask application that runs cross-platform (Windows, OSX & Linux) in Crossbar. pgDevOps is Open Source software, distributed under the GNU General Public License version 2.0 (GPLv2).
 
 
 ### Setup python env
